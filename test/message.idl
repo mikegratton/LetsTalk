@@ -1,0 +1,10 @@
+#ifndef message_idl
+#define message_idl
+
+struct message
+{
+    uint64 index;
+    string surprise;
+};
+
+#endif
