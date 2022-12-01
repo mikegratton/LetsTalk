@@ -1,6 +1,8 @@
 #ifndef message_idl
 #define message_idl
 
+#include "other.idl"
+
 struct message
 {
     uint64 index;

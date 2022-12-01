@@ -1,0 +1,10 @@
+#ifndef  other_idl
+#define other_idl
+
+struct other
+{
+    uint64 index;
+    double number;
+};
+
+#endif

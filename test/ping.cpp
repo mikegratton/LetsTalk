@@ -1,6 +1,6 @@
 #include "LetsTalk.hpp"
 #include <iostream>
-#include "message.h"
+#include "idl/message.h"
 
 int main(int argc, char** argv)
 {
@@ -13,6 +13,5 @@ int main(int argc, char** argv)
     msg->surprise("Test");
     msg->index(1);
     pub.publish(std::move(msg));
-    
     return 0;
 }
