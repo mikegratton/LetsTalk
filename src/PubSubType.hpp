@@ -3,7 +3,7 @@
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastdds/dds/topic/TopicDataType.hpp>
 #include <fastrtps/utils/md5.h>
-
+    
 namespace lt
 {
 
@@ -56,14 +56,12 @@ public:
 
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/Cdr.h>
-#include <cxxabi.h>
+#include "LetsTalkFwd.hpp"
 namespace lt
 {
 template<class T>
-PubSubType<T>::PubSubType() {
-    char* realname = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
-    setName(realname);
-    free(realname);
+PubSubType<T>::PubSubType() {    
+    setName(detail::get_demangled_name<T>().c_str());    
     auto type_size = T::getMaxCdrSerializedSize();
     type_size += eprosima::fastcdr::Cdr::alignment(type_size, 4); /* possible submessage alignment */
     m_typeSize = static_cast<uint32_t>(type_size) + 4; /*encapsulation*/
