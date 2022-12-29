@@ -21,37 +21,23 @@ namespace efr = eprosima::fastrtps::rtps;
 
 class Participant;
 using ParticipantPtr = std::shared_ptr<Participant>;
+class Publisher;
 
-
-
-class Publisher {
-public:
-
-    operator bool() const { return isOkay(); }
-    bool isOkay() const { return !(nullptr == m_writer || nullptr == m_serializer); }
-
-    template<class T>
-    bool publish(std::unique_ptr<T> i_data);
-
-protected:
-    friend Participant;
-
-    Publisher(std::shared_ptr<efd::TopicDataType> i_serializer,
-              std::shared_ptr<efd::DataWriter> i_writer);
-    bool doPublish(void* i_data);
-    
-    std::shared_ptr<efd::TopicDataType> m_serializer;    
-    std::shared_ptr<efd::DataWriter> m_writer;
-};
-    
 
 namespace detail
 {
-    
+
+/*
+ * Get the type name for T using RTTI and (potentially) 
+ * a demangle call to the compiler library
+ */
 template<class T> std::string get_demangled_name();
 
 class SubscriberCounter;
-    
+
+/**
+ * ReaderListener calls the installed callback when data is available
+ */
 template<class T, class C>
 class ReaderListener : public efd::DataReaderListener
 {
@@ -79,6 +65,20 @@ protected:
     ParticipantPtr m_participant;
 };
 
+/**
+ * Helper function to create listener instances from callbacks
+ */
+template<class T, class C>
+efd::DataReaderListener* makeListener(C i_callback, std::string const& i_topic, ParticipantPtr i_participant)
+{
+    return new ReaderListener<T,C>(i_callback, i_topic, i_participant);
+}
+
+
+/**
+ * SubscriberCounter updates the number of subscribers on a topic as they are discovered
+ * or lost.
+ */
 class SubscriberCounter : public efd::DataWriterListener {
 public:
     SubscriberCounter(std::string const& i_topic, ParticipantPtr i_participant);
@@ -88,14 +88,20 @@ public:
     ParticipantPtr m_participant;
 };
 
+/**
+ * ParticipantLogger logs messages about participant discovery in verbose mode
+ */
 class ParticipantLogger : public efd::DomainParticipantListener {
 public:
+    /*
     std::function<void(efd::DomainParticipant* i_participant, 
                        efr::ParticipantDiscoveryInfo&& i_info)> m_callback;
+                    */
     ParticipantLogger();
-    
+    /*
     void on_participant_discovery(efd::DomainParticipant* i_participant, 
-                                  efr::ParticipantDiscoveryInfo&& i_info);        
+                                  efr::ParticipantDiscoveryInfo&& i_info) override;            
+    */
 };
 
 void logSubscriptionMatched(ParticipantPtr const& i_participant, std::string const& i_topic,
@@ -107,13 +113,5 @@ void logIncompatibleQos(ParticipantPtr const& i_participant, std::string const& 
 void logLostSample(ParticipantPtr const& i_participant, std::string const& i_topic,
                             const efd::SampleLostStatus& status);
 
-template<class T, class C>
-ReaderListener<T,C>* makeListener(C i_callback, std::string const& i_topic, ParticipantPtr i_participant)
-{
-    return new ReaderListener<T,C>(i_callback, i_topic, i_participant);
-}
-
 } // detail
 } // lt
-
-

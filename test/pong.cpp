@@ -1,21 +1,18 @@
 #include "LetsTalk.hpp"
-#include "idl/message.h"
 #include <iostream>
-#include <thread>
+#include "HelloWorld.h"
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
+    
+    
     auto node = lt::Participant::create();
-    node->subscribe<message>("MessageTopic", [](std::unique_ptr<message> data) {
-        std::cout << data->surprise() << " " << data->index() << std::endl;
-    });
-    std::cout << "Have type " << node->topicType("MessageTopic") << " on topic MessageTopic\n";
-    auto sub = node->getRawSubscriber();
-    auto listen = sub->lookup_datareader("MessageTopic")->get_listener();
-    std::cout << "Listener is " << listen << "\n";
-    sub->notify_datareaders();
-    while (node->publisherCount("MessageTopic") >= 0 ) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));    
-    }      
+    node->subscribe<HelloWorld>("HelloWorldTopic", [](std::unique_ptr<HelloWorld> data) {
+        std::cout << data->message() << " " << data->index() << std::endl;
+    }); 
+
+    for ( ; ;) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));            
+    }
     return 0;
 }

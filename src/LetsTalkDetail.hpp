@@ -7,6 +7,12 @@
 #include <cxxabi.h>
 #endif
 
+
+namespace eprosima { namespace fastrtps { namespace types {
+std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return);
+} } }
+
+
 namespace lt {
 namespace detail {
 
@@ -24,7 +30,9 @@ ReaderListener<T,C>::ReaderListener(C i_callback, std::string const& i_topic, Pa
     : m_callback(i_callback)
     , m_topic(i_topic)
     , m_participant(i_participant)
-{ }
+{ 
+    
+}
 
 
 template<class T, class C>
@@ -35,7 +43,7 @@ void ReaderListener<T,C>::on_data_available(efd::DataReader* i_reader) {
     }
     std::unique_ptr<T> data(new T);
     efd::SampleInfo info;
-    auto code = i_reader->read_next_sample(data.get(), &info);
+    auto code = i_reader->take_next_sample(data.get(), &info);
     if ( code == ReturnCode_t::RETCODE_OK) {
         if (info.valid_data) {
             m_callback(std::move(data));
@@ -96,7 +104,7 @@ std::string get_demangled_name()
 
 
 template<class T>
-bool Publisher::publish(std::unique_ptr<T> i_data) {
+bool Publisher::publish(std::unique_ptr<T> i_data) {    
     assert(m_serializer->getName() == get_demangled_name<T>());    
     return doPublish(i_data.get());
 }

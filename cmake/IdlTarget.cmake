@@ -25,8 +25,8 @@ macro(CompileIdl )
    foreach( incl ${idl_INCLUDE})
        list(APPEND ddsgen_include -I ${incl})
    endforeach()
-   set(idl_ABS_PATH ${CMAKE_CURRENT_BINARY_DIR}/${idl_PATH})
-   message("idl_PATH=${idl_PATH}")
+   set(idl_ABS_PATH ${CMAKE_CURRENT_BINARY_DIR}/${idl_PATH})  
+   file(TO_CMAKE_PATH ${idl_ABS_PATH} idl_ABS_PATH)
    file(MAKE_DIRECTORY ${idl_ABS_PATH})
    set(relpath ${idl_ABS_PATH})
    string(REPLACE "${CMAKE_BINARY_DIR}/" "" relpath ${relpath})
@@ -36,16 +36,12 @@ macro(CompileIdl )
    foreach(idl ${idl_SOURCE})
        get_filename_component(stem ${idl} NAME_WE)
        get_filename_component(idl_abs ${idl} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-       add_custom_command(OUTPUT ${idl_ABS_PATH}/${stem}.idl.d
-            COMMAND cpp ${ddsgen_include} -MM ${idl_abs} -o ${idl_ABS_PATH}/${stem}.idl.d
-            COMMAND sed -i -e "s,${stem}.o,${relpath}/${stem}.h ${relpath}/${stem}.cxx," ${idl_ABS_PATH}/${stem}.idl.d
-            DEPENDS ${idl_abs}
-            )
        add_custom_command(OUTPUT ${idl_ABS_PATH}/${stem}.h ${idl_ABS_PATH}/${stem}.cxx
+            COMMAND cpp ${ddsgen_include} -MM ${idl_abs} -MF ${idl_ABS_PATH}/${stem}.idl.d
+            COMMAND sed -i -e "s,${stem}.o,${relpath}/${stem}.h ${relpath}/${stem}.cxx," ${idl_ABS_PATH}/${stem}.idl.d
             COMMAND ${ddsgen} -cs -replace ${ddsgen_include} ${idl_abs}
             DEPFILE ${idl_ABS_PATH}/${stem}.idl.d
-            DEPENDS ${idl_abs} ${idl_ABS_PATH}/${stem}.idl.d
-            WORKING_DIRECTORY ${idl_ABS_PATH}
+            DEPENDS ${idl_abs} 
             COMMENT "Compiling idl ${idl_abs}"
             )
        list(APPEND idl_source ${idl_ABS_PATH}/${stem}.cxx)

@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sstream>
 
-
 namespace lt {
 
 namespace efd = eprosima::fastdds::dds;
@@ -32,22 +31,32 @@ ParticipantPtr Participant::create(int i_domain, std::string const& i_qosProfile
         raw->delete_contained_entities();
         factory->delete_participant(raw);
     };
+    
+    // By default, a listener on the participant intercepts ALL data callbacks.
+    // Let's disable that
+    efd::StatusMask dontBlockData = efd::StatusMask::all();
+    dontBlockData >> efd::StatusMask::data_available() >> efd::StatusMask::data_on_readers();
+    
     efd::DomainParticipant* rawParticipant;
-    if (i_qosProfile.empty()) {
-        rawParticipant = factory->create_participant(i_domain, factory->get_default_participant_qos(),
-                         new detail::ParticipantLogger);
+    if (i_qosProfile.empty()) {        
+
+        rawParticipant = factory->create_participant(i_domain, 
+                                                     factory->get_default_participant_qos(), 
+                                                     new detail::ParticipantLogger(), 
+                                                     dontBlockData);        
     } else {
         rawParticipant = factory->create_participant_with_profile(i_domain, i_qosProfile,
-                         new detail::ParticipantLogger);
+                         new detail::ParticipantLogger(), dontBlockData);
     }
-    auto part = std::shared_ptr<efd::DomainParticipant>(rawParticipant, participantDeleter);
-    p->m_participant = part;
-    auto pubDeleter = [part](efd::Publisher* pub) { part->delete_publisher(pub); };
+    
+    auto participant = std::shared_ptr<efd::DomainParticipant>(rawParticipant, participantDeleter);
+    p->m_participant = participant;
+    auto pubDeleter = [participant](efd::Publisher* pub) { participant->delete_publisher(pub); };
     auto rawPub = p->m_participant->create_publisher(p->m_participant->get_default_publisher_qos());
     p->m_publisher = std::shared_ptr<efd::Publisher>(rawPub, pubDeleter);
 
-    auto subDeleter = [part](efd::Subscriber* sub) { part->delete_subscriber(sub); };
-    auto rawSub = p->m_participant->create_subscriber(p->m_participant->get_default_subscriber_qos());
+    auto subDeleter = [participant](efd::Subscriber* sub) { participant->delete_subscriber(sub); };
+    auto rawSub = p->m_participant->create_subscriber(p->m_participant->get_default_subscriber_qos());    
     p->m_subscriber = std::shared_ptr<efd::Subscriber>(rawSub, subDeleter);
 
     return p;
@@ -59,11 +68,11 @@ Participant::~Participant() {
     m_participant->delete_contained_entities();
 }
 
-Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport i_type,
+Publisher Participant::doAdvertise(std::string const& i_topic, TypeSupport const& i_type,
                                    std::string const& i_qosProfile, int i_historyDepth) {
     auto topic = getTopic(i_topic, i_type, i_historyDepth);
     if (nullptr == topic) {
-        return Publisher(nullptr, nullptr);
+        return Publisher(nullptr);
     }
     efd::DataWriter* rawWriter;
     if (i_qosProfile.empty()) {
@@ -76,27 +85,25 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
     };
     auto writer = std::shared_ptr<efd::DataWriter>(rawWriter, writerDeleter);
     auto code = writer->set_listener(new detail::SubscriberCounter(i_topic, shared_from_this()));
-    LT_LOG << m_participant << " created new publisher for type \"" << i_type->getName() << "\" on topic \"" << i_topic 
+    LT_LOG << m_participant << " created new publisher for type \"" << i_type.get_type_name() << "\" on topic \"" << i_topic 
         <<"\"; " << code << "\n";
-    return Publisher(i_type, writer);
+    return Publisher(writer);
 }
 
-void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport i_type,
+void Participant::doSubscribe(std::string const& i_topic, TypeSupport const& i_type,
                               efd::DataReaderListener* i_listener, std::string const& i_qosProfile,
-                              int i_historyDepth ) {
+                              int i_historyDepth) {    
     auto reader = m_subscriber->lookup_datareader(i_topic);
-    if (reader) {
+    if (reader && reader->type().get_type_name() != i_type.get_type_name()) {
         auto code = m_subscriber->delete_datareader(reader);
         LT_LOG << "Deleted old datareader on " << i_topic << "; " << code << "\n";
     }
-
     auto topic = getTopic(i_topic, i_type, i_historyDepth);
     if (i_qosProfile.empty()) {
-        reader = m_subscriber->create_datareader(topic, m_subscriber->get_default_datareader_qos());
+        reader = m_subscriber->create_datareader(topic, m_subscriber->get_default_datareader_qos(), i_listener);
     } else {
-        reader = m_subscriber->create_datareader_with_profile(topic, i_qosProfile);
-    }
-    reader->set_listener(i_listener);
+        reader = m_subscriber->create_datareader_with_profile(topic, i_qosProfile, i_listener);
+    } 
     LT_LOG << m_participant << " created new subscriber for type \"" << i_type->getName() << "\" on topic \"" << i_topic <<"\"\n";
 }
 
@@ -148,6 +155,11 @@ int Participant::subscriberCount(std::string const& i_topic) const {
     }
 }
 
+void Participant::registerType(efd::TypeSupport const& i_type)
+{
+    i_type.register_type(m_participant.get());    
+}
+
 std::string Participant::topicType(std::string const& i_topic) const {
     auto topic = m_participant->find_topic(i_topic, eprosima::fastrtps::Duration_t(0,10000));
     if (nullptr == topic) {
@@ -156,27 +168,24 @@ std::string Participant::topicType(std::string const& i_topic) const {
     return topic->get_type_name();
 }
 
-efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport i_type,
+efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport const& i_type,
                                   int i_historyDepth) {
-    auto knownType = m_participant->find_type(i_type->getName());
-    if (nullptr == knownType) {
-        auto code = m_participant->register_type(i_type);
-        LT_LOG << m_participant << " registered new type \"" << i_type->getName() << "\"; " << code << "\n";
-    }
+        
+    registerType(i_type);
     auto topic = m_participant->find_topic(i_topic, eprosima::fastrtps::Duration_t(0,10000));
     if (nullptr == topic) {
-        topic = m_participant->create_topic(i_topic, i_type->getName(),
+        topic = m_participant->create_topic(i_topic, i_type.get_type_name(),
                                             m_participant->get_default_topic_qos());        
-        LT_LOG << m_participant << " started a new topic for type " << i_type->getName() 
+        LT_LOG << m_participant << " started a new topic for type " << i_type.get_type_name() 
                << " named \"" << i_topic <<"\"\n";
 
     }
     if (nullptr == topic) {
         LT_LOG << m_participant << " could not create topic \"" << i_topic << "\"\n";
         return nullptr;
-    } else if (topic->get_type_name() != i_type->getName()) {        
+    } else if (topic->get_type_name() != i_type.get_type_name()) {        
         LT_LOG << m_participant << " already has a topic \"" << i_topic << "\", but for type " 
-            << topic->get_type_name() << " not the requested type " << i_type->getName() << "\n";        
+            << topic->get_type_name() << " not the requested type " << i_type.get_type_name() << "\n";        
         return nullptr;
     } else {
         // Set history depth 
@@ -190,15 +199,14 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport i
     }
 }
 
-Publisher::Publisher(std::shared_ptr<efd::TopicDataType> i_serializer,
-                     std::shared_ptr<efd::DataWriter> i_writer)
-    : m_serializer(i_serializer)
-    , m_writer(i_writer)
+Publisher::Publisher(std::shared_ptr<efd::DataWriter> i_writer)
+    : m_writer(i_writer)
 { }
 
 
 bool Publisher::doPublish(void* i_data) {    
     if (!isOkay() || nullptr == i_data) {
+        LT_LOG << m_writer << " could not publish sample " << i_data << "\n";
         return false;
     }        
     return m_writer->write(i_data);

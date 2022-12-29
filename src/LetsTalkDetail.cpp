@@ -36,7 +36,9 @@ void SubscriberCounter::on_publication_matched(efd::DataWriter*, efd::Publicatio
     }
 }
 
+ParticipantLogger::ParticipantLogger() { }
 
+/*
 ParticipantLogger::ParticipantLogger()
     : m_callback([](efd::DomainParticipant*
     , efr::ParticipantDiscoveryInfo &&) {})
@@ -47,7 +49,7 @@ void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_parti
     if (i_info.status == efr::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT) {
         LT_LOG << i_participant << " discovered participant \""
                << i_info.info.m_participantName << "\"\n";
-        m_callback(i_participant, std::move(i_info));
+        // m_callback(i_participant, std::move(i_info));
     } else if (i_info.status == efr::ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT) {
         LT_LOG << i_participant << " saw participant \"" << i_info.info.m_participantName
                << "\" change qos\n";
@@ -56,6 +58,7 @@ void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_parti
                << i_info.info.m_participantName << "\"\n";
     }
 }
+*/
 
 void logSubscriptionMatched(ParticipantPtr const& i_participant, std::string const& i_topic,
                             efd::SubscriptionMatchedStatus const& i_info) {
@@ -64,7 +67,7 @@ void logSubscriptionMatched(ParticipantPtr const& i_participant, std::string con
                << i_info.current_count << " publisher(s)\n";
     } else {
         LT_LOG << name(i_participant) << " topic \"" << i_topic << "\" lost "
-               << -i_info.current_count_change << " LT_VERBOSEpublisher(s)\n";
+               << -i_info.current_count_change << " publisher(s)\n";
     }
 }
 
@@ -104,9 +107,13 @@ const bool LT_VERBOSE = check_verbose();
 
 }
 
+}
+
 
 // Why is ReturnCode_t so needlessly complicated?
-std::ostream& operator<<(std::ostream& os, eprosima::fastrtps::types::ReturnCode_t i_return) {
+namespace eprosima { namespace fastrtps { namespace types {
+
+std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return) {
     /*
     enum ReturnCodeValue
     {
@@ -144,6 +151,4 @@ std::ostream& operator<<(std::ostream& os, eprosima::fastrtps::types::ReturnCode
     default: return os << "UNKNOWN (" << i_return() << ")";
     }
 }
-
-
-}
+} } }
