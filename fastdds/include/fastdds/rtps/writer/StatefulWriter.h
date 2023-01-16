@@ -431,8 +431,11 @@ private:
             LocatorSelectorSender& locator_selector,
             bool create_sender_resources);
 
+    void select_all_readers_nts(
+            RTPSMessageGroup& group,
+            LocatorSelectorSender& locator_selector);
+
     void send_heartbeat_piggyback_nts_(
-            ReaderProxy* reader,
             RTPSMessageGroup& message_group,
             LocatorSelectorSender& locator_selector,
             uint32_t& last_bytes_processed);
@@ -468,6 +471,14 @@ private:
 
     void prepare_datasharing_delivery(
             CacheChange_t* change);
+
+    /**
+     * Check the StatefulWriter's sequence numbers and add the required GAP messages to the provided message group.
+     *
+     * @param group     Reference to the Message Group to which the GAP messages are to be added.
+     */
+    void add_gaps_for_holes_in_history_(
+            RTPSMessageGroup& group);
 
     //! True to disable piggyback heartbeats
     bool disable_heartbeat_piggyback_;

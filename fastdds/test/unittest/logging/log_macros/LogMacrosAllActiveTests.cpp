@@ -40,9 +40,9 @@
  */
 TEST_F(LogMacrosTests, all_active)
 {
-    logError(SampleCategory, "Sample error message");
-    logWarning(SampleCategory, "Sample warning message");
-    logInfo(SampleCategory, "Sample info message");
+    EPROSIMA_LOG_ERROR(SampleCategory, "Sample error message");
+    EPROSIMA_LOG_WARNING(SampleCategory, "Sample warning message");
+    EPROSIMA_LOG_INFO(SampleCategory, "Sample info message");
 
     auto consumedEntries = HELPER_WaitForEntries(3);
     ASSERT_EQ(3u, consumedEntries.size());

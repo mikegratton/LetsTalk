@@ -3,7 +3,7 @@
 
 namespace lt {
 namespace detail {
-std::string getDefaultProfileXml(char const* i_participantName) {
+std::string getDefaultProfileXml() {
     std::string xml(R"(
 <?xml version="1.0" encoding="UTF-8" ?>
 <dds>
@@ -18,12 +18,6 @@ std::string getDefaultProfileXml(char const* i_participantName) {
             <type>TCPv4</type>
         </transport_descriptor>
     </transport_descriptors>
-    <participant profile_name="paricipate" is_default_profile="true">
-        <domainId>0</domainId>
-        <rtps>
-            <name>@LT_NAME@</name>
-       </rtps>
-    </participant>
     <publisher profile_name="reliable" is_default_profile="true">
         <qos>
             <durability>
@@ -64,7 +58,7 @@ std::string getDefaultProfileXml(char const* i_participantName) {
                 <kind>ASYNCHRONOUS</kind>
             </publishMode>
             <ownership>
-                <kind>EXCLUSIVE</kind>
+                <kind>SHARED</kind>
             </ownership>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy>
@@ -100,7 +94,7 @@ std::string getDefaultProfileXml(char const* i_participantName) {
                 <kind>RELIABLE</kind>
             </reliability>
             <ownership>
-                <kind>EXCLUSIVE</kind>
+                <kind>SHARED</kind>
             </ownership>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy>
@@ -109,8 +103,6 @@ std::string getDefaultProfileXml(char const* i_participantName) {
 </dds>
 )");
     
-    std::regex findName("@LT_NAME@");
-    xml = std::regex_replace(xml, findName, i_participantName);
     return xml;
     
 }

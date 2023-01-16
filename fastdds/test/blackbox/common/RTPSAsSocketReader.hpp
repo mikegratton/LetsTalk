@@ -114,8 +114,8 @@ public:
         mw << magicword << "_" << asio::ip::host_name() << "_" << GET_PID();
         magicword_ = mw.str();
 
-        // By default, memory mode is preallocated (the most restritive)
-        hattr_.memoryPolicy = eprosima::fastrtps::rtps::PREALLOCATED_MEMORY_MODE;
+        // By default, memory mode is PREALLOCATED_WITH_REALLOC_MEMORY_MODE
+        hattr_.memoryPolicy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
         // By default, heartbeat period delay is 100 milliseconds.
         reader_attr_.times.heartbeatResponseDelay.seconds = 0;
@@ -372,15 +372,15 @@ private:
     eprosima::fastrtps::rtps::RTPSReader* reader_;
     eprosima::fastrtps::rtps::ReaderHistory* history_;
     eprosima::fastrtps::rtps::HistoryAttributes hattr_;
-    bool initialized_;
+    std::atomic<bool> initialized_;
     std::list<type> total_msgs_;
     std::mutex mutex_;
     std::condition_variable cv_;
     std::string magicword_;
-    bool receiving_;
+    std::atomic<bool> receiving_;
     eprosima::fastrtps::rtps::SequenceNumber_t last_seq_;
-    size_t current_received_count_;
-    size_t number_samples_expected_;
+    std::atomic<size_t> current_received_count_;
+    std::atomic<size_t> number_samples_expected_;
     std::string ip_;
     uint32_t port_;
     type_support type_;

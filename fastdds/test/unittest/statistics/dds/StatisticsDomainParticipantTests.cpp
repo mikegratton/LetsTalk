@@ -106,7 +106,10 @@ public:
     std::function<uint32_t()> getSerializedSizeProvider(
             void* /*data*/) override
     {
-        return std::function<uint32_t()>();
+        return []()->uint32_t
+               {
+                   return 0;
+               };
     }
 
     void* createData() override
@@ -219,7 +222,7 @@ TEST_F(StatisticsDomainParticipantTests, EnableDisableStatisticsDataWriterTest)
                     create_participant(0, eprosima::fastdds::dds::PARTICIPANT_QOS_DEFAULT);
     ASSERT_NE(participant, nullptr);
 
-    eprosima::fastdds::dds::DataWriterQos inconsistent_qos = eprosima::fastdds::dds::DATAWRITER_QOS_DEFAULT;
+    eprosima::fastdds::dds::DataWriterQos inconsistent_qos = STATISTICS_DATAWRITER_QOS;
     inconsistent_qos.reliability().kind = eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS;
     inconsistent_qos.ownership().kind = eprosima::fastdds::dds::EXCLUSIVE_OWNERSHIP_QOS;
 
@@ -485,7 +488,7 @@ TEST_F(StatisticsDomainParticipantTests, EnableDisableStatisticsDataWriterTest)
  * This test checks that when the topic name provided is not valid, a log error is printed.
  * 1. Create a participant with the property fastdds.statistics set to an invalid topic name
  * 2. Check that there is no topic/type registered in the participant
- * 3. Wait for the logError entry to be consumed
+ * 3. Wait for the EPROSIMA_LOG_ERROR entry to be consumed
  */
 TEST_F(StatisticsDomainParticipantTests, CreateParticipantWithInvalidTopicName)
 {
@@ -546,7 +549,7 @@ TEST_F(StatisticsDomainParticipantTests, CreateParticipantWithInvalidTopicName)
     EXPECT_EQ(nullptr, participant->lookup_topicdescription(SAMPLE_DATAS_TOPIC));
     EXPECT_EQ(nullptr, participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
 
-    // 3. Wait until logError entries are captured
+    // 3. Wait until EPROSIMA_LOG_ERROR entries are captured
     helper_block_for_at_least_entries(2);
     auto consumed_entries = mock_consumer_->ConsumedEntries();
     EXPECT_EQ(consumed_entries.size(), 2u);
@@ -695,6 +698,49 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
     EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant->delete_topic(invalid_topic));
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
                     delete_participant(statistics_participant), ReturnCode_t::RETCODE_OK);
+#endif // FASTDDS_STATISTICS
+}
+
+/**
+
+ * This test checks that a participant is correctly deleted by the factory
+ * after calling delete_contained_entities() method
+ * 1. Create a statistics participant, register type
+ * 2. Create a sample topic
+ * 3. Perform a delete_contained_entities() in the statistics participant
+ * 4. Delete the participant
+ */
+TEST_F(StatisticsDomainParticipantTests, DeleteParticipantAfterDeleteContainedEntitiesFailure)
+{
+#ifdef FASTDDS_STATISTICS
+
+    eprosima::fastdds::dds::TypeSupport count_type(new EntityCountPubSubType);
+
+    // 1. Create DomainParticipant with statistics
+    eprosima::fastdds::dds::DomainParticipant* participant =
+            eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
+                    create_participant(0, eprosima::fastdds::dds::PARTICIPANT_QOS_DEFAULT);
+    ASSERT_NE(participant, nullptr);
+
+    // Register type
+    participant->register_type(count_type);
+
+    // 2. Create a sample topic
+    participant->create_topic(HEARTBEAT_COUNT_TOPIC,
+            count_type->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+
+    DomainParticipant* statistics_participant = DomainParticipant::narrow(participant);
+    ASSERT_NE(statistics_participant, nullptr);
+
+    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
+            STATISTICS_DATAWRITER_QOS));
+
+    // 3. Perform a delete_contained_entities() in the statistics participant
+    EXPECT_EQ(participant->delete_contained_entities(), ReturnCode_t::RETCODE_OK);
+
+    // 4. Delete the participant
+    EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
+                    delete_participant(participant), ReturnCode_t::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 

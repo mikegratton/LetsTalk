@@ -159,7 +159,6 @@ void DomainParticipantImpl::disable()
     {
         participant->set_listener(nullptr);
     }
-    rtps_listener_.participant_ = nullptr;
 
     // The function to disable the DomainParticipantImpl is called from
     // DomainParticipantFactory::delete_participant() and DomainParticipantFactory destructor.
@@ -235,6 +234,10 @@ DomainParticipantImpl::~DomainParticipantImpl()
 
     std::lock_guard<std::mutex> _(mtx_gs_);
 
+    // Assert no callbacks are being executed.
+    // Note that this should never occur since reception and events threads joined when removing rtps_participant.
+    assert(!(rtps_listener_.callback_counter_ > 0));
+
     if (participant_)
     {
         participant_->impl_ = nullptr;
@@ -266,7 +269,7 @@ ReturnCode_t DomainParticipantImpl::enable()
 
         if (part == nullptr)
         {
-            logError(DOMAIN_PARTICIPANT, "Problem creating RTPSParticipant");
+            EPROSIMA_LOG_ERROR(DOMAIN_PARTICIPANT, "Problem creating RTPSParticipant");
             return ReturnCode_t::RETCODE_ERROR;
         }
     }
@@ -553,13 +556,13 @@ ContentFilteredTopic* DomainParticipantImpl::create_contentfilteredtopic(
     if ((topics_.find(name) != topics_.end()) ||
             (filtered_topics_.find(name) != filtered_topics_.end()))
     {
-        logError(PARTICIPANT, "Topic with name : " << name << " already exists");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Topic with name : " << name << " already exists");
         return nullptr;
     }
 
     if (related_topic->get_participant() != get_participant())
     {
-        logError(PARTICIPANT, "Creating ContentFilteredTopic with name " << name <<
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Creating ContentFilteredTopic with name " << name <<
                 ": related_topic not from this participant");
         return nullptr;
     }
@@ -567,7 +570,7 @@ ContentFilteredTopic* DomainParticipantImpl::create_contentfilteredtopic(
     IContentFilterFactory* filter_factory = find_content_filter_factory(filter_class_name);
     if (nullptr == filter_factory)
     {
-        logError(PARTICIPANT, "Could not find factory for filter class " << filter_class_name);
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Could not find factory for filter class " << filter_class_name);
         return nullptr;
     }
 
@@ -590,7 +593,7 @@ ContentFilteredTopic* DomainParticipantImpl::create_contentfilteredtopic(
             filter_factory->create_content_filter(filter_class_name, related_topic->get_type_name().c_str(),
             type.get(), filter_expression.c_str(), filter_parameters, filter_instance))
     {
-        logError(PARTICIPANT, "Could not create filter of class " << filter_class_name << " for expression \"" <<
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Could not create filter of class " << filter_class_name << " for expression \"" <<
                 filter_expression);
         return nullptr;
     }
@@ -754,7 +757,7 @@ Publisher* DomainParticipantImpl::create_publisher(
     {
         // The PublisherImpl::check_qos() function is not yet implemented and always returns ReturnCode_t::RETCODE_OK.
         // It will be implemented in future releases of Fast DDS.
-        // logError(PARTICIPANT, "PublisherQos inconsistent or not supported");
+        // EPROSIMA_LOG_ERROR(PARTICIPANT, "PublisherQos inconsistent or not supported");
         // return nullptr;
     }
 
@@ -818,7 +821,7 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
 /* TODO
    Subscriber* DomainParticipantImpl::get_builtin_subscriber()
    {
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return nullptr;
    }
  */
@@ -828,7 +831,7 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
         const InstanceHandle_t& handle)
    {
     (void)handle;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -838,7 +841,7 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
         const InstanceHandle_t& handle)
    {
     (void)handle;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -848,7 +851,7 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
         const InstanceHandle_t& handle)
    {
     (void)handle;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -858,7 +861,7 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
         const InstanceHandle_t& handle)
    {
     (void)handle;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -966,7 +969,7 @@ ReturnCode_t DomainParticipantImpl::assert_liveliness()
     }
     else
     {
-        logError(PARTICIPANT, "Invalid WLP, cannot assert liveliness of participant");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Invalid WLP, cannot assert liveliness of participant");
     }
     return ReturnCode_t::RETCODE_ERROR;
 }
@@ -1121,7 +1124,7 @@ const ReturnCode_t DomainParticipantImpl::get_topic_qos_from_profile(
         std::vector<InstanceHandle_t>& participant_handles) const
    {
     (void)participant_handles;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -1131,7 +1134,7 @@ const ReturnCode_t DomainParticipantImpl::get_topic_qos_from_profile(
         std::vector<InstanceHandle_t>& topic_handles) const
    {
     (void)topic_handles;
-    logError(PARTICIPANT, "Not implemented.");
+    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
    }
  */
@@ -1230,7 +1233,7 @@ Subscriber* DomainParticipantImpl::create_subscriber(
     {
         // The SubscriberImpl::check_qos() function is not yet implemented and always returns ReturnCode_t::RETCODE_OK.
         // It will be implemented in future releases of Fast DDS.
-        // logError(PARTICIPANT, "SubscriberQos inconsistent or not supported");
+        // EPROSIMA_LOG_ERROR(PARTICIPANT, "SubscriberQos inconsistent or not supported");
         // return nullptr;
     }
 
@@ -1299,13 +1302,13 @@ Topic* DomainParticipantImpl::create_topic(
     TypeSupport type_support = find_type(type_name);
     if (type_support.empty())
     {
-        logError(PARTICIPANT, "Type : " << type_name << " Not Registered");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Type : " << type_name << " Not Registered");
         return nullptr;
     }
 
     if (!TopicImpl::check_qos_including_resource_limits(qos, type_support))
     {
-        logError(PARTICIPANT, "TopicQos inconsistent or not supported");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "TopicQos inconsistent or not supported");
         return nullptr;
     }
 
@@ -1317,14 +1320,14 @@ Topic* DomainParticipantImpl::create_topic(
     if ((topics_.find(topic_name) != topics_.end()) ||
             (filtered_topics_.find(topic_name) != filtered_topics_.end()))
     {
-        logError(PARTICIPANT, "Topic with name : " << topic_name << " already exists");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Topic with name : " << topic_name << " already exists");
         return nullptr;
     }
 
     InstanceHandle_t topic_handle;
     create_instance_handle(topic_handle);
 
-    TopicProxyFactory* factory = new TopicProxyFactory(this, topic_name, mask, type_support, qos, listener);
+    TopicProxyFactory* factory = new TopicProxyFactory(this, topic_name, type_name, mask, type_support, qos, listener);
     TopicProxy* proxy = factory->create_topic();
     Topic* topic = proxy->get_topic();
     topic->set_instance_handle(topic_handle);
@@ -1406,7 +1409,7 @@ ReturnCode_t DomainParticipantImpl::register_type(
 {
     if (type_name.size() <= 0)
     {
-        logError(PARTICIPANT, "Registered Type must have a name");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Registered Type must have a name");
         return ReturnCode_t::RETCODE_BAD_PARAMETER;
     }
 
@@ -1419,11 +1422,11 @@ ReturnCode_t DomainParticipantImpl::register_type(
             return ReturnCode_t::RETCODE_OK;
         }
 
-        logError(PARTICIPANT, "Another type with the same name '" << type_name << "' is already registered.");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Another type with the same name '" << type_name << "' is already registered.");
         return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
     }
 
-    logInfo(PARTICIPANT, "Type " << type_name << " registered.");
+    EPROSIMA_LOG_INFO(PARTICIPANT, "Type " << type_name << " registered.");
     std::lock_guard<std::mutex> lock(mtx_types_);
     types_.insert(std::make_pair(type_name, type));
 
@@ -1462,7 +1465,7 @@ bool DomainParticipantImpl::register_dynamic_type_to_factories(
             const TypeObject* type_obj = objectFactory->get_type_object(dpst->getName());
             if (type_id2 == nullptr)
             {
-                logError(DOMAIN_PARTICIPANT, "Cannot register dynamic type " << dpst->getName());
+                EPROSIMA_LOG_ERROR(DOMAIN_PARTICIPANT, "Cannot register dynamic type " << dpst->getName());
             }
             else
             {
@@ -1485,7 +1488,7 @@ ReturnCode_t DomainParticipantImpl::unregister_type(
 {
     if (type_name.size() <= 0)
     {
-        logError(PARTICIPANT, "Registered Type must have a name");
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Registered Type must have a name");
         return ReturnCode_t::RETCODE_BAD_PARAMETER;
     }
 
@@ -1532,10 +1535,10 @@ void DomainParticipantImpl::MyRTPSParticipantListener::onParticipantDiscovery(
         RTPSParticipant*,
         ParticipantDiscoveryInfo&& info)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->on_participant_discovery(participant_->participant_, std::move(info));
+        participant_->listener_->on_participant_discovery(participant_->participant_, std::move(info));
     }
 }
 
@@ -1544,10 +1547,10 @@ void DomainParticipantImpl::MyRTPSParticipantListener::onParticipantAuthenticati
         RTPSParticipant*,
         ParticipantAuthenticationInfo&& info)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->onParticipantAuthentication(participant_->participant_, std::move(info));
+        participant_->listener_->onParticipantAuthentication(participant_->participant_, std::move(info));
     }
 }
 
@@ -1557,10 +1560,10 @@ void DomainParticipantImpl::MyRTPSParticipantListener::onReaderDiscovery(
         RTPSParticipant*,
         ReaderDiscoveryInfo&& info)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->on_subscriber_discovery(participant_->participant_, std::move(info));
+        participant_->listener_->on_subscriber_discovery(participant_->participant_, std::move(info));
     }
 }
 
@@ -1568,10 +1571,10 @@ void DomainParticipantImpl::MyRTPSParticipantListener::onWriterDiscovery(
         RTPSParticipant*,
         WriterDiscoveryInfo&& info)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->on_publisher_discovery(participant_->participant_, std::move(info));
+        participant_->listener_->on_publisher_discovery(participant_->participant_, std::move(info));
     }
 }
 
@@ -1583,19 +1586,19 @@ void DomainParticipantImpl::MyRTPSParticipantListener::on_type_discovery(
         const fastrtps::types::TypeObject* object,
         fastrtps::types::DynamicType_ptr dyn_type)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->on_type_discovery(
+        participant_->listener_->on_type_discovery(
             participant_->participant_,
             request_sample_id,
             topic,
             identifier,
             object,
             dyn_type);
-    }
 
-    participant_->check_get_type_request(request_sample_id, identifier, object, dyn_type);
+        participant_->check_get_type_request(request_sample_id, identifier, object, dyn_type);
+    }
 }
 
 void DomainParticipantImpl::MyRTPSParticipantListener::on_type_dependencies_reply(
@@ -1603,14 +1606,14 @@ void DomainParticipantImpl::MyRTPSParticipantListener::on_type_dependencies_repl
         const fastrtps::rtps::SampleIdentity& request_sample_id,
         const fastrtps::types::TypeIdentifierWithSizeSeq& dependencies)
 {
-    DomainParticipantListener* listener = nullptr;
-    if (participant_ != nullptr && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
-        listener->on_type_dependencies_reply(
+        participant_->listener_->on_type_dependencies_reply(
             participant_->participant_, request_sample_id, dependencies);
-    }
 
-    participant_->check_get_dependencies_request(request_sample_id, dependencies);
+        participant_->check_get_dependencies_request(request_sample_id, dependencies);
+    }
 }
 
 void DomainParticipantImpl::MyRTPSParticipantListener::on_type_information_received(
@@ -1619,17 +1622,14 @@ void DomainParticipantImpl::MyRTPSParticipantListener::on_type_information_recei
         const fastrtps::string_255& type_name,
         const fastrtps::types::TypeInformation& type_information)
 {
-    DomainParticipantListener* listener = nullptr;
-    DomainParticipant* participant = nullptr;
-    if (participant_ != nullptr
-            && (participant = participant_->get_participant()) != nullptr
-            && (listener = participant_->get_listener()) != nullptr)
+    Sentry sentinel(this);
+    if (sentinel)
     {
         if (type_information.complete().typeid_with_size().type_id()._d() > 0
                 || type_information.minimal().typeid_with_size().type_id()._d() > 0)
         {
-            listener->on_type_information_received(
-                participant, topic_name, type_name, type_information);
+            participant_->listener_->on_type_information_received(
+                participant_->participant_, topic_name, type_name, type_information);
         }
     }
 }
@@ -2182,12 +2182,13 @@ bool DomainParticipantImpl::can_qos_be_updated(
     if (!(to.allocation() == from.allocation()))
     {
         updatable = false;
-        logWarning(RTPS_QOS_CHECK, "ParticipantResourceLimitsQos cannot be changed after the participant is enabled");
+        EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK,
+                "ParticipantResourceLimitsQos cannot be changed after the participant is enabled");
     }
     if (!(to.properties() == from.properties()))
     {
         updatable = false;
-        logWarning(RTPS_QOS_CHECK, "PropertyPolilyQos cannot be changed after the participant is enabled");
+        EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK, "PropertyPolilyQos cannot be changed after the participant is enabled");
     }
     if (!(to.wire_protocol() == from.wire_protocol()))
     {
@@ -2254,7 +2255,7 @@ bool DomainParticipantImpl::can_qos_be_updated(
                 from.wire_protocol().builtin.discovery_config.ignoreParticipantFlags))))
         {
             updatable = false;
-            logWarning(RTPS_QOS_CHECK, "WireProtocolConfigQos cannot be changed after the participant is enabled, "
+            EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK, "WireProtocolConfigQos cannot be changed after the participant is enabled, "
                     << "with the exception of builtin.discovery_config.m_DiscoveryServers");
         }
         else
@@ -2277,7 +2278,7 @@ bool DomainParticipantImpl::can_qos_be_updated(
                 if (!contained)
                 {
                     updatable = false;
-                    logWarning(RTPS_QOS_CHECK,
+                    EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK,
                             "Discovery Servers cannot be removed from the list; they can only be added");
                     break;
                 }
@@ -2287,12 +2288,12 @@ bool DomainParticipantImpl::can_qos_be_updated(
     if (!(to.transport() == from.transport()))
     {
         updatable = false;
-        logWarning(RTPS_QOS_CHECK, "TransportConfigQos cannot be changed after the participant is enabled");
+        EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK, "TransportConfigQos cannot be changed after the participant is enabled");
     }
     if (!(to.name() == from.name()))
     {
         updatable = false;
-        logWarning(RTPS_QOS_CHECK, "Participant name cannot be changed after the participant is enabled");
+        EPROSIMA_LOG_WARNING(RTPS_QOS_CHECK, "Participant name cannot be changed after the participant is enabled");
     }
     return updatable;
 }
@@ -2302,12 +2303,12 @@ void DomainParticipantImpl::create_instance_handle(
 {
     using eprosima::fastrtps::rtps::octet;
 
-    ++next_instance_id_;
+    uint32_t id = ++next_instance_id_;
     handle = guid_;
     handle.value[15] = 0x01; // Vendor specific;
-    handle.value[14] = static_cast<octet>(next_instance_id_ & 0xFF);
-    handle.value[13] = static_cast<octet>((next_instance_id_ >> 8) & 0xFF);
-    handle.value[12] = static_cast<octet>((next_instance_id_ >> 16) & 0xFF);
+    handle.value[14] = static_cast<octet>(id & 0xFF);
+    handle.value[13] = static_cast<octet>((id >> 8) & 0xFF);
+    handle.value[12] = static_cast<octet>((id >> 16) & 0xFF);
 }
 
 DomainParticipantListener* DomainParticipantImpl::get_listener_for(

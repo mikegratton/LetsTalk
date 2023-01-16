@@ -268,8 +268,8 @@ public:
         subscriber_attr_.topic.topicKind =
                 type_.m_isGetKeyDefined ? ::eprosima::fastrtps::rtps::WITH_KEY : ::eprosima::fastrtps::rtps::NO_KEY;
 
-        // By default, memory mode is preallocated (the most restritive)
-        subscriber_attr_.historyMemoryPolicy = eprosima::fastrtps::rtps::PREALLOCATED_MEMORY_MODE;
+        // By default, memory mode is PREALLOCATED_WITH_REALLOC_MEMORY_MODE
+        subscriber_attr_.historyMemoryPolicy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
         // By default, heartbeat period delay is 100 milliseconds.
         subscriber_attr_.times.heartbeatResponseDelay.seconds = 0;
@@ -947,6 +947,13 @@ public:
         return *this;
     }
 
+    PubSubReader& ignore_participant_flags(
+            eprosima::fastrtps::rtps::ParticipantFilteringFlags_t flags)
+    {
+        participant_attr_.rtps.builtin.discovery_config.ignoreParticipantFlags = flags;
+        return *this;
+    }
+
     PubSubReader& socket_buffer_size(
             uint32_t sockerBufferSize)
     {
@@ -1046,6 +1053,15 @@ public:
     {
         participant_attr_.rtps.builtin.discovery_config.leaseDuration = lease_duration;
         participant_attr_.rtps.builtin.discovery_config.leaseDuration_announcementperiod = announce_period;
+        return *this;
+    }
+
+    PubSubReader& initial_announcements(
+            uint32_t count,
+            const eprosima::fastrtps::Duration_t& period)
+    {
+        participant_attr_.rtps.builtin.discovery_config.initial_announcements.count = count;
+        participant_attr_.rtps.builtin.discovery_config.initial_announcements.period = period;
         return *this;
     }
 
@@ -1370,8 +1386,8 @@ private:
     std::atomic<bool> receiving_;
     type_support type_;
     std::map<eprosima::fastrtps::rtps::InstanceHandle_t, eprosima::fastrtps::rtps::SequenceNumber_t> last_seq;
-    size_t current_processed_count_;
-    size_t number_samples_expected_;
+    std::atomic<size_t> current_processed_count_;
+    std::atomic<size_t> number_samples_expected_;
     bool discovery_result_;
 
     std::function<bool(const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo& info)> onDiscovery_;

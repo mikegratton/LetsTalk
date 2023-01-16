@@ -27,9 +27,6 @@
 #include <fastrtps/qos/ParameterTypes.h>
 #include <rtps/participant/RTPSParticipantImpl.h>
 
-using namespace eprosima::fastdds::statistics;
-using eprosima::fastrtps::rtps::RTPSParticipantImpl;
-
 namespace eprosima {
 namespace fastdds {
 namespace statistics {
@@ -90,10 +87,6 @@ detail::SampleIdentity_s to_statistics_type(
     return *reinterpret_cast<detail::SampleIdentity_s*>(&sample_id);
 }
 
-} // statistics
-} // fastdds
-} // eprosima
-
 StatisticsAncillary* StatisticsListenersImpl::get_aux_members() const
 {
     return members_.get();
@@ -128,6 +121,29 @@ bool StatisticsListenersImpl::remove_statistics_listener_impl(
     return 1 == members_->listeners.erase(listener);
 }
 
+void StatisticsListenersImpl::set_enabled_statistics_writers_mask_impl(
+        uint32_t enabled_writers)
+{
+    std::unique_lock<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    if (members_)
+    {
+        members_->enabled_writers_mask.store(enabled_writers);
+    }
+}
+
+bool StatisticsListenersImpl::are_statistics_writers_enabled(
+        uint32_t checked_enabled_writers)
+{
+    // Check if the corresponding writer is enabled
+    std::unique_lock<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    if (members_)
+    {
+        // Casting a number other than 1 to bool is not guaranteed to yield true
+        return (0 != (members_->enabled_writers_mask & checked_enabled_writers));
+    }
+    return false;
+}
+
 const eprosima::fastrtps::rtps::GUID_t& StatisticsParticipantImpl::get_guid() const
 {
     using eprosima::fastrtps::rtps::RTPSParticipantImpl;
@@ -142,6 +158,12 @@ const eprosima::fastrtps::rtps::GUID_t& StatisticsParticipantImpl::get_guid() co
 std::recursive_mutex& StatisticsParticipantImpl::get_statistics_mutex()
 {
     return statistics_mutex_;
+}
+
+bool StatisticsParticipantImpl::are_statistics_writers_enabled(
+        uint32_t checked_enabled_writers)
+{
+    return (enabled_writers_mask_ & checked_enabled_writers);
 }
 
 void StatisticsParticipantImpl::ListenerProxy::on_statistics_data(
@@ -329,6 +351,17 @@ bool StatisticsParticipantImpl::remove_statistics_listener(
            && ((old_mask & mask) == mask); // return false if there were unregistered entities
 }
 
+void StatisticsParticipantImpl::set_enabled_statistics_writers_mask(
+        uint32_t enabled_writers)
+{
+    enabled_writers_mask_.store(enabled_writers);
+}
+
+uint32_t StatisticsParticipantImpl::get_enabled_statistics_writers_mask()
+{
+    return enabled_writers_mask_.load();
+}
+
 void StatisticsParticipantImpl::on_network_statistics(
         const fastrtps::rtps::GuidPrefix_t& source_participant,
         const fastrtps::rtps::Locator_t& source_locator,
@@ -348,6 +381,11 @@ void StatisticsParticipantImpl::process_network_timestamp(
         const rtps::StatisticsSubmessageData::TimeStamp& ts)
 {
     using namespace eprosima::fastrtps::rtps;
+
+    if (!are_statistics_writers_enabled(EventKind::NETWORK_LATENCY))
+    {
+        return;
+    }
 
     Time_t source_ts(ts.seconds, ts.fraction);
     Time_t current_ts;
@@ -382,6 +420,11 @@ void StatisticsParticipantImpl::process_network_sequence(
         const rtps::StatisticsSubmessageData::Sequence& seq,
         uint64_t datagram_size)
 {
+    if (!are_statistics_writers_enabled(EventKind::RTPS_LOST))
+    {
+        return;
+    }
+
     lost_traffic_key key(source_participant, reception_locator);
     bool should_notify = false;
     Entity2LocatorTraffic notification;
@@ -451,6 +494,11 @@ void StatisticsParticipantImpl::on_rtps_sent(
     using namespace std;
     using eprosima::fastrtps::rtps::RTPSParticipantImpl;
 
+    if (!are_statistics_writers_enabled(EventKind::RTPS_SENT))
+    {
+        return;
+    }
+
     // Compose callback and update the inner state
     Entity2LocatorTraffic notification;
     notification.src_guid(to_statistics_type(get_guid()));
@@ -481,6 +529,11 @@ void StatisticsParticipantImpl::on_entity_discovery(
         const fastdds::dds::ParameterPropertyList_t& properties)
 {
     using namespace fastrtps;
+
+    if (!are_statistics_writers_enabled(EventKind::DISCOVERED_ENTITY))
+    {
+        return;
+    }
 
     /**
      * @brief Get the value of a property from a property list.
@@ -536,6 +589,11 @@ void StatisticsParticipantImpl::on_entity_discovery(
 void StatisticsParticipantImpl::on_pdp_packet(
         const uint32_t packages)
 {
+    if (!are_statistics_writers_enabled(EventKind::PDP_PACKETS))
+    {
+        return;
+    }
+
     EntityCount notification;
     notification.guid(to_statistics_type(get_guid()));
 
@@ -560,6 +618,11 @@ void StatisticsParticipantImpl::on_pdp_packet(
 void StatisticsParticipantImpl::on_edp_packet(
         const uint32_t packages)
 {
+    if (!are_statistics_writers_enabled(EventKind::EDP_PACKETS))
+    {
+        return;
+    }
+
     EntityCount notification;
     notification.guid(to_statistics_type(get_guid()));
 
@@ -580,3 +643,7 @@ void StatisticsParticipantImpl::on_edp_packet(
                 listener->on_statistics_data(data);
             });
 }
+
+} // statistics
+} // fastdds
+} // eprosima

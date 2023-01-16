@@ -79,6 +79,8 @@ install(
     ARCHIVE COMPONENT tinyxml2_development
     INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
+export(TARGETS tinyxml2 NAMESPACE tinyxml2:: FILE tinyxml2-${type}-targets.cmake)
+
 
 # Type-specific targets
 

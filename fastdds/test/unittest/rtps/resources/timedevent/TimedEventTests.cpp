@@ -111,6 +111,43 @@ TEST(TimedEvent, Event_RestartEvents)
 }
 
 /*!
+ * @fn TEST(TimedEvent, Event_RecreateEvents)
+ * @brief This test checks the correct behavior of recreating events.
+ * First it is checked that recreating and restarting an event multiple times is possible.
+ * The event is then recreated (blocking cancel), and an object shared with the callback is modified in the main thread.
+ * A data race would be reported by thread sanitizer if cancelling (\c cancel_timer) the event instead.
+ */
+TEST(TimedEvent, Event_RecreateEvents)
+{
+    int num = 0;
+    auto callback = [&num]() -> void
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                num++;
+            };
+
+    MockEvent event(*env->service_, 100, false, callback);
+
+    for (int i = 0; i < 10; ++i)
+    {
+        event.event().recreate_timer();
+        event.event().restart_timer();
+        event.wait();
+    }
+
+    // Recreate timer (blocking cancel) and modify object shared with callback
+    // A data race would be reported by thread sanitizer if using cancel_timer instead
+    event.event().recreate_timer();
+    num = 10;
+
+    ASSERT_FALSE(event.wait(120));
+
+    int successed = event.successed_.load(std::memory_order_relaxed);
+
+    ASSERT_EQ(successed, 10);
+}
+
+/*!
  * @fn TEST(TimedEvent, EventOnSuccessAutoDestruc_QuickCancelEvents)
  * @brief This test checks the event is not destroyed when it is canceled.
  * This test launches an event, configured to destroy itself when the event is executed successfully,
@@ -405,6 +442,65 @@ TEST(TimedEventMultithread, PendingRaceCheck)
     stop_test = true;
     checking_thr->join();
     delete checking_thr;
+}
+
+/*!
+ * @fn TEST(TimedEvent, Event_UnregisterEventWithinCallbackOfAnotherEvent)
+ * @brief This test checks the ability to unregister a TimedEvent
+ * inside another TimedEvent callback
+ */
+TEST(TimedEvent, Event_UnregisterEventWithinCallbackOfAnotherEvent)
+{
+    using TimedEvent = eprosima::fastrtps::rtps::TimedEvent;
+
+    constexpr auto expiration_ms = std::chrono::milliseconds(100);
+    std::atomic_bool success(false);
+
+    // Dummy callback event
+    auto simple_callback = []()
+            {
+                return false;
+            };
+
+    //! 1. Create a simple event with longer period
+    TimedEvent* simple_event = new TimedEvent(*env->service_, simple_callback, 3.0 * expiration_ms.count());
+
+    std::mutex mtx;
+    std::unique_ptr<TimedEvent> event_ptr;
+
+    {
+        std::lock_guard<std::mutex> _(mtx);
+        event_ptr.reset(simple_event);
+    }
+
+    // Tester callback event that will unregister simple_event
+    auto tester_callback = [&]()
+            {
+
+                //! This will call unregister under the hood
+                {
+                    std::lock_guard<std::mutex> _(mtx);
+                    event_ptr.reset();
+                }
+
+                success = true;
+
+                return false;
+            };
+
+    //! 2. Create a second event with shorter period
+    TimedEvent tester_event(*env->service_, tester_callback, 1.0 * expiration_ms.count());
+
+    //! 3. Start event timers
+    simple_event->restart_timer();
+    tester_event.restart_timer();
+
+    //! 4. Give enough time fot events to trigger
+    std::this_thread::sleep_for(6.0 * expiration_ms);
+
+    //! 5. Assert unregister_timer() operation was ok
+    ASSERT_TRUE(success);
+
 }
 
 int main(

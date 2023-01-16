@@ -211,7 +211,7 @@ ParticipantProxyData* PDP::add_participant_proxy_data(
         }
         else
         {
-            logWarning(RTPS_PDP, "Maximum number of participant proxies (" << max_proxies << \
+            EPROSIMA_LOG_WARNING(RTPS_PDP, "Maximum number of participant proxies (" << max_proxies << \
                     ") reached for participant " << mp_RTPSParticipant->getGuid() << std::endl);
             return nullptr;
         }
@@ -242,6 +242,7 @@ void PDP::initializeParticipantProxyData(
         ParticipantProxyData* participant_data)
 {
     RTPSParticipantAttributes& attributes = mp_RTPSParticipant->getAttributes();
+    bool announce_locators = !mp_RTPSParticipant->is_intraprocess_only();
 
     participant_data->m_leaseDuration = attributes.builtin.discovery_config.leaseDuration;
     //set_VendorId_eProsima(participant_data->m_VendorId);
@@ -282,13 +283,16 @@ void PDP::initializeParticipantProxyData(
     participant_data->m_availableBuiltinEndpoints |= mp_RTPSParticipant->security_manager().builtin_endpoints();
 #endif // if HAVE_SECURITY
 
-    for (const Locator_t& loc : attributes.defaultUnicastLocatorList)
+    if (announce_locators)
     {
-        participant_data->default_locators.add_unicast_locator(loc);
-    }
-    for (const Locator_t& loc : attributes.defaultMulticastLocatorList)
-    {
-        participant_data->default_locators.add_multicast_locator(loc);
+        for (const Locator_t& loc : attributes.defaultUnicastLocatorList)
+        {
+            participant_data->default_locators.add_unicast_locator(loc);
+        }
+        for (const Locator_t& loc : attributes.defaultMulticastLocatorList)
+        {
+            participant_data->default_locators.add_multicast_locator(loc);
+        }
     }
     participant_data->m_expectsInlineQos = false;
     participant_data->m_guid = mp_RTPSParticipant->getGuid();
@@ -317,23 +321,29 @@ void PDP::initializeParticipantProxyData(
     }
 
     participant_data->metatraffic_locators.unicast.clear();
-    for (const Locator_t& loc : this->mp_builtin->m_metatrafficUnicastLocatorList)
+    if (announce_locators)
     {
-        participant_data->metatraffic_locators.add_unicast_locator(loc);
-    }
-
-    participant_data->metatraffic_locators.multicast.clear();
-    if (!m_discovery.avoid_builtin_multicast || participant_data->metatraffic_locators.unicast.empty())
-    {
-        for (const Locator_t& loc: this->mp_builtin->m_metatrafficMulticastLocatorList)
+        for (const Locator_t& loc : this->mp_builtin->m_metatrafficUnicastLocatorList)
         {
-            participant_data->metatraffic_locators.add_multicast_locator(loc);
+            participant_data->metatraffic_locators.add_unicast_locator(loc);
         }
     }
 
-    fastdds::rtps::ExternalLocatorsProcessor::add_external_locators(*participant_data,
-            attributes.builtin.metatraffic_external_unicast_locators,
-            attributes.default_external_unicast_locators);
+    participant_data->metatraffic_locators.multicast.clear();
+    if (announce_locators)
+    {
+        if (!m_discovery.avoid_builtin_multicast || participant_data->metatraffic_locators.unicast.empty())
+        {
+            for (const Locator_t& loc: this->mp_builtin->m_metatrafficMulticastLocatorList)
+            {
+                participant_data->metatraffic_locators.add_multicast_locator(loc);
+            }
+        }
+
+        fastdds::rtps::ExternalLocatorsProcessor::add_external_locators(*participant_data,
+                attributes.builtin.metatraffic_external_unicast_locators,
+                attributes.default_external_unicast_locators);
+    }
 
     participant_data->m_participantName = std::string(attributes.getName());
 
@@ -375,7 +385,7 @@ void PDP::initializeParticipantProxyData(
 bool PDP::initPDP(
         RTPSParticipantImpl* part)
 {
-    logInfo(RTPS_PDP, "Beginning");
+    EPROSIMA_LOG_INFO(RTPS_PDP, "Beginning");
     mp_RTPSParticipant = part;
     m_discovery = mp_RTPSParticipant->getAttributes().builtin;
     initial_announcements_ = m_discovery.discovery_config.initial_announcements;
@@ -445,7 +455,7 @@ void PDP::announceParticipantState(
 {
     if (enabled_)
     {
-        // logInfo(RTPS_PDP, "Announcing RTPSParticipant State (new change: " << new_change << ")");
+        // EPROSIMA_LOG_INFO(RTPS_PDP, "Announcing RTPSParticipant State (new change: " << new_change << ")");
         CacheChange_t* change = nullptr;
 
         if (!dispose)
@@ -490,7 +500,7 @@ void PDP::announceParticipantState(
                     }
                     else
                     {
-                        logError(RTPS_PDP, "Cannot serialize ParticipantProxyData.");
+                        EPROSIMA_LOG_ERROR(RTPS_PDP, "Cannot serialize ParticipantProxyData.");
                     }
                 }
             }
@@ -533,7 +543,7 @@ void PDP::announceParticipantState(
                 }
                 else
                 {
-                    logError(RTPS_PDP, "Cannot serialize ParticipantProxyData.");
+                    EPROSIMA_LOG_ERROR(RTPS_PDP, "Cannot serialize ParticipantProxyData.");
                 }
             }
         }
@@ -630,7 +640,7 @@ bool PDP::lookupWriterProxyData(
 bool PDP::removeReaderProxyData(
         const GUID_t& reader_guid)
 {
-    logInfo(RTPS_PDP, "Removing reader proxy data " << reader_guid);
+    EPROSIMA_LOG_INFO(RTPS_PDP, "Removing reader proxy data " << reader_guid);
     std::lock_guard<std::recursive_mutex> guardPDP(*this->mp_mutex);
 
     for (ParticipantProxyData* pit : participant_proxies_)
@@ -667,7 +677,7 @@ bool PDP::removeReaderProxyData(
 bool PDP::removeWriterProxyData(
         const GUID_t& writer_guid)
 {
-    logInfo(RTPS_PDP, "Removing writer proxy data " << writer_guid);
+    EPROSIMA_LOG_INFO(RTPS_PDP, "Removing writer proxy data " << writer_guid);
     std::lock_guard<std::recursive_mutex> guardPDP(*this->mp_mutex);
 
     for (ParticipantProxyData* pit : participant_proxies_)
@@ -739,7 +749,7 @@ ReaderProxyData* PDP::addReaderProxyData(
         GUID_t& participant_guid,
         std::function<bool(ReaderProxyData*, bool, const ParticipantProxyData&)> initializer_func)
 {
-    logInfo(RTPS_PDP, "Adding reader proxy data " << reader_guid);
+    EPROSIMA_LOG_INFO(RTPS_PDP, "Adding reader proxy data " << reader_guid);
     ReaderProxyData* ret_val = nullptr;
 
     // notify statistics module
@@ -794,7 +804,7 @@ ReaderProxyData* PDP::addReaderProxyData(
                 }
                 else
                 {
-                    logWarning(RTPS_PDP, "Maximum number of reader proxies (" << max_proxies <<
+                    EPROSIMA_LOG_WARNING(RTPS_PDP, "Maximum number of reader proxies (" << max_proxies <<
                             ") reached for participant " << mp_RTPSParticipant->getGuid() << std::endl);
                     return nullptr;
                 }
@@ -835,7 +845,7 @@ WriterProxyData* PDP::addWriterProxyData(
         GUID_t& participant_guid,
         std::function<bool(WriterProxyData*, bool, const ParticipantProxyData&)> initializer_func)
 {
-    logInfo(RTPS_PDP, "Adding writer proxy data " << writer_guid);
+    EPROSIMA_LOG_INFO(RTPS_PDP, "Adding writer proxy data " << writer_guid);
     WriterProxyData* ret_val = nullptr;
 
     // notify statistics module
@@ -889,7 +899,7 @@ WriterProxyData* PDP::addWriterProxyData(
                 }
                 else
                 {
-                    logWarning(RTPS_PDP, "Maximum number of writer proxies (" << max_proxies <<
+                    EPROSIMA_LOG_WARNING(RTPS_PDP, "Maximum number of writer proxies (" << max_proxies <<
                             ") reached for participant " << mp_RTPSParticipant->getGuid() << std::endl);
                     return nullptr;
                 }
@@ -935,7 +945,7 @@ bool PDP::remove_remote_participant(
         return false;
     }
 
-    logInfo(RTPS_PDP, partGUID );
+    EPROSIMA_LOG_INFO(RTPS_PDP, partGUID );
     ParticipantProxyData* pdata = nullptr;
 
     //Remove it from our vector or RTPSParticipantProxies:
@@ -1239,7 +1249,7 @@ void PDP::set_initial_announcement_interval()
     if ((initial_announcements_.count > 0) && (initial_announcements_.period <= c_TimeZero))
     {
         // Force a small interval (1ms) between initial announcements
-        logWarning(RTPS_PDP, "Initial announcement period is not strictly positive. Changing to 1ms.");
+        EPROSIMA_LOG_WARNING(RTPS_PDP, "Initial announcement period is not strictly positive. Changing to 1ms.");
         initial_announcements_.period = { 0, 1000000 };
     }
     set_next_announcement_interval();

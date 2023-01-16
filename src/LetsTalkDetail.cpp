@@ -1,47 +1,46 @@
 #include "LetsTalk.hpp"
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
+
+#if defined(__GNUC__) || defined(__clang__)
+#include <cxxabi.h>
+#endif
+
 
 
 namespace lt {
 
 namespace detail {
 
-std::string name(ParticipantPtr const& p) {
-    if (p) {
-        std::stringstream ss;
-        ss << p.get();
-        return ss.str();
+
+#if defined(__GNUC__) || defined(__clang__)
+std::string demangle_name(char const* i_mangled) {
+    char* realname = abi::__cxa_demangle(i_mangled, nullptr, nullptr, nullptr);
+    std::string rname(realname);
+    free(realname);
+    return rname;
+}
+#else
+std::string demangle_name(char const* i_mangled) {
+    return std::string(i_mangled);
+}
+#endif
+
+
+bool getIgnoreNonlocal() {
+    char* verb = getenv("LT_LOCAL_ONLY");
+    if (verb && atoi(verb)) {
+        return true;
     }
-    return "UNKNOWN";
+    return false;
 }
 
+const bool s_IGNORE_NONLOCAL = getIgnoreNonlocal();
 
-SubscriberCounter::SubscriberCounter(std::string const& i_topic, ParticipantPtr i_participant)
-    : m_topic(i_topic)
-    , m_participant(i_participant)
-{ }
 
-void SubscriberCounter::on_publication_matched(efd::DataWriter*, efd::PublicationMatchedStatus const& info) {
-    if (m_participant) {
-        m_participant->updateSubscriberCount(m_topic, info.current_count_change);
-    }
-    if (info.current_count_change > 0) {
-        LT_LOG << m_participant << " topic \"" << m_topic << "\" matched "
-               << info.current_count << " subscriber(s)\n";
-    } else {
-        LT_LOG << m_participant << " topic \"" << m_topic << "\" lost "
-               << -info.current_count_change << " subscriber(s)\n";
-    }
-}
-
-ParticipantLogger::ParticipantLogger() { }
-
-/*
-ParticipantLogger::ParticipantLogger()
-    : m_callback([](efd::DomainParticipant*
-    , efr::ParticipantDiscoveryInfo &&) {})
+ParticipantLogger::ParticipantLogger(ParticipantPtr i_participant)
+    : m_participant(i_participant)
+    , m_callback([](efd::DomainParticipant*, efr::ParticipantDiscoveryInfo &&) {})
 { }
 
 void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_participant,
@@ -49,7 +48,13 @@ void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_parti
     if (i_info.status == efr::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT) {
         LT_LOG << i_participant << " discovered participant \""
                << i_info.info.m_participantName << "\"\n";
-        // m_callback(i_participant, std::move(i_info));
+        bool isLocal = i_info.info.m_guid.is_on_same_host_as(i_participant->guid());
+        if (s_IGNORE_NONLOCAL && !isLocal) {
+            LT_LOG << i_participant << " ignored remote participant \""
+                   << i_info.info.m_participantName << "\"\n";
+            i_participant->ignore_participant(i_info.info.m_key);
+        }
+        m_callback(i_participant, std::move(i_info));
     } else if (i_info.status == efr::ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT) {
         LT_LOG << i_participant << " saw participant \"" << i_info.info.m_participantName
                << "\" change qos\n";
@@ -58,37 +63,75 @@ void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_parti
                << i_info.info.m_participantName << "\"\n";
     }
 }
-*/
 
-void logSubscriptionMatched(ParticipantPtr const& i_participant, std::string const& i_topic,
-                            efd::SubscriptionMatchedStatus const& i_info) {
+void ParticipantLogger::on_publication_matched(efd::DataWriter* i_writer,
+        efd::PublicationMatchedStatus const& info) {
+
+    auto const& topic = i_writer->get_topic()->get_name();
+    auto* participant = i_writer->get_publisher()->get_participant();
+    if (m_participant) {
+        m_participant->updateSubscriberCount(topic, info.current_count_change);
+    }
+    if (info.current_count_change > 0) {
+        LT_LOG << participant
+               << " topic \"" << topic << "\" matched "
+               << info.current_count << " subscriber(s)\n";
+    } else {
+        LT_LOG << participant
+               << " topic \"" << topic << "\" lost "
+               << -info.current_count_change << " subscriber(s)\n";
+    }
+}
+
+
+void ParticipantLogger::on_subscription_matched(efd::DataReader* i_reader,
+        efd::SubscriptionMatchedStatus const& i_info) {
+    auto const& topic = i_reader->get_topicdescription()->get_name();
+    if (m_participant) {
+        m_participant->updatePublisherCount(topic, i_info.current_count_change);
+    }
     if (i_info.current_count_change > 0) {
-        LT_LOG << name(i_participant) << " topic \"" << i_topic << "\" matched "
+        LT_LOG << i_reader->get_subscriber()->get_participant()
+               << " topic \"" << topic << "\" matched "
                << i_info.current_count << " publisher(s)\n";
     } else {
-        LT_LOG << name(i_participant) << " topic \"" << i_topic << "\" lost "
+        LT_LOG << i_reader->get_subscriber()->get_participant()
+               << " topic \"" << topic << "\" lost "
                << -i_info.current_count_change << " publisher(s)\n";
     }
 }
 
-void logSampleRejected(ParticipantPtr const& i_participant, std::string const& i_topic,
-                       const efd::SampleRejectedStatus& status) {
+
+void logSampleRejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& status) {
     if (status.last_reason != 0) {
-        LT_LOG << i_participant << " rejected sample on \"" << i_topic << "\"; total rejected = "
-               << status.total_count << "\n";
+        LT_LOG << i_reader->get_subscriber()->get_participant()  << " rejected sample on \""
+               << i_reader->get_topicdescription()->get_name()
+               << "\"; total rejected = " << status.total_count << "\n";
     }
 }
 
-void logIncompatibleQos(ParticipantPtr const& i_participant, std::string const& i_topic,
+void logIncompatibleQos(efd::DataReader* i_reader,
                         const efd::RequestedIncompatibleQosStatus& status) {
 
-    LT_LOG << i_participant << " rejected incompatible QoS match on \"" << i_topic << "\"\n";
+    LT_LOG << i_reader->get_subscriber()->get_participant()
+           << " rejected incompatible QoS match on \""
+           << i_reader->get_topicdescription()->get_name()  << "\"\n";
 }
 
-void logLostSample(ParticipantPtr const& i_participant, std::string const& i_topic,
-                   const efd::SampleLostStatus& status) {
-    LT_LOG << i_participant << " lost sample on \"" << i_topic << "\"; total lost = "
+void logLostSample(efd::DataReader* i_reader, const efd::SampleLostStatus& status) {
+    LT_LOG << i_reader->get_subscriber()->get_participant()  << " lost sample on \""
+           << i_reader->get_topicdescription()->get_name()  << "\"; total lost = "
            << status.total_count << "\n";
+}
+
+
+std::string requestName(std::string i_name) {
+    return (i_name + "/request");
+}
+
+
+std::string replyName(std::string i_name) {
+    return (i_name + "/reply");
 }
 
 /*
@@ -104,6 +147,10 @@ bool check_verbose() {
 
 const bool LT_VERBOSE = check_verbose();
 
+efr::Time_t getBadTime()
+{
+    return efr::Time_t(1,1);
+}
 
 }
 
@@ -111,7 +158,9 @@ const bool LT_VERBOSE = check_verbose();
 
 
 // Why is ReturnCode_t so needlessly complicated?
-namespace eprosima { namespace fastrtps { namespace types {
+namespace eprosima {
+namespace fastrtps {
+namespace types {
 
 std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return) {
     /*
@@ -151,4 +200,6 @@ std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return) {
     default: return os << "UNKNOWN (" << i_return() << ")";
     }
 }
-} } }
+}
+}
+}

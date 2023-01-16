@@ -15,10 +15,13 @@
 #include "BlackboxTests.hpp"
 
 #include <chrono>
+#include <cstdint>
+#include <memory>
 #include <thread>
 
 #include <gtest/gtest.h>
 
+#include <fastdds/rtps/flowcontrol/FlowControllerDescriptor.hpp>
 #include <fastrtps/rtps/attributes/RTPSParticipantAttributes.h>
 #include <fastrtps/rtps/participant/RTPSParticipant.h>
 #include <fastrtps/rtps/RTPSDomain.h>
@@ -467,6 +470,95 @@ TEST_P(RTPS, RTPSAsReliableWithRegistrationAndHolesInHistory)
     late_joiner.block_for_all();
 }
 
+/*
+ * This test checks that GAPs are properly sent when a writer is sending data to
+ * each reader separately.
+ */
+
+TEST(RTPS, RTPSUnavailableSampleGapWhenSeparateSending)
+{
+    RTPSWithRegistrationReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
+    RTPSWithRegistrationWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+
+    // To simulate lossy conditions
+    auto testTransport = std::make_shared<rtps::test_UDPv4TransportDescriptor>();
+
+    reader.
+            durability(eprosima::fastrtps::rtps::DurabilityKind_t::TRANSIENT_LOCAL).
+            history_depth(3).
+            reliability(eprosima::fastrtps::rtps::ReliabilityKind_t::RELIABLE).init();
+
+    ASSERT_TRUE(reader.isInitialized());
+
+    // set_separate_sending
+
+    writer.durability(eprosima::fastrtps::rtps::DurabilityKind_t::TRANSIENT_LOCAL).
+            disable_builtin_transport().
+            reliability(eprosima::fastrtps::rtps::ReliabilityKind_t::RELIABLE).
+            history_depth(3).
+            add_user_transport_to_pparams(testTransport).init();
+
+    ASSERT_TRUE(writer.isInitialized());
+
+    writer.set_separate_sending(true);
+
+    // Wait for discovery.
+    writer.wait_discovery();
+    reader.wait_discovery();
+
+    HelloWorld message;
+    message.message("HelloWorld");
+
+    std::list<HelloWorld> data;
+    std::list<HelloWorld> expected;
+
+    reader.startReception();
+
+    // Send data
+    uint16_t index = 0;
+    message.index(++index);
+
+    data.push_back(message);
+    expected.push_back(message);
+    reader.expected_data(expected);
+    writer.send(data);
+
+    test_UDPv4Transport::test_UDPv4Transport_ShutdownAllNetwork = true;
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    message.index(++index);
+    data.push_back(message);
+    writer.send(data);
+
+    message.index(++index);
+    data.push_back(message);
+    expected.push_back(message);
+    reader.expected_data(expected);
+    writer.send(data);
+
+    writer.remove_change({0, 2});
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    test_UDPv4Transport::test_UDPv4Transport_ShutdownAllNetwork = false;
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    message.index(++index);
+    data.push_back(message);
+    expected.push_back(message);
+    reader.expected_data(expected);
+
+    writer.send(data);
+
+    // Block reader until reception finished or timeout.
+    reader.block_for_all(std::chrono::seconds(1));
+    // Block until all data is ACK'd
+    writer.waitForAllAcked(std::chrono::seconds(1));
+
+    EXPECT_EQ(reader.getReceivedCount(), static_cast<unsigned int>(expected.size()));
+}
 
 TEST_P(RTPS, RTPSAsReliableVolatileTwoWritersConsecutives)
 {
@@ -661,6 +753,116 @@ TEST(RTPS, RemoveDisabledParticipant)
 
     ASSERT_NE(nullptr, rtps_participant);
     ASSERT_TRUE(RTPSDomain::removeRTPSParticipant(rtps_participant));
+}
+
+
+/**
+ * This test checks a race condition on initializing a writer's flow controller when creating
+ * several RTPSWriters in parallel: https://eprosima.easyredmine.com/issues/15905
+ *
+ * The test creates a participant with 4 different flow controllers, and then creates 200 threads
+ * which each create an RTPSWriter which uses one of the participant's flow controllers.
+ * The threads wait for a command coming from the main thread to delete the writers. This is to
+ * ensure that all threads are initialized prior to any of them starts deleting.
+ */
+TEST(RTPS, MultithreadedWriterCreation)
+{
+    /* Flow controller builder */
+    using FlowControllerDescriptor_t = eprosima::fastdds::rtps::FlowControllerDescriptor;
+    using SchedulerPolicy_t = eprosima::fastdds::rtps::FlowControllerSchedulerPolicy;
+    auto create_flow_controller =
+            [](const char* name, SchedulerPolicy_t scheduler,
+                    int32_t max_bytes_per_period,
+                    uint64_t period_ms) -> std::shared_ptr<FlowControllerDescriptor_t>
+            {
+                std::shared_ptr<FlowControllerDescriptor_t> descriptor = std::make_shared<FlowControllerDescriptor_t>();
+                descriptor->name = name;
+                descriptor->scheduler = scheduler;
+                descriptor->max_bytes_per_period = max_bytes_per_period;
+                descriptor->period_ms = period_ms;
+                return descriptor;
+            };
+
+    /* Create participant */
+    RTPSParticipantAttributes rtps_attr;
+    // Create one flow controller of each kind to make things interesting
+    const char* flow_controller_name = "fifo_controller";
+    rtps_attr.flow_controllers.push_back(create_flow_controller("high_priority_controller",
+            SchedulerPolicy_t::HIGH_PRIORITY, 200, 10));
+    rtps_attr.flow_controllers.push_back(create_flow_controller("priority_with_reservation_controller",
+            SchedulerPolicy_t::PRIORITY_WITH_RESERVATION, 200, 10));
+    rtps_attr.flow_controllers.push_back(create_flow_controller("round_robin_controller",
+            SchedulerPolicy_t::ROUND_ROBIN, 200, 10));
+    rtps_attr.flow_controllers.push_back(create_flow_controller(flow_controller_name, SchedulerPolicy_t::FIFO, 200,
+            10));
+    RTPSParticipant* rtps_participant = RTPSDomain::createParticipant(
+        (uint32_t)GET_PID() % 230, false, rtps_attr, nullptr);
+
+    /* Test sync variables */
+    std::mutex finish_mtx;
+    std::condition_variable finish_cv;
+    bool should_finish = false;
+
+    /* Lambda function to create a writer with a flow controller, and to destroy it at command */
+    auto thread_run = [rtps_participant, flow_controller_name, &finish_mtx, &finish_cv, &should_finish]()
+            {
+                /* Create writer history */
+                eprosima::fastrtps::rtps::HistoryAttributes hattr;
+                eprosima::fastrtps::rtps::WriterHistory* history = new eprosima::fastrtps::rtps::WriterHistory(hattr);
+                eprosima::fastrtps::TopicAttributes topic_attr;
+
+                /* Create writer with a flow controller */
+                eprosima::fastrtps::rtps::WriterAttributes writer_attr;
+                writer_attr.mode = RTPSWriterPublishMode::ASYNCHRONOUS_WRITER;
+                writer_attr.flow_controller_name = flow_controller_name;
+                eprosima::fastrtps::rtps::RTPSWriter*  writer = eprosima::fastrtps::rtps::RTPSDomain::createRTPSWriter(
+                    rtps_participant, writer_attr, history, nullptr);
+
+                /* Register writer in participant */
+                eprosima::fastrtps::WriterQos writer_qos;
+                ASSERT_EQ(rtps_participant->registerWriter(writer, topic_attr, writer_qos), true);
+
+                {
+                    /* Wait for test completion request */
+                    std::unique_lock<std::mutex> lock(finish_mtx);
+                    finish_cv.wait(lock, [&should_finish]()
+                            {
+                                return should_finish;
+                            });
+                }
+
+                /* Remove writer */
+                ASSERT_TRUE(RTPSDomain::removeRTPSWriter(writer));
+                delete history;
+            };
+
+    {
+        /* Create test threads */
+        constexpr size_t num_threads = 200;
+        std::vector<std::thread> threads;
+        for (size_t i = 0; i < num_threads; ++i)
+        {
+            threads.push_back(std::thread(thread_run));
+        }
+
+        /* Once all threads are created, we can start deleting them */
+        {
+            std::lock_guard<std::mutex> guard(finish_mtx);
+            should_finish = true;
+            finish_cv.notify_all();
+        }
+
+        /* Wait until are threads join */
+        for (std::thread& thr : threads)
+        {
+            thr.join();
+        }
+    }
+
+    /* Clean up */
+    ASSERT_TRUE(RTPSDomain::removeRTPSParticipant(rtps_participant));
+    ASSERT_NE(nullptr, rtps_participant);
+    RTPSDomain::stopAll();
 }
 
 #ifdef INSTANTIATE_TEST_SUITE_P

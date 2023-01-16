@@ -105,7 +105,7 @@ ParticipantProxyData::ParticipantProxyData(
 
 ParticipantProxyData::~ParticipantProxyData()
 {
-    logInfo(RTPS_PARTICIPANT, m_guid);
+    EPROSIMA_LOG_INFO(RTPS_PARTICIPANT, m_guid);
 
     // delete all reader proxies
     if (m_readers)
@@ -376,14 +376,8 @@ bool ParticipantProxyData::readFromCDRMessage(
         const NetworkFactory& network,
         bool is_shm_transport_available)
 {
-    bool are_shm_metatraffic_locators_present = false;
-    bool are_shm_default_locators_present = false;
-    bool is_shm_transport_possible = false;
-
-    auto param_process = [this, &network, &is_shm_transport_possible,
-                    &are_shm_metatraffic_locators_present,
-                    &are_shm_default_locators_present,
-                    &is_shm_transport_available](CDRMessage_t* msg, const ParameterId_t& pid, uint16_t plength)
+    auto param_process = [this, &network, &is_shm_transport_available](
+        CDRMessage_t* msg, const ParameterId_t& pid, uint16_t plength)
             {
                 switch (pid)
                 {
@@ -468,9 +462,7 @@ bool ParticipantProxyData::readFromCDRMessage(
                         {
                             ProxyDataFilters::filter_locators(
                                 is_shm_transport_available,
-                                &is_shm_transport_possible,
-                                &are_shm_metatraffic_locators_present,
-                                &metatraffic_locators,
+                                metatraffic_locators,
                                 temp_locator,
                                 false);
                         }
@@ -490,9 +482,7 @@ bool ParticipantProxyData::readFromCDRMessage(
                         {
                             ProxyDataFilters::filter_locators(
                                 is_shm_transport_available,
-                                &is_shm_transport_possible,
-                                &are_shm_metatraffic_locators_present,
-                                &metatraffic_locators,
+                                metatraffic_locators,
                                 temp_locator,
                                 true);
                         }
@@ -512,9 +502,7 @@ bool ParticipantProxyData::readFromCDRMessage(
                         {
                             ProxyDataFilters::filter_locators(
                                 is_shm_transport_available,
-                                &is_shm_transport_possible,
-                                &are_shm_default_locators_present,
-                                &default_locators,
+                                default_locators,
                                 temp_locator,
                                 true);
                         }
@@ -534,9 +522,7 @@ bool ParticipantProxyData::readFromCDRMessage(
                         {
                             ProxyDataFilters::filter_locators(
                                 is_shm_transport_available,
-                                &is_shm_transport_possible,
-                                &are_shm_default_locators_present,
-                                &default_locators,
+                                default_locators,
                                 temp_locator,
                                 false);
                         }
@@ -610,7 +596,7 @@ bool ParticipantProxyData::readFromCDRMessage(
 
                         identity_token_ = std::move(p.token);
 #else
-                        logWarning(RTPS_PARTICIPANT, "Received PID_IDENTITY_TOKEN but security is disabled");
+                        EPROSIMA_LOG_WARNING(RTPS_PARTICIPANT, "Received PID_IDENTITY_TOKEN but security is disabled");
 #endif // if HAVE_SECURITY
                         break;
                     }
@@ -626,7 +612,8 @@ bool ParticipantProxyData::readFromCDRMessage(
 
                         permissions_token_ = std::move(p.token);
 #else
-                        logWarning(RTPS_PARTICIPANT, "Received PID_PERMISSIONS_TOKEN but security is disabled");
+                        EPROSIMA_LOG_WARNING(RTPS_PARTICIPANT,
+                                "Received PID_PERMISSIONS_TOKEN but security is disabled");
 #endif // if HAVE_SECURITY
                         break;
                     }
@@ -644,7 +631,7 @@ bool ParticipantProxyData::readFromCDRMessage(
                         security_attributes_ = p.security_attributes;
                         plugin_security_attributes_ = p.plugin_security_attributes;
 #else
-                        logWarning(RTPS_PARTICIPANT,
+                        EPROSIMA_LOG_WARNING(RTPS_PARTICIPANT,
                                 "Received PID_PARTICIPANT_SECURITY_INFO but security is disabled");
 #endif // if HAVE_SECURITY
                         break;
@@ -793,7 +780,7 @@ void ParticipantProxyData::set_persistence_guid(
     {
         if (!it->modify(persistent_guid))
         {
-            logError(RTPS_PARTICIPANT, "Failed to change property <"
+            EPROSIMA_LOG_ERROR(RTPS_PARTICIPANT, "Failed to change property <"
                     << it->first() << " | " << it->second() << "> to <"
                     << persistent_guid.first << " | " << persistent_guid.second << ">");
         }

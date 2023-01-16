@@ -12,6 +12,9 @@
 
 #include <memory>
 
+#include "ActiveObject.hpp"
+
+
 namespace lt
 {
 
@@ -21,8 +24,13 @@ namespace efr = eprosima::fastrtps::rtps;
 
 class Participant;
 using ParticipantPtr = std::shared_ptr<Participant>;
+
 class Publisher;
 
+template<class Req, class Rep>
+class Requester;    
+    
+using Guid = efr::GUID_t;
 
 namespace detail
 {
@@ -33,8 +41,6 @@ namespace detail
  */
 template<class T> std::string get_demangled_name();
 
-class SubscriberCounter;
-
 /**
  * ReaderListener calls the installed callback when data is available
  */
@@ -44,74 +50,59 @@ class ReaderListener : public efd::DataReaderListener
 public:
     using type = T;
     
-    ReaderListener(C i_callback, std::string const& i_topic, ParticipantPtr i_participant);
+    ReaderListener(C i_callback);
     
     void on_data_available(efd::DataReader* i_reader) override;
-    
-    void on_subscription_matched(efd::DataReader*, 
-                                efd::SubscriptionMatchedStatus const& info) override;
-                                
-    void on_sample_rejected(efd::DataReader* reader, 
-                            const efd::SampleRejectedStatus& status) override;
+     
+    void on_sample_rejected(efd::DataReader* i_reader, 
+                            const efd::SampleRejectedStatus& i_status) override;
                             
-    void on_requested_incompatible_qos(efd::DataReader* reader, 
-                                       const efd::RequestedIncompatibleQosStatus& status) override;
+    void on_requested_incompatible_qos(efd::DataReader* i_reader, 
+                                       const efd::RequestedIncompatibleQosStatus& i_status) override;
                                        
-    void on_sample_lost(efd::DataReader* reader, const efd::SampleLostStatus& status) override;
+    void on_sample_lost(efd::DataReader* i_reader, const efd::SampleLostStatus& i_status) override;
 
 protected:
-    C m_callback;
-    std::string m_topic;
-    ParticipantPtr m_participant;
+    C m_callback;    
 };
 
 /**
  * Helper function to create listener instances from callbacks
  */
 template<class T, class C>
-efd::DataReaderListener* makeListener(C i_callback, std::string const& i_topic, ParticipantPtr i_participant)
+efd::DataReaderListener* makeListener(C i_callback)
 {
-    return new ReaderListener<T,C>(i_callback, i_topic, i_participant);
+    return new ReaderListener<T,C>(i_callback);
 }
 
-
-/**
- * SubscriberCounter updates the number of subscribers on a topic as they are discovered
- * or lost.
- */
-class SubscriberCounter : public efd::DataWriterListener {
-public:
-    SubscriberCounter(std::string const& i_topic, ParticipantPtr i_participant);
-
-    void on_publication_matched(efd::DataWriter*, efd::PublicationMatchedStatus const& info) override;
-    std::string m_topic;
-    ParticipantPtr m_participant;
-};
 
 /**
  * ParticipantLogger logs messages about participant discovery in verbose mode
  */
 class ParticipantLogger : public efd::DomainParticipantListener {
 public:
-    /*
-    std::function<void(efd::DomainParticipant* i_participant, 
-                       efr::ParticipantDiscoveryInfo&& i_info)> m_callback;
-                    */
-    ParticipantLogger();
-    /*
+    
+    using Callback = std::function<void(efd::DomainParticipant* i_participant, 
+                       efr::ParticipantDiscoveryInfo&& i_info)>;
+    
+    ParticipantLogger(ParticipantPtr i_participant);
+    
     void on_participant_discovery(efd::DomainParticipant* i_participant, 
-                                  efr::ParticipantDiscoveryInfo&& i_info) override;            
-    */
+                                  efr::ParticipantDiscoveryInfo&& i_info) override;   
+                                  
+    void on_subscription_matched(efd::DataReader* i_reader,
+                                 efd::SubscriptionMatchedStatus const& info) override;
+    
+    void on_publication_matched(efd::DataWriter* i_writer, 
+                                efd::PublicationMatchedStatus const& i_info) override;    
+protected:
+    ParticipantPtr m_participant;    
+    Callback m_callback;    
 };
 
-void logSubscriptionMatched(ParticipantPtr const& i_participant, std::string const& i_topic,
-                            efd::SubscriptionMatchedStatus const& info);
-void logSampleRejected(ParticipantPtr const& i_participant, std::string const& i_topic,
-                            const efd::SampleRejectedStatus& status);
-void logIncompatibleQos(ParticipantPtr const& i_participant, std::string const& i_topic,
-                            const efd::RequestedIncompatibleQosStatus& status);
-void logLostSample(ParticipantPtr const& i_participant, std::string const& i_topic,
-                            const efd::SampleLostStatus& status);
+void logSampleRejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& i_status);
+void logIncompatibleQos(efd::DataReader* i_reader, const efd::RequestedIncompatibleQosStatus& i_status);
+void logLostSample(efd::DataReader* i_reader, const efd::SampleLostStatus& i_status);
 
 } // detail
 } // lt

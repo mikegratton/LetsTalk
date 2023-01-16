@@ -26,7 +26,7 @@
  * Check all log levels are active in debug mode, or INFO is not active in Release mode */
 TEST_F(LogMacrosTests, default_macros_test)
 {
-    std::cout << std::endl << "logInfo #define'd related constants:" << std::endl;
+    std::cout << std::endl << "EPROSIMA_LOG_INFO #define'd related constants:" << std::endl;
     macro_print(HAVE_LOG_NO_INFO);
     macro_print(FASTDDS_ENFORCE_LOG_INFO);
     macro_print(__INTERNALDEBUG);
@@ -36,9 +36,9 @@ TEST_F(LogMacrosTests, default_macros_test)
     macro_print(NDEBUG);
     std::cout << std::endl;
 
-    logError(SampleCategory, "Sample error message");
-    logWarning(SampleCategory, "Sample warning message");
-    logInfo(SampleCategory, "Sample info message");
+    EPROSIMA_LOG_ERROR(SampleCategory, "Sample error message");
+    EPROSIMA_LOG_WARNING(SampleCategory, "Sample warning message");
+    EPROSIMA_LOG_INFO(SampleCategory, "Sample info message");
 
 #if defined(NDEBUG) && !HAVE_LOG_NO_INFO
 # if !defined(_MSC_VER )
@@ -46,7 +46,9 @@ TEST_F(LogMacrosTests, default_macros_test)
 # endif  // Visual Studio specific behavior
 #endif  // Check default macro values
 
-#if !HAVE_LOG_NO_INFO && (defined(_DEBUG) || defined(__DEBUG) || !defined(NDEBUG))
+#if !HAVE_LOG_NO_INFO && \
+    ((defined(__INTERNALDEBUG) || defined(_INTERNALDEBUG)) && (defined(_DEBUG) || defined(__DEBUG) || \
+    !defined(NDEBUG)))
     static constexpr unsigned int expected_result = 3;
 #else
     static constexpr unsigned int expected_result = 2;

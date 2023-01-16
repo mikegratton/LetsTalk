@@ -32,6 +32,8 @@ set(IS_THIRDPARTY_BOOST_SUPPORTED ${IS_THIRDPARTY_BOOST_OK})
 
 if(NOT IS_THIRDPARTY_BOOST_OK)
     message(STATUS ${OUT} "\nCouldn't compile thirdparty/boost. SHM Transport feature will be disabled!!!\n")
+else()
+    message(STATUS "Thirdparty/boost compiled OK")
 endif()
 
 mark_as_advanced(THIRDPARTY_BOOST_INCLUDE_DIR)

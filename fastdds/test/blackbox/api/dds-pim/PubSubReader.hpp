@@ -331,8 +331,9 @@ public:
             datareader_qos_.data_sharing().off();
         }
 
-        // By default, memory mode is preallocated (the most restritive)
-        datareader_qos_.endpoint().history_memory_policy = eprosima::fastrtps::rtps::PREALLOCATED_MEMORY_MODE;
+        // By default, memory mode is PREALLOCATED_WITH_REALLOC_MEMORY_MODE
+        datareader_qos_.endpoint().history_memory_policy =
+                eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
         // By default, heartbeat period delay is 100 milliseconds.
         datareader_qos_.reliable_reader_qos().times.heartbeatResponseDelay.seconds = 0;
@@ -495,6 +496,7 @@ public:
         while (ret);
 
         receiving_.store(true);
+        std::lock_guard<std::mutex> lock(mutex_);
         return get_last_sequence_received();
     }
 
@@ -1293,6 +1295,15 @@ public:
         return *this;
     }
 
+    PubSubReader& initial_announcements(
+            uint32_t count,
+            const eprosima::fastrtps::Duration_t& period)
+    {
+        participant_qos_.wire_protocol().builtin.discovery_config.initial_announcements.count = count;
+        participant_qos_.wire_protocol().builtin.discovery_config.initial_announcements.period = period;
+        return *this;
+    }
+
     PubSubReader& ownership_exclusive()
     {
         datareader_qos_.ownership().kind = eprosima::fastdds::dds::EXCLUSIVE_OWNERSHIP_QOS;
@@ -1832,8 +1843,8 @@ protected:
     eprosima::fastdds::dds::TypeSupport type_;
     using LastSeqInfo = std::pair<eprosima::fastrtps::rtps::InstanceHandle_t, eprosima::fastrtps::rtps::GUID_t>;
     std::map<LastSeqInfo, eprosima::fastrtps::rtps::SequenceNumber_t> last_seq;
-    size_t current_processed_count_;
-    size_t number_samples_expected_;
+    std::atomic<size_t> current_processed_count_;
+    std::atomic<size_t> number_samples_expected_;
     bool discovery_result_;
 
     std::string xml_file_ = "";

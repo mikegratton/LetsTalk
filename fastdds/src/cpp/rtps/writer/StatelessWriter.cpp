@@ -216,7 +216,7 @@ void StatelessWriter::init(
 
 StatelessWriter::~StatelessWriter()
 {
-    logInfo(RTPS_WRITER, "StatelessWriter destructor"; );
+    EPROSIMA_LOG_INFO(RTPS_WRITER, "StatelessWriter destructor"; );
     deinit();
 }
 
@@ -289,7 +289,7 @@ bool StatelessWriter::datasharing_delivery(
     assert(pool != nullptr);
 
     pool->add_to_shared_history(change);
-    logInfo(RTPS_WRITER, "Notifying readers of cache change with SN " << change->sequenceNumber);
+    EPROSIMA_LOG_INFO(RTPS_WRITER, "Notifying readers of cache change with SN " << change->sequenceNumber);
     for (std::unique_ptr<ReaderLocator>& reader : matched_datasharing_readers_)
     {
         if (!reader_data_filter_ || reader_data_filter_->is_relevant(*change, reader->remote_guid()))
@@ -329,7 +329,7 @@ void StatelessWriter::unsent_change_added_to_history(
     }
     else
     {
-        logInfo(RTPS_WRITER, "No reader to add change.");
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "No reader to add change.");
         if (mp_listener != nullptr)
         {
             mp_listener->onWriterChangeReceivedByAll(this, change);
@@ -373,7 +373,7 @@ bool StatelessWriter::change_removed_by_history(
         assert (pool != nullptr);
 
         pool->remove_from_shared_history(change);
-        logInfo(RTPS_WRITER, "Removing shared cache change with SN " << change->sequenceNumber);
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "Removing shared cache change with SN " << change->sequenceNumber);
     }
 
     const uint64_t sequence_number = change->sequenceNumber.to64long();
@@ -430,14 +430,12 @@ bool StatelessWriter::matched_reader_add(
             {
                 if (reader.remote_guid() == data.guid())
                 {
-                    logWarning(RTPS_WRITER, "Attempting to add existing reader, updating information.");
+                    EPROSIMA_LOG_WARNING(RTPS_WRITER, "Attempting to add existing reader, updating information.");
                     if (reader.update(data.remote_locators().unicast,
                     data.remote_locators().multicast,
                     data.m_expectsInlineQos))
                     {
                         filter_remote_locators(*reader.general_locator_selector_entry(),
-                        m_att.external_unicast_locators, m_att.ignore_non_matching_locators);
-                        filter_remote_locators(*reader.async_locator_selector_entry(),
                         m_att.external_unicast_locators, m_att.ignore_non_matching_locators);
                         update_reader_info(true);
                     }
@@ -474,7 +472,7 @@ bool StatelessWriter::matched_reader_add(
         }
         else
         {
-            logWarning(RTPS_WRITER, "Couldn't add matched reader due to resource limits");
+            EPROSIMA_LOG_WARNING(RTPS_WRITER, "Couldn't add matched reader due to resource limits");
             return false;
         }
     }
@@ -492,28 +490,26 @@ bool StatelessWriter::matched_reader_add(
             is_datasharing_compatible_with(data));
     filter_remote_locators(*new_reader->general_locator_selector_entry(),
             m_att.external_unicast_locators, m_att.ignore_non_matching_locators);
-    filter_remote_locators(*new_reader->async_locator_selector_entry(),
-            m_att.external_unicast_locators, m_att.ignore_non_matching_locators);
 
     locator_selector_.locator_selector.add_entry(new_reader->general_locator_selector_entry());
 
     if (new_reader->is_local_reader())
     {
         matched_local_readers_.push_back(std::move(new_reader));
-        logInfo(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
-                                              << " as local reader");
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
+                                                        << " as local reader");
     }
     else if (new_reader->is_datasharing_reader())
     {
         matched_datasharing_readers_.push_back(std::move(new_reader));
-        logInfo(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
-                                              << " as data sharing");
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
+                                                        << " as data sharing");
     }
     else
     {
         matched_remote_readers_.push_back(std::move(new_reader));
-        logInfo(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
-                                              << " as remote reader");
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "Adding reader " << data.guid() << " to " << this->m_guid.entityId
+                                                        << " as remote reader");
     }
 
     update_reader_info(true);
@@ -535,7 +531,7 @@ bool StatelessWriter::set_fixed_locators(
     if (getAttributes().security_attributes().is_submessage_protected ||
             getAttributes().security_attributes().is_payload_protected)
     {
-        logError(RTPS_WRITER, "A secure besteffort writer cannot add a lonely locator");
+        EPROSIMA_LOG_ERROR(RTPS_WRITER, "A secure besteffort writer cannot add a lonely locator");
         return false;
     }
 #endif // if HAVE_SECURITY
@@ -602,7 +598,7 @@ bool StatelessWriter::matched_reader_remove(
         reader->stop();
         matched_readers_pool_.push_back(std::move(reader));
         update_reader_info(false);
-        logInfo(RTPS_WRITER, "Reader Proxy removed: " << reader_guid);
+        EPROSIMA_LOG_INFO(RTPS_WRITER, "Reader Proxy removed: " << reader_guid);
         if (nullptr != mp_listener)
         {
             // call the listener without locks taken
@@ -661,7 +657,6 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
         LocatorSelectorSender& locator_selector, // Object locked by FlowControllerImpl
         const std::chrono::time_point<std::chrono::steady_clock>& /*TODO max_blocking_time*/)
 {
-    size_t num_locators = locator_selector.locator_selector.selected_size() + fixed_locators_.size();
     uint64_t change_sequence_number = cache_change->sequenceNumber.to64long();
     NetworkFactory& network = mp_RTPSParticipant->network_factory();
     DeliveryRetCode ret_code = DeliveryRetCode::DELIVERED;
@@ -699,7 +694,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                                 reader_data_filter_->is_relevant(*cache_change, it->remote_guid()))
                         {
                             group.sender(this, &*it);
-                            num_locators = it->locators_size();
+                            size_t num_locators = it->locators_size();
 
                             if (group.add_data_frag(*cache_change, frag, is_inline_qos_expected_))
                             {
@@ -707,7 +702,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                             }
                             else
                             {
-                                logError(RTPS_WRITER,
+                                EPROSIMA_LOG_ERROR(RTPS_WRITER,
                                         "Error sending fragment (" << cache_change->sequenceNumber << ", " << frag <<
                                         ")");
                                 ret_code = DeliveryRetCode::NOT_DELIVERED;
@@ -729,7 +724,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                             reader_data_filter_->is_relevant(*cache_change, it->remote_guid()))
                     {
                         group.sender(this, &*it);
-                        num_locators = it->locators_size();
+                        size_t num_locators = it->locators_size();
 
                         if (group.add_data(*cache_change, is_inline_qos_expected_))
                         {
@@ -737,7 +732,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                         }
                         else
                         {
-                            logError(RTPS_WRITER, "Error sending change " << cache_change->sequenceNumber);
+                            EPROSIMA_LOG_ERROR(RTPS_WRITER, "Error sending change " << cache_change->sequenceNumber);
                             ret_code = DeliveryRetCode::NOT_DELIVERED;
                         }
                     }
@@ -746,8 +741,6 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
         }
         else
         {
-            bool locator_selector_should_be_reset = false;
-
             if (nullptr != reader_data_filter_)
             {
                 locator_selector.locator_selector.reset(false);
@@ -758,14 +751,21 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                         locator_selector.locator_selector.enable(it->remote_guid());
                     }
                 }
-                if (locator_selector.locator_selector.state_has_changed())
-                {
-                    network.select_locators(locator_selector.locator_selector);
-                    compute_selected_guids(locator_selector);
-                    locator_selector_should_be_reset = true;
-                }
-                num_locators = locator_selector.locator_selector.selected_size() + fixed_locators_.size();
             }
+            else
+            {
+                locator_selector.locator_selector.reset(true);
+            }
+
+            if (locator_selector.locator_selector.state_has_changed())
+            {
+                network.select_locators(locator_selector.locator_selector);
+                if (!has_builtin_guid())
+                {
+                    compute_selected_guids(locator_selector);
+                }
+            }
+            size_t num_locators = locator_selector.locator_selector.selected_size() + fixed_locators_.size();
 
             if (0 < num_locators)
             {
@@ -781,7 +781,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                         }
                         else
                         {
-                            logError(RTPS_WRITER,
+                            EPROSIMA_LOG_ERROR(RTPS_WRITER,
                                     "Error sending fragment (" << cache_change->sequenceNumber << ", " << frag << ")");
                             ret_code = DeliveryRetCode::NOT_DELIVERED;
                         }
@@ -795,17 +795,10 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
                     }
                     else
                     {
-                        logError(RTPS_WRITER, "Error sending change " << cache_change->sequenceNumber);
+                        EPROSIMA_LOG_ERROR(RTPS_WRITER, "Error sending change " << cache_change->sequenceNumber);
                         ret_code = DeliveryRetCode::NOT_DELIVERED;
                     }
                 }
-            }
-
-            if (locator_selector_should_be_reset)
-            {
-                locator_selector.locator_selector.reset(true);
-                network.select_locators(locator_selector.locator_selector);
-                compute_selected_guids(locator_selector);
             }
         }
 
@@ -816,7 +809,7 @@ DeliveryRetCode StatelessWriter::deliver_sample_nts(
     }
     catch (const RTPSMessageGroup::timeout&)
     {
-        logError(RTPS_WRITER, "Max blocking time reached");
+        EPROSIMA_LOG_ERROR(RTPS_WRITER, "Max blocking time reached");
         ret_code = DeliveryRetCode::NOT_DELIVERED;
     }
     catch (const RTPSMessageGroup::limit_exceeded&)

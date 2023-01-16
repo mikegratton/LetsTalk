@@ -371,9 +371,6 @@ else()
     set(HAVE_STRICT_REALTIME 0)
 endif()
 
-configure_file(${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/config.h.in
-    ${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/config.h)
-
 if(NOT ANDROID)
     find_package(Threads REQUIRED)
 endif()
@@ -385,6 +382,58 @@ if(APPLE)
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 endif()
+
+# Find out if libatomic link is required in this platform
+find_package(Atomic MODULE)
+
+# Check if the shared_mutex provided by the platform STL library
+# prioritizes writes
+
+# try_run cannot manage targets yet
+get_target_property(CMAKE_ATOMIC_LIB eProsima_atomic INTERFACE_LINK_LIBRARIES)    
+if(NOT CMAKE_ATOMIC_LIB)
+    set(CMAKE_ATOMIC_LIB)
+endif()
+
+try_run(SM_RUN_RESULT SM_COMPILE_RESULT
+        "${PROJECT_BINARY_DIR}/shmtest"
+        "${PROJECT_SOURCE_DIR}/cmake/modules/check_shared_mutex_priority.cpp"
+        LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_ATOMIC_LIB}
+        RUN_OUTPUT_VARIABLE SM_RUN_OUTPUT)
+
+if(SM_COMPILE_RESULT AND NOT SM_RUN_RESULT)
+    string(STRIP ${SM_RUN_OUTPUT} SM_RUN_OUTPUT)
+    message(STATUS "Framework's shared_mutex is ${SM_RUN_OUTPUT}")
+endif()
+
+if(SM_RUN_OUTPUT STREQUAL "PTHREAD_RWLOCK_PREFER_READER_NP")
+    set(USER_CAN_CHOOSE_SHARED_MEMORY_THIRDPARTY ON)
+else()
+    message(STATUS "Forcing third party shared_mutex")
+    set(USE_THIRDPARTY_SHARED_MUTEX ON)
+endif()
+
+cmake_dependent_option(
+    USE_THIRDPARTY_SHARED_MUTEX [=[
+Forces the use of a Boost-based shared_mutex implementation
+instead of the framework one. Useful to cope with issues on
+framework implementations like misguided sanitizer reports.
+This implementation will be used by default on frameworks
+lacking the shared_mutex feature like those not fulfilling
+C++17.
+]=] OFF
+    "USER_CAN_CHOOSE_SHARED_MEMORY_THIRDPARTY"
+    ON)
+
+unset(USER_CAN_CHOOSE_SHARED_MEMORY_THIRDPARTY)
+unset(SM_RUN_RESULT)
+unset(SM_COMPILE_RESULT)
+unset(SM_RUN_OUTPUT)
+unset(CMAKE_ATOMIC_LIB)
+
+# Generate the proper configure file
+configure_file(${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/config.h.in
+    ${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/config.h)
 
 #Create library
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_source_files})
@@ -418,8 +467,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}>
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/cpp>
     $<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>
-    PRIVATE
-    $<$<BOOL:${TINYXML2_INCLUDE_DIR}>:${TINYXML2_INCLUDE_DIR}>
+    PRIVATE    
     $<$<BOOL:${ANDROID}>:${ANDROID_IFADDRS_INCLUDE_DIR}>
     ${THIRDPARTY_BOOST_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/thirdparty/taocpp-pegtl
@@ -432,19 +480,13 @@ else()
     set(PRIVACY "PUBLIC")
 endif()
 
-# Find out if libatomic link is required in this platform
-find_package(Atomic MODULE)
-
 # Link library to external libraries.
-target_link_libraries(${PROJECT_NAME} ${PRIVACY} fastcdr foonathan_memory
-	    tinyxml2
-    ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS}
+target_link_libraries(${PROJECT_NAME} ${PRIVACY} fastcdr foonathan_memory asio tinyxml2
+    ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS}    
     $<$<BOOL:${LINK_SSL}>:OpenSSL::SSL$<SEMICOLON>OpenSSL::Crypto$<$<BOOL:${WIN32}>:$<SEMICOLON>crypt32.lib>>
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     ${THIRDPARTY_BOOST_LINK_LIBS}
-    PRIVATE 
-	    asio
-	    eProsima_atomic
+    PRIVATE eProsima_atomic
     )
 
 if(MSVC OR MSVC_IDE)
@@ -475,12 +517,12 @@ if(MSVC OR MSVC_IDE)
 
         # replace the values in the manifest template
         configure_file(
-            "${CMAKE_SOURCE_DIR}/cmake/packaging/windows/fastrtps.manifest.in"
-            "${CMAKE_CURRENT_BINARY_DIR}/fastrtps.manifest"
+            "${PROJECT_SOURCE_DIR}/cmake/packaging/windows/fastrtps.manifest.in"
+            "${PROJECT_BINARY_DIR}/fastrtps.manifest"
             @ONLY
             )
 
-        file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/fastrtps.manifest" MANIFEST_FILE_PATH)
+        file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/fastrtps.manifest" MANIFEST_FILE_PATH)
         target_link_options(${PROJECT_NAME} PRIVATE "/MANIFEST:EMBED" "/MANIFESTINPUT:${MANIFEST_FILE_PATH}")
 
         unset(WINDOWS_SOURCE_DIR)
@@ -521,7 +563,7 @@ elseif(BUILD_SHARED_LIBS)
     set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
     unset(OLD_CMAKE_REQUIRED_FLAGS)
     if(HAS_VERSION_SCRIPT_SUPPORT)
-        message(DEBUG "Using linker version script to select exported symbols")
+        message(STATUS "Using linker version script to select exported symbols")
         target_link_options(${PROJECT_NAME} PRIVATE ${VERSION_SCRIPT_SUPPORT_FLAGS})
     endif()
 endif()
@@ -556,6 +598,13 @@ install(FILES ${PROJECT_BINARY_DIR}/include/${PROJECT_NAME}/config.h
     COMPONENT headers
     )
 
+# Install public statistics idls
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/fastdds/statistics
+    DESTINATION ${INCLUDE_INSTALL_DIR}/fastdds
+    FILES_MATCHING
+    PATTERN "*.idl"
+    )
+
 # Install libraries
 
 # Generate different target names depending on linking
@@ -574,7 +623,7 @@ install(TARGETS ${PROJECT_NAME} eProsima_atomic
     ARCHIVE DESTINATION "${LIB_INSTALL_DIR}${MSVCARCH_DIR_EXTENSION}"
     )
 
-# export(TARGETS ${PROJECT_NAME} eProsima_atomic FILE ${PROJECT_BINARY_DIR}/cmake/config/${PROJECT_NAME}-${FASTDDS_LINKING}-targets.cmake)
+export(TARGETS ${PROJECT_NAME} eProsima_atomic FILE ${PROJECT_BINARY_DIR}/cmake/config/${PROJECT_NAME}-${FASTDDS_LINKING}-targets.cmake)
 
 if(INSTALLER_PLATFORM)
     set(INSTALL_DESTINATION_PATH ${DATA_INSTALL_DIR}/${PROJECT_NAME}-${INSTALLER_PLATFORM}/cmake)

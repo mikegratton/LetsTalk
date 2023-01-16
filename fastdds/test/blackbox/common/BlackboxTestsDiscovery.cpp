@@ -632,7 +632,6 @@ TEST(Discovery, PubXmlLoadedPartition)
     writer.wait_discovery();
 }
 
-// Used to detect Github issue #154
 TEST(Discovery, LocalInitialPeers)
 {
     PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
@@ -751,6 +750,127 @@ TEST_P(Discovery, PubSubAsReliableHelloworldPartitions)
     ASSERT_TRUE(data.empty());
     // Block reader until reception finished or timeout.
     reader.block_for_all();
+}
+
+/*!
+ * @test: Regression test for redmine issue #15839
+ *
+ * This test creates one writer and two readers, listening for metatraffic on different ports.
+ *
+ */
+TEST(Discovery, LocalInitialPeersDiferrentLocators)
+{
+    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+    PubSubReader<HelloWorldPubSubType> readers[2]{ {TEST_TOPIC_NAME}, {TEST_TOPIC_NAME} };
+
+    static const uint32_t writer_port = global_port;
+    static const uint32_t reader_ports[] = { global_port + 1u, global_port + 2u };
+
+    // Checks that the wrong locator is only accessed when necessary
+    struct Checker
+    {
+        // Maximum number of times the locator of the first reader is expected when the second one is initiated.
+        // We allow for one DATA(p) to be sent.
+        const size_t max_allowed_times = 1;
+        // Flag to indicate whether the locator of the first reader is expected.
+        bool first_reader_locator_allowed = true;
+        // Counts the number of times the locator of the first reader is used after the second one is initiated
+        size_t wrong_times = 0;
+
+        void check(
+                const eprosima::fastdds::rtps::Locator& destination)
+        {
+            if (!first_reader_locator_allowed && destination.port == reader_ports[0])
+            {
+                ++wrong_times;
+                EXPECT_LE(wrong_times, max_allowed_times);
+            }
+        }
+
+    };
+
+    // Install hook on the test transport to check for destination locators on the writer participant
+    Checker checker;
+    auto locator_printer = [&checker](const eprosima::fastdds::rtps::Locator& destination)
+            {
+                checker.check(destination);
+                return false;
+            };
+
+    auto old_locator_filter = test_UDPv4Transport::locator_filter;
+    test_UDPv4Transport::locator_filter = locator_printer;
+
+    // Configure writer participant:
+    // - Uses the test transport, to check destination behavior
+    // - Listens for metatraffic on `writer_port`
+    // - Has no automatic announcements
+    {
+        auto test_transport = std::make_shared<test_UDPv4TransportDescriptor>();
+
+        LocatorList_t writer_metatraffic_unicast;
+        Locator_t locator;
+        locator.port = static_cast<uint16_t>(writer_port);
+        writer_metatraffic_unicast.push_back(locator);
+
+        writer.disable_builtin_transport().
+                add_user_transport_to_pparams(test_transport).
+                metatraffic_unicast_locator_list(writer_metatraffic_unicast).
+                lease_duration(c_TimeInfinite, { 3600, 0 }).
+                initial_announcements(0, {}).
+                reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS);
+    }
+
+    // Configure reader participants:
+    // - Use (non-testing) UDP transport only
+    // - Listen on different ports
+    // - Announce only once to the port of the writer only
+    //   (i.e. no communication between reader participants will happen)
+    auto udp_transport = std::make_shared<UDPv4TransportDescriptor>();
+    for (uint16_t i = 0; i < 2; ++i)
+    {
+        LocatorList_t reader_metatraffic_unicast;
+        Locator_t locator;
+        locator.port = static_cast<uint16_t>(reader_ports[i]);
+        reader_metatraffic_unicast.push_back(locator);
+
+        LocatorList_t reader_initial_peers;
+        Locator_t loc_initial_peer;
+        IPLocator::setIPv4(loc_initial_peer, 127, 0, 0, 1);
+        loc_initial_peer.port = static_cast<uint16_t>(writer_port);
+        reader_initial_peers.push_back(loc_initial_peer);
+
+        readers[i].disable_builtin_transport().
+                add_user_transport_to_pparams(udp_transport).
+                lease_duration(c_TimeInfinite, {3600, 0}).
+                initial_announcements(1, {0, 100 * 1000 * 1000}).
+                metatraffic_unicast_locator_list(reader_metatraffic_unicast).
+                initial_peers(reader_initial_peers).
+                reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS);
+    }
+
+    // Start writer and first reader, and wait for them to discover
+    writer.init();
+    ASSERT_TRUE(writer.isInitialized());
+
+    readers[0].init();
+    ASSERT_TRUE(readers[0].isInitialized());
+
+    writer.wait_discovery();
+    readers[0].wait_discovery();
+
+    // Wait a bit (in case some additional ACKNACK / DATA(p) is exchanged after discovery)
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    // Check that, when initializing the second reader, the writer does not communicate with the first reader,
+    // except for a single DATA(p)
+    checker.first_reader_locator_allowed = false;
+
+    readers[1].init();
+    ASSERT_TRUE(readers[1].isInitialized());
+    readers[1].wait_discovery();
+
+    // Restore filter before deleting the participants
+    test_UDPv4Transport::locator_filter = old_locator_filter;
 }
 
 TEST_P(Discovery, PubSubAsReliableHelloworldParticipantDiscovery)
@@ -1160,6 +1280,74 @@ TEST_P(Discovery, EndpointCreationMultithreaded)
     // Stop endpoint creation thread
     stop = true;
     endpoint_thr.join();
+}
+
+// Regression test for redmine issue 16253
+TEST_P(Discovery, AsymmeticIgnoreParticipantFlags)
+{
+    if (INTRAPROCESS != GetParam())
+    {
+        GTEST_SKIP() << "Only makes sense on INTRAPROCESS";
+        return;
+    }
+
+    // This participant is created with flags to ignore participants which are not on the same process.
+    // When the announcements of this participant arrive to p2, a single DATA(p) should be sent back.
+    // No other traffic is expected, since it will take place through intraprocess.
+    PubSubReader<HelloWorldPubSubType> p1(TEST_TOPIC_NAME);
+    p1.ignore_participant_flags(static_cast<eprosima::fastrtps::rtps::ParticipantFilteringFlags_t>(
+                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_HOST |
+                eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS));
+    p1.init();
+    EXPECT_TRUE(p1.isInitialized());
+
+    // This participant is created with the test transport to check that nothing unexpected is sent to the
+    // multicast metatraffic locators.
+    // Setting localhost in the interface whitelist ensures that the traffic will not leave the host, and also
+    // that multicast datagrams are sent only once.
+    // A very long period for the participant announcement is set, along with 0 initial announcements, so we can
+    // have a exact expectation on the number of datagrams sent to multicast.
+    PubSubWriter<HelloWorldPubSubType> p2(TEST_TOPIC_NAME);
+
+    // This will hold the multicast port. Since the test is not always run in the same domain, we'll need to set
+    // its value when the first multicast datagram is sent.
+    std::atomic<uint32_t> multicast_port{ 0 };
+    // Only two multicast datagrams are allowed: the initial DATA(p) and the DATA(p) sent in response of the discovery
+    // of p1.
+    constexpr uint32_t allowed_messages_on_port = 2;
+
+    auto test_transport = std::make_shared<eprosima::fastdds::rtps::test_UDPv4TransportDescriptor>();
+
+    std::atomic<uint32_t> messages_on_port{ 0 };
+    test_transport->interfaceWhiteList.push_back("127.0.0.1");
+    test_transport->locator_filter_ = [&multicast_port, &messages_on_port](
+        const eprosima::fastdds::rtps::Locator& destination)
+            {
+                if (IPLocator::isMulticast(destination))
+                {
+                    uint32_t port = 0;
+                    multicast_port.compare_exchange_strong(port, destination.port);
+                    if (destination.port == multicast_port)
+                    {
+                        ++messages_on_port;
+                    }
+                }
+                return false;
+            };
+
+    p2.disable_builtin_transport().
+            add_user_transport_to_pparams(test_transport).
+            lease_duration({ 60 * 60, 0 }, { 50 * 60, 0 }).
+            initial_announcements(0, {});
+    p2.init();
+    EXPECT_TRUE(p2.isInitialized());
+
+    // Wait for participants and endpoints to discover each other
+    p1.wait_discovery();
+    p2.wait_discovery();
+
+    // Check expectation on the number of multicast datagrams sent by p2
+    EXPECT_EQ(messages_on_port, allowed_messages_on_port);
 }
 
 #ifdef INSTANTIATE_TEST_SUITE_P

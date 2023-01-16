@@ -11,7 +11,7 @@ int main(int, char**)
         std::cout << data->message() << " " << data->index() << std::endl;
     }); 
 
-    for ( ; ;) {
+    for ( ; ; ) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));            
     }
     return 0;

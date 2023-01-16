@@ -129,6 +129,7 @@ TEST_F(UDPv4Tests, send_and_receive_between_ports)
     MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
     SendResourceList send_resource_list;
+    ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, multicastLocator));
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator)); // Includes loopback
     ASSERT_FALSE(send_resource_list.empty());
     ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(multicastLocator));
@@ -188,6 +189,7 @@ TEST_F(UDPv4Tests, send_to_loopback)
     MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
     SendResourceList send_resource_list;
+    ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, multicastLocator));
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator)); // Includes loopback
     ASSERT_FALSE(send_resource_list.empty());
     ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(multicastLocator));
@@ -309,13 +311,14 @@ TEST_F(UDPv4Tests, send_to_wrong_interface)
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator));
     ASSERT_FALSE(send_resource_list.empty());
 
+    Locator_t empty_locator;
+    EXPECT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, empty_locator));
+
     LocatorList_t locator_list;
-    locator_list.push_back(Locator_t());
+    locator_list.push_back(empty_locator);
     Locators locators_begin(locator_list.begin());
     Locators locators_end(locator_list.end());
 
-    //Sending through a different IP will NOT work, except 0.0.0.0
-    IPLocator::setIPv4(outputChannelLocator, 111, 111, 111, 111);
     std::vector<octet> message = { 'H', 'e', 'l', 'l', 'o' };
     ASSERT_FALSE(send_resource_list.at(0)->send(message.data(), (uint32_t)message.size(), &locators_begin,
             &locators_end,
@@ -370,6 +373,7 @@ TEST_F(UDPv4Tests, send_to_allowed_interface)
             remoteMulticastLocator.port = g_default_port;
             remoteMulticastLocator.kind = LOCATOR_KIND_UDPv4;
             IPLocator::setIPv4(remoteMulticastLocator, 239, 255, 1, 4);
+            ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, remoteMulticastLocator));
 
             LocatorList_t locator_list;
             locator_list.push_back(remoteMulticastLocator);
@@ -425,6 +429,7 @@ TEST_F(UDPv4Tests, send_and_receive_between_allowed_sockets_using_localhost)
     MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
     SendResourceList send_resource_list;
+    ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, unicastLocator));
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator)); // Includes loopback
     ASSERT_FALSE(send_resource_list.empty());
     ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(unicastLocator));
@@ -485,6 +490,7 @@ TEST_F(UDPv4Tests, send_and_receive_between_allowed_sockets_using_unicast)
         MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
         SendResourceList send_resource_list;
+        ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, unicastLocator));
         ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator)); // Includes loopback
         ASSERT_FALSE(send_resource_list.empty());
         ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(unicastLocator));
@@ -546,6 +552,7 @@ TEST_F(UDPv4Tests, send_and_receive_between_allowed_sockets_using_unicast_to_mul
         MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
         SendResourceList send_resource_list;
+        ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, unicastLocator));
         ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator)); // Includes loopback
         ASSERT_FALSE(send_resource_list.empty());
         ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(unicastLocator));

@@ -71,7 +71,7 @@ bool TopicPayloadPool::do_get_payload(
             // Failed to resize, but we can still keep it for later.
             free_payloads_.push_back(payload);
             lock.unlock();
-            logError(RTPS_HISTORY, "Failed to resize the payload");
+            EPROSIMA_LOG_ERROR(RTPS_HISTORY, "Failed to resize the payload");
 
             cache_change.serializedPayload.data = nullptr;
             cache_change.serializedPayload.max_size = 0;
@@ -179,7 +179,7 @@ TopicPayloadPool::PayloadNode* TopicPayloadPool::allocate(
 {
     if (all_payloads_.size() >= max_pool_size_)
     {
-        logWarning(RTPS_HISTORY, "Maximum number of allowed reserved payloads reached");
+        EPROSIMA_LOG_WARNING(RTPS_HISTORY, "Maximum number of allowed reserved payloads reached");
         return nullptr;
     }
 
@@ -189,20 +189,18 @@ TopicPayloadPool::PayloadNode* TopicPayloadPool::allocate(
 TopicPayloadPool::PayloadNode* TopicPayloadPool::do_allocate(
         uint32_t size)
 {
-    PayloadNode* payload = nullptr;
+    PayloadNode* payload = new (std::nothrow) PayloadNode(size);
 
-    try
+    if (payload != nullptr)
     {
-        payload = new PayloadNode(size);
+        payload->data_index(static_cast<uint32_t>(all_payloads_.size()));
+        all_payloads_.push_back(payload);
     }
-    catch (std::bad_alloc& exception)
+    else
     {
-        logWarning(RTPS_HISTORY, "Failure to create a new payload " << exception.what());
-        return nullptr;
+        EPROSIMA_LOG_WARNING(RTPS_HISTORY, "Failure to create a new payload ");
     }
 
-    payload->data_index(static_cast<uint32_t>(all_payloads_.size()));
-    all_payloads_.push_back(payload);
     return payload;
 }
 
@@ -253,7 +251,11 @@ void TopicPayloadPool::reserve (
     for (size_t i = all_payloads_.size(); i < min_num_payloads; ++i)
     {
         PayloadNode* payload = do_allocate(size);
-        free_payloads_.push_back(payload);
+
+        if (payload != nullptr)
+        {
+            free_payloads_.push_back(payload);
+        }
     }
 }
 

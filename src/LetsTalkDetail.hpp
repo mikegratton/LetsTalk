@@ -3,14 +3,13 @@
 #include "assert.h"
 #include <string>
 
-#if defined(__GNUC__) || defined(__clang__)
-#include <cxxabi.h>
-#endif
-
-
-namespace eprosima { namespace fastrtps { namespace types {
+namespace eprosima {
+namespace fastrtps {
+namespace types {
 std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return);
-} } }
+}
+}
+}
 
 
 namespace lt {
@@ -23,89 +22,222 @@ extern const bool LT_VERBOSE;
 
 using eprosima::fastrtps::types::ReturnCode_t;
 
-std::string getDefaultProfileXml(char const* i_participantName = program_invocation_short_name);
-    
+std::string getDefaultProfileXml();
+
 template<class T, class C>
-ReaderListener<T,C>::ReaderListener(C i_callback, std::string const& i_topic, ParticipantPtr i_participant)
-    : m_callback(i_callback)
-    , m_topic(i_topic)
-    , m_participant(i_participant)
-{ 
-    
+ReaderListener<T,C>::ReaderListener(C i_callback)
+    : m_callback(i_callback)    
+{
 }
 
 
 template<class T, class C>
-void ReaderListener<T,C>::on_data_available(efd::DataReader* i_reader) {
-    if (nullptr == i_reader) {
-        LT_LOG << m_topic << " callback has a null reader\n";
-        return;
-    }
-    std::unique_ptr<T> data(new T);
-    efd::SampleInfo info;
-    auto code = i_reader->take_next_sample(data.get(), &info);
-    if ( code == ReturnCode_t::RETCODE_OK) {
-        if (info.valid_data) {
-            m_callback(std::move(data));
+void ReaderListener<T,C>::on_data_available(efd::DataReader* i_reader) {    
+    std::size_t expected = i_reader->get_unread_count();
+    for (std::size_t i=0; i<expected; i++) {
+        std::unique_ptr<T> data(new T);
+        efd::SampleInfo info;
+        auto code = i_reader->take_next_sample(data.get(), &info);
+        if (code == ReturnCode_t::RETCODE_OK) {
+            if (info.valid_data) {
+                m_callback(std::move(data));
+            }
+        } else {
+            LT_LOG << i_reader->get_subscriber()->get_participant() 
+                   << " " <<  i_reader->get_topicdescription()->get_name() 
+                   << " callback has an incomplete sample: " << code << "\n";
+            break;
         }
-    } else {
-        LT_LOG << "Notified of data available on " << m_topic << ", but code is " << code << "\n";
     }
 }
 
 template<class T, class C>
-void ReaderListener<T,C>::on_subscription_matched(efd::DataReader*,
-        efd::SubscriptionMatchedStatus const& info) {
-    if (m_participant) {
-        m_participant->updatePublisherCount(m_topic, info.current_count_change);
+void ReaderListener<T,C>::on_sample_rejected(efd::DataReader* reader,
+        const efd::SampleRejectedStatus& status) {
+    logSampleRejected(reader, status);
+}
+
+template<class T, class C>
+void ReaderListener<T,C>::on_requested_incompatible_qos(efd::DataReader* reader, 
+                                                        const efd::RequestedIncompatibleQosStatus& status) {
+    logIncompatibleQos(reader, status);
+}
+
+template<class T, class C>
+void ReaderListener<T,C>::on_sample_lost(efd::DataReader* reader,
+        const efd::SampleLostStatus& status) {
+    logLostSample(reader, status);
+}
+
+std::string demangle_name(char const* i_mangled);
+
+template<class T>
+std::string get_demangled_name() { return demangle_name(typeid(T).name()); }
+
+
+}
+
+
+template<class T, class C>
+void Participant::subscribe(std::string const& i_topic, C i_callback, std::string const& i_qosProfile,
+                            int i_historyDepth) {
+    auto listener = detail::makeListener<T, C>(i_callback);
+    doSubscribe(i_topic, efd::TypeSupport(new PubSubType<T>()), listener, i_qosProfile, i_historyDepth);
+}
+
+template<class T>
+QueuePtr<T> Participant::subscribe(std::string const& i_topic,
+                                   std::string const& i_qosProfile, int i_historyDepth) {
+    auto queue = std::make_shared<ThreadSafeQueue<T>>(i_historyDepth);
+    auto listener = detail::makeListener<T>([queue](std::unique_ptr<T> i_sample) {
+        queue.push(std::move(i_sample));
+    }, i_topic, shared_from_this());
+    doSubscribe(i_topic, efd::TypeSupport(new PubSubType<T>()), listener, i_qosProfile, 1);
+}
+
+namespace detail {
+
+efr::Time_t getBadTime();
+
+template<class Req, class Rep, class C>
+class ServiceProvider : public efd::DataReaderListener, ActiveObject {
+protected:
+    Publisher m_sender;
+    C m_providerCallback;
+    efr::SampleIdentity m_Id;
+
+public:
+
+    ServiceProvider(C i_providerCallback, Publisher i_publisher)
+        : m_sender(i_publisher)
+        , m_providerCallback(i_providerCallback) {
+        m_Id.writer_guid(m_sender.guid());
     }
-    logSubscriptionMatched(m_participant, m_topic, info);
+
+    void on_data_available(efd::DataReader* i_reader) override {
+        if (nullptr == i_reader) {
+            return;
+        }
+        Req* data = new Req();
+        efd::SampleInfo info;
+        auto code = i_reader->take_next_sample(data, &info);
+        if (code == ReturnCode_t::RETCODE_OK) {
+            if (info.valid_data) {
+                efr::WriteParams correlation;
+                m_Id.sequence_number()++;
+                correlation.sample_identity(m_Id);
+                correlation.related_sample_identity(info.sample_identity);
+                submitJob([this, data, correlation]() {
+                    std::unique_ptr<Req> udata(data);
+                    std::unique_ptr<Rep> reply;
+                    try {
+                        reply = m_providerCallback(std::move(udata));
+                    } catch (...) {
+                        reply = nullptr;
+                    }
+                    efr::WriteParams corr(correlation);
+                    efr::Time_t::now(corr.source_timestamp());
+                    if (nullptr == reply) {
+                        corr.source_timestamp(getBadTime());
+                        reply = std::unique_ptr<Rep>(new Rep);
+                    } 
+                    m_sender.publish(std::move(reply), corr);
+                });
+            }
+        }
+    }
+};
+
+std::string requestName(std::string i_name);
+
+std::string replyName(std::string i_name);
+
 }
 
-template<class T, class C>
-void ReaderListener<T,C>::on_sample_rejected(efd::DataReader* reader, 
-                                             const efd::SampleRejectedStatus& status) 
-{
-    logSampleRejected(m_participant, m_topic, status);    
+template<class Req, class Rep, class C>
+void Participant::advertise(std::string const& i_serviceName, C i_serviceProvider) {
+    Publisher sender = advertise<Rep>(detail::replyName(i_serviceName));
+    auto listener = new detail::ServiceProvider<Req, Rep, C>(i_serviceProvider, sender);
+    doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new PubSubType<Req>()), listener, "", 1);
 }
 
-template<class T, class C>
-void ReaderListener<T,C>::on_requested_incompatible_qos(efd::DataReader* reader, const efd::RequestedIncompatibleQosStatus& status) 
-{
-    logIncompatibleQos(m_participant, m_topic, status);    
+template<class Req, class Rep>
+Requester<Req, Rep> Participant::request(std::string const& i_serviceName) {
+    return Requester<Req, Rep>(shared_from_this(), i_serviceName);
 }
 
-template<class T, class C>
-void ReaderListener<T,C>::on_sample_lost(efd::DataReader* reader, 
-                                         const efd::SampleLostStatus& status) 
-{
-    logLostSample(m_participant, m_topic, status);    
-}
 
-#if defined(__GNUC__) || defined(__clang__)
 template<class T>
-std::string get_demangled_name()
-{
-    char* realname = abi::__cxa_demangle(typeid(T).name(), nullptr, nullptr, nullptr);
-    std::string rname(realname);
-    free(realname);
-    return rname;
-}
-#else
-template<class T>
-std::string get_demangled_name()
-{
-    return std::string(typeid(T).name());
-}
-#endif
-
-
+Publisher Participant::advertise(std::string const& i_topic, std::string const& i_qosProfile,
+                                 int i_historyDepth) {
+    return doAdvertise(i_topic, efd::TypeSupport(new PubSubType<T>()), i_qosProfile, i_historyDepth);
 }
 
 
 template<class T>
 bool Publisher::publish(std::unique_ptr<T> i_data) {    
-    assert(m_serializer->getName() == get_demangled_name<T>());    
     return doPublish(i_data.get());
+}
+
+template<class T>
+bool Publisher::publish(std::unique_ptr<T> i_data, efr::WriteParams i_correlation) {    
+    return doPublish(i_data.get(), i_correlation);
+}
+
+template<class Req, class Rep>
+void Requester<Req, Rep>::OnReply::on_data_available(efd::DataReader* i_reader) {
+    std::unique_ptr<Rep> data(new Rep);
+    efd::SampleInfo info;
+    auto code = i_reader->take_next_sample(data.get(), &info);
+    if (code == ReturnCode_t::RETCODE_OK) {
+        if (info.valid_data) {
+            auto it = requester->m_requests.find(info.related_sample_identity);
+            if (it != requester->m_requests.end()) {
+                if (info.source_timestamp == detail::getBadTime()) {
+                    it->second.set_exception(std::make_exception_ptr(std::runtime_error("RPC failed")));
+                } else {
+                    it->second.set_value(std::move(data));
+                }
+                requester->m_requests.erase(it);
+            } 
+        }
+    }
+}
+
+
+template<class Req, class Rep>
+Requester<Req, Rep>::Requester(ParticipantPtr i_participant,
+                               std::string const& i_serviceName)
+    : m_serviceName(i_serviceName) {
+    auto type = efd::TypeSupport(new PubSubType<Req>());
+    auto topic = i_participant->getTopic(detail::requestName(i_serviceName), type, 1);
+    if (nullptr == topic) {
+        m_requestPub = nullptr;
+        return;
+    }
+    auto ddsPublisher = i_participant->getRawPublisher();
+    efd::DataWriterQos qos = ddsPublisher->get_default_datawriter_qos();
+    efd::DataWriter* rawWriter = ddsPublisher->create_datawriter(topic, qos);
+    auto writerDeleter = [ddsPublisher](efd::DataWriter* raw) {
+        ddsPublisher->delete_datawriter(raw);
+    };
+    m_requestPub = std::shared_ptr<efd::DataWriter>(rawWriter, writerDeleter);
+    m_Id.writer_guid(m_requestPub->guid());
+    m_Id.sequence_number(efr::SequenceNumber_t(0));
+    auto listen = new OnReply(this);
+    i_participant->doSubscribe(detail::replyName(i_serviceName),
+                               efd::TypeSupport(new PubSubType<Rep>()), listen, "", 1);
+}
+
+template<class Req, class Rep>
+std::future<std::unique_ptr<Rep>> Requester<Req, Rep>::request(std::shared_ptr<Req> i_request) {
+    // Determine the request id
+    efr::WriteParams params;
+    m_Id.sequence_number()++;
+    params.sample_identity(m_Id);
+
+    // Send the request
+    m_requestPub->write(i_request.get(), params);
+    return m_requests[m_Id].get_future();
 }
 }
