@@ -1,0 +1,20 @@
+#ifndef reactor_idl
+#define reactor_idl
+
+struct reactor_progress
+{
+    int32 progress;
+};
+
+enum Command
+{
+    CANCEL
+};
+
+struct reactor_command
+{
+    Command command;
+};
+
+#endif
+

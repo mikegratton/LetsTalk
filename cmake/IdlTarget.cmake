@@ -58,5 +58,10 @@ macro(IdlTarget name)
        add_library(${name} STATIC ${idl_source})
    endif()
    target_link_libraries(${name} PUBLIC fastrtps)
-   target_include_directories(${name} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+   target_include_directories(${name} 
+        PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include/${name}>
+        )
+    # TODO install path?
 endmacro()

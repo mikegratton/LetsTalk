@@ -12,6 +12,13 @@ namespace lt {
 namespace efd = eprosima::fastdds::dds;
 namespace efr = eprosima::fastrtps::rtps;
 
+
+Guid Publisher::guid() const
+{
+    return detail::toLib(m_writer->guid());
+}
+
+
 ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosProfile) {
         
     auto factory = efd::DomainParticipantFactory::get_instance();
@@ -260,13 +267,27 @@ bool Publisher::doPublish(void* i_data) {
     return m_writer->write(i_data);
 }
 
-bool Publisher::doPublish(void* i_data, efr::WriteParams i_correlation) {
+
+bool Publisher::doPublish(void* i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad) {
     if (!isOkay() || nullptr == i_data) {
         LT_LOG << m_writer << " could not publish sample " << i_data << "\n";
         return false;
     }
+    efr::WriteParams i_correlation;    
+    i_correlation.sample_identity(detail::toSampleId(i_myId));
+    i_correlation.related_sample_identity(detail::toSampleId(i_relatedId));
+    std::cout << "!!! " << i_relatedId << " vs " << detail::fromSampleId(i_correlation.related_sample_identity()) << "\n";
+    if (i_bad) {
+        i_correlation.source_timestamp(detail::getBadTime());
+    }
     return m_writer->write(i_data, i_correlation);
 }
 
+std::ostream& operator<<(std::ostream& os, Guid const& i_guid)
+{
+    uint64_t const* first = reinterpret_cast<uint64_t const*>(&i_guid.data[0]);
+    uint64_t const* second = reinterpret_cast<uint64_t const*>(&i_guid.data[8]);
+    return os << *first << "-" << *second << "-" << i_guid.sequence;
+}
 
 }

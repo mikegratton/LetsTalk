@@ -18,6 +18,8 @@ add_executable(ltTest
     ThreadSafeQueue.cpp
     qosProfile.cpp
     reqrep.cpp
+    Reactor.cpp
+    Guid.cpp
     main.cpp
     )
 target_link_libraries(ltTest PUBLIC letstalk helloIdl)

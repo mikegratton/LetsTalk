@@ -54,6 +54,28 @@ public:
                    int i_historyDepth=1);
 
     /**
+     * subscribeWithId<T>(topic, callback, profile)
+     *
+     * Register a callback on the named topic expecting type T.  When data arrives, the callback
+     * will be called.  Callbacks take the form
+     * ```
+     *   void my_callback(std::unique_ptr<T> new_data, Guid this_id, Guid related_id);
+     * ```
+     * Note that data is provided as a unique_ptr.
+     *
+     * @param i_topic Topic name to subscribe to
+     *
+     * @param i_callback Callback function or lambda.
+     *
+     * @param i_qosProfile Settings profile
+     *
+     * @param i_historyDepth Number of historical messages to store
+     */
+    template<class T, class C>
+    void subscribeWithId(std::string const& i_topic, C i_callback, std::string const& i_qosProfile = "",
+                   int i_historyDepth=1);
+    
+    /**
      * subscribe<T>(topic, profile, history)
      *
      * Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
@@ -79,6 +101,13 @@ public:
      */
     void unsubscribe(std::string const& i_topic);
 
+    /**
+     * unadvertise(service)
+     *
+     * Stop providing the named service
+     *
+     * @param i_service Service to discontinue
+     */
     void unadvertise(std::string const& i_service);
 
     /**
@@ -107,6 +136,19 @@ public:
     template<class Req, class Rep, class C>
     void advertise(std::string const& i_serviceName, C i_serviceProvider);
     
+    /**
+     * Build a requester object for making requests to a service. Each request
+     * is an object of type Req and will correspond to one response object of
+     * type Rep.
+     * 
+     * Typically, this will look like
+     * ```
+     * auto requester = participant->request<Location,Temperature>("weatherService");
+     * auto location = std::unique_ptr<Location>(new Location(41.0, 70.0));
+     * auto temp = requester.request(std::move(location)).get();     
+     * ```
+     * 
+     */
     template<class Req, class Rep>
     Requester<Req, Rep> request(std::string const& i_serviceName);
     
@@ -208,18 +250,24 @@ public:
     operator bool() const { return isOkay(); }
     bool isOkay() const { return !(nullptr == m_writer); }
     
-    /**m_requests
+    /**
      * Take the data sample and publish it.
      */
     template<class T>
     bool publish(std::unique_ptr<T> i_data);
     
+    /**
+     * Publish with a given ID, related ID, and a good/bad flag
+     */
     template<class T>
-    bool publish(std::unique_ptr<T> i_data, efr::WriteParams i_correlation);
+    bool publish(std::unique_ptr<T> i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad=false);
 
     std::string const& topic() const { return m_topicName; }
+        
+    Guid guid() const;
     
-    Guid guid() const { return m_writer->guid(); }
+    // Makes a dead publisher
+    Publisher() = default;
     
 protected:
     friend Participant;
@@ -230,12 +278,20 @@ protected:
     bool doPublish(void* i_data);
     
     /// Type-erased publish method
-    bool doPublish(void* i_data, efr::WriteParams i_correlation);
+    bool doPublish(void* i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad);
 
     std::shared_ptr<efd::DataWriter> m_writer;
     std::string m_topicName;
 };
 
+/*
+ * A Requester is an object used for making requests to a remote service.
+ * Each request returns a future response that can be waited upon for the 
+ * reply.  These are constructed by the Participant.
+ * 
+ * Note that std::runtime_error may be thrown if the service indicates 
+ * an error.
+ */
 template<class Req, class Rep>
 class Requester : public efd::DataReaderListener {
 public:
@@ -248,7 +304,8 @@ public:
 protected:
     
     friend Participant;
-        
+    
+    /// Specialized listener to correlate requests with replies
     struct OnReply: public efd::DataReaderListener {
         Requester* requester;    
         explicit OnReply(Requester* i_req) : requester(i_req) { }
@@ -256,12 +313,12 @@ protected:
     };
     
     Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
-        
+    
     using Promise = std::promise<std::unique_ptr<Rep>>;
-    std::shared_ptr<efd::DataWriter> m_requestPub;    
-    efr::SampleIdentity m_Id;
-    std::map<efr::SampleIdentity, Promise> m_requests;
-    std::string m_serviceName;
+    std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests    
+    Guid m_sessionId;
+    std::map<Guid, Promise> m_requests; //! All pending requests
+    std::string m_serviceName; //! The name of this service
 };
 
 

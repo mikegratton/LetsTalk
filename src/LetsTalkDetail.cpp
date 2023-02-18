@@ -26,6 +26,36 @@ std::string demangle_name(char const* i_mangled) {
 }
 #endif
 
+efr::GUID_t toNative(Guid const& i_guid)
+{
+    efr::GUID_t fastGuid;    
+    memcpy(fastGuid.guidPrefix.value, i_guid.data, efr::GuidPrefix_t::size);
+    memcpy(fastGuid.entityId.value, &i_guid.data[12], efr::EntityId_t::size);
+    return fastGuid;    
+}
+
+Guid toLib(efr::GUID_t const& i_guid)
+{
+    Guid lib;
+    memcpy(lib.data, i_guid.guidPrefix.value, efr::GuidPrefix_t::size);
+    memcpy(&lib.data[efr::GuidPrefix_t::size], i_guid.entityId.value, i_guid.entityId.size);
+    return lib;
+}
+
+efr::SampleIdentity toSampleId(Guid const& i_id)
+{
+    efr::SampleIdentity id;
+    id.writer_guid(toNative(i_id));
+    id.sequence_number(efr::SequenceNumber_t(i_id.sequence));    
+    return id;
+}
+
+Guid fromSampleId(efr::SampleIdentity const& i_sampleId)
+{
+    Guid guid = toLib(i_sampleId.writer_guid());
+    guid.sequence = i_sampleId.sequence_number().to64long();    
+    return guid;
+}
 
 bool getIgnoreNonlocal() {
     char* verb = getenv("LT_LOCAL_ONLY");
@@ -152,9 +182,9 @@ efr::Time_t getBadTime()
     return efr::Time_t(1,1);
 }
 
-}
+} // detail
 
-}
+} // lt
 
 
 // Why is ReturnCode_t so needlessly complicated?

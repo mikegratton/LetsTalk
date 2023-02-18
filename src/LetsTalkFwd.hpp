@@ -29,8 +29,18 @@ class Publisher;
 
 template<class Req, class Rep>
 class Requester;    
-    
-using Guid = efr::GUID_t;
+
+struct Guid
+{
+    unsigned char data[16];
+    uint64_t sequence;
+    Guid() { memset(data, 0, 16); sequence = 0; }
+    static Guid UNKNOWN() { return Guid(); }    
+    void increment() { sequence += 1; }    
+};
+
+std::ostream& operator<<(std::ostream& os, Guid const& i_guid);
+
 
 namespace detail
 {
@@ -52,7 +62,7 @@ public:
     
     ReaderListener(C i_callback);
     
-    void on_data_available(efd::DataReader* i_reader) override;
+    virtual void on_data_available(efd::DataReader* i_reader) override;
      
     void on_sample_rejected(efd::DataReader* i_reader, 
                             const efd::SampleRejectedStatus& i_status) override;
@@ -66,6 +76,18 @@ protected:
     C m_callback;    
 };
 
+
+template<class T> struct NoOp { void operator()(std::unique_ptr<T>) const { } };
+
+template<class T, class C>
+class ReaderWithIdListener : public ReaderListener<T,NoOp<T>>
+{
+public:    
+    ReaderWithIdListener(C i_callback) : ReaderListener<T,NoOp<T>>(NoOp<T>()), m_callbackWithId(i_callback) { }
+    void on_data_available(efd::DataReader* i_reader) override;    
+    C m_callbackWithId;
+};
+
 /**
  * Helper function to create listener instances from callbacks
  */
@@ -73,6 +95,12 @@ template<class T, class C>
 efd::DataReaderListener* makeListener(C i_callback)
 {
     return new ReaderListener<T,C>(i_callback);
+}
+
+template<class T, class C>
+efd::DataReaderListener* makeListenerWithId(C i_callback)
+{
+    return new ReaderWithIdListener<T,C>(i_callback);
 }
 
 
