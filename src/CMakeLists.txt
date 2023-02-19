@@ -21,6 +21,7 @@ set(headers
     Reactor.hpp
     ReactorClient.hpp
     ReactorServer.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/Reactor.h
     )
     
 target_link_libraries(letstalk PUBLIC fastrtps reactorIdl)

@@ -21,12 +21,10 @@ TEST_CASE("Reactor")
     auto clientSession = AskForGreeting.request(std::move(message));
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     
-    std::cout << "Is alive? " << clientSession.isAlive() << "\n";
     CHECK(SayHi.havePendingSession() == true);
     auto serverSession = SayHi.getPendingSession();
     CHECK(serverSession.isAlive() == true);
     CHECK(clientSession.isAlive() == true);
-    std::cout << "Session started with request-> " << serverSession.request()->message() << ": " << serverSession.request()->index() << "\n";
     serverSession.progress(10);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     CHECK(clientSession.progress() == 10);
@@ -38,5 +36,31 @@ TEST_CASE("Reactor")
     CHECK(clientSession.progress() == 100);
     auto rep = clientSession.get();
     REQUIRE(rep != nullptr);
-    std::cout << "Session completed with reply-> " << rep->message() << ": " << rep->index() << "\n";
+    CHECK(rep->index() == 1);
+}
+
+TEST_CASE("ReactorCancel")
+{
+    ParticipantPtr part1 = Participant::create();
+    ParticipantPtr part2 = Participant::create();
+    ReactorServer<HelloWorld, HelloWorld> SayHi(part1, "hello");
+    ReactorClient<HelloWorld, HelloWorld> AskForGreeting(part2, "hello");
+    
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    auto message = std::unique_ptr<HelloWorld>(new HelloWorld);
+    message->message("hello?");
+    message->index(0);
+    auto clientSession = AskForGreeting.request(std::move(message));
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    
+    CHECK(SayHi.havePendingSession() == true);
+    auto serverSession = SayHi.getPendingSession();
+    CHECK(serverSession.isAlive() == true);
+    CHECK(clientSession.isAlive() == true);
+    
+    clientSession.cancel();
+    CHECK(clientSession.isAlive() == false);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));    
+    CHECK(serverSession.isAlive() == false);    
 }
