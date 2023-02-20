@@ -172,12 +172,13 @@ public:
                     try {
                         reply = m_providerCallback(std::move(udata));
                     } catch (...) {
-                        reply = nullptr;
+                        reply = nullptr;                        
                     }
                     bool isBad = false;
                     if (nullptr == reply) {
                         isBad = true;
                         reply = std::unique_ptr<Rep>(new Rep);
+                        std::cout << "Setting error bit in reply\n";
                     }
                     m_sender.publish(std::move(reply), m_Id, relatedId, isBad);
                 });

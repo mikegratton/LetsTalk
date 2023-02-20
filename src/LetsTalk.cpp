@@ -276,7 +276,6 @@ bool Publisher::doPublish(void* i_data, Guid const& i_myId, Guid const& i_relate
     efr::WriteParams i_correlation;    
     i_correlation.sample_identity(detail::toSampleId(i_myId));
     i_correlation.related_sample_identity(detail::toSampleId(i_relatedId));
-    std::cout << "!!! " << i_relatedId << " vs " << detail::fromSampleId(i_correlation.related_sample_identity()) << "\n";
     if (i_bad) {
         i_correlation.source_timestamp(detail::getBadTime());
     }
