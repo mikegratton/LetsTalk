@@ -21,3 +21,7 @@ enum ReactorProgressMark {
 };
 
 }
+
+
+#include "ReactorClient.hpp"
+#include "ReactorServer.hpp"

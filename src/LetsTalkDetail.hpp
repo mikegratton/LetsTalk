@@ -3,6 +3,12 @@
 #include "assert.h"
 #include <string>
 
+/**
+ * Implementations for class templates are defined here. This has the type-specific 
+ * code for pub/sub and req/rep. 
+ */
+
+// FastDDS return codes to string translation
 namespace eprosima {
 namespace fastrtps {
 namespace types {
@@ -13,24 +19,50 @@ std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return);
 
 
 namespace lt {
-namespace detail {
-
-extern const bool LT_VERBOSE;
-
-#define LT_LOG if(!::lt::detail::LT_VERBOSE){} else std::cout
 
 using eprosima::fastrtps::types::ReturnCode_t;
 
+    
+/////////////////////////////////////////////////////////////////////////////////
+// Inline comparison operators for Guids    
+inline bool operator<(Guid const& g1, Guid const& g2) {
+    int compare = memcmp(g1.data, g2.data, sizeof(g1.data));
+    return (compare < 0 || (compare == 0 && g1.sequence < g2.sequence));    
+}
+
+inline bool operator==(Guid const& g1, Guid const& g2) {
+    return memcmp(g1.data, g2.data, sizeof(g1.data)) == 0 && g1.sequence == g2.sequence;
+}
+
+namespace detail {
+
+// Logging is controlled by this variable, set from the environment on startup
+extern const bool LT_VERBOSE;
+
+// The log macro swallows the message is LT_VERBOSE is false
+#define LT_LOG if(!::lt::detail::LT_VERBOSE){} else std::cout
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+// TODO does name demangling need to live here?
+std::string demangle_name(char const* i_mangled);
+
+template<class T>
+std::string get_demangled_name() { return demangle_name(typeid(T).name()); }
+////////////////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////////
+// GUID_t and SampleId are both converible to the lt::Guid
 efr::GUID_t toNative(Guid const& i_guid);
-
 Guid toLib(efr::GUID_t const& i_guid);
-
 efr::SampleIdentity toSampleId(Guid const& i_id);
-
 Guid fromSampleId(efr::SampleIdentity const& i_sampleId);
 
-std::string getDefaultProfileXml();
 
+//////////////////////////////////////////////////////////////////////////////
+// ReaderListener class template implementation
+// This is in detail because instances should not be visible outside the library
 template<class T, class C>
 ReaderListener<T,C>::ReaderListener(C i_callback)
     : m_callback(i_callback) {
@@ -75,6 +107,8 @@ void ReaderListener<T,C>::on_sample_lost(efd::DataReader* reader,
     logLostSample(reader, status);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+// ReaderWithIdListener implementation. This only differs in on_data_available
 template<class T, class C>
 void ReaderWithIdListener<T,C>::on_data_available(efd::DataReader* i_reader) 
 {
@@ -97,14 +131,13 @@ void ReaderWithIdListener<T,C>::on_data_available(efd::DataReader* i_reader)
     }
 }
 
-std::string demangle_name(char const* i_mangled);
 
-template<class T>
-std::string get_demangled_name() { return demangle_name(typeid(T).name()); }
+} // namespace detail
 
-
-}
-
+//////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////
+// Publish/Subscribe
+// Most of these try to push work off on generic doSubscribe/doPublish/doAdvertise methods
 template<class T, class C>
 void Participant::subscribe(std::string const& i_topic, C i_callback, std::string const& i_qosProfile,
                             int i_historyDepth) {
@@ -129,17 +162,41 @@ QueuePtr<T> Participant::subscribe(std::string const& i_topic,
     doSubscribe(i_topic, efd::TypeSupport(new PubSubType<T>()), listener, i_qosProfile, 1);
 }
 
-inline bool operator<(Guid const& g1, Guid const& g2) {
-    int compare = memcmp(g1.data, g2.data, sizeof(g1.data));
-    return (compare < 0 || (compare == 0 && g1.sequence < g2.sequence));    
+
+template<class T>
+Publisher Participant::advertise(std::string const& i_topic, std::string const& i_qosProfile,
+                                 int i_historyDepth) {
+    return doAdvertise(i_topic, efd::TypeSupport(new PubSubType<T>()), i_qosProfile, i_historyDepth);
 }
 
-inline bool operator==(Guid const& g1, Guid const& g2) {
-    return memcmp(g1.data, g2.data, sizeof(g1.data)) == 0 && g1.sequence == g2.sequence;
+
+template<class T>
+bool Publisher::publish(std::unique_ptr<T> i_data) {
+    return doPublish(i_data.get());
 }
+
+template<class T>
+bool Publisher::publish(std::unique_ptr<T> i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad) {
+    return doPublish(i_data.get(), i_myId, i_relatedId, i_bad);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////
+// Request/Reply
 
 namespace detail {
 
+//////////////////////////////////////////////////////////
+// Request/Reply naming and constants
+std::string requestName(std::string i_name);
+std::string replyName(std::string i_name);
+efr::Time_t getBadTime();
+
+///////////////////////////////////////////////////////////////////
+// ServiceProvider is an internal active object used to convert a
+// subscription to a callback to the actual service provision.
+// It tracks the Guid of the request automatically.
 template<class Req, class Rep, class C>
 class ServiceProvider : public efd::DataReaderListener, ActiveObject {
 protected:
@@ -187,16 +244,11 @@ public:
     }
 };
 
-    
-std::string requestName(std::string i_name);
-
-std::string replyName(std::string i_name);
-
-efr::Time_t getBadTime();
-
 } // namespace detail
 
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Replier creation: just save the listener inside the FastDDS data reader object
 template<class Req, class Rep, class C>
 void Participant::advertise(std::string const& i_serviceName, C i_serviceProvider) {
     Publisher sender = advertise<Rep>(detail::replyName(i_serviceName));
@@ -204,27 +256,11 @@ void Participant::advertise(std::string const& i_serviceName, C i_serviceProvide
     doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new PubSubType<Req>()), listener, "", 1);
 }
 
+///////////////////////////////////////////////////////////////////////////////////
+// Requester definitions
 template<class Req, class Rep>
 Requester<Req, Rep> Participant::request(std::string const& i_serviceName) {
     return Requester<Req, Rep>(shared_from_this(), i_serviceName);
-}
-
-
-template<class T>
-Publisher Participant::advertise(std::string const& i_topic, std::string const& i_qosProfile,
-                                 int i_historyDepth) {
-    return doAdvertise(i_topic, efd::TypeSupport(new PubSubType<T>()), i_qosProfile, i_historyDepth);
-}
-
-
-template<class T>
-bool Publisher::publish(std::unique_ptr<T> i_data) {
-    return doPublish(i_data.get());
-}
-
-template<class T>
-bool Publisher::publish(std::unique_ptr<T> i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad) {
-    return doPublish(i_data.get(), i_myId, i_relatedId, i_bad);
 }
 
 template<class Req, class Rep>
@@ -281,4 +317,4 @@ std::future<std::unique_ptr<Rep>> Requester<Req, Rep>::request(std::shared_ptr<R
     m_requestPub->write(i_request.get(), params);
     return m_requests[m_sessionId].get_future();
 }
-}
+} // namespace lt

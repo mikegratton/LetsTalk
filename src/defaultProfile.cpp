@@ -2,7 +2,6 @@
 #include <regex>
 
 namespace lt {
-namespace detail {
 std::string getDefaultProfileXml() {
     std::string xml(R"(
 <?xml version="1.0" encoding="UTF-8" ?>
@@ -105,6 +104,5 @@ std::string getDefaultProfileXml() {
     
     return xml;
     
-}
 }
 }

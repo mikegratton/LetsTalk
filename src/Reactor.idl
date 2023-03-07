@@ -4,6 +4,13 @@
 struct reactor_progress
 {
     int32 progress;
+    sequence<octet> data;
+};
+
+// Standin type if no progress data
+struct reactor_void_progress
+{
+    int32 dummy;
 };
 
 enum Command
@@ -18,3 +25,4 @@ struct reactor_command
 
 #endif
 
+ 

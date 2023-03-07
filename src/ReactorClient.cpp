@@ -15,6 +15,7 @@ ReactorClientBackend::ReactorClientBackend(ParticipantPtr i_participant, std::st
             LT_LOG << m_participant.get() << ":" << m_service << "-client"
                    << "  Session ID " << i_relatedId << " progress " << i_progress->progress() << "\n";
             it->second.progress = i_progress->progress();
+            it->second.progressData.push(std::move(i_progress));
         }
     });
 }
@@ -80,6 +81,16 @@ int ReactorClientBackend::progress(Guid const& i_id) {
         return it->second.progress;
     }
     return PROG_UNKNOWN;
+}
+
+std::unique_ptr<reactor_progress> ReactorClientBackend::progressData(Guid const& i_id, std::chrono::nanoseconds i_wait)
+{
+    LockGuard guard(m_mutex);
+    auto it = m_session.find(i_id);
+    if (it != m_session.end()) {
+        return it->second.progressData.pop(i_wait);
+    }
+    return nullptr;
 }
 
 }

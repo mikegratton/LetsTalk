@@ -12,6 +12,9 @@ namespace lt {
 namespace efd = eprosima::fastdds::dds;
 namespace efr = eprosima::fastrtps::rtps;
 
+// The default profile is a string constant stored elsewhere
+std::string getDefaultProfileXml();
+
 
 Guid Publisher::guid() const
 {
@@ -32,7 +35,7 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
             auto code = factory->load_XML_profiles_file(profileXml);
             LT_LOG << "QOS profile xml loaded with code " << code;
         } else {
-            std::string defaultXml = detail::getDefaultProfileXml();
+            std::string defaultXml = getDefaultProfileXml();
             factory->load_XML_profiles_string(defaultXml.c_str(), defaultXml.size());            
         }
         
@@ -57,6 +60,11 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
         }
     }
     
+    // RAII design to bind up the factory deletion methods with the dtors in shared_ptr.
+    // 1. Create an entity from the factory
+    // 2. Make a lambda to delete it on the factory
+    // 3. Put these together in a shared_ptr
+    
     rawParticipant = factory->create_participant(i_domain, qos);
     auto participantDeleter = [factory](efd::DomainParticipant* raw) {
         raw->delete_contained_entities();
@@ -67,17 +75,21 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
     // Create the publisher    
     auto rawPub = rawParticipant->create_publisher(rawParticipant->get_default_publisher_qos());
     auto pubDeleter = [participant](efd::Publisher* pub) { participant->delete_publisher(pub); };
-    
+    auto publisher = std::shared_ptr<efd::Publisher>(rawPub, pubDeleter);
+
     // Create the subscriber    
     auto rawSub = rawParticipant->create_subscriber(rawParticipant->get_default_subscriber_qos());
     auto subDeleter = [participant](efd::Subscriber* sub) { participant->delete_subscriber(sub); };    
-
-    // Bind up the parts in shared ptrs
+    auto subscriber = std::shared_ptr<efd::Subscriber>(rawSub, subDeleter);
+    
+    // Make the lt::Participant instance
     auto p = std::make_shared<Participant>();
     p->m_participant = participant;
-    p->m_publisher = std::shared_ptr<efd::Publisher>(rawPub, pubDeleter);
-    p->m_subscriber = std::shared_ptr<efd::Subscriber>(rawSub, subDeleter);
+    p->m_publisher = publisher;
+    p->m_subscriber = subscriber;
     
+    // Make the participant listener for logging and stat keeping. Note the mask needs to 
+    // be set or all events are eaten by the participant listener
     efd::StatusMask mask = efd::StatusMask::all();
     mask >> efd::StatusMask::data_available() >> efd::StatusMask::data_on_readers();
     mask << efd::StatusMask::subscription_matched() << efd::StatusMask::publication_matched();
@@ -86,6 +98,7 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
 }
 
 Participant::~Participant() {
+    // Ensure all readers and writers are destructed. This isn't strictly needed
     m_publisher->delete_contained_entities();
     m_subscriber->delete_contained_entities();
     m_participant->delete_contained_entities();
@@ -111,6 +124,8 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
         }
     }
     m_publisher->copy_from_topic_qos(qos, topic->get_qos());
+    
+    // Follow the pattern of binding the raw object with its deleter in a shared_ptr
     efd::DataWriter* rawWriter = m_publisher->create_datawriter(topic, qos);
     auto writerDeleter = [this](efd::DataWriter* raw) {
         m_publisher->delete_datawriter(raw);
@@ -124,15 +139,21 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
 void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport const& i_type,
                               efd::DataReaderListener* i_listener, std::string const& i_qosProfile,
                               int i_historyDepth) {
+    // Only one reader per topic, please
     auto reader = m_subscriber->lookup_datareader(i_topic);
     if (reader && reader->type().get_type_name() != i_type.get_type_name()) {
         auto code = m_subscriber->delete_datareader(reader);
         LT_LOG << "Deleted old datareader on " << i_topic << "; " << code << "\n";
     }
+    
+    // Ensure the topic exists with the correct type
     auto topic = getTopic(i_topic, i_type, i_historyDepth);
     if (topic == nullptr) {
+        LT_LOG << "Error: Could not create topic " << i_topic << "\n";
         return;
     }
+    
+    // Get the QoS if required
     efd::DataReaderQos qos = m_subscriber->get_default_datareader_qos();
     if (!i_qosProfile.empty()) {
         auto status = m_subscriber->get_datareader_qos_from_profile(i_qosProfile, qos);
@@ -141,12 +162,15 @@ void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport const
             qos = m_subscriber->get_default_datareader_qos(); 
         }
     }
+    
+    // Make the data reader. This entity is kept alive by the subscriber
     m_subscriber->copy_from_topic_qos(qos, topic->get_qos());
     reader = m_subscriber->create_datareader(topic, qos, i_listener, efd::StatusMask::data_available());
     LT_LOG << m_participant << " created new subscriber for type \"" << i_type->getName() 
         << "\" on topic \"" << i_topic <<"\"\n";
 }
 
+// Since we don't keep an instance of the reader, we'll look it up on demand
 void Participant::unsubscribe(std::string const& i_topic) {
     auto reader = m_subscriber->lookup_datareader(i_topic);
     if (reader) {
@@ -155,14 +179,17 @@ void Participant::unsubscribe(std::string const& i_topic) {
     }
 }
 
+// Technically writer instances are kept in the publisher, but we can delete them out from
+// under that object here
 void Participant::unadvertise(std::string const& i_service) {
-    auto reader = m_subscriber->lookup_datareader(detail::requestName(i_service));
-    if (reader) {
-        auto code = m_subscriber->delete_datareader(reader);
+    auto writer = m_publisher->lookup_datawriter(detail::requestName(i_service));
+    if (writer) {
+        auto code = m_publisher->delete_datawriter(writer);
         LT_LOG << m_participant << " Unadverised service " << i_service << "; " << code << "\n";
     }
 }
 
+// Callback to update the table of counts
 void Participant::updatePublisherCount(std::string const& i_topic, int i_update) {
     std::unique_lock<std::mutex> guard(m_countMutex);
     auto it = m_publisherCount.find(i_topic);
@@ -173,6 +200,7 @@ void Participant::updatePublisherCount(std::string const& i_topic, int i_update)
     }
 }
 
+// Callback to update the table of counts
 void Participant::updateSubscriberCount(std::string const& i_topic, int i_update) {
     std::unique_lock<std::mutex> guard(m_countMutex);
     auto it = m_subscriberCount.find(i_topic);
@@ -183,6 +211,7 @@ void Participant::updateSubscriberCount(std::string const& i_topic, int i_update
     }
 }
 
+// Get the count. Note the mutex
 int Participant::publisherCount(std::string const& i_topic) const {
     std::unique_lock<std::mutex> guard(m_countMutex);
     auto it = m_publisherCount.find(i_topic);
@@ -193,6 +222,7 @@ int Participant::publisherCount(std::string const& i_topic) const {
     }
 }
 
+// Get the count. Note the mutex
 int Participant::subscriberCount(std::string const& i_topic) const {
     std::unique_lock<std::mutex> guard(m_countMutex);
     auto it = m_subscriberCount.find(i_topic);
@@ -253,6 +283,9 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport c
     return topic;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Publisher definitions for untemplated methods
+
 Publisher::Publisher(std::shared_ptr<efd::DataWriter> i_writer, std::string const& i_topicName)
     : m_writer(i_writer)
     , m_topicName(i_topicName)
@@ -289,4 +322,4 @@ std::ostream& operator<<(std::ostream& os, Guid const& i_guid)
     return os << *first << "-" << *second << "-" << i_guid.sequence;
 }
 
-}
+} // namespace lt

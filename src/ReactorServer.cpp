@@ -13,7 +13,7 @@ void ReactorServerBackend::logConnectionStatus() const {
     LT_LOG << m_participant.get() << "\n";
 }
 
-void ReactorServerBackend::progress(Guid const& i_id, int i_progress) {
+void ReactorServerBackend::progress(Guid const& i_id, int i_progress, efr::SerializedPayload_t& i_payload) {
     LockGuard guard(m_mutex);
     auto it = m_session.find(i_id);
     if (it != m_session.end()) {
@@ -33,6 +33,7 @@ void ReactorServerBackend::progress(Guid const& i_id, int i_progress) {
            << "  Session ID " << i_id << " progress " << i_progress << "\n";
     std::unique_ptr<reactor_progress> message(new reactor_progress);
     message->progress(i_progress);
+    message->data().insert(message->data().end(), i_payload.data, i_payload.data + i_payload.length);
     m_progressSender.publish(std::move(message), m_progressSender.guid(), i_id);
 }
 
@@ -53,7 +54,8 @@ bool ReactorServerBackend::isAlive(Guid const& i_id) const {
 
 void ReactorServerBackend::recordReply(Guid const& i_id)
 {
-    progress(i_id, PROG_SUCCESS);
+    efr::SerializedPayload_t noPayload;
+    progress(i_id, PROG_SUCCESS, noPayload);
     LockGuard guard(m_mutex);
     auto it = m_session.find(i_id);
     if (it != m_session.end()) {

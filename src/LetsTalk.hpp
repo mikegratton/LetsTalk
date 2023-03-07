@@ -240,6 +240,7 @@ protected:
 /*
  * A type-erased publisher object. This is used to send
  * data on a topic.  These are created by the Participant.
+ * This is a lightweight class and may be cheaply copied.
  */
 class Publisher {
 public:
@@ -257,7 +258,8 @@ public:
     bool publish(std::unique_ptr<T> i_data);
     
     /**
-     * Publish with a given ID, related ID, and a good/bad flag
+     * Publish with a given ID, related ID, and a good/bad flag. This is 
+     * mainly used by the request/response and reactors.
      */
     template<class T>
     bool publish(std::unique_ptr<T> i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad=false);
@@ -270,7 +272,7 @@ public:
     Publisher() = default;
     
 protected:
-    friend Participant;
+    friend class Participant;
 
     Publisher(std::shared_ptr<efd::DataWriter> i_writer, std::string const& i_topicName);
     
@@ -289,8 +291,7 @@ protected:
  * Each request returns a future response that can be waited upon for the 
  * reply.  These are constructed by the Participant.
  * 
- * Note that std::runtime_error may be thrown if the service indicates 
- * an error.
+ * @throws std::runtime_error if the service indicates an error.
  */
 template<class Req, class Rep>
 class Requester : public efd::DataReaderListener {
@@ -303,7 +304,7 @@ public:
     
 protected:
     
-    friend Participant;
+    friend class Participant;
     
     /// Specialized listener to correlate requests with replies
     struct OnReply: public efd::DataReaderListener {

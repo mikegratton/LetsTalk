@@ -10,31 +10,50 @@ namespace detail {
 class ReactorClientBackend;
 }
 
-template<class Req, class Rep>
+template<class Req, class Rep, class ProgressData=reactor_void_progress>
 class ReactorClient {
 public:
 
+    /**
+     * Construct a reactor client that makes requests to i_serviceName
+     * @param i_participant Participant to use for communications
+     * @param i_serviceName Name of this service 
+     */
     ReactorClient(ParticipantPtr i_participant, std::string const& i_serviceName);
 
+    /**
+     * Each session is modeled by this class. It is lightweight and copyable.
+     */
     class Session {
     public:
+        
+        /// Get the current progress (0 to 100)
         int progress() const;
+        
+        // Get the progress data. All data sent is queued.
+        std::unique_ptr<ProgressData> progressData(std::chrono::nanoseconds const& i_wait = std::chrono::nanoseconds(0));
 
+        /// Check if this session is alive
         bool isAlive() const;
 
+        /// Cancel the request
         void cancel();
 
+        /// Get the response. Will return nullptr if the response is not ready by i_wait
         std::unique_ptr<Rep> get(std::chrono::nanoseconds const& i_wait = std::chrono::nanoseconds(0));
 
+    protected:
+        friend class ReactorClient;
         Session(std::shared_ptr<detail::ReactorClientBackend> i_backend, Guid i_id);
 
-    protected:
         std::shared_ptr<detail::ReactorClientBackend> m_backend;
         Guid m_id;
     };
 
+    /// Make a request to the reactor service
     Session request(std::unique_ptr<Req> i_request);
 
+    /// Logs debug information about the connections if LT_VERBOSE is defined
     void logConnectionStatus() const;
 
 protected:
@@ -46,6 +65,7 @@ protected:
 
 namespace detail {
 
+/// Generic backend for all clients
 class ReactorClientBackend {
 public:
     void logConnectionStatus() const;
@@ -56,6 +76,7 @@ public:
 
     int progress(Guid const& i_id);
 
+    std::unique_ptr<reactor_progress> progressData(Guid const& i_id, std::chrono::nanoseconds i_wait);
 
     template<class Req, class Rep>
     void connect() {
@@ -105,6 +126,7 @@ protected:
 
     struct SessionData {
         int progress;
+        ThreadSafeQueue<reactor_progress> progressData;
         std::shared_ptr<std::promise<void*>> promise;
         std::future<void*> replyFuture;
         std::function<void(void)> deleter;
@@ -122,45 +144,67 @@ protected:
 
 }
 
-template<class Req, class Rep>
-ReactorClient<Req, Rep>::ReactorClient(ParticipantPtr i_participant, std::string const& i_serviceName) {
+template<class Req, class Rep, class ProgressData>
+ReactorClient<Req, Rep, ProgressData>::ReactorClient(ParticipantPtr i_participant, std::string const& i_serviceName) {
     m_backend = std::make_shared<detail::ReactorClientBackend>(i_participant, i_serviceName);
     m_backend->connect<Req, Rep>();
 }
 
 
-template<class Req, class Rep>
-typename ReactorClient<Req, Rep>::Session ReactorClient<Req, Rep>::request(std::unique_ptr<Req> i_request) {
+template<class Req, class Rep, class ProgressData>
+typename ReactorClient<Req, Rep, ProgressData>::Session ReactorClient<Req, Rep, ProgressData>::request(std::unique_ptr<Req> i_request) {
     logConnectionStatus();
     return Session(m_backend, m_backend->startNewSession(std::move(i_request)));
 }
 
-template<class Req, class Rep>
-void ReactorClient<Req,Rep>::logConnectionStatus() const { m_backend->logConnectionStatus(); }
+template<class Req, class Rep, class ProgressData>
+void ReactorClient<Req,Rep,ProgressData>::logConnectionStatus() const { m_backend->logConnectionStatus(); }
 
-template<class Req, class Rep>
-int ReactorClient<Req, Rep>::Session::progress() const {
+template<class Req, class Rep, class ProgressData>
+int ReactorClient<Req, Rep, ProgressData>::Session::progress() const {
     return m_backend->progress(m_id);
 }
-template<class Req, class Rep>
-bool ReactorClient<Req, Rep>::Session::isAlive() const {
+
+template<class Req, class Rep, class ProgressData>
+std::unique_ptr<ProgressData> ReactorClient<Req, Rep, ProgressData>::Session::progressData(std::chrono::nanoseconds const& i_wait)
+{
+    auto progressDataPtr = m_backend->progressData(m_id, i_wait);
+    if (progressDataPtr) {
+        std::unique_ptr<ProgressData> data(new ProgressData);
+        PubSubType<ProgressData> deser;
+        efr::SerializedPayload_t rawData; 
+        rawData.length = progressDataPtr->data().size();
+        rawData.data = progressDataPtr->data().data();
+        if (rawData.length == 0) {
+            return nullptr;
+        }
+        rawData.encapsulation = CDR_LE; // FIXME how do you know?
+        deser.deserialize(&rawData, data.get()); 
+        rawData.data = nullptr; // Prevent double free
+        return data;
+    }
+    return nullptr;
+}
+
+template<class Req, class Rep, class ProgressData>
+bool ReactorClient<Req, Rep, ProgressData>::Session::isAlive() const {
     return m_backend->isAlive(m_id);
 }
 
-template<class Req, class Rep>
-void ReactorClient<Req, Rep>::Session::cancel() {
+template<class Req, class Rep, class ProgressData>
+void ReactorClient<Req, Rep, ProgressData>::Session::cancel() {
     m_backend->cancel(m_id);
 }
 
-template<class Req, class Rep>
-std::unique_ptr<Rep> ReactorClient<Req, Rep>::Session::get(std::chrono::nanoseconds const& i_wait) {
+template<class Req, class Rep, class ProgressData>
+std::unique_ptr<Rep> ReactorClient<Req, Rep, ProgressData>::Session::get(std::chrono::nanoseconds const& i_wait) {
     void* rawPtr = m_backend->get(m_id, i_wait);
     return std::unique_ptr<Rep>((Rep*) rawPtr);
     
 }
 
-template<class Req, class Rep>
-ReactorClient<Req, Rep>::Session::Session(std::shared_ptr<detail::ReactorClientBackend> i_backend, Guid i_id)
+template<class Req, class Rep, class ProgressData>
+ReactorClient<Req, Rep, ProgressData>::Session::Session(std::shared_ptr<detail::ReactorClientBackend> i_backend, Guid i_id)
     : m_backend(i_backend)
     , m_id(i_id) {
 }

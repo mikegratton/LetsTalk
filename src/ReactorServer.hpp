@@ -8,7 +8,7 @@ namespace detail {
 class ReactorServerBackend;
 }
 
-template<class Req, class Rep>
+template<class Req, class Rep, class ProgressData = reactor_void_progress>
 class ReactorServer {
 public:
     class Session {
@@ -17,7 +17,7 @@ public:
         Req const* request() const { return m_request.get(); }
 
         /// Transmit progress information to the client
-        void progress(int i_progress);
+        void progress(int i_progress, std::unique_ptr<ProgressData> i_data = nullptr);
 
         /// Check that the client hasn't cancelled this session, or that it isn't already complete
         bool isAlive() const;
@@ -28,20 +28,11 @@ public:
         /// Mark the request as failed
         void fail();
         
-        ~Session();
-        
     protected:
 
         friend class ReactorServer;
         
-        Session(std::shared_ptr<detail::ReactorServerBackend> i_backend, std::shared_ptr<Req> i_request, Guid i_id)
-            : m_backend(i_backend)
-            , m_request(i_request)
-            , m_id(i_id) {
-            if (m_backend) {
-                progress(PROG_START);
-            }
-        }
+        Session(std::shared_ptr<detail::ReactorServerBackend> i_backend, std::shared_ptr<Req> i_request, Guid i_id);
         
         std::shared_ptr<detail::ReactorServerBackend> m_backend;
         std::shared_ptr<Req> m_request;
@@ -51,14 +42,14 @@ public:
 
     ReactorServer(ParticipantPtr m_participant, std::string const& i_service);
 
-    // Check if there is a pending session
+    /// Check if there is a pending session
     bool havePendingSession() const;
 
-    // Get the next pending request as a new session object. If there are no pending requests,
-    // this retuns a session object where isAlive() returns false
+    /// Get the next pending request as a new session object. If there are no pending requests,
+    /// this retuns a session object where isAlive() returns false
     Session getPendingSession(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 
-    // For debugging
+    /// For debugging. Prints connection status if LT_VERBOSE is defined
     void logConnectionStatus() const;
     
 protected:
@@ -104,7 +95,7 @@ class ReactorServerBackend {
 public:
     void logConnectionStatus() const;
 
-    void progress(Guid const& i_id, int i_progress);
+    void progress(Guid const& i_id, int i_progress, efr::SerializedPayload_t& i_payload);
 
     bool isAlive(Guid const& i_id) const;
 
@@ -187,13 +178,13 @@ void ReactorServerBackend::subscribeToRequest() {
 }
 }
 
-template<class Req, class Rep>
-bool ReactorServer<Req,Rep>::havePendingSession() const {
+template<class Req, class Rep, class P>
+bool ReactorServer<Req,Rep,P>::havePendingSession() const {
     return m_backend->havePendingSession();
 }
 
-template<class Req, class Rep>
-typename ReactorServer<Req,Rep>::Session ReactorServer<Req,Rep>::getPendingSession(std::chrono::nanoseconds i_wait) {
+template<class Req, class Rep, class P>
+typename ReactorServer<Req,Rep,P>::Session ReactorServer<Req,Rep, P>::getPendingSession(std::chrono::nanoseconds i_wait) {
     logConnectionStatus();
     m_backend->pruneDeadSessions();    
     auto s = m_backend->getPendingSession<Req>(i_wait);
@@ -203,23 +194,28 @@ typename ReactorServer<Req,Rep>::Session ReactorServer<Req,Rep>::getPendingSessi
     return Session(nullptr, nullptr, Guid::UNKNOWN());
 }
 
-template<class Req, class Rep>
-void ReactorServer<Req,Rep>::logConnectionStatus() const { m_backend->logConnectionStatus(); }
+template<class Req, class Rep, class P>
+void ReactorServer<Req,Rep,P>::logConnectionStatus() const { m_backend->logConnectionStatus(); }
 
-template<class Req, class Rep>
-void ReactorServer<Req,Rep>::Session::progress(int i_progress) {
+template<class Req, class Rep, class ProgressData>
+void ReactorServer<Req,Rep, ProgressData>::Session::progress(int i_progress, std::unique_ptr<ProgressData> i_data) {
     if (m_backend) {
-        m_backend->progress(m_id, i_progress);
+        efr::SerializedPayload_t payload;
+        if ( i_data && typeid(ProgressData) != typeid(reactor_void_progress)){
+            PubSubType<ProgressData> ser;
+            ser.serialize(i_data.get(), &payload);
+        }
+        m_backend->progress(m_id, i_progress, payload);
     }
 }
 
-template<class Req, class Rep>
-bool ReactorServer<Req,Rep>::Session::isAlive() const {
+template<class Req, class Rep, class P>
+bool ReactorServer<Req,Rep,P>::Session::isAlive() const {
     return (m_backend && m_backend->isAlive(m_id));
 }
 
-template<class Req, class Rep>
-void ReactorServer<Req,Rep>::Session::reply(std::unique_ptr<Rep> i_reply) {
+template<class Req, class Rep, class P>
+void ReactorServer<Req,Rep,P>::Session::reply(std::unique_ptr<Rep> i_reply) {
     if (nullptr == m_backend) {
         return;
     }
@@ -227,27 +223,32 @@ void ReactorServer<Req,Rep>::Session::reply(std::unique_ptr<Rep> i_reply) {
     m_backend.reset();
 }
 
-template<class Req, class Rep>
-void ReactorServer<Req,Rep>::Session::fail() {
+template<class Req, class Rep, class P>
+void ReactorServer<Req,Rep,P>::Session::fail() {
     if (nullptr == m_backend) {
         return;
     }
-    m_backend->progress(m_id, PROG_FAILED);
+    progress(PROG_FAILED);
     m_backend.reset();
 }
 
-template<class Req, class Rep>
-ReactorServer<Req, Rep>::ReactorServer(ParticipantPtr i_participant, std::string const& i_service)
+template<class Req, class Rep, class P>
+ReactorServer<Req, Rep,P>::ReactorServer(ParticipantPtr i_participant, std::string const& i_service)
     : m_backend(std::make_shared<detail::ReactorServerBackend>(i_participant,
                 i_participant->advertise<Rep>(reactorReplyName(i_service)),
                 i_service)) {
     m_backend->subscribeToRequest<Req>();
 }
 
-template<class Req, class Rep>
-ReactorServer<Req, Rep>::Session::~Session()
-{
-    
-}
+template<class Req, class Rep, class P>
+ReactorServer<Req, Rep, P>::Session::Session(std::shared_ptr<detail::ReactorServerBackend> i_backend, 
+                                          std::shared_ptr<Req> i_request, Guid i_id)
+            : m_backend(i_backend)
+            , m_request(i_request)
+            , m_id(i_id) {
+            if (m_backend) {
+                progress(PROG_START);
+            }
+        }
 
 }

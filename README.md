@@ -140,3 +140,13 @@ are stored in the build directory.  If the IDL is changed, make/ninja will corre
 re-run the IDL compiler, recompile the IDL target, and re-link.  The intention is 
 to have machine-generated code segregated from the rest of the codebase.  More options
 for controlling the include path are documented in IdlTarget.cmake.
+
+# TODO
+
+1. Version script and proper cmake/install
+
+2. Test custom progress data
+
+3. Update bundled fast dds with cmake fixes and "ignore" feature
+
+4. Find lingering failed reply bug
