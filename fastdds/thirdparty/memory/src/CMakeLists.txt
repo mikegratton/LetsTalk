@@ -49,7 +49,7 @@ set(header
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp
         ${header_path}/virtual_memory.hpp
-        ${header_path}/container_node_sizes_impl.hpp)
+        ${header_path}/detail/container_node_sizes_impl.hpp)
 
 set(src
         detail/align.cpp
