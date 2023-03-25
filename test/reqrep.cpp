@@ -58,6 +58,8 @@ TEST_CASE("FailedRequest")
     
     lt::ParticipantPtr p2 = lt::Participant::create();
     auto requester = p2->request<HelloWorld, HelloWorld>("greet");
+    // Wait to connect
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     auto req = std::unique_ptr<HelloWorld>(new HelloWorld);
     req->index(0);
     req->message("Hello");

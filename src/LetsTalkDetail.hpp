@@ -192,6 +192,7 @@ namespace detail {
 std::string requestName(std::string i_name);
 std::string replyName(std::string i_name);
 efr::Time_t getBadTime();
+efr::SampleIdentity getBadId();
 
 ///////////////////////////////////////////////////////////////////
 // ServiceProvider is an internal active object used to convert a
@@ -270,13 +271,18 @@ void Requester<Req, Rep>::OnReply::on_data_available(efd::DataReader* i_reader) 
     auto code = i_reader->take_next_sample(data.get(), &info);
     if (code == ReturnCode_t::RETCODE_OK) {
         if (info.valid_data) {
-            auto it = requester->m_requests.find(detail::fromSampleId(info.related_sample_identity));
+            Guid good = detail::fromSampleId(info.related_sample_identity);
+            Guid bad = good.makeBadVersion();
+            std::unique_lock<std::mutex> guard(requester->m_lock);
+            auto it = requester->m_requests.find(good);
+            if (it != requester->m_requests.end()) {    
+                it->second.set_value(std::move(data));
+                requester->m_requests.erase(it);
+                return;
+            }
+            it = requester->m_requests.find(bad);
             if (it != requester->m_requests.end()) {
-                if (info.source_timestamp == detail::getBadTime()) {
-                    it->second.set_exception(std::make_exception_ptr(std::runtime_error("RPC failed")));
-                } else {
-                    it->second.set_value(std::move(data));
-                }
+                it->second.set_exception(std::make_exception_ptr(std::runtime_error("RPC failed")));  
                 requester->m_requests.erase(it);
             }
         }
@@ -308,6 +314,31 @@ Requester<Req, Rep>::Requester(ParticipantPtr i_participant,
 }
 
 template<class Req, class Rep>
+Requester<Req, Rep>::Requester(Requester const& i_other)
+: m_requestPub(i_other.m_requestPub)
+, m_sessionId(i_other.m_sessionId)
+, m_serviceName(i_other.m_serviceName)
+{
+}
+
+template<class Req, class Rep>
+Requester<Req, Rep>::Requester(Requester&& i_other)
+: m_requestPub(i_other.m_requestPub)
+, m_sessionId(i_other.m_sessionId)
+, m_requests(std::move(i_other.m_requests))
+, m_serviceName(i_other.m_serviceName)
+{
+}
+
+template<class Req, class Rep>
+Requester<Req, Rep> const& Requester<Req, Rep>::operator=(Requester const& i_other)
+{
+    m_requestPub = i_other.m_requestPub;
+    m_sessionId = i_other.m_sessionId;
+    m_serviceName = i_other.m_serviceName;
+}
+
+template<class Req, class Rep>
 std::future<std::unique_ptr<Rep>> Requester<Req, Rep>::request(std::shared_ptr<Req> i_request) {
     // Determine the request id
     efr::WriteParams params;
@@ -315,6 +346,7 @@ std::future<std::unique_ptr<Rep>> Requester<Req, Rep>::request(std::shared_ptr<R
     params.sample_identity(detail::toSampleId(m_sessionId));
     // Send the request
     m_requestPub->write(i_request.get(), params);
+    std::unique_lock<std::mutex> guard(m_lock);
     return m_requests[m_sessionId].get_future();
 }
 } // namespace lt

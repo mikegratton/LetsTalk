@@ -307,10 +307,11 @@ bool Publisher::doPublish(void* i_data, Guid const& i_myId, Guid const& i_relate
         return false;
     }
     efr::WriteParams i_correlation;    
-    i_correlation.sample_identity(detail::toSampleId(i_myId));
-    i_correlation.related_sample_identity(detail::toSampleId(i_relatedId));
+    i_correlation.sample_identity(detail::toSampleId(i_myId));    
     if (i_bad) {
-        i_correlation.source_timestamp(detail::getBadTime());
+        i_correlation.related_sample_identity(detail::toSampleId(i_relatedId.makeBadVersion()));
+    } else {        
+        i_correlation.related_sample_identity(detail::toSampleId(i_relatedId));
     }
     return m_writer->write(i_data, i_correlation);
 }

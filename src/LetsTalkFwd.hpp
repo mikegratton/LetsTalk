@@ -37,6 +37,8 @@ struct Guid
     Guid() { memset(data, 0, 16); sequence = 0; }
     static Guid UNKNOWN() { return Guid(); }    
     void increment() { sequence += 1; }    
+    Guid makeBadVersion() const;
+    bool isBadVersionOf(Guid const& i_other) const;
 };
 
 std::ostream& operator<<(std::ostream& os, Guid const& i_guid);

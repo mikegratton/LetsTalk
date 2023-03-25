@@ -66,6 +66,5 @@ macro(IdlTarget name)
         PUBLIC 
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:include/${name}>
-        )
-    # TODO install path?
+        )    
 endmacro()

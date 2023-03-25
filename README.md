@@ -94,11 +94,6 @@ Let's talk offers three communication patters:
   useful in robotics where calculations or actions take appreciable 
   time during which the requesting process may need to cancel or 
   retask the service provider as the situation changes.
-  
-While the publish/subscribe are vanilla DDS, the request/response uses
-a magic sample timestamp to communicate failure. As such, it won't work
-with other DDS vendors.  (I hope to remove this limitation later, but
-this was the only working pathway with FastDDS I found.)
 
 The reactor is likewise bound to Let's Talk, and it is unlikely to become
 more standards compliant since there are few reactor implementations in
@@ -148,5 +143,3 @@ for controlling the include path are documented in IdlTarget.cmake.
 2. Test custom progress data
 
 3. Update bundled fast dds with cmake fixes and "ignore" feature
-
-4. Find lingering failed reply bug

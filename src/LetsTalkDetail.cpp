@@ -10,6 +10,19 @@
 
 namespace lt {
 
+Guid Guid::makeBadVersion() const
+{
+    Guid bad(*this);
+    bad.sequence = ~bad.sequence;
+    return bad;
+}
+
+bool Guid::isBadVersionOf(Guid const& i_other) const
+{
+    Guid i_twin = i_other.makeBadVersion();
+    return (i_twin == *this);
+}
+    
 namespace detail {
 
 
@@ -180,6 +193,11 @@ const bool LT_VERBOSE = check_verbose();
 efr::Time_t getBadTime()
 {
     return efr::Time_t(1,1);
+}
+
+efr::SampleIdentity getBadId()
+{
+    return toSampleId(Guid::UNKNOWN());
 }
 
 } // detail

@@ -294,13 +294,16 @@ protected:
  * @throws std::runtime_error if the service indicates an error.
  */
 template<class Req, class Rep>
-class Requester : public efd::DataReaderListener {
+class Requester {
 public:
         
     std::string const& serviceName() const { return m_serviceName; }
     
     std::future<std::unique_ptr<Rep>> request(std::shared_ptr<Req> i_request);
-       
+    
+    Requester(Requester const& i_other);
+    Requester(Requester&& i_other);
+    Requester const& operator=(Requester const& i_other);
     
 protected:
     
@@ -316,6 +319,7 @@ protected:
     Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
     
     using Promise = std::promise<std::unique_ptr<Rep>>;
+    std::mutex m_lock;    
     std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests    
     Guid m_sessionId;
     std::map<Guid, Promise> m_requests; //! All pending requests
