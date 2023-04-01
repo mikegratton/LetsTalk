@@ -91,7 +91,7 @@ if (FASTDDS_STATISTICS)
 endif()
 
 ## StatisticsDomainParticipantMockTests
-if (SQLITE3_SUPPORT AND FASTDDS_STATISTICS)
+if (SQLITE3_SUPPORT AND FASTDDS_STATISTICS AND NOT QNX)
     # this test includes C sources
     enable_language(C)
 
@@ -304,6 +304,7 @@ if (SQLITE3_SUPPORT AND FASTDDS_STATISTICS)
             ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/logging/Logging.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/SecurityManager.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/SecurityPluginFactory.cpp
+            ${PROJECT_SOURCE_DIR}/src/cpp/rtps/builtin/discovery/participant/DS/PDPSecurityInitiatorListener.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/artifact_providers/FileProvider.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/artifact_providers/Pkcs11Provider.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/authentication/PKIDH.cpp
@@ -373,7 +374,7 @@ if (SQLITE3_SUPPORT AND FASTDDS_STATISTICS)
             )
     endif()
     add_gtest(StatisticsDomainParticipantMockTests SOURCES ${STATISTICS_DOMAINPARTICIPANT_MOCK_TESTS_SOURCE})
-endif(SQLITE3_SUPPORT AND FASTDDS_STATISTICS)
+endif (SQLITE3_SUPPORT AND FASTDDS_STATISTICS AND NOT QNX)
 
 if(ANDROID)
     set_property(TARGET StatisticsQosTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")

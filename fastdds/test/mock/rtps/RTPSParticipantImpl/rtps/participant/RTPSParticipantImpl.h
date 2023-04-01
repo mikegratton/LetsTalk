@@ -21,7 +21,7 @@
 
 // Include first possible mocks (depending on include on CMakeLists.txt)
 #include <fastrtps/rtps/attributes/RTPSParticipantAttributes.h>
-#include <fastrtps/rtps/network/NetworkFactory.h>
+#include <rtps/network/NetworkFactory.h>
 #include <fastrtps/rtps/participant/RTPSParticipantListener.h>
 #include <fastrtps/rtps/reader/RTPSReader.h>
 #include <fastrtps/rtps/resources/ResourceEvent.h>
@@ -69,10 +69,10 @@ public:
             RTPSParticipant* participant,
             ParticipantDiscoveryInfo&& info) override
     {
-        onParticipantDiscovery(participant, info);
+        onParticipantDiscovery_mock(participant, info);
     }
 
-    MOCK_METHOD2(onParticipantDiscovery, void (RTPSParticipant*, const ParticipantDiscoveryInfo&));
+    MOCK_METHOD2(onParticipantDiscovery_mock, void (RTPSParticipant*, const ParticipantDiscoveryInfo&));
 
 #if HAVE_SECURITY
     void onParticipantAuthentication(
@@ -230,6 +230,8 @@ public:
 
         return true;
     }
+
+    MOCK_METHOD0(pdp, PDP * ());
 
     MOCK_METHOD0(pdpsimple, PDPSimple * ());
 

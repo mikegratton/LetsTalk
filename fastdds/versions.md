@@ -1,11 +1,30 @@
 Forthcoming
 -----------
 
+Version 2.10.0
+--------------
+
+* Enabled secure communications on Discovery Server (ABI break on RTPS layer)
+* Added non-standard DataWriterListener callback `on_unacknowledged_sample_removed` (API extension on DDS layer).
+* Added `RTPSWriter::has_been_delivered` virtual method (ABI break on RTPS layer).
+* Refactor `StatefulWriter::get_disable_positive_acks` as virtual method of `RTPSWriter` (ABI break on RTPS layer).
+* Network headers made private (ABI break on RTPS layer).
+* Added ignore RTPS entity API in RTPSParticipant (ABI break on RTPS layer).
+* Overload `PDP::removeWriterProxyData` and `PDP::removeReaderProxyData` (ABI break on RTPS layer).
+* Overload RTPS discovery callbacks in RTPSParticipantListener (ABI break on RTPS layer).
+* Overload DDS discovery callbacks in DomainParticipantListener (ABI break on DDS layer). 
+* Added on_incompatible_type to RTPS listeners (ABI break on RTPS layer).
+* Added support for QNX 7.1 build.
+
+Version 2.9.0
+-------------
+
 * Default memory management policy set to `PREALLOCATED_WITH_REALLOC_MEMORY_MODE` (behaviour change)
 * Statistics metrics are only calculated/accumulated when their corresponding DataWriter is enabled (behaviour change)
 * Added new log macros `EPROSIMA_LOG_INFO`, `EPROSIMA_LOG_WARNING` and `EPROSIMA_LOG_ERROR`, and change all old macros `logInfo`, `logWarning`, and `logError` in the project.
 * Added `ENABLE_OLD_LOG_MACROS` CMake option to support disabling the compilation of old log macros `logInfo`, `logWarning`, and `logError`.
 * FASTDDS_STATISTICS build option set to ON by default
+* Added XML profile validation option as a CLI new verb task: `"fastdds xml validate <xml_file(s)_path>"`. Added tests due to this new feature.
 
 Version 2.8.0
 -------------

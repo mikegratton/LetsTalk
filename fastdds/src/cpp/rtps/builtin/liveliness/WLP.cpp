@@ -483,7 +483,6 @@ bool WLP::assignRemoteEndpoints(
 {
     const NetworkFactory& network = mp_participant->network_factory();
     uint32_t endp = pdata.m_availableBuiltinEndpoints;
-    uint32_t partdet = endp;
     uint32_t auxendp = endp;
     bool use_multicast_locators = !mp_participant->getAttributes().builtin.avoid_builtin_multicast ||
             pdata.metatraffic_locators.unicast.empty();
@@ -505,10 +504,8 @@ bool WLP::assignRemoteEndpoints(
     temp_reader_proxy_data_.m_qos.m_durability.kind = TRANSIENT_LOCAL_DURABILITY_QOS;
     temp_reader_proxy_data_.m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
 
-    partdet &= DISC_BUILTIN_ENDPOINT_PARTICIPANT_DETECTOR; //Habria que quitar esta linea que comprueba si tiene PDP.
     auxendp &= BUILTIN_ENDPOINT_PARTICIPANT_MESSAGE_DATA_WRITER;
-
-    if ((auxendp != 0 || partdet != 0) && this->mp_builtinReader != nullptr)
+    if (auxendp != 0 && this->mp_builtinReader != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_LIVELINESS, "Adding remote writer to my local Builtin Reader");
         temp_writer_proxy_data_.guid().entityId = c_EntityId_WriterLiveliness;
@@ -517,7 +514,7 @@ bool WLP::assignRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= BUILTIN_ENDPOINT_PARTICIPANT_MESSAGE_DATA_READER;
-    if ((auxendp != 0 || partdet != 0) && this->mp_builtinWriter != nullptr)
+    if (auxendp != 0 && this->mp_builtinWriter != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_LIVELINESS, "Adding remote reader to my local Builtin Writer");
         temp_reader_proxy_data_.guid().entityId = c_EntityId_ReaderLiveliness;
@@ -527,7 +524,7 @@ bool WLP::assignRemoteEndpoints(
 #if HAVE_SECURITY
     auxendp = endp;
     auxendp &= BUILTIN_ENDPOINT_PARTICIPANT_MESSAGE_SECURE_DATA_WRITER;
-    if ((auxendp != 0 || partdet != 0) && this->mp_builtinReaderSecure != nullptr)
+    if (auxendp != 0 && this->mp_builtinReaderSecure != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_LIVELINESS, "Adding remote writer to my local Builtin Secure Reader");
         temp_writer_proxy_data_.guid().entityId = c_EntityId_WriterLivelinessSecure;
@@ -543,7 +540,7 @@ bool WLP::assignRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= BUILTIN_ENDPOINT_PARTICIPANT_MESSAGE_SECURE_DATA_READER;
-    if ((auxendp != 0 || partdet != 0) && this->mp_builtinWriterSecure != nullptr)
+    if (auxendp != 0 && this->mp_builtinWriterSecure != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_LIVELINESS, "Adding remote reader to my local Builtin Secure Writer");
         temp_reader_proxy_data_.guid().entityId = c_EntityId_ReaderLivelinessSecure;
@@ -838,6 +835,8 @@ bool WLP::add_local_reader(
 bool WLP::remove_local_reader(
         RTPSReader* reader)
 {
+    std::lock_guard<std::recursive_mutex> guard(*mp_builtinProtocols->mp_PDP->getMutex());
+
     auto it = std::find(
         readers_.begin(),
         readers_.end(),
@@ -866,12 +865,13 @@ bool WLP::automatic_liveliness_assertion()
 
 bool WLP::participant_liveliness_assertion()
 {
-    std::lock_guard<std::recursive_mutex> guard(*mp_builtinProtocols->mp_PDP->getMutex());
+    std::unique_lock<std::recursive_mutex> lock(*mp_builtinProtocols->mp_PDP->getMutex());
 
     if (0 < manual_by_participant_writers_.size())
     {
         if (pub_liveliness_manager_->is_any_alive(MANUAL_BY_PARTICIPANT_LIVELINESS_QOS))
         {
+            lock.unlock();
             return send_liveliness_message(manual_by_participant_instance_handle_);
         }
     }

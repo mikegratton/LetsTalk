@@ -15,13 +15,21 @@
 ###############################################################################
 # CMake build rules for FastCDR                                               #
 ###############################################################################
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.15)
 
 set(IS_TOP_LEVEL TRUE)
 if(PROJECT_SOURCE_DIR)
     set(IS_TOP_LEVEL FALSE)
 endif()
 
+# Set CMAKE_BUILD_TYPE to Release by default.
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Setting build type to 'Release' as none was specified.")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING
+        "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+        FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
 
 ###############################################################################
 # Version information                                                         #
@@ -82,10 +90,27 @@ string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
 set(${PROJECT_NAME}_DESCRIPTION_SUMMARY "C++ library for serialize using CDR serialization")
 set(${PROJECT_NAME}_DESCRIPTION "eProsima ${PROJECT_NAME_LARGE} library provides two serialization mechanisms. One is the standard CDR serialization mechanism, while the other is a faster implementation that modifies the standard.")
 
+message(STATUS "Configuring ${PROJECT_NAME_LARGE}")
+message(STATUS "Version: ${PROJECT_VERSION}")
+message(STATUS "To change the version modify the file configure.ac")
+
 ###############################################################################
 # Generation of windows installers.
 ###############################################################################
 option(EPROSIMA_INSTALLER "Activate the creation of a build to create windows installers" OFF)
+
+###############################################################################
+# CCache on Windows on CI
+###############################################################################
+if (MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
+    foreach(config DEBUG RELWITHDEBINFO)
+        foreach(lang C CXX)
+            set(flags_var "CMAKE_${lang}_FLAGS_${config}")
+            string(REPLACE "/Zi" "/Z7" ${flags_var} "${${flags_var}}")
+            set(${flags_var} "${${flags_var}}")
+        endforeach()
+    endforeach()
+endif()
 
 ###############################################################################
 # GCC colors if using CCache

@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <list>
 #include <mutex>
+#include <set>
 #include <sys/types.h>
 
 #if defined(_WIN32)
@@ -34,29 +35,24 @@
 #include <unistd.h>
 #endif // if defined(_WIN32)
 
-#include <rtps/messages/RTPSMessageGroup_t.hpp>
-#include <rtps/messages/SendBuffersManager.hpp>
-
-#include <fastdds/rtps/common/Guid.h>
-
 #include <fastdds/rtps/attributes/RTPSParticipantAttributes.h>
-
 #include <fastdds/rtps/builtin/data/ContentFilterProperty.hpp>
 #include <fastdds/rtps/builtin/data/ReaderProxyData.h>
 #include <fastdds/rtps/builtin/data/WriterProxyData.h>
-
+#include <fastdds/rtps/common/Guid.h>
 #include <fastdds/rtps/history/IChangePool.h>
 #include <fastdds/rtps/history/IPayloadPool.h>
-
-#include <fastdds/rtps/network/NetworkFactory.h>
-#include <fastdds/rtps/network/ReceiverResource.h>
-#include <fastdds/rtps/network/SenderResource.h>
-
 #include <fastdds/rtps/messages/MessageReceiver.h>
-
 #include <fastdds/rtps/resources/ResourceEvent.h>
-#include "../flowcontrol/FlowControllerFactory.hpp"
+#include <fastdds/rtps/transport/SenderResource.h>
+#include <fastrtps/utils/Semaphore.h>
+#include <fastrtps/utils/shared_mutex.hpp>
 
+#include "../flowcontrol/FlowControllerFactory.hpp"
+#include <rtps/messages/RTPSMessageGroup_t.hpp>
+#include <rtps/messages/SendBuffersManager.hpp>
+#include <rtps/network/NetworkFactory.h>
+#include <rtps/network/ReceiverResource.h>
 #include <statistics/rtps/StatisticsBase.hpp>
 
 #if HAVE_SECURITY
@@ -64,9 +60,6 @@
 #include <fastdds/rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
 #include <rtps/security/SecurityManager.h>
 #endif // if HAVE_SECURITY
-
-#include <fastrtps/utils/Semaphore.h>
-#include <fastrtps/utils/shared_mutex.hpp>
 
 namespace eprosima {
 
@@ -101,6 +94,7 @@ class ReaderAttributes;
 class ReaderHistory;
 class ReaderListener;
 class StatefulReader;
+class PDP;
 class PDPSimple;
 class IPersistenceService;
 class WLP;
@@ -276,9 +270,12 @@ public:
             std::chrono::steady_clock::time_point& max_blocking_time_point)
     {
         bool ret_code = false;
+#if HAVE_STRICT_REALTIME
         std::unique_lock<std::timed_mutex> lock(m_send_resources_mutex_, std::defer_lock);
-
         if (lock.try_lock_until(max_blocking_time_point))
+#else
+        std::unique_lock<std::timed_mutex> lock(m_send_resources_mutex_);
+#endif // if HAVE_STRICT_REALTIME
         {
             ret_code = true;
 
@@ -410,6 +407,8 @@ public:
 #endif // if HAVE_SECURITY
 
     PDPSimple* pdpsimple();
+
+    PDP* pdp();
 
     WLP* wlp();
 
@@ -584,6 +583,13 @@ private:
 
     //! Determine if the RTPSParticipantImpl was initialized successfully.
     bool initialized_ = false;
+
+    //! Ignored entities collections
+    std::set<GuidPrefix_t> ignored_participants_;
+    std::set<GUID_t> ignored_writers_;
+    std::set<GUID_t> ignored_readers_;
+    //! Protect ignored entities collection concurrent access
+    mutable shared_mutex ignored_mtx_;
 
     RTPSParticipantImpl& operator =(
             const RTPSParticipantImpl&) = delete;
@@ -990,6 +996,60 @@ public:
      * Function run when the RTPSDomain is notified that the environment file has changed.
      */
     void environment_file_has_changed();
+
+    /**
+     * @brief Query if the participant is found in the ignored collection
+     *
+     * @param[in] participant_guid Participant to be queried
+     * @return True if found in the ignored collection. False otherwise.
+     */
+    bool is_participant_ignored(
+            const GuidPrefix_t& participant_guid);
+
+    /**
+     * @brief Query if the writer is found in the ignored collection
+     *
+     * @param[in] writer_guid Writer to be queried
+     * @return True if found in the ignored collection. False otherwise.
+     */
+    bool is_writer_ignored(
+            const GUID_t& writer_guid);
+
+    /**
+     * @brief Query if the reader is found in the ignored collection
+     *
+     * @param[in] reader_guid Reader to be queried
+     * @return True if found in the ignored collection. False otherwise.
+     */
+    bool is_reader_ignored(
+            const GUID_t& reader_guid);
+
+    /**
+     * @brief Add a Participant into the corresponding ignore collection.
+     *
+     * @param[in] participant_guid Participant that is to be ignored.
+     * @return True if correctly included into the ignore collection. False otherwise.
+     */
+    bool ignore_participant(
+            const GuidPrefix_t& participant_guid);
+
+    /**
+     * @brief Add a Writer into the corresponding ignore collection.
+     *
+     * @param[in] writer_guid Writer that is to be ignored.
+     * @return True if correctly included into the ignore collection. False otherwise.
+     */
+    bool ignore_writer(
+            const GUID_t& writer_guid);
+
+    /**
+     * @brief Add a Reader into the corresponding ignore collection.
+     *
+     * @param[in] reader_guid Reader that is to be ignored.
+     * @return True if correctly included into the ignore collection. False otherwise.
+     */
+    bool ignore_reader(
+            const GUID_t& reader_guid);
 
     template <EndpointKind_t kind, octet no_key, octet with_key>
     static bool preprocess_endpoint_attributes(

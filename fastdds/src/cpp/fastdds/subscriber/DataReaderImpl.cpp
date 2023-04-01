@@ -494,19 +494,18 @@ ReturnCode_t DataReaderImpl::read_or_take(
         return code;
     }
 
-    auto max_blocking_time = std::chrono::steady_clock::now() +
 #if HAVE_STRICT_REALTIME
+    auto max_blocking_time = std::chrono::steady_clock::now() +
             std::chrono::microseconds(::TimeConv::Time_t2MicroSecondsInt64(qos_.reliability().max_blocking_time));
-#else
-            std::chrono::hours(24);
-#endif // if HAVE_STRICT_REALTIME
-
     std::unique_lock<RecursiveTimedMutex> lock(reader_->getMutex(), std::defer_lock);
 
     if (!lock.try_lock_until(max_blocking_time))
     {
         return ReturnCode_t::RETCODE_TIMEOUT;
     }
+#else
+    std::lock_guard<RecursiveTimedMutex> _(reader_->getMutex());
+#endif // if HAVE_STRICT_REALTIME
 
     set_read_communication_status(false);
 
@@ -693,19 +692,19 @@ ReturnCode_t DataReaderImpl::read_or_take_next_sample(
         return ReturnCode_t::RETCODE_NO_DATA;
     }
 
-    auto max_blocking_time = std::chrono::steady_clock::now() +
 #if HAVE_STRICT_REALTIME
+    auto max_blocking_time = std::chrono::steady_clock::now() +
             std::chrono::microseconds(::TimeConv::Time_t2MicroSecondsInt64(qos_.reliability().max_blocking_time));
-#else
-            std::chrono::hours(24);
-#endif // if HAVE_STRICT_REALTIME
-
     std::unique_lock<RecursiveTimedMutex> lock(reader_->getMutex(), std::defer_lock);
 
     if (!lock.try_lock_until(max_blocking_time))
     {
         return ReturnCode_t::RETCODE_TIMEOUT;
     }
+
+#else
+    std::lock_guard<RecursiveTimedMutex> _(reader_->getMutex());
+#endif // if HAVE_STRICT_REALTIME
 
     set_read_communication_status(false);
 
@@ -1920,6 +1919,13 @@ ReadCondition* DataReaderImpl::create_readcondition(
         return nullptr;
     }
 
+
+    eprosima::fastdds::dds::detail::StateFilter current_mask{};
+    if (nullptr != reader_)
+    {
+        current_mask = get_last_mask_state();
+    }
+
     std::lock_guard<std::recursive_mutex> _(get_conditions_mutex());
 
     // Check if there is an associated ReadConditionImpl object already
@@ -1950,6 +1956,7 @@ ReadCondition* DataReaderImpl::create_readcondition(
     {
         // create a new one
         impl = std::make_shared<detail::ReadConditionImpl>(*this, key);
+        impl->set_trigger_value(current_mask);
         // Add the implementation object to the collection
         read_conditions_.insert(impl.get());
     }
@@ -2037,28 +2044,29 @@ void DataReaderImpl::try_notify_read_conditions() noexcept
     }
 
     // Update and check the mask change requires notification
+    eprosima::fastdds::dds::detail::StateFilter current_mask{};
+    bool notify = false;
     {
         std::lock_guard<RecursiveTimedMutex> _(reader_->getMutex());
 
         auto old_mask = last_mask_state_;
         last_mask_state_ = history_.get_mask_status();
+        current_mask = last_mask_state_;
 
-        bool notify = last_mask_state_.sample_states & ~old_mask.sample_states ||
+        notify = last_mask_state_.sample_states & ~old_mask.sample_states ||
                 last_mask_state_.view_states & ~old_mask.view_states ||
                 last_mask_state_.instance_states & ~old_mask.instance_states;
-
-        if (!notify)
-        {
-            return;
-        }
     }
 
     // traverse the conditions notifying
     std::lock_guard<std::recursive_mutex> _(get_conditions_mutex());
-
     for (detail::ReadConditionImpl* impl : read_conditions_)
     {
-        impl->notify();
+        impl->set_trigger_value(current_mask);
+        if (notify)
+        {
+            impl->notify();
+        }
     }
 }
 

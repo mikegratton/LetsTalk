@@ -30,7 +30,7 @@ endif()
 ###############################################################################
 # Project                                                                     #
 ###############################################################################
-project(fastrtps VERSION "2.9.0" LANGUAGES C CXX)
+project(fastrtps VERSION "2.10.0" LANGUAGES C CXX)
 
 set(PROJECT_NAME_LARGE "Fast RTPS")
 string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
@@ -81,6 +81,19 @@ else()
     if(EPROSIMA_BUILD)
         string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     endif()
+endif()
+
+###############################################################################
+# CCache on Windows on CI
+###############################################################################
+if (MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
+    foreach(config DEBUG RELWITHDEBINFO)
+        foreach(lang C CXX)
+            set(flags_var "CMAKE_${lang}_FLAGS_${config}")
+            string(REPLACE "/Zi" "/Z7" ${flags_var} "${${flags_var}}")
+            set(${flags_var} "${${flags_var}}")
+        endforeach()
+    endforeach()
 endif()
 
 ###############################################################################
@@ -240,10 +253,14 @@ include_directories(thirdparty/filewatch)
 ###############################################################################
 option(SECURITY "Activate security" OFF)
 
-if(SECURITY)
-    find_package(OpenSSL REQUIRED)
+if(QNX)
+    set(OPENSSL_FOUND 1)
 else()
-    find_package(OpenSSL)
+    if(SECURITY)
+        find_package(OpenSSL REQUIRED)
+    else()
+        find_package(OpenSSL)
+    endif()
 endif()
 
 if(OPENSSL_FOUND)
@@ -261,6 +278,20 @@ if(SECURITY OR TLS_FOUND)
     set(LINK_SSL 1)
 else()
     set(LINK_SSL 0)
+endif()
+
+if(SECURITY AND QNX)
+    add_library(OpenSSL::SSL INTERFACE IMPORTED)
+    add_library(OpenSSL::Crypto INTERFACE IMPORTED)
+
+    set_target_properties(OpenSSL::SSL PROPERTIES
+        INTERFACE_LINK_LIBRARIES ssl
+    )
+    set_target_properties(OpenSSL::Crypto PROPERTIES
+        INTERFACE_LINK_LIBRARIES crypto
+    )
+
+    set(OPENSSL_LIBRARIES ssl crypto)
 endif()
 
 option(SQLITE3_SUPPORT "Activate SQLITE3 support" ON)
@@ -507,6 +538,12 @@ install(FILES ${PROJECT_SOURCE_DIR}/LICENSE
     COMPONENT licenses
     )
 
+# Install xml validator
+install(FILES ${PROJECT_SOURCE_DIR}/resources/xsd/fastRTPS_profiles.xsd
+    DESTINATION ${DATA_INSTALL_DIR}
+    COMPONENT xsd
+    )
+
 option(INSTALL_EXAMPLES "Install example" OFF)
 
 if(INSTALL_EXAMPLES)
@@ -549,8 +586,3 @@ if(BUILD_DOCUMENTATION)
             )
     endif()
 endif()
-
-
-#################################################################
-set(CPACK_GENERATOR TGZ)
-include(CPack)

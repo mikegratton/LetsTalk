@@ -20,6 +20,8 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 
+#include "BoostAtExitRegistry.hpp"
+
 namespace eprosima {
 namespace fastdds {
 namespace rtps {

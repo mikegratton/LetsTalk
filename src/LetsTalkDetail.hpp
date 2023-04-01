@@ -236,7 +236,8 @@ public:
                     if (nullptr == reply) {
                         isBad = true;
                         reply = std::unique_ptr<Rep>(new Rep);
-                        std::cout << "Setting error bit in reply\n";
+
+                        
                     }
                     m_sender.publish(std::move(reply), m_Id, relatedId, isBad);
                 });
@@ -293,7 +294,8 @@ void Requester<Req, Rep>::OnReply::on_data_available(efd::DataReader* i_reader) 
 template<class Req, class Rep>
 Requester<Req, Rep>::Requester(ParticipantPtr i_participant,
                                std::string const& i_serviceName)
-    : m_serviceName(i_serviceName) {
+    : m_participant(i_participant)
+    , m_serviceName(i_serviceName) {
     auto type = efd::TypeSupport(new PubSubType<Req>());
     auto topic = i_participant->getTopic(detail::requestName(i_serviceName), type, 1);
     if (nullptr == topic) {
@@ -311,6 +313,23 @@ Requester<Req, Rep>::Requester(ParticipantPtr i_participant,
     auto listen = new OnReply(this);
     i_participant->doSubscribe(detail::replyName(i_serviceName),
                                efd::TypeSupport(new PubSubType<Rep>()), listen, "", 1);
+}
+
+
+template<class Req, class Rep>
+bool Requester<Req, Rep>::isConnected() const
+{
+    int providerCount = m_participant->subscriberCount(detail::requestName(serviceName()));
+    if (providerCount > 1) {
+        LT_LOG << "Warning! Service " << serviceName() << " has " << providerCount << " providers.";
+    }
+    return providerCount > 0;
+}
+
+template<class Req, class Rep>
+bool Requester<Req, Rep>::impostorsExist() const
+{
+    return m_participant->subscriberCount(detail::requestName(serviceName())) > 1;
 }
 
 template<class Req, class Rep>

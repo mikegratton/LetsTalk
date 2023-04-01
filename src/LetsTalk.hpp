@@ -238,9 +238,8 @@ protected:
 
 
 /*
- * A type-erased publisher object. This is used to send
- * data on a topic.  These are created by the Participant.
- * This is a lightweight class and may be cheaply copied.
+ * A type-erased lightweight publisher object used to send  data on a topic.  
+ * These are created by the Participant and may be cheaply copied.
  */
 class Publisher {
 public:
@@ -305,6 +304,9 @@ public:
     Requester(Requester&& i_other);
     Requester const& operator=(Requester const& i_other);
     
+    bool isConnected() const;
+    bool impostorsExist() const;
+    
 protected:
     
     friend class Participant;
@@ -319,7 +321,8 @@ protected:
     Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
     
     using Promise = std::promise<std::unique_ptr<Rep>>;
-    std::mutex m_lock;    
+    std::mutex m_lock;  // Guards the requests map
+    std::shared_ptr<Participant> m_participant;
     std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests    
     Guid m_sessionId;
     std::map<Guid, Promise> m_requests; //! All pending requests

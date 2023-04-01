@@ -298,6 +298,71 @@ void EDPSimple::processPersistentData(
     // We don't need to awake the server thread because we are in it
 }
 
+EDPSimple::t_p_StatefulWriter EDPSimple::get_builtin_writer_history_pair_by_entity(
+        const EntityId_t& entity_id)
+{
+    t_p_StatefulWriter ret{nullptr, nullptr};
+
+    if (entity_id == c_EntityId_SEDPPubWriter)
+    {
+        ret = publications_writer_;
+
+    }
+    else if (entity_id == c_EntityId_SEDPSubWriter)
+    {
+        ret = subscriptions_writer_;
+    }
+#if HAVE_SECURITY
+    else if (entity_id == sedp_builtin_publications_secure_writer)
+    {
+        ret = publications_secure_writer_;
+    }
+    else if (entity_id == sedp_builtin_subscriptions_secure_writer)
+    {
+        ret = subscriptions_secure_writer_;
+    }
+#endif // HAVE_SECURITY
+    else
+    {
+        EPROSIMA_LOG_ERROR(RTPS_EDP, "Could not find the requested writer builtin endpoint");
+    }
+
+    return ret;
+}
+
+EDPSimple::t_p_StatefulReader EDPSimple::get_builtin_reader_history_pair_by_entity(
+        const EntityId_t& entity_id)
+{
+    t_p_StatefulReader ret{nullptr, nullptr};
+
+    if (entity_id == c_EntityId_SEDPPubReader || entity_id == c_EntityId_SEDPPubWriter)
+    {
+        ret = publications_reader_;
+    }
+    else if (entity_id == c_EntityId_SEDPSubReader || entity_id == c_EntityId_SEDPSubWriter)
+    {
+        ret = subscriptions_reader_;
+    }
+#if HAVE_SECURITY
+    else if (entity_id == sedp_builtin_publications_secure_reader ||
+            entity_id == sedp_builtin_publications_secure_writer)
+    {
+        ret = publications_secure_reader_;
+    }
+    else if (entity_id == sedp_builtin_subscriptions_secure_reader ||
+            entity_id == sedp_builtin_subscriptions_secure_writer)
+    {
+        ret = subscriptions_secure_reader_;
+    }
+#endif // HAVE_SECURITY
+    else
+    {
+        EPROSIMA_LOG_ERROR(RTPS_EDP, "Could not find the requested reader builtin endpoint");
+    }
+
+    return ret;
+}
+
 void EDPSimple::set_builtin_reader_history_attributes(
         HistoryAttributes& attributes)
 {
@@ -765,10 +830,9 @@ void EDPSimple::assignRemoteEndpoints(
     EPROSIMA_LOG_INFO(RTPS_EDP, "New DPD received, adding remote endpoints to our SimpleEDP endpoints");
     const NetworkFactory& network = mp_RTPSParticipant->network_factory();
     uint32_t endp = pdata.m_availableBuiltinEndpoints;
-    uint32_t auxendp = endp;
+    uint32_t auxendp;
     bool use_multicast_locators = !mp_PDP->getRTPSParticipant()->getAttributes().builtin.avoid_builtin_multicast ||
             pdata.metatraffic_locators.unicast.empty();
-    auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_ANNOUNCER;
 
     auto temp_reader_proxy_data = get_temporary_reader_proxies_pool().get();
 
@@ -788,8 +852,8 @@ void EDPSimple::assignRemoteEndpoints(
     temp_writer_proxy_data->m_qos.m_durability.kind = TRANSIENT_LOCAL_DURABILITY_QOS;
     temp_writer_proxy_data->m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
 
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
+    auxendp = endp;
+    auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_ANNOUNCER;
     if (auxendp != 0 && publications_reader_.first != nullptr) //Exist Pub Writer and i have pub reader
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Pub Writer to my Pub Reader");
@@ -799,8 +863,6 @@ void EDPSimple::assignRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_writer_.first != nullptr) //Exist Pub Detector
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Pub Reader to my Pub Writer");
@@ -809,8 +871,6 @@ void EDPSimple::assignRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_reader_.first != nullptr) //Exist Pub Announcer
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Writer to my Sub Reader");
@@ -820,8 +880,6 @@ void EDPSimple::assignRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_writer_.first != nullptr) //Exist Pub Announcer
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Reader to my Sub Writer");
@@ -832,8 +890,6 @@ void EDPSimple::assignRemoteEndpoints(
 #if HAVE_SECURITY
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_SECURE_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_secure_reader_.first != nullptr)
     {
         temp_writer_proxy_data->guid().entityId = sedp_builtin_publications_secure_writer;
@@ -850,8 +906,6 @@ void EDPSimple::assignRemoteEndpoints(
 
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_SECURE_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_secure_writer_.first != nullptr)
     {
         temp_reader_proxy_data->guid().entityId = sedp_builtin_publications_secure_reader;
@@ -866,8 +920,6 @@ void EDPSimple::assignRemoteEndpoints(
 
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_SECURE_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_secure_reader_.first != nullptr)
     {
         temp_writer_proxy_data->guid().entityId = sedp_builtin_subscriptions_secure_writer;
@@ -884,8 +936,6 @@ void EDPSimple::assignRemoteEndpoints(
 
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_SECURE_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_secure_writer_.first != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Reader to my Sub Writer");
@@ -912,8 +962,6 @@ void EDPSimple::removeRemoteEndpoints(
     uint32_t endp = pdata->m_availableBuiltinEndpoints;
     uint32_t auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_reader_.first != nullptr) //Exist Pub Writer and i have pub reader
     {
         tmp_guid.entityId = c_EntityId_SEDPPubWriter;
@@ -921,8 +969,6 @@ void EDPSimple::removeRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_writer_.first != nullptr) //Exist Pub Detector
     {
         tmp_guid.entityId = c_EntityId_SEDPPubReader;
@@ -930,8 +976,6 @@ void EDPSimple::removeRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_reader_.first != nullptr) //Exist Pub Announcer
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Writer to my Sub Reader");
@@ -940,8 +984,6 @@ void EDPSimple::removeRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_writer_.first != nullptr) //Exist Pub Announcer
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Reader to my Sub Writer");
@@ -952,8 +994,6 @@ void EDPSimple::removeRemoteEndpoints(
 #if HAVE_SECURITY
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_SECURE_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_secure_reader_.first != nullptr)
     {
         tmp_guid.entityId = sedp_builtin_publications_secure_writer;
@@ -966,8 +1006,6 @@ void EDPSimple::removeRemoteEndpoints(
 
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_PUBLICATION_SECURE_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && publications_secure_writer_.first != nullptr)
     {
         tmp_guid.entityId = sedp_builtin_publications_secure_reader;
@@ -980,8 +1018,6 @@ void EDPSimple::removeRemoteEndpoints(
 
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_SECURE_ANNOUNCER;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_secure_reader_.first != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Writer to my Sub Reader");
@@ -994,8 +1030,6 @@ void EDPSimple::removeRemoteEndpoints(
     }
     auxendp = endp;
     auxendp &= DISC_BUILTIN_ENDPOINT_SUBSCRIPTION_SECURE_DETECTOR;
-    //FIXME: FIX TO NOT FAIL WITH BAD BUILTIN ENDPOINT SET
-    //auxendp = 1;
     if (auxendp != 0 && subscriptions_secure_writer_.first != nullptr)
     {
         EPROSIMA_LOG_INFO(RTPS_EDP, "Adding SEDP Sub Reader to my Sub Writer");

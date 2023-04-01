@@ -75,6 +75,7 @@ using fastrtps::TopicAttributes;
 using fastrtps::SubscriberAttributes;
 using fastrtps::PublisherAttributes;
 using fastrtps::rtps::RTPSDomain;
+using fastrtps::rtps::RTPSDomainImpl;
 using fastrtps::rtps::RTPSParticipant;
 using fastrtps::rtps::ParticipantDiscoveryInfo;
 #if HAVE_SECURITY
@@ -257,7 +258,7 @@ ReturnCode_t DomainParticipantImpl::enable()
 
     // If DEFAULT_ROS2_MASTER_URI is specified then try to create default client if
     // that already exists.
-    RTPSParticipant* part = RTPSDomain::clientServerEnvironmentCreationOverride(
+    RTPSParticipant* part = RTPSDomainImpl::clientServerEnvironmentCreationOverride(
         domain_id_,
         false,
         rtps_attr,
@@ -826,15 +827,13 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
    }
  */
 
-/* TODO
-   bool DomainParticipantImpl::ignore_participant(
+bool DomainParticipantImpl::ignore_participant(
         const InstanceHandle_t& handle)
-   {
-    (void)handle;
+{
+    static_cast<void>(handle);
     EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
-   }
- */
+}
 
 /* TODO
    bool DomainParticipantImpl::ignore_topic(
@@ -846,25 +845,21 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
    }
  */
 
-/* TODO
-   bool DomainParticipantImpl::ignore_publication(
+bool DomainParticipantImpl::ignore_publication(
         const InstanceHandle_t& handle)
-   {
-    (void)handle;
+{
+    static_cast<void>(handle);
     EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
-   }
- */
+}
 
-/* TODO
-   bool DomainParticipantImpl::ignore_subscription(
+bool DomainParticipantImpl::ignore_subscription(
         const InstanceHandle_t& handle)
-   {
-    (void)handle;
+{
+    static_cast<void>(handle);
     EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
     return false;
-   }
- */
+}
 
 DomainId_t DomainParticipantImpl::get_domain_id() const
 {
