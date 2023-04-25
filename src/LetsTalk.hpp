@@ -1,11 +1,12 @@
 #pragma once
+#include <future>
 #include <map>
-#include <vector>
 #include <mutex>
+#include <vector>
+
 #include "LetsTalkFwd.hpp"
 #include "PubSubType.hpp"
 #include "ThreadSafeQueue.hpp"
-#include <future>
 
 namespace lt {
 
@@ -16,320 +17,289 @@ namespace lt {
  * Participants are handled as shared pointers.
  */
 class Participant : public std::enable_shared_from_this<Participant> {
-public:
+ public:
+  /**
+   * create() makes a new Participant.
+   *
+   * @param i_domain Domains are logically isolated pub/sub communities. Valid values are
+   *                 0 to 232
+   * @param i_qosProfile The name a of a settings "QOS" (Quality of Service) profile.
+   *                 Profiles are defined in XML.
+   *
+   */
+  static ParticipantPtr create(uint8_t i_domain = 0, std::string const& i_qosProfile = "");
+  ~Participant();
 
-    /**
-     * create() makes a new Participant. 
-     *
-     * @param i_domain Domains are logically isolated pub/sub communities. Valid values are
-     *                 0 to 232
-     * @param i_qosProfile The name a of a settings "QOS" (Quality of Service) profile.
-     *                 Profiles are defined in XML.
-     *
-     */
-    static ParticipantPtr create(uint8_t i_domain = 0, std::string const& i_qosProfile = "");
-    ~Participant();
+  /**
+   * subscribe<T>(topic, callback, profile)
+   *
+   * Register a callback on the named topic expecting type T.  When data arrives, the callback
+   * will be called.  Callbacks take the form
+   * ```
+   *   void my_callback(std::unique_ptr<T> new_data);
+   * ```
+   * Note that data is provided as a unique_ptr.
+   *
+   * @param i_topic Topic name to subscribe to
+   *
+   * @param i_callback Callback function or lambda.
+   *
+   * @param i_qosProfile Settings profile
+   *
+   * @param i_historyDepth Number of historical messages to store
+   */
+  template <class T, class C>
+  void subscribe(std::string const& i_topic, C i_callback, std::string const& i_qosProfile = "",
+                 int i_historyDepth = 1);
 
+  /**
+   * subscribe<T>(topic, profile, history)
+   *
+   * Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
+   * to the history level, at which point the oldest sample will be discarded.
+   *
+   * @param i_topic Topic name to subscribe to
+   *
+   * @param i_qosProfile Settings profile
+   *
+   * @param i_historyDepth Number of historical messages to store
+   */
+  template <class T>
+  QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 128);
 
-    /**
-     * subscribe<T>(topic, callback, profile)
-     *
-     * Register a callback on the named topic expecting type T.  When data arrives, the callback
-     * will be called.  Callbacks take the form
-     * ```
-     *   void my_callback(std::unique_ptr<T> new_data);
-     * ```
-     * Note that data is provided as a unique_ptr.
-     *
-     * @param i_topic Topic name to subscribe to
-     *
-     * @param i_callback Callback function or lambda.
-     *
-     * @param i_qosProfile Settings profile
-     *
-     * @param i_historyDepth Number of historical messages to store
-     */
-    template<class T, class C>
-    void subscribe(std::string const& i_topic, C i_callback, std::string const& i_qosProfile = "",
-                   int i_historyDepth=1);
+  /**
+   * unsubscribe(topic)
+   *
+   * Unsubscribe from the given topic if subscribed.
+   *
+   * @param i_topic Topic to unsubscribe from
+   */
+  void unsubscribe(std::string const& i_topic);
 
-    /**
-     * subscribeWithId<T>(topic, callback, profile)
-     *
-     * Register a callback on the named topic expecting type T.  When data arrives, the callback
-     * will be called.  Callbacks take the form
-     * ```
-     *   void my_callback(std::unique_ptr<T> new_data, Guid this_id, Guid related_id);
-     * ```
-     * Note that data is provided as a unique_ptr.
-     *
-     * @param i_topic Topic name to subscribe to
-     *
-     * @param i_callback Callback function or lambda.
-     *
-     * @param i_qosProfile Settings profile
-     *
-     * @param i_historyDepth Number of historical messages to store
-     */
-    template<class T, class C>
-    void subscribeWithId(std::string const& i_topic, C i_callback, std::string const& i_qosProfile = "",
-                   int i_historyDepth=1);
-    
-    /**
-     * subscribe<T>(topic, profile, history)
-     *
-     * Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
-     * to the history level, at which point the oldest sample will be discarded.
-     * 
-     * @param i_topic Topic name to subscribe to
-     *
-     * @param i_qosProfile Settings profile
-     *
-     * @param i_historyDepth Number of historical messages to store
-     */
-    template<class T>
-    QueuePtr<T> subscribe(std::string const& i_topic,
-                                     std::string const& i_qosProfile = "",
-                                     int i_historyDepth=128);
+  /**
+   * unadvertise(service)
+   *
+   * Stop providing the named service
+   *
+   * @param i_service Service to discontinue
+   */
+  void unadvertise(std::string const& i_service);
 
-    /**
-     * unsubscribe(topic)
-     *
-     * Unsubscribe from the given topic if subscribed.
-     *
-     * @param i_topic Topic to unsubscribe from
-     */
-    void unsubscribe(std::string const& i_topic);
+  /**
+   * advertise<T>(topic)
+   *
+   * Get a Publisher object you can use to send messages of type T on the topic.
+   *
+   * @param i_topic Name of the topic
+   *
+   * @param i_qosProfile Settings profile
+   *
+   * Note: Publisher is a lightweight class that is cheap to copy. It's primary API
+   * call is
+   * ```
+   * bool publish(std::unique_ptr<T> i_data);
+   * ```
+   * which returns true if the data was sent successfully.
+   */
+  template <class T>
+  Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 1);
 
-    /**
-     * unadvertise(service)
-     *
-     * Stop providing the named service
-     *
-     * @param i_service Service to discontinue
-     */
-    void unadvertise(std::string const& i_service);
+  /**
+   * std::unique_ptr<Rep> advertise(std::unique_ptr<Req> i_request)
+   */
+  template <class Req, class Rep, class C>
+  void advertise(std::string const& i_serviceName, C i_serviceProvider);
 
-    /**
-     * advertise<T>(topic)
-     *
-     * Get a Publisher object you can use to send messages of type T on the topic.
-     *
-     * @param i_topic Name of the topic
-     *
-     * @param i_qosProfile Settings profile
-     *
-     * Note: Publisher is a lightweight class that is cheap to copy. It's primary API
-     * call is
-     * ```
-     * bool publish(std::unique_ptr<T> i_data);
-     * ```
-     * which returns true if the data was sent successfully.
-     */
-    template<class T>
-    Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "",
-                        int i_historyDepth=1);
+  /**
+   * Build a requester object for making requests to a service. Each request
+   * is an object of type Req and will correspond to one response object of
+   * type Rep.
+   *
+   * Typically, this will look like
+   * ```
+   * auto requester = participant->request<Location,Temperature>("weatherService");
+   * auto location = std::unique_ptr<Location>(new Location(41.0, 70.0));
+   * auto temp = requester.request(std::move(location)).get();
+   * ```
+   *
+   */
+  template <class Req, class Rep>
+  Requester<Req, Rep> request(std::string const& i_serviceName);
 
-    /**
-     * std::unique_ptr<Rep> advertise(std::unique_ptr<Req> i_request) 
-     */
-    template<class Req, class Rep, class C>
-    void advertise(std::string const& i_serviceName, C i_serviceProvider);
-    
-    /**
-     * Build a requester object for making requests to a service. Each request
-     * is an object of type Req and will correspond to one response object of
-     * type Rep.
-     * 
-     * Typically, this will look like
-     * ```
-     * auto requester = participant->request<Location,Temperature>("weatherService");
-     * auto location = std::unique_ptr<Location>(new Location(41.0, 70.0));
-     * auto temp = requester.request(std::move(location)).get();     
-     * ```
-     * 
-     */
-    template<class Req, class Rep>
-    Requester<Req, Rep> request(std::string const& i_serviceName);
-    
-    
-    /**
-     * Obtain the current known number of publishers on a given topic
-     * 
-     * @param i_topic Topic to query
-     * 
-     * @return number of known publishers on i_topic (excluding this participant)
-     */
-    int publisherCount(std::string const& i_topic) const;
+  /**
+   * Obtain the current known number of publishers on a given topic
+   *
+   * @param i_topic Topic to query
+   *
+   * @return number of known publishers on i_topic (excluding this participant)
+   */
+  int publisherCount(std::string const& i_topic) const;
 
-    /**
-     * Obtain the current known number of subscribers on a given topic
-     * 
-     * @param i_topic Topic to query
-     * 
-     * @return number of known subscribers on i_topic (excluding this participant)
-     */
-    int subscriberCount(std::string const& i_topic) const;
+  /**
+   * Obtain the current known number of subscribers on a given topic
+   *
+   * @param i_topic Topic to query
+   *
+   * @return number of known subscribers on i_topic (excluding this participant)
+   */
+  int subscriberCount(std::string const& i_topic) const;
 
-    /**
-     * Get the name (demangled) of the type in use on a given topic
-     * 
-     * @param i_topic Topic to query
-     * 
-     * @return Name of the type in use in i_topic
-     */
-    std::string topicType(std::string const& i_topic) const;
+  /**
+   * Get the name (demangled) of the type in use on a given topic
+   *
+   * @param i_topic Topic to query
+   *
+   * @return Name of the type in use in i_topic
+   */
+  std::string topicType(std::string const& i_topic) const;
 
-    /**
-     * Get the name of the participant
-     */
-    std::string name() const;
-    
-    /*
-     * Expert interface to underlying fastdds components. These calls may be removed
-     * in the future.
-     */
-    std::shared_ptr<efd::DomainParticipant> getRawParticipant() { return m_participant; }
-    std::shared_ptr<efd::Publisher> getRawPublisher() { return m_publisher; }
-    std::shared_ptr<efd::Subscriber> getRawSubscriber() { return m_subscriber; }
+  /**
+   * Get the name of the participant
+   */
+  std::string name() const;
 
-protected:
+  /*
+   * Expert interface to underlying fastdds components. These calls may be removed
+   * in the future.
+   */
+  std::shared_ptr<efd::DomainParticipant> getRawParticipant() { return m_participant; }
+  std::shared_ptr<efd::Publisher> getRawPublisher() { return m_publisher; }
+  std::shared_ptr<efd::Subscriber> getRawSubscriber() { return m_subscriber; }
 
-    /// Get a pointer to an existing topic, or create a new topic (registering i_type) and
-    /// return a pointer to that. If a topic exists using a different type, it will be
-    /// deleted, and a new topic created for the new (topic, type) pair.
-    efd::Topic* getTopic(std::string const& i_topic, efd::TypeSupport const& i_type, 
-                         int i_historyDepth=1);
+ protected:
+  /// Get a pointer to an existing topic, or create a new topic (registering i_type) and
+  /// return a pointer to that. If a topic exists using a different type, it will be
+  /// deleted, and a new topic created for the new (topic, type) pair.
+  efd::Topic* getTopic(std::string const& i_topic, efd::TypeSupport const& i_type, int i_historyDepth = 1);
 
-    /// Register the serialize/deserialize support with the participant
-    void registerType(efd::TypeSupport const& i_type);
+  /// Register the serialize/deserialize support with the participant
+  void registerType(efd::TypeSupport const& i_type);
 
-    /// Type-erased advertise function
-    Publisher doAdvertise(std::string const& i_topic, efd::TypeSupport const& i_type,
-                          std::string const& i_qosProfile, int i_historyDepth);
+  /// Type-erased advertise function
+  Publisher doAdvertise(std::string const& i_topic, efd::TypeSupport const& i_type, std::string const& i_qosProfile,
+                        int i_historyDepth);
 
-    /// Type-erased subscribe function
-    void doSubscribe(std::string const& i_topic, efd::TypeSupport const& i_typeName,
-                     efd::DataReaderListener* i_listener, std::string const& i_qosProfile,
-                     int i_historyDepth);
+  /// Type-erased subscribe function
+  void doSubscribe(std::string const& i_topic, efd::TypeSupport const& i_typeName, efd::DataReaderListener* i_listener,
+                   std::string const& i_qosProfile, int i_historyDepth);
 
-    /// Callback for updating the pub/sub counts
-    void updatePublisherCount(std::string const& i_topic, int i_update);
-    void updateSubscriberCount(std::string const& i_topic, int i_update);
+  /// Callback for updating the pub/sub counts
+  void updatePublisherCount(std::string const& i_topic, int i_update);
+  void updateSubscriberCount(std::string const& i_topic, int i_update);
 
-    /// Reader callbacks use this templated class
-    template<class T, class C> friend class detail::ReaderListener;
+  /// Reader callbacks use this templated class
+  template <class T, class C>
+  friend class detail::ReaderListener;
 
-    /// The publisher has a private ctor
-    friend class Publisher;
-    template<class Req, class Rep> friend class Requester;
+  /// The publisher has a private ctor
+  friend class Publisher;
+  template <class Req, class Rep>
+  friend class Requester;
 
-    /// Allow the participant callbacks to update the count
-    friend class detail::ParticipantLogger;
+  /// Allow the participant callbacks to update the count
+  friend class detail::ParticipantLogger;
 
-    std::shared_ptr<efd::DomainParticipant> m_participant; // Underlying DDS participant
-    std::shared_ptr<efd::Publisher> m_publisher; // Single pub object for all writers
-    std::shared_ptr<efd::Subscriber> m_subscriber; // Single sub object for all readers
+  std::shared_ptr<efd::DomainParticipant> m_participant;  // Underlying DDS participant
+  std::shared_ptr<efd::Publisher> m_publisher;            // Single pub object for all writers
+  std::shared_ptr<efd::Subscriber> m_subscriber;          // Single sub object for all readers
 
-    mutable std::mutex m_countMutex; // Guards the pub/sub count maps
-    std::map<std::string, int> m_subscriberCount; // Number of readers per topic
-    std::map<std::string, int> m_publisherCount; // Number of writers per topic
+  mutable std::mutex m_countMutex;               // Guards the pub/sub count maps
+  std::map<std::string, int> m_subscriberCount;  // Number of readers per topic
+  std::map<std::string, int> m_publisherCount;   // Number of writers per topic
 };
 
-
 /*
- * A type-erased lightweight publisher object used to send  data on a topic.  
+ * A type-erased lightweight publisher object used to send  data on a topic.
  * These are created by the Participant and may be cheaply copied.
  */
 class Publisher {
-public:
+ public:
+  /**
+   * Check that this object can send data
+   */
+  operator bool() const { return isOkay(); }
+  bool isOkay() const { return !(nullptr == m_writer); }
 
-    /**
-     * Check that this object can send data
-     */
-    operator bool() const { return isOkay(); }
-    bool isOkay() const { return !(nullptr == m_writer); }
-    
-    /**
-     * Take the data sample and publish it.
-     */
-    template<class T>
-    bool publish(std::unique_ptr<T> i_data);
-    
-    /**
-     * Publish with a given ID, related ID, and a good/bad flag. This is 
-     * mainly used by the request/response and reactors.
-     */
-    template<class T>
-    bool publish(std::unique_ptr<T> i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad=false);
+  /**
+   * Take the data sample and publish it.
+   */
+  template <class T>
+  bool publish(std::unique_ptr<T> i_data);
 
-    std::string const& topic() const { return m_topicName; }
-        
-    Guid guid() const;
-    
-    // Makes a dead publisher
-    Publisher() = default;
-    
-protected:
-    friend class Participant;
+  template <class T>
+  bool publish(T const& i_data);
 
-    Publisher(std::shared_ptr<efd::DataWriter> i_writer, std::string const& i_topicName);
-    
-    /// Type-erased publish method
-    bool doPublish(void* i_data);
-    
-    /// Type-erased publish method
-    bool doPublish(void* i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad);
+  /**
+   * Publish with a given ID, related ID, and a good/bad flag. This is
+   * mainly used by the request/response and reactors.
+   */
+  template <class T>
+  bool publish(T const& i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad = false);
 
-    std::shared_ptr<efd::DataWriter> m_writer;
-    std::string m_topicName;
+  std::string const& topic() const { return m_topicName; }
+
+  Guid guid() const;
+
+  // Makes a dead publisher
+  Publisher() = default;
+
+ protected:
+  friend class Participant;
+
+  Publisher(std::shared_ptr<efd::DataWriter> i_writer, std::string const& i_topicName);
+
+  /// Type-erased publish method
+  bool doPublish(void* i_data);
+
+  /// Type-erased publish method
+  bool doPublish(void* i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad);
+
+  std::shared_ptr<efd::DataWriter> m_writer;
+  std::string m_topicName;
 };
 
 /*
  * A Requester is an object used for making requests to a remote service.
- * Each request returns a future response that can be waited upon for the 
+ * Each request returns a future response that can be waited upon for the
  * reply.  These are constructed by the Participant.
- * 
+ *
  * @throws std::runtime_error if the service indicates an error.
  */
-template<class Req, class Rep>
+template <class Req, class Rep>
 class Requester {
-public:
-        
-    std::string const& serviceName() const { return m_serviceName; }
-    
-    std::future<std::unique_ptr<Rep>> request(std::shared_ptr<Req> i_request);
-    
-    Requester(Requester const& i_other);
-    Requester(Requester&& i_other);
-    Requester const& operator=(Requester const& i_other);
-    
-    bool isConnected() const;
-    bool impostorsExist() const;
-    
-protected:
-    
-    friend class Participant;
-    
-    /// Specialized listener to correlate requests with replies
-    struct OnReply: public efd::DataReaderListener {
-        Requester* requester;    
-        explicit OnReply(Requester* i_req) : requester(i_req) { }
-        void on_data_available(efd::DataReader* i_reader) override;
-    };
-    
-    Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
-    
-    using Promise = std::promise<std::unique_ptr<Rep>>;
-    std::mutex m_lock;  // Guards the requests map
-    std::shared_ptr<Participant> m_participant;
-    std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests    
-    Guid m_sessionId;
-    std::map<Guid, Promise> m_requests; //! All pending requests
-    std::string m_serviceName; //! The name of this service
+ public:
+  std::string const& serviceName() const { return m_serviceName; }
+
+  std::future<Rep> request(Req const& i_request);
+
+  Requester(Requester const& i_other);
+  Requester(Requester&& i_other);
+  Requester const& operator=(Requester const& i_other);
+
+  bool isConnected() const;
+  bool impostorsExist() const;
+
+ protected:
+  friend class Participant;
+
+  /// Specialized listener to correlate requests with replies
+  struct OnReply : public efd::DataReaderListener {
+    Requester* requester;
+    explicit OnReply(Requester* i_req) : requester(i_req) {}
+    void on_data_available(efd::DataReader* i_reader) override;
+  };
+
+  Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
+
+  using Promise = std::promise<Rep>;
+  std::mutex m_lock;  // Guards the requests map
+  std::shared_ptr<Participant> m_participant;
+  std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests
+  Guid m_sessionId;
+  std::map<Guid, Promise> m_requests;  //! All pending requests
+  std::string m_serviceName;           //! The name of this service
 };
 
-
-}
+}  // namespace lt
 
 #include "LetsTalkDetail.hpp"

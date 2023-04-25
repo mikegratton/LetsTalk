@@ -1,9 +1,10 @@
-#include <string>
 #include <regex>
+#include <string>
 
 namespace lt {
-std::string getDefaultProfileXml() {
-    std::string xml(R"(
+std::string getDefaultProfileXml()
+{
+  std::string xml(R"(
 <?xml version="1.0" encoding="UTF-8" ?>
 <dds>
 <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
@@ -101,8 +102,7 @@ std::string getDefaultProfileXml() {
 </profiles>
 </dds>
 )");
-    
-    return xml;
-    
+
+  return xml;
 }
-}
+}  // namespace lt
