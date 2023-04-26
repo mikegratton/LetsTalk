@@ -4,6 +4,7 @@
 
 #include "LetsTalk.hpp"
 #include "ReaderListenerImpl.hpp"
+#include "RequestReplyImpl.hpp"
 
 namespace lt {
 
@@ -48,5 +49,23 @@ bool Publisher::publish(T const& i_data, Guid const& i_myId, Guid const& i_relat
   return doPublish(&const_cast<T&>(i_data), i_myId, i_relatedId, i_bad);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+// Replier creation: just save the listener inside the FastDDS data reader object
+template <class Req, class Rep, class C>
+void Participant::advertise(std::string const& i_serviceName, C i_serviceProvider)
+{
+  Publisher sender = advertise<Rep>(detail::replyName(i_serviceName));
+  auto listener = new detail::ServiceProvider<Req, Rep, C>(i_serviceProvider, sender);
+  doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new PubSubType<Req>()), listener, "", 1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// Requester creation
+template <class Req, class Rep>
+Requester<Req, Rep> Participant::request(std::string const& i_serviceName)
+{
+  return Requester<Req, Rep>(
+      std::make_shared<detail::RequesterImpl<Req, Rep>>(this->shared_from_this(), i_serviceName));
+}
+
 }  // namespace lt
-#include "RequestReplyImpl.hpp"

@@ -28,10 +28,10 @@ class ReaderListener : public efd::DataReaderListener {
   void on_sample_lost(efd::DataReader* i_reader, const efd::SampleLostStatus& i_status) final;
 
  protected:
-  void handle_sample(T const& i_sample, efd::SampleInfo const& i_info, wants_guid_tag);
-  void handle_sample(T const& i_sample, efd::SampleInfo const& i_info, plain_tag);
-  void handle_sample(T const& i_sample, efd::SampleInfo const& i_info, uptr_with_guid_tag);
-  void handle_sample(T const& i_sample, efd::SampleInfo const&, uptr_tag);
+  bool handle_sample(efd::DataReader* i_reader, wants_guid_tag);
+  bool handle_sample(efd::DataReader* i_reader, plain_tag);
+  bool handle_sample(efd::DataReader* i_reader, uptr_with_guid_tag);
+  bool handle_sample(efd::DataReader* i_reader, uptr_tag);
 
   C m_callback;
 };

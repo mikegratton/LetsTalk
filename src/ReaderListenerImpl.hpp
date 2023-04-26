@@ -19,42 +19,72 @@ void ReaderListener<T, C>::on_data_available(efd::DataReader* i_reader)
   typename functor_tagger<C, T>::type tag;
   std::size_t expected = i_reader->get_unread_count();
   for (std::size_t i = 0; i < expected; i++) {
-    T data;
-    efd::SampleInfo info;
-    auto code = i_reader->take_next_sample(&data, &info);
-    if (code == ReturnCode_t::RETCODE_OK) {
-      if (info.valid_data) { handle_sample(data, info, tag); }
-    } else {
+    if (!handle_sample(i_reader, tag)) {
       LT_LOG << i_reader->get_subscriber()->get_participant() << " " << i_reader->get_topicdescription()->get_name()
-             << " callback has an incomplete sample: " << code << "\n";
+             << " callback has an incomplete sample.\n";
       break;
     }
   }
 }
 
 template <class T, class C>
-void ReaderListener<T, C>::handle_sample(T const& i_sample, efd::SampleInfo const& i_info, wants_guid_tag)
+bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, wants_guid_tag)
 {
-  m_callback(i_sample, toLetsTalkGuid(i_info.sample_identity), toLetsTalkGuid(i_info.related_sample_identity));
+  T data;
+  efd::SampleInfo info;
+  auto code = i_reader->take_next_sample(&data, &info);
+  if (code == ReturnCode_t::RETCODE_OK) {
+    if (info.valid_data) {
+      m_callback(data, toLetsTalkGuid(info.sample_identity), toLetsTalkGuid(info.related_sample_identity));
+      return true;
+    }
+  }
+  return false;
 }
 
 template <class T, class C>
-void ReaderListener<T, C>::handle_sample(T const& i_sample, efd::SampleInfo const&, plain_tag)
+bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, plain_tag)
 {
-  m_callback(i_sample);
+  T data;
+  efd::SampleInfo info;
+  auto code = i_reader->take_next_sample(&data, &info);
+  if (code == ReturnCode_t::RETCODE_OK) {
+    if (info.valid_data) {
+      m_callback(data);
+      return true;
+    }
+  }
+  return false;
 }
 
 template <class T, class C>
-void ReaderListener<T, C>::handle_sample(T const& i_sample, efd::SampleInfo const& i_info, uptr_with_guid_tag)
+bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, uptr_with_guid_tag)
 {
-  m_callback(std::unique_ptr<T>(new T(i_sample)), toLetsTalkGuid(i_info.sample_identity),
-             toLetsTalkGuid(i_info.related_sample_identity));
+  std::unique_ptr<T> data(new T);
+  efd::SampleInfo info;
+  auto code = i_reader->take_next_sample(data.get(), &info);
+  if (code == ReturnCode_t::RETCODE_OK) {
+    if (info.valid_data) {
+      m_callback(std::move(data), toLetsTalkGuid(info.sample_identity), toLetsTalkGuid(info.related_sample_identity));
+      return true;
+    }
+  }
+  return false;
 }
 
 template <class T, class C>
-void ReaderListener<T, C>::handle_sample(T const& i_sample, efd::SampleInfo const&, uptr_tag)
+bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, uptr_tag)
 {
-  m_callback(std::unique_ptr<T>(new T(i_sample)));
+  std::unique_ptr<T> data(new T);
+  efd::SampleInfo info;
+  auto code = i_reader->take_next_sample(data.get(), &info);
+  if (code == ReturnCode_t::RETCODE_OK) {
+    if (info.valid_data) {
+      m_callback(std::move(data));
+      return true;
+    }
+  }
+  return false;
 }
 
 template <class T, class C>

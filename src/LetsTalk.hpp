@@ -6,8 +6,8 @@
 
 #include "LetsTalkFwd.hpp"
 #include "PubSubType.hpp"
+#include "RequestReply.hpp"
 #include "ThreadSafeQueue.hpp"
-
 namespace lt {
 
 /**
@@ -256,48 +256,6 @@ class Publisher {
 
   std::shared_ptr<efd::DataWriter> m_writer;
   std::string m_topicName;
-};
-
-/*
- * A Requester is an object used for making requests to a remote service.
- * Each request returns a future response that can be waited upon for the
- * reply.  These are constructed by the Participant.
- *
- * @throws std::runtime_error if the service indicates an error.
- */
-template <class Req, class Rep>
-class Requester {
- public:
-  std::string const& serviceName() const { return m_serviceName; }
-
-  std::future<Rep> request(Req const& i_request);
-
-  Requester(Requester const& i_other);
-  Requester(Requester&& i_other);
-  Requester const& operator=(Requester const& i_other);
-
-  bool isConnected() const;
-  bool impostorsExist() const;
-
- protected:
-  friend class Participant;
-
-  /// Specialized listener to correlate requests with replies
-  struct OnReply : public efd::DataReaderListener {
-    Requester* requester;
-    explicit OnReply(Requester* i_req) : requester(i_req) {}
-    void on_data_available(efd::DataReader* i_reader) override;
-  };
-
-  Requester(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName);
-
-  using Promise = std::promise<Rep>;
-  std::mutex m_lock;  // Guards the requests map
-  std::shared_ptr<Participant> m_participant;
-  std::shared_ptr<efd::DataWriter> m_requestPub;  //! Outbound requests
-  Guid m_sessionId;
-  std::map<Guid, Promise> m_requests;  //! All pending requests
-  std::string m_serviceName;           //! The name of this service
 };
 
 }  // namespace lt

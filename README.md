@@ -21,8 +21,8 @@ using the Let's Talk API:
 int main(int, char**)
 {
     auto node = lt::Participant::create();
-    node->subscribe<HelloWorld>("HelloWorldTopic", [](std::unique_ptr<HelloWorld> data) {
-        std::cout << data->message() << " " << data->index() << std::endl;
+    node->subscribe<HelloWorld>("HelloWorldTopic", [](HelloWorld const& data) {
+        std::cout << data.message() << " " << data.index() << std::endl;
     }); 
     std::this_thread::sleep_for(std::chrono::minutes(1));            
     return 0;
@@ -44,10 +44,10 @@ int main(int argc, char** argv)
     }
     std::cout << "Publication begins...\n";
     for(int i=0; i<100; i++) {
-        auto msg = std::make_unique<HelloWorld>();
-        msg->message("Test");
-        msg->index(i);
-        bool okay = pub.publish(std::move(msg));
+        HelloWorld msg;
+        msg.message("Test");
+        msg.index(i);
+        bool okay = pub.publish(msg);
         std::cout << "Sent " << i << "  " << (okay? "okay" : "FAILED") << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         if (node->subscriberCount("HelloWorldTopic") == 0 || !okay) {
@@ -59,8 +59,7 @@ int main(int argc, char** argv)
 
 ```
 As you can see, subscription involves providing a callback function, typically a
-lambda.  Publication uses a Publisher object.  Data is handled via unique_ptrs
-to avoid concurrency problems.
+lambda.  Publication uses a Publisher object.
 
 The design of the main Participant API is largely based on the 
 ignition::transport API, a very convenient ZMQ/protobuf communication
@@ -87,17 +86,13 @@ Let's talk offers three communication patters:
   Talk implementation is simple. If there are multiple providers for 
   a service, an error is logged, but no attempt is made to determine
   which provider will handle a given call. Calls use the C++ promise/
-  future types, including exception setting on failure.
+  future types, including setting exceptions on failure.
   
 * Reactor: A request/response pattern where requests recieve multiple
-  "progress" replies, before finally ending with a reply.  These are
-  useful in robotics where calculations or actions take appreciable 
-  time during which the requesting process may need to cancel or 
-  retask the service provider as the situation changes.
-
-The reactor is likewise bound to Let's Talk, and it is unlikely to become
-more standards compliant since there are few reactor implementations in
-the wild.
+  "progress" replies, before finally ending with a final reply.  These
+  are useful in robotics where calculations or actions take 
+  appreciable time during which the requesting process may need to 
+  cancel or retask the service provider as the situation changes.
 
 # CMake Support
 
@@ -142,4 +137,8 @@ for controlling the include path are documented in IdlTarget.cmake.
 
 2. Test custom progress data
 
-3. Update bundled fast dds with cmake fixes and "ignore" feature
+3. Test and document uptr variants
+
+4. Test install script
+
+5. Fix req/rep race condition
