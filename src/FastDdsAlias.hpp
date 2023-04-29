@@ -2,6 +2,11 @@
 #include <fastdds/rtps/common/all_common.h>
 
 #include <iosfwd>
+
+/**
+ * Namespace aliases and the like for interacting with fastdds
+ */
+
 namespace lt {
 
 //////////////////////////////////////////////////

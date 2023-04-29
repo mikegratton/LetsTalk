@@ -9,31 +9,33 @@ namespace lt {
 namespace detail {
 
 /**
- * ReaderListener calls the installed callback when data is available
+ * ReaderListener adapts a simple callback for use with fastdds. These are created internally
+ * by Participant.
  */
 template <class T, class C>
 class ReaderListener : public efd::DataReaderListener {
- public:
-  using type = T;
+   public:
+    using type = T;
 
-  ReaderListener(C i_callback);
+    ReaderListener(C i_callback);
 
-  virtual void on_data_available(efd::DataReader* i_reader) override;
+    void on_data_available(efd::DataReader* i_reader) final;
 
-  void on_sample_rejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& i_status) final;
+    void on_sample_rejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& i_status) final;
 
-  void on_requested_incompatible_qos(efd::DataReader* i_reader,
-                                     const efd::RequestedIncompatibleQosStatus& i_status) final;
+    void on_requested_incompatible_qos(efd::DataReader* i_reader,
+                                       const efd::RequestedIncompatibleQosStatus& i_status) final;
 
-  void on_sample_lost(efd::DataReader* i_reader, const efd::SampleLostStatus& i_status) final;
+    void on_sample_lost(efd::DataReader* i_reader, const efd::SampleLostStatus& i_status) final;
 
- protected:
-  bool handle_sample(efd::DataReader* i_reader, wants_guid_tag);
-  bool handle_sample(efd::DataReader* i_reader, plain_tag);
-  bool handle_sample(efd::DataReader* i_reader, uptr_with_guid_tag);
-  bool handle_sample(efd::DataReader* i_reader, uptr_tag);
+   protected:
+    /// Tag dispatched handle_sample calls C with the deduced arguments
+    bool handle_sample(efd::DataReader* i_reader, wants_guid_tag);
+    bool handle_sample(efd::DataReader* i_reader, plain_tag);
+    bool handle_sample(efd::DataReader* i_reader, uptr_with_guid_tag);
+    bool handle_sample(efd::DataReader* i_reader, uptr_tag);
 
-  C m_callback;
+    C m_callback;
 };
 
 /**
@@ -42,7 +44,7 @@ class ReaderListener : public efd::DataReaderListener {
 template <class T, class C>
 efd::DataReaderListener* makeListener(C i_callback)
 {
-  return new ReaderListener<T, C>(i_callback);
+    return new ReaderListener<T, C>(i_callback);
 }
 }  // namespace detail
 }  // namespace lt

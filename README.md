@@ -1,6 +1,16 @@
 Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 =================================================
 
+
+# TODO -- Stuff standing in the way of initial release
+
+1. Test custom progress data
+
+2. Document uptr variants
+
+4. Create reactor examples
+
+
 # Introduction
 
 Let's Talk is an API wrapped around the FastDDS library, along with
@@ -94,6 +104,11 @@ Let's talk offers three communication patters:
   appreciable time during which the requesting process may need to 
   cancel or retask the service provider as the situation changes.
 
+# Environment variables
+
+* `LT_VERBOSE` -- enables debug print messages about discovery and message passing
+* `LT_LOCAL_ONLY` -- If 1, prevents discovery from finding participants on another host
+
 # CMake Support
 
 In addition to the API, Let's Talk provides a simple way to use Fast DDS 
@@ -102,14 +117,14 @@ build alongside Let's Talk without other requirements. Adding Let's Talk
 as a subdirectory of your CMake project will provide the targets
 
 * letstalk -- The Let's Talk library and transitive dependencies
-* fastrtps -- Just the Fast DDS library
+* fastdds  -- Just the Fast DDS library
 
-Installing the Let's Talk project provides the CMake config script *TODO*.
+Installing the Let's Talk project provides a CMake config script
 Using
 ```
-find_package(LetsTalk)
+find_package(letstalk)
 ```
-will provide the target "lt::LetsTalk" to link against.
+will provide the target "letstalk" to link against.
 
 ## IDL Support in CMake
 
@@ -131,14 +146,3 @@ re-run the IDL compiler, recompile the IDL target, and re-link.  The intention i
 to have machine-generated code segregated from the rest of the codebase.  More options
 for controlling the include path are documented in IdlTarget.cmake.
 
-# TODO
-
-1. Version script and proper cmake/install
-
-2. Test custom progress data
-
-3. Test and document uptr variants
-
-4. Test install script
-
-5. Fix req/rep race condition

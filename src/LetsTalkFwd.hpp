@@ -8,6 +8,7 @@
 #include "Guid.hpp"
 #include "ParticipantLogger.hpp"
 #include "ReaderListener.hpp"
+
 namespace lt {
 
 //////////////////////////////////////////////////
@@ -25,14 +26,17 @@ class Requester;
 // Logging
 namespace detail {
 
+// Check if remote connections allowed
+extern const bool s_IGNORE_NONLOCAL;
+
 // Logging is controlled by this variable, set from the environment on startup
 extern const bool LT_VERBOSE;
 
 // The log macro swallows the message is LT_VERBOSE is false
-#define LT_LOG                     \
-  if (!::lt::detail::LT_VERBOSE) { \
-  } else                           \
-    std::cout
+#define LT_LOG                       \
+    if (!::lt::detail::LT_VERBOSE) { \
+    } else                           \
+        std::cout
 
 ////////////////////////////////////////////////////////////////////////////////////////
 std::string demangle_name(char const* i_mangled);
@@ -40,7 +44,7 @@ std::string demangle_name(char const* i_mangled);
 template <class T>
 std::string get_demangled_name()
 {
-  return demangle_name(typeid(T).name());
+    return demangle_name(typeid(T).name());
 }
 
 void logSampleRejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& i_status);

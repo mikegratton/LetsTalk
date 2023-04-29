@@ -3,11 +3,16 @@
 #include <type_traits>
 
 #include "Guid.hpp"
+
+/*
+ * Metaprograms for determining what kind of callback was supplied
+ */
+
 namespace lt {
 
 template <typename... Ts>
 struct make_void {
-  typedef void type;
+    typedef void type;
 };
 
 template <typename... Ts>
@@ -57,10 +62,10 @@ using conditional_t = typename std::conditional<B, T, F>::type;
 
 template <class C, class T, class D = std::default_delete<T>>
 struct functor_tagger {
-  using type =
-      conditional_t<wants_guids<C, T>::value, wants_guid_tag,
-                    conditional_t<wants_uptr<C, T, D>::value, uptr_tag,
-                                  conditional_t<wants_uptr_with_guid<C, T, D>::value, uptr_with_guid_tag, plain_tag>>>;
+    using type = conditional_t<
+        wants_guids<C, T>::value, wants_guid_tag,
+        conditional_t<wants_uptr<C, T, D>::value, uptr_tag,
+                      conditional_t<wants_uptr_with_guid<C, T, D>::value, uptr_with_guid_tag, plain_tag>>>;
 };
 
 }  // namespace lt

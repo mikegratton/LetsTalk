@@ -1,0 +1,13 @@
+#ifndef DIVIDE_SERVICE_IDL
+#define DIVIDE_SERVICE_IDL
+
+struct DivideProblem {
+    int32 numerator;
+    int32 denominator;
+};
+
+struct DivideResult {
+    int32 quotient;
+};
+
+#endif 

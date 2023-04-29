@@ -23,17 +23,24 @@ class RequesterImpl;
  */
 template <class Req, class Rep>
 class Requester {
- public:
-  std::string const& serviceName() const;
+   public:
+    /// Retrieve the name of this service
+    std::string const& serviceName() const;
 
-  std::future<Rep> request(Req const& i_request);
+    /// Make a request.
+    /// @param i_request request data
+    /// @return future reply
+    std::future<Rep> request(Req const& i_request);
 
-  bool isConnected() const;
-  bool impostorsExist() const;
+    /// Check that there is at least one publisher to Req
+    bool isConnected() const;
 
- protected:
-  friend class Participant;
-  Requester(std::shared_ptr<detail::RequesterImpl<Req, Rep>> i_backend) : m_backend(i_backend) {}
-  std::shared_ptr<detail::RequesterImpl<Req, Rep>> m_backend;
+    /// Check that there is at most one subscriber to the Req topic
+    bool impostorsExist() const;
+
+   protected:
+    friend class Participant;
+    Requester(std::shared_ptr<detail::RequesterImpl<Req, Rep>> i_backend) : m_backend(i_backend) {}
+    std::shared_ptr<detail::RequesterImpl<Req, Rep>> m_backend;  // This class just wraps access to the shared backend
 };
 }  // namespace lt

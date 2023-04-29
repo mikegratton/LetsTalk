@@ -57,52 +57,52 @@ namespace lt {
  */
 
 class ActiveObject {
- public:
-  /**
-   * Starts the work thread
-   */
-  ActiveObject() : m_keepAlive(false) { startWork(); }
+   public:
+    /**
+     * Starts the work thread
+     */
+    ActiveObject() : m_keepAlive(false) { startWork(); }
 
-  /**
-   * Stops the work thread and finishes any pending jobs
-   */
-  virtual ~ActiveObject() { stopWork(); }
+    /**
+     * Stops the work thread and finishes any pending jobs
+     */
+    virtual ~ActiveObject() { stopWork(); }
 
-  /**
-   * Checks if the work thread is running
-   */
-  bool isWorking() const { return m_keepAlive.load(); }
+    /**
+     * Checks if the work thread is running
+     */
+    bool isWorking() const { return m_keepAlive.load(); }
 
-  /**
-   * Starts the work thread if it is not already started
-   */
-  void startWork();
+    /**
+     * Starts the work thread if it is not already started
+     */
+    void startWork();
 
-  /**
-   * Stops the work thread if it is running, finishing any pending
-   * jobs on the caller's thread.
-   */
-  void stopWork();
+    /**
+     * Stops the work thread if it is running, finishing any pending
+     * jobs on the caller's thread.
+     */
+    void stopWork();
 
- protected:
-  /**
-   * Submit a job. C must be copyable (a lambda is typical) with no function
-   * arguments.
-   */
-  template <class C>
-  void submitJob(C i_job)
-  {
-    LockGuard guard(m_mutex);
-    m_work.emplace_back(i_job);
-  }
+   protected:
+    /**
+     * Submit a job. C must be copyable (a lambda is typical) with no function
+     * arguments.
+     */
+    template <class C>
+    void submitJob(C i_job)
+    {
+        LockGuard guard(m_mutex);
+        m_work.emplace_back(i_job);
+    }
 
- private:
-  using WorkQueue = std::list<std::function<void()>>;
-  using LockGuard = std::unique_lock<std::mutex>;
+   private:
+    using WorkQueue = std::list<std::function<void()>>;
+    using LockGuard = std::unique_lock<std::mutex>;
 
-  WorkQueue m_work;
-  mutable std::mutex m_mutex;
-  std::thread m_workThread;
-  std::atomic_bool m_keepAlive;
+    WorkQueue m_work;              /// Queue of pending functions, guarded by m_mutex
+    mutable std::mutex m_mutex;    /// Guards work queue
+    std::thread m_workThread;      /// Private thread for running work items
+    std::atomic_bool m_keepAlive;  /// Controls work loop
 };
 }  // namespace lt
