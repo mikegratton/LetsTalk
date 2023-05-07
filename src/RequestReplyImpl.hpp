@@ -94,15 +94,15 @@ class RequesterImpl {
     {
         // Send the request
         Guid requestId;
+        std::future<Rep> future;
         {
             std::unique_lock<std::mutex> guard(m_lock);
-            m_sessionId.increment();
-            requestId = m_sessionId;
+            requestId = m_sessionId.increment();
+            future = m_requests[requestId].get_future();
         }
         m_requestPub.publish(i_request, requestId, Guid::UNKNOWN());
         LT_LOG << serviceName() << ": Making request " << requestId << "\n";
-        std::unique_lock<std::mutex> guard(m_lock);
-        return m_requests[requestId].get_future();
+        return future;
     }
 
     bool isConnected() const
@@ -120,11 +120,11 @@ class RequesterImpl {
     /// Callback. Use Guid to check that this reply is for us.
     void onReply(Rep const& data, Guid const& id, Guid const& relatedId)
     {
+        LT_LOG << serviceName() << ": Received reply " << relatedId << "\n";
+
         Guid badId = relatedId.makeBadVersion();
         std::unique_lock<std::mutex> guard(m_lock);
         auto it = m_requests.find(relatedId);
-
-        LT_LOG << serviceName() << ": Received reply " << relatedId << "\n";
         if (it != m_requests.end()) {
             LT_LOG << serviceName() << ": Recognized as a pending request\n";
             it->second.set_value(data);

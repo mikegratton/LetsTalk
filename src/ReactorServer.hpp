@@ -22,7 +22,7 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
     class Session {
        public:
         /// Inspect the request data for this session
-        Req const* request() const { return m_request.get(); }
+        Req const& request() const { return m_request; }
 
         /**
          * Transmit progress information to the client
@@ -32,14 +32,10 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
         void progress(int i_progress, ProgressData const& i_data);
 
         /**
-         * Transmit progress information to the client. This is a simplified version for when there's no
-         * progress data, just marks.
+         * Transmit progress information to the client. This version does not send progress data
          * @param i_progress Current progress mark
          */
-        typename std::enable_if<std::is_same<ProgressData, reactor_void_progress>::value>::type progress(int i_progress)
-        {
-            progress(i_progress, reactor_void_progress());
-        }
+        void progress(int i_progress) { progress(i_progress, reactor_void_progress()); }
 
         /// Check that the client hasn't cancelled this session, or that it isn't already complete
         bool isAlive() const;
@@ -49,6 +45,11 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
 
         /// Mark the request as failed
         void fail();
+
+        /// Get the id of this session
+        Guid const& id() const { return m_id; }
+
+        ~Session();
 
        protected:
         friend Backend;
@@ -69,6 +70,9 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
 
     /// For debugging. Prints connection status if LT_VERBOSE is defined
     void logConnectionStatus() const;
+
+    /// Count number of discovered clients
+    int discoveredClients() const;
 
    protected:
     friend class Participant;

@@ -43,6 +43,9 @@ class ReactorClient {
         /// Cancel the request, ending the session
         void cancel();
 
+        /// Get the id of this session
+        Guid const& id() const { return m_id; }
+
         /**
          *  Get the response. Will return false if the response is not ready by i_wait
          * @param o_reply The returned reply data is written here.
@@ -50,6 +53,8 @@ class ReactorClient {
          * @return true of o_data has the reply
          */
         bool get(Rep& o_reply, std::chrono::nanoseconds const& i_wait = std::chrono::nanoseconds(0));
+
+        ~Session();
 
        protected:
         friend Backend;
@@ -68,6 +73,9 @@ class ReactorClient {
 
     /// Logs debug information about the connections if LT_VERBOSE is defined
     void logConnectionStatus() const;
+
+    /// Check if there is a connection to the server
+    bool discoveredServer() const;
 
    protected:
     friend class Participant;

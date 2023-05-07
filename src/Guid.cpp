@@ -6,13 +6,9 @@ namespace lt {
 
 Guid Guid::makeBadVersion() const
 {
-    // "bad" version just have the sequence bits flipped.
-    // This is fast to compute and compare against. Since
-    // the sequence numbers are used in order, this also
-    // provides a reasonable distance between queries,
-    // except at wrap-around.
+    // "bad" version just a circular shift
     Guid bad(*this);
-    bad.sequence = ~bad.sequence;
+    bad.sequence = (bad.sequence << 32) | (bad.sequence >> 32);
     return bad;
 }
 

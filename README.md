@@ -13,12 +13,13 @@ Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 
 # Introduction
 
-Let's Talk is an API wrapped around the FastDDS library, along with
-a distribution of that library, the IDL compiler, and cmake tools
-for compiling/linking to DDS and IDL-derived files.  It's guiding 
-principle is that *simple things should be easy*.  So it trys to
-adopt sensible defaults while providing access to more functionality
-through optional arguments.
+Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) 
+designed for simple and efficient interprocess coordination on local networks. As DDS is
+the communication standard used by ROS2, it's compatible with ROS2. The library is 
+an API wrapped around the FastDDS library, along with a distribution of that library
+and cmake tools for compiling/linking to DDS.  It's guiding principle is that 
+*simple things should be easy*.  So it trys to adopt sensible defaults while providing 
+access to more functionality through optional arguments.
 
 Here's the basic "hello world" example from [Fast DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html) 
 using the Let's Talk API:
@@ -104,10 +105,47 @@ Let's talk offers three communication patters:
   appreciable time during which the requesting process may need to 
   cancel or retask the service provider as the situation changes.
 
+## Publish/Subscribe
+
+## Request/Response
+
+## Reactor
+
+## Examples
+
+The `examples` directory contains demonstration programs for these three patterns, as well
+as sample CMake files.  To build the examples, first build and install Let's Talk, then 
+create a symlink to the install directory in the examples directory:
+```
+$ cd examples
+$ ln -s <lets talk install dir> install
+$ mkdir build && cd build
+$ cmake ..
+```
+
+# DDS Concepts in Let's Talk
+
+## Participant
+
+## Topics
+
+## Types and IDL
+
+## Quality of Service (QoS)
+
 # Environment variables
+
+Let's Talk uses environment variables so that programs can easily modify the
+behavior at runtime.
 
 * `LT_VERBOSE` -- enables debug print messages about discovery and message passing
 * `LT_LOCAL_ONLY` -- If 1, prevents discovery from finding participants on another host
+
+To use this on you program `foo`, you can launch foo from the shell like this:
+```
+$ LT_VERBOSE=1 ./foo
+```
+
 
 # CMake Support
 
@@ -145,4 +183,27 @@ are stored in the build directory.  If the IDL is changed, make/ninja will corre
 re-run the IDL compiler, recompile the IDL target, and re-link.  The intention is 
 to have machine-generated code segregated from the rest of the codebase.  More options
 for controlling the include path are documented in IdlTarget.cmake.
+
+# About DDS
+
+The Data Distribution Service is an efficient and powerful publish/subscribe framework,
+but it is very complicated. It's worth exploring the chain of acronyms that make it up:
+
+* DDS -- Data Distribution Service. This isn't a protocol standard at all, it turns out!
+It's an API standard. 
+
+* RTPS -- Real-Time Publish Subscribe. This is the protocol standard. It covers how participants
+discover one another, how topics and types are communicated, how data is sent, and how transmission
+errors are handled. RTPS uses a peer-to-peer design rather than a central message broker, making it 
+more resillient and flexible. (But also placing larger burdens on those peers.)
+
+* IDL -- Interface Description Language. DDS inherited this from the 90's CORBA technology, and the 
+16/32 bit world of the time defintely shows in the language.  IDL is ugly but functional for the 
+purpose.  It isn't as fully featured as Google Protocol Buffers, but it is servicable.
+
+* CDR -- Common Data Representation. This is the serialized format for data transmitted. Typically, 
+IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR.
+Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire.
+Given DDS's emphasis on local network communication vs protobuf's focus on internet communication,
+this makes sense.
 

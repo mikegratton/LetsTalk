@@ -1,0 +1,26 @@
+#ifndef OPEN_GARAGE_IDL
+#define OPEN_GARAGE_IDL
+
+enum GarageDoorState {
+    kopen,
+    kclosed,
+    kstuck,
+    kopening,
+    kclosing,
+    __kunknown
+};
+
+struct ChangeRequest {
+    GarageDoorState desired_state;
+};
+
+struct ChangeStatus {
+    GarageDoorState current_state;
+    string message;
+};
+
+struct ChangeResult {
+    GarageDoorState final_state;
+};
+
+#endif

@@ -1,14 +1,12 @@
-#include "HelloWorld.h"
 #include "LetsTalk.hpp"
 #include "doctest.h"
+#include "idl/HelloWorld.h"
 
-TEST_CASE("FailedRequest")
+TEST_CASE("Request.Failed")
 {
     lt::ParticipantPtr p1 = lt::Participant::create();
-    p1->advertise<HelloWorld, HelloWorld>("greet", [](HelloWorld const& req) -> HelloWorld const& {
-        (void)req;
-        throw std::runtime_error("Error!");
-    });
+    p1->advertise<HelloWorld, HelloWorld>(
+        "greet", [](HelloWorld const& req) -> HelloWorld const& { throw std::runtime_error("Error!"); });
 
     lt::ParticipantPtr p2 = lt::Participant::create();
     auto requester = p2->makeRequester<HelloWorld, HelloWorld>("greet");
@@ -31,7 +29,7 @@ TEST_CASE("FailedRequest")
     }
 }
 
-TEST_CASE("BasicRequest")
+TEST_CASE("Request.Basic")
 {
     lt::ParticipantPtr p1 = lt::Participant::create();
     p1->advertise<HelloWorld, HelloWorld>("greet", [](HelloWorld const& req) -> HelloWorld {
@@ -75,7 +73,7 @@ TEST_CASE("BasicRequest")
     CHECK(rep.index() == 1);
 }
 
-TEST_CASE("PingPongRequest")
+TEST_CASE("Request.PingPong")
 {
     lt::ParticipantPtr p1 = lt::Participant::create();
     p1->advertise<HelloWorld, HelloWorld>("greet", [](HelloWorld const& req) -> HelloWorld {

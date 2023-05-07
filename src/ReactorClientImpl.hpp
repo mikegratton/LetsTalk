@@ -1,4 +1,6 @@
 #pragma once
+#include <deque>
+
 #include "Reactor.hpp"
 #include "ReactorClient.hpp"
 
@@ -9,13 +11,16 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
    public:
     Guid startNewSession(Req const& i_request)
     {
-        LockGuard guard(m_mutex);
-        m_lastId.increment();
-        m_requestSender.publish(i_request, m_lastId, Guid::UNKNOWN());
-        m_session[m_lastId];
+        Guid thisId;
+        {
+            LockGuard guard(m_mutex);
+            thisId = m_lastId.increment();
+            m_session[m_lastId];
+        }
+        m_requestSender.publish(i_request, thisId, Guid::UNKNOWN());
         LT_LOG << m_participant.get() << ":" << m_service << "-client"
-               << "  Start new session ID " << m_lastId << "\n";
-        return m_lastId;
+               << "  Start new session ID " << thisId << "\n";
+        return thisId;
     }
 
     typename ReactorClient<Req, Rep, ProgressData>::Session request(Req const& i_request)
@@ -32,13 +37,34 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     {
         auto progressLambda = [this](reactor_progress const& i_progress, Guid const& /*sampleId*/,
                                      Guid const& i_relatedId) {
+            // Try to deserialize the sample
+            bool haveData = false;
+            ProgressData sample;
+            if (i_progress.data().size() > 0) {
+                PubSubType<ProgressData> deser;
+                efr::SerializedPayload_t serialized;
+                serialized.length = i_progress.data().size();
+                serialized.data = const_cast<unsigned char*>(i_progress.data().data());
+                serialized.encapsulation = CDR_LE;  // FIXME how do you know? It's in the encapsulation bytes, but
+                                                    // we've got to dig through *OMG* documents for it :(
+                haveData = deser.deserialize(&serialized, &sample);
+                serialized.data = nullptr;  // Prevent double free, as mem is owned by rawData
+            }
+            // Place the sample
             LockGuard guard(m_mutex);
             auto it = m_session.find(i_relatedId);
-            if (it != m_session.end()) {
-                LT_LOG << m_participant.get() << ":" << m_service << "-client"
-                       << "  Session ID " << i_relatedId << " progress " << i_progress.progress() << "\n";
-                it->second.progress = i_progress.progress();
-                it->second.progressData.push(i_progress);
+            if (it == m_session.end()) { return; }
+            it->second.progress = i_progress.progress();
+            LT_LOG << m_participant.get() << ":" << m_service << "-client"
+                   << "  Session ID " << i_relatedId << " progress " << i_progress.progress() << "\n";
+            if (i_progress.data().size() > 0) {
+                if (haveData) {
+                    it->second.progressData.emplace_back(std::move(sample));
+                    it->second.cvProgressData.notify_one();
+                } else {
+                    LT_LOG << m_participant.get() << ":" << m_service << "-client"
+                           << "  Session ID " << i_relatedId << " got mangled progress data\n";
+                }
             }
         };
         m_participant->subscribe<reactor_progress>(reactorProgressName(i_serviceName), progressLambda);
@@ -48,12 +74,14 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
         auto repCallback = [this](Rep const& i_reply, Guid const& /*sampleId*/, Guid const& i_relatedId) {
             LockGuard guard(m_mutex);
             auto it = m_session.find(i_relatedId);
-            if (it != m_session.end()) {
-                LT_LOG << m_participant.get() << ":" << m_service << "-client"
-                       << "  Finish session ID " << i_relatedId << "\n";
-                it->second.reply = std::move(i_reply);
-                it->second.replyReady = true;
-            }
+            if (it == m_session.end()) { return; }
+            LT_LOG << m_participant.get() << ":" << m_service << "-client"
+                   << "  Finish session ID " << i_relatedId << "\n";
+            it->second.progress = PROG_SUCCESS;
+            it->second.reply = std::move(i_reply);
+            it->second.replyReady = true;
+            guard.release();
+            it->second.cvReply.notify_one();
         };
         m_participant->subscribe<Rep>(reactorReplyName(m_service), repCallback);
     }
@@ -71,14 +99,16 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     {
         LockGuard guard(m_mutex);
         auto it = m_session.find(i_id);
-        if (it != m_session.end()) {
-            SessionData& sessionData = it->second;
-            auto readyLambda = [&sessionData]() -> bool { return sessionData.replyReady; };
-            if (sessionData.cvReply.wait_for(guard, i_wait, readyLambda)) {
-                o_reply = std::move(sessionData.reply);
-                m_session.erase(it);
-                return true;
-            }
+        if (it == m_session.end()) { return false; }
+        SessionData& sessionData = it->second;
+        auto readyLambda = [&sessionData]() -> bool { return sessionData.replyReady; };
+        if (i_wait.count() == 0) {
+            sessionData.cvReply.wait(guard, readyLambda);
+            o_reply = std::move(sessionData.reply);
+            return true;
+        } else if (sessionData.cvReply.wait_for(guard, i_wait, readyLambda)) {
+            o_reply = std::move(sessionData.reply);
+            return true;
         }
         return false;
     }
@@ -99,11 +129,13 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
 
     void cancel(Guid const& i_id)
     {
-        LockGuard guard(m_mutex);
-        auto command = std::unique_ptr<reactor_command>(new reactor_command);
-        command->command(Command::CANCEL);
-        m_commandSender.publish(std::move(command), Guid::UNKNOWN(), i_id);
-        m_session.erase(i_id);
+        reactor_command command;
+        command.command(Command::CANCEL);
+        {
+            LockGuard guard(m_mutex);
+            m_session.erase(i_id);
+        }
+        m_commandSender.publish(command, Guid::UNKNOWN(), i_id);
         LT_LOG << m_participant.get() << ":" << m_service << "-client"
                << "  Cancelled session ID " << i_id << "\n";
     }
@@ -128,20 +160,28 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     {
         LockGuard guard(m_mutex);
         auto it = m_session.find(i_id);
-        if (it != m_session.end()) {
-            auto data = it->second.progressData.pop(i_wait);
-            if (data) {
-                PubSubType<ProgressData> deser;
-                efr::SerializedPayload_t serialized;
-                serialized.length = data->data().size();
-                serialized.data = data->data().data();
-                serialized.encapsulation = CDR_LE;  // FIXME how do you know?
-                deser.deserialize(&serialized, &o_progress);
-                serialized.data = nullptr;  // Prevent double free, as mem is owned by rawData
-                return true;
-            }
+        if (it == m_session.end()) { return false; }
+        auto& session = it->second;
+        auto waitLambda = [&session]() { return !session.progressData.empty(); };
+        if (i_wait.count() == 0) {
+            session.cvProgressData.wait(guard, waitLambda);
+            o_progress = std::move(session.progressData.front());
+            session.progressData.pop_front();
+            return true;
+        } else if (session.cvProgressData.wait_for(guard, i_wait, waitLambda)) {
+            o_progress = std::move(session.progressData.front());
+            session.progressData.pop_front();
+            return true;
         }
         return false;
+    }
+
+    bool discoveredServer() const { return m_participant->subscriberCount(reactorRequestName(m_service)) > 0; }
+
+    void disposeOfSession(Guid const& i_id)
+    {
+        LockGuard guard(m_mutex);
+        m_session.erase(i_id);
     }
 
     ParticipantPtr m_participant;  /// Participant holding all pubs and subs
@@ -155,8 +195,8 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
 
     struct SessionData {
         int progress;  /// Current progress mark
-        ThreadSafeQueue<reactor_progress>
-            progressData;  /// Queue of all recieved but not retrieved progress data samples
+        std::condition_variable cvProgressData;
+        std::deque<ProgressData> progressData;  /// Queue of all recieved but not retrieved progress data samples
         std::condition_variable cvReply;
         Rep reply;
         bool replyReady;
@@ -166,7 +206,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     };
 
     std::map<Guid, SessionData> m_session;  /// Record of all active sessions indexed by id
-};
+};                                          // namespace detail
 }  // namespace detail
 
 template <class Req, class Rep, class ProgressData>
@@ -188,6 +228,18 @@ void ReactorClient<Req, Rep, ProgressData>::logConnectionStatus() const
 }
 
 template <class Req, class Rep, class ProgressData>
+ReactorClient<Req, Rep, ProgressData>::Session::Session(std::shared_ptr<Backend> i_reactor, Guid i_id)
+    : m_reactor(i_reactor), m_id(i_id)
+{
+}
+
+template <class Req, class Rep, class ProgressData>
+ReactorClient<Req, Rep, ProgressData>::Session::~Session()
+{
+    if (m_reactor) { m_reactor->disposeOfSession(m_id); }
+}
+
+template <class Req, class Rep, class ProgressData>
 bool ReactorClient<Req, Rep, ProgressData>::Session::progressData(ProgressData& o_progress,
                                                                   std::chrono::nanoseconds const& i_wait)
 {
@@ -199,12 +251,6 @@ template <class Req, class Rep, class ProgressData>
 bool ReactorClient<Req, Rep, ProgressData>::Session::get(Rep& o_reply, std::chrono::nanoseconds const& i_wait)
 {
     return m_reactor->get(o_reply, m_id, i_wait);
-}
-
-template <class Req, class Rep, class ProgressData>
-ReactorClient<Req, Rep, ProgressData>::Session::Session(std::shared_ptr<Backend> i_reactor, Guid i_id)
-    : m_reactor(i_reactor), m_id(i_id)
-{
 }
 
 template <class Req, class Rep, class ProgressData>
@@ -225,6 +271,12 @@ int ReactorClient<Req, Rep, ProgressData>::Session::progress() const
 {
     if (m_reactor) { return m_reactor->progress(m_id); }
     return PROG_UNKNOWN;
+}
+
+template <class Req, class Rep, class ProgressData>
+bool ReactorClient<Req, Rep, ProgressData>::discoveredServer() const
+{
+    return m_backend->discoveredServer();
 }
 
 }  // namespace lt

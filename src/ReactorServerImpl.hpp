@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "PubSubType.hpp"
 #include "Reactor.hpp"
 #include "ReactorServer.hpp"
@@ -18,22 +20,24 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
             // Need to use related ID because entity codes don't match
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Session ID " << relatedId << " cancelled\n";
-            LockGuard guard(m_mutex);
-            m_session[relatedId] = CANCELLED;
+            LockGuard guard(m_sessionMutex);
+            m_session.erase(relatedId);
         };
         m_participant->subscribe<reactor_command>(reactorCommandName(i_service), commandCallback);
         auto reqCallback = [this](Req const& i_req, Guid const& id, Guid const& /*relatedId*/) {
+            LockGuard guard(m_requestMutex);
+            m_pending.emplace_back(id, i_req);
+            guard.release();
+            m_arePending.notify_one();
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Request ID " << id << " enqued as pending\n";
-            LockGuard guard(m_mutex);
-            m_pending.emplace_back(id, i_req);
         };
         m_participant->subscribe<Req>(reactorRequestName(m_service), reqCallback);
     }
 
     ~ReactorServerBackend()
     {
-        LockGuard guard(m_mutex);
+        LockGuard guard(m_sessionMutex);
         m_participant->unsubscribe(reactorCommandName(m_service));
         m_participant->unsubscribe(reactorRequestName(m_service));
         m_participant->unadvertise(reactorReplyName(m_service));
@@ -56,18 +60,22 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
 
     bool havePendingSession() const
     {
-        LockGuard guard(m_mutex);
+        LockGuard guard(m_sessionMutex);
         return m_pending.size() > 0;
     }
 
     /// Mark that the reply was sent for session i_id
     void recordReply(Guid const& i_id)
     {
-        std::vector<unsigned char> noPayload;
-        progress(i_id, PROG_SUCCESS, noPayload);
-        LockGuard guard(m_mutex);
-        auto it = m_session.find(i_id);
-        if (it != m_session.end()) { it->second = SUCCEED; }
+        reactor_progress message;
+        message.progress(PROG_SUCCESS);
+        m_progressSender.publish(message, m_progressSender.guid(), i_id);
+
+        {
+            LockGuard guard(m_sessionMutex);
+            auto it = m_session.find(i_id);
+            if (it != m_session.end()) { it->second = SUCCEED; }
+        }
         LT_LOG << m_participant.get() << ":" << m_service << "-server"
                << "  Finish session ID " << i_id << "\n";
     }
@@ -82,14 +90,27 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     /// Get the next pending session and it's id
     std::pair<Guid, Req> getPendingSessionData(std::chrono::nanoseconds i_wait)
     {
-        LockGuard guard(m_mutex);
-        if (m_arePending.wait_for(guard, i_wait, [this]() { return !m_pending.empty(); })) {
-            auto id = m_pending.front().first;
-            auto request = std::move(m_pending.front());
+        std::cout << "Accessing the pending queue" << std::endl;
+
+        if (i_wait.count() == 0) {
+            LockGuard guard(m_requestMutex);
+            m_arePending.wait(guard, [this]() { return !m_pending.empty(); });
+            auto sessionData = std::move(m_pending.front());
             m_pending.pop_front();
+            guard.release();
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
-                   << "  Starting new session ID " << id << "\n";
-            return request;
+                   << "  Starting new session ID " << sessionData.first << "\n";
+            return sessionData;
+        }
+
+        LockGuard guard(m_requestMutex);
+        if (m_arePending.wait_for(guard, i_wait, [this]() { return !m_pending.empty(); })) {
+            auto sessionData = std::move(m_pending.front());
+            m_pending.pop_front();
+            guard.release();
+            LT_LOG << m_participant.get() << ":" << m_service << "-server"
+                   << "  Starting new session ID " << sessionData.first << "\n";
+            return sessionData;
         }
         return {Guid::UNKNOWN(), Req()};
     }
@@ -97,37 +118,37 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     /// Remove sessions that are finished, cancelled, or failed from the session map
     void pruneDeadSessions()
     {
-        LockGuard guard(m_mutex);
-        std::vector<Guid> dead;
-        for (auto const& p : m_session) {
-            switch (p.second) {
+        LockGuard guard(m_sessionMutex);
+        for (auto it = m_session.begin(); it != m_session.end(); ++it) {
+            switch (it->second) {
                 case CANCELLED:
                 case FAILED:
-                case SUCCEED: dead.push_back(p.first);
+                case SUCCEED: m_session.erase(it);
                 default:;
             }
         }
-        for (auto const& id : dead) { m_session.erase(id); }
     }
 
     /// Send a progress update.
     /// @param i_payload -- this must already be serialized ProgressData
     void progress(Guid const& i_id, int i_progress, std::vector<unsigned char>& i_payload)
     {
-        LockGuard guard(m_mutex);
-        auto it = m_session.find(i_id);
-        if (it != m_session.end()) {
-            if (i_progress >= PROG_SUCCESS) {
-                it->second = SUCCEEDING;
-            } else if (i_progress > PROG_START) {
-                it->second = RUNNING;
+        {
+            LockGuard guard(m_sessionMutex);
+            auto it = m_session.find(i_id);
+            if (it != m_session.end()) {
+                if (i_progress >= PROG_SUCCESS) {
+                    it->second = SUCCEEDING;
+                } else if (i_progress > PROG_START) {
+                    it->second = RUNNING;
+                } else if (i_progress == PROG_START) {
+                    it->second = STARTING;
+                } else {
+                    m_session.erase(it);
+                }
             } else if (i_progress == PROG_START) {
-                it->second = STARTING;
-            } else {
-                it->second = FAILED;
+                m_session[i_id] = STARTING;
             }
-        } else if (i_progress == PROG_START) {
-            m_session[i_id] = STARTING;
         }
         LT_LOG << m_participant.get() << ":" << m_service << "-server"
                << "  Session ID " << i_id << " progress " << i_progress << "\n";
@@ -140,7 +161,7 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     /// Check if i_id is still live
     bool isAlive(Guid const& i_id) const
     {
-        LockGuard guard(m_mutex);
+        LockGuard guard(m_sessionMutex);
         auto it = m_session.find(i_id);
         if (it == m_session.end()) { return false; }
         switch (it->second) {
@@ -153,13 +174,20 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     typename ReactorServer<Req, Rep, ProgressData>::Session getPendingSession(std::chrono::nanoseconds i_wait)
     {
         logConnectionStatus();
-        pruneDeadSessions();
         auto s = std::move(getPendingSessionData(i_wait));
         if (s.first != Guid::UNKNOWN()) {
             return typename ReactorServer<Req, Rep, ProgressData>::Session(this->shared_from_this(),
                                                                            std::move(s.second), s.first);
         }
         return typename ReactorServer<Req, Rep, ProgressData>::Session(nullptr, Req(), Guid::UNKNOWN());
+    }
+
+    bool discoveredClients() const { return m_participant->subscriberCount(reactorReplyName(m_service)); }
+
+    void disposeOfSession(Guid i_id)
+    {
+        LockGuard guard(m_sessionMutex);
+        m_session.erase(i_id);
     }
 
    protected:
@@ -171,9 +199,10 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     std::string m_service;         /// Service name
 
     ////////////////////////////////////////////////////////////
-    // The session and pending data are guarded by m_mutex
+    // The session and pending data are guarded by m_sessionMutex
     using LockGuard = std::unique_lock<std::mutex>;
-    mutable std::mutex m_mutex;                  /// Shared state guard
+    mutable std::mutex m_sessionMutex;  /// Shared session guard
+    mutable std::mutex m_requestMutex;
     std::condition_variable m_arePending;        /// Thread coordination for pending sessions
     std::map<Guid, State> m_session;             /// Map of id's to session statuses
     std::deque<std::pair<Guid, Req>> m_pending;  /// Pending sessions
@@ -223,7 +252,8 @@ template <class Req, class Rep, class P>
 void ReactorServer<Req, Rep, P>::Session::fail()
 {
     if (nullptr == m_reactor) { return; }
-    progress(PROG_FAILED);
+    std::vector<unsigned char> noData;
+    m_reactor->progress(m_id, PROG_FAILED, noData);
     m_reactor.reset();
 }
 
@@ -231,7 +261,16 @@ template <class Req, class Rep, class P>
 ReactorServer<Req, Rep, P>::Session::Session(std::shared_ptr<Backend> i_reactor, Req const& i_request, Guid i_id)
     : m_reactor(i_reactor), m_request(i_request), m_id(i_id)
 {
-    if (m_reactor) { progress(PROG_START); }
+    if (m_reactor) {
+        std::vector<unsigned char> noData;
+        m_reactor->progress(m_id, PROG_START, noData);
+    }
+}
+
+template <class Req, class Rep, class P>
+ReactorServer<Req, Rep, P>::Session::~Session()
+{
+    if (m_reactor) { m_reactor->disposeOfSession(m_id); }
 }
 
 template <class Req, class Rep, class ProgressData>
@@ -251,6 +290,12 @@ template <class Req, class Rep, class ProgressData>
 bool ReactorServer<Req, Rep, ProgressData>::havePendingSession() const
 {
     return m_backend->havePendingSession();
+}
+
+template <class Req, class Rep, class ProgressData>
+int ReactorServer<Req, Rep, ProgressData>::discoveredClients() const
+{
+    return m_backend->discoveredClients();
 }
 
 }  // namespace lt

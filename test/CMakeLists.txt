@@ -1,6 +1,11 @@
 include(IdlTarget)
-IdlTarget(messageIdl SOURCE message.idl PATH idl)
-IdlTarget(helloIdl SOURCE HelloWorld.idl)
+IdlTarget(testIdl
+    SOURCE
+        message.idl
+        other.idl
+        HelloWorld.idl
+        OpenGarage.idl
+    PATH idl)
 
 add_executable(ltTest
     ActiveObject.cpp
@@ -11,4 +16,4 @@ add_executable(ltTest
     Guid.cpp
     main.cpp
 )
-target_link_libraries(ltTest PUBLIC letstalk messageIdl helloIdl)
+target_link_libraries(ltTest PUBLIC letstalk testIdl)

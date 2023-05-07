@@ -20,7 +20,12 @@ struct Guid {
         sequence = 0;
     }
     static Guid UNKNOWN() { return Guid(); }
-    void increment() { sequence += 1; }
+    Guid increment()
+    {
+        sequence += 1;
+        if (sequence == 0) sequence = 1;
+        return *this;
+    }
     Guid makeBadVersion() const;
     bool isBadVersionOf(Guid const& i_other) const;
 };
