@@ -54,7 +54,7 @@ std::ostream& operator<<(std::ostream& os, Guid const& i_guid)
 {
     uint64_t const* first = reinterpret_cast<uint64_t const*>(&i_guid.data[0]);
     uint64_t const* second = reinterpret_cast<uint64_t const*>(&i_guid.data[8]);
-    return os << *first << "-" << *second << "-" << i_guid.sequence;
+    return os << std::hex << std::noshowbase << *first << "-" << *second << "-" << i_guid.sequence;
 }
 
 }  // namespace lt

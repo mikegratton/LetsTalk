@@ -4,6 +4,7 @@
 
 #include "LetsTalk.hpp"
 #include "LetsTalkFwd.hpp"
+#include "ParticipantImpl.hpp"
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 // Request/Reply
@@ -27,11 +28,15 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
     Publisher m_sender;
     C m_providerCallback;
     Guid m_Id;
+    std::string m_serviceName;
 
    public:
     /// Ctor. Note this starts the work thread.
-    ServiceProvider(C i_providerCallback, Publisher i_publisher)
-        : m_sender(i_publisher), m_providerCallback(i_providerCallback), m_Id(m_sender.guid())
+    ServiceProvider(std::string const& i_serviceName, C i_providerCallback, Publisher i_publisher)
+        : m_sender(i_publisher),
+          m_providerCallback(i_providerCallback),
+          m_Id(m_sender.guid()),
+          m_serviceName(i_serviceName)
     {
     }
 
@@ -41,12 +46,10 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
         if (nullptr == i_reader) { return; }
         Req data;
         efd::SampleInfo info;
-        auto code = i_reader->take_next_sample(&data, &info);
-        if (code == ReturnCode_t::RETCODE_OK) {
+        while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
             if (info.valid_data) {
-                m_Id.increment();
                 Guid relatedId = toLetsTalkGuid(info.sample_identity);
-                LT_LOG << "Request " << relatedId << " received\n";
+                LT_LOG << m_serviceName << ": Request " << relatedId << " received\n";
                 submitJob([this, data, relatedId]() {
                     Rep reply;
                     bool isBad = false;
@@ -55,8 +58,9 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
                     } catch (...) {
                         isBad = true;
                     }
-                    LT_LOG << "Sending reply for " << relatedId << ", result okay=" << !isBad << "\n";
-                    m_sender.publish(reply, m_Id, relatedId, isBad);
+                    LT_LOG << m_serviceName << ": Sending reply for " << relatedId << ", result "
+                           << (isBad ? "FAILED" : "okay") << "\n";
+                    m_sender.publish(reply, m_Id.increment(), relatedId, isBad);
                 });
             }
         }
@@ -120,25 +124,23 @@ class RequesterImpl {
     /// Callback. Use Guid to check that this reply is for us.
     void onReply(Rep const& data, Guid const& id, Guid const& relatedId)
     {
-        LT_LOG << serviceName() << ": Received reply " << relatedId << "\n";
-
         Guid badId = relatedId.makeBadVersion();
         std::unique_lock<std::mutex> guard(m_lock);
         auto it = m_requests.find(relatedId);
         if (it != m_requests.end()) {
-            LT_LOG << serviceName() << ": Recognized as a pending request\n";
+            LT_LOG << serviceName() << ": Success response received for pending request " << relatedId << "\n";
             it->second.set_value(data);
             m_requests.erase(it);
             return;
         }
         it = m_requests.find(badId);
         if (it != m_requests.end()) {
-            LT_LOG << serviceName() << ": Recognized as a FAILED pending request\n";
+            LT_LOG << serviceName() << ": Failure response received for pending request " << badId << "\n";
             it->second.set_exception(std::make_exception_ptr(std::runtime_error("RPC failed")));
             m_requests.erase(it);
             return;
         }
-        LT_LOG << serviceName() << ": Reply " << relatedId << " ignored.\n";
+        LT_LOG << serviceName() << ": Reply for " << relatedId << " (aka " << badId << ") ignored.\n";
     }
 
     std::shared_ptr<Participant> m_participant;  //! Related participant

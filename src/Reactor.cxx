@@ -41,7 +41,7 @@ using namespace eprosima::fastcdr::exception;
 #define reactor_void_progress_max_key_cdr_typesize 0ULL;
 
 #define reactor_command_max_key_cdr_typesize 0ULL;
-#define reactor_progress_max_key_cdr_typesize 0ULL;
+#define reactor_progress_max_key_cdr_typesize 4ULL;
 
 reactor_progress::reactor_progress()
 {
@@ -229,13 +229,16 @@ size_t reactor_progress::getKeyMaxCdrSerializedSize(
 
 bool reactor_progress::isKeyDefined()
 {
-    return false;
+    return true;
 }
 
 void reactor_progress::serializeKey(
         eprosima::fastcdr::Cdr& scdr) const
 {
     (void) scdr;
+   scdr << m_progress;
+   
+  
 }
 
 reactor_void_progress::reactor_void_progress()

@@ -12,27 +12,26 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
    public:
     ReactorServerBackend(ParticipantPtr i_participant, std::string const& i_service)
         : m_participant(i_participant),
-          m_replySender(m_participant->advertise<Rep>(reactorReplyName(i_service))),
-          m_progressSender(m_participant->advertise<reactor_progress>(reactorProgressName(i_service))),
+          m_replySender(m_participant->advertise<Rep>(reactorReplyName(i_service), "stateful", 8)),
+          m_progressSender(m_participant->advertise<reactor_progress>(reactorProgressName(i_service), "stateful", 8)),
           m_service(i_service)
     {
         auto commandCallback = [this](reactor_command const&, Guid const& /*id*/, Guid const& relatedId) {
-            // Need to use related ID because entity codes don't match
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Session ID " << relatedId << " cancelled\n";
             LockGuard guard(m_sessionMutex);
             m_session.erase(relatedId);
         };
-        m_participant->subscribe<reactor_command>(reactorCommandName(i_service), commandCallback);
+        m_participant->subscribe<reactor_command>(reactorCommandName(i_service), commandCallback, "stateful");
         auto reqCallback = [this](Req const& i_req, Guid const& id, Guid const& /*relatedId*/) {
             LockGuard guard(m_requestMutex);
             m_pending.emplace_back(id, i_req);
-            guard.release();
+            guard.unlock();
             m_arePending.notify_one();
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Request ID " << id << " enqued as pending\n";
         };
-        m_participant->subscribe<Req>(reactorRequestName(m_service), reqCallback);
+        m_participant->subscribe<Req>(reactorRequestName(m_service), reqCallback, "stateful");
     }
 
     ~ReactorServerBackend()
@@ -92,22 +91,11 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     {
         std::cout << "Accessing the pending queue" << std::endl;
 
-        if (i_wait.count() == 0) {
-            LockGuard guard(m_requestMutex);
-            m_arePending.wait(guard, [this]() { return !m_pending.empty(); });
-            auto sessionData = std::move(m_pending.front());
-            m_pending.pop_front();
-            guard.release();
-            LT_LOG << m_participant.get() << ":" << m_service << "-server"
-                   << "  Starting new session ID " << sessionData.first << "\n";
-            return sessionData;
-        }
-
         LockGuard guard(m_requestMutex);
         if (m_arePending.wait_for(guard, i_wait, [this]() { return !m_pending.empty(); })) {
             auto sessionData = std::move(m_pending.front());
             m_pending.pop_front();
-            guard.release();
+            guard.unlock();
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Starting new session ID " << sessionData.first << "\n";
             return sessionData;
@@ -151,7 +139,8 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
             }
         }
         LT_LOG << m_participant.get() << ":" << m_service << "-server"
-               << "  Session ID " << i_id << " progress " << i_progress << "\n";
+               << "  Session ID " << i_id << " progress " << i_progress << " w/ " << i_payload.size()
+               << " bytes data\n";
         reactor_progress message;
         message.progress(i_progress);
         message.data().swap(i_payload);

@@ -85,7 +85,7 @@ template <class Req, class Rep, class C>
 void Participant::advertise(std::string const& i_serviceName, C i_serviceProvider)
 {
     Publisher sender = advertise<Rep>(detail::replyName(i_serviceName));
-    auto listener = new detail::ServiceProvider<Req, Rep, C>(i_serviceProvider, sender);
+    auto listener = new detail::ServiceProvider<Req, Rep, C>(i_serviceName, i_serviceProvider, sender);
     doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new PubSubType<Req>()), listener, "", 1);
 }
 

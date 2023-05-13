@@ -32,7 +32,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
 
     ReactorClientBackend(ParticipantPtr i_participant, std::string const& i_serviceName)
         : m_participant(i_participant),
-          m_commandSender(i_participant->advertise<reactor_command>(reactorCommandName(i_serviceName))),
+          m_commandSender(i_participant->advertise<reactor_command>(reactorCommandName(i_serviceName), "stateful")),
           m_service(i_serviceName)
     {
         auto progressLambda = [this](reactor_progress const& i_progress, Guid const& /*sampleId*/,
@@ -56,7 +56,8 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
             if (it == m_session.end()) { return; }
             it->second.progress = i_progress.progress();
             LT_LOG << m_participant.get() << ":" << m_service << "-client"
-                   << "  Session ID " << i_relatedId << " progress " << i_progress.progress() << "\n";
+                   << "  Session ID " << i_relatedId << " progress " << i_progress.progress() << " w/ "
+                   << i_progress.data().size() << " bytes data \n";
             if (i_progress.data().size() > 0) {
                 if (haveData) {
                     it->second.progressData.emplace_back(std::move(sample));
@@ -67,9 +68,9 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
                 }
             }
         };
-        m_participant->subscribe<reactor_progress>(reactorProgressName(i_serviceName), progressLambda);
+        m_participant->subscribe<reactor_progress>(reactorProgressName(i_serviceName), progressLambda, "stateful");
 
-        m_requestSender = m_participant->advertise<Req>(reactorRequestName(m_service));
+        m_requestSender = m_participant->advertise<Req>(reactorRequestName(m_service), "stateful", 8);
         m_lastId = m_requestSender.guid();
         auto repCallback = [this](Rep const& i_reply, Guid const& /*sampleId*/, Guid const& i_relatedId) {
             LockGuard guard(m_mutex);
@@ -80,10 +81,10 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
             it->second.progress = PROG_SUCCESS;
             it->second.reply = std::move(i_reply);
             it->second.replyReady = true;
-            guard.release();
+            guard.unlock();
             it->second.cvReply.notify_one();
         };
-        m_participant->subscribe<Rep>(reactorReplyName(m_service), repCallback);
+        m_participant->subscribe<Rep>(reactorReplyName(m_service), repCallback, "stateful");
     }
 
     ~ReactorClientBackend()
@@ -102,11 +103,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
         if (it == m_session.end()) { return false; }
         SessionData& sessionData = it->second;
         auto readyLambda = [&sessionData]() -> bool { return sessionData.replyReady; };
-        if (i_wait.count() == 0) {
-            sessionData.cvReply.wait(guard, readyLambda);
-            o_reply = std::move(sessionData.reply);
-            return true;
-        } else if (sessionData.cvReply.wait_for(guard, i_wait, readyLambda)) {
+        if (sessionData.cvReply.wait_for(guard, i_wait, readyLambda)) {
             o_reply = std::move(sessionData.reply);
             return true;
         }
@@ -163,12 +160,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
         if (it == m_session.end()) { return false; }
         auto& session = it->second;
         auto waitLambda = [&session]() { return !session.progressData.empty(); };
-        if (i_wait.count() == 0) {
-            session.cvProgressData.wait(guard, waitLambda);
-            o_progress = std::move(session.progressData.front());
-            session.progressData.pop_front();
-            return true;
-        } else if (session.cvProgressData.wait_for(guard, i_wait, waitLambda)) {
+        if (session.cvProgressData.wait_for(guard, i_wait, waitLambda)) {
             o_progress = std::move(session.progressData.front());
             session.progressData.pop_front();
             return true;

@@ -27,7 +27,7 @@ TEST_CASE("Reactor.Basic")
     std::cout << "Starting" << std::endl;
 
     CHECK(SayHi.havePendingSession() == true);
-    auto serverSession = SayHi.getPendingSession();
+    auto serverSession = SayHi.getPendingSession(std::chrono::seconds(1));
     CHECK(serverSession.isAlive() == true);
     CHECK(clientSession.isAlive() == true);
     serverSession.progress(10);
@@ -59,7 +59,7 @@ TEST_CASE("Reactor.Cancel")
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     CHECK(SayHi.havePendingSession() == true);
-    auto serverSession = SayHi.getPendingSession();
+    auto serverSession = SayHi.getPendingSession(std::chrono::seconds(1));
     CHECK(serverSession.isAlive() == true);
     CHECK(clientSession.isAlive() == true);
 
@@ -87,29 +87,30 @@ TEST_CASE("Reactor.CustomProgress")
     std::cout << "This session is " << serverSession.id() << "\n";
     REQUIRE(serverSession.isAlive() == true);
     CHECK(serverSession.request().desired_state() == GarageDoorState::kopen);
+
     ChangeStatus status;
     status.current_state(GarageDoorState::kopening);
-
     serverSession.progress(10, status);
     status.current_state(GarageDoorState::kstuck);
     serverSession.progress(11, status);
     status.current_state(GarageDoorState::kopening);
     serverSession.progress(90, status);
+
     REQUIRE(clientSession.isAlive());
     CHECK(clientSession.progress() >= PROG_SENT);
     ChangeStatus deliveredStatus;
-    CHECK(clientSession.progressData(deliveredStatus));
+    CHECK(clientSession.progressData(deliveredStatus, std::chrono::seconds(1)));
     CHECK(deliveredStatus.current_state() == GarageDoorState::kopening);
-    CHECK(clientSession.progressData(deliveredStatus));
+    CHECK(clientSession.progressData(deliveredStatus, std::chrono::seconds(1)));
     CHECK(deliveredStatus.current_state() == GarageDoorState::kstuck);
-    CHECK(clientSession.progressData(deliveredStatus));
+    CHECK(clientSession.progressData(deliveredStatus, std::chrono::seconds(1)));
     CHECK(deliveredStatus.current_state() == GarageDoorState::kopening);
     CHECK(clientSession.progress() == 90);
     ChangeResult result;
     result.final_state(GarageDoorState::kopen);
     serverSession.reply(result);
     ChangeResult clientResult;
-    CHECK(clientSession.get(clientResult));
+    CHECK(clientSession.get(clientResult, std::chrono::seconds(1)));
     CHECK(clientResult.final_state() == GarageDoorState::kopen);
     CHECK(clientSession.progress() == PROG_SUCCESS);
 }

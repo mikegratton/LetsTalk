@@ -54,13 +54,6 @@ class ThreadSafeQueue {
      */
     std::unique_ptr<T> pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0))
     {
-        if (i_wait == std::chrono::nanoseconds(0)) {
-            LockGuard guard(m_mutex);
-            m_nonempty.wait(guard, [this]() { return !m_queue.empty(); });
-            auto popped = std::move(m_queue.front());
-            m_queue.pop_front();
-            return popped;
-        }
         LockGuard guard(m_mutex);
         if (m_nonempty.wait_for(guard, i_wait, [this]() { return !m_queue.empty(); })) {
             auto popped = std::move(m_queue.front());
@@ -79,14 +72,8 @@ class ThreadSafeQueue {
     Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0))
     {
         Queue queue;
-        if (i_wait.count() == 0) {
-            LockGuard guard(m_mutex);
-            m_nonempty.wait(guard, [this]() { return !m_queue.empty(); });
-            queue.swap(m_queue);
-        } else {
-            LockGuard guard(m_mutex);
-            if (m_nonempty.wait_for(guard, i_wait, [this]() { return !m_queue.empty(); })) { queue.swap(m_queue); }
-        }
+        LockGuard guard(m_mutex);
+        if (m_nonempty.wait_for(guard, i_wait, [this]() { return !m_queue.empty(); })) { queue.swap(m_queue); }
         return queue;
     }
 
