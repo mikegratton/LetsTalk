@@ -28,6 +28,7 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
     Publisher m_sender;
     C m_providerCallback;
     Guid m_Id;
+    Guid m_lastReqeustId;
     std::string m_serviceName;
 
    public:
@@ -36,6 +37,7 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
         : m_sender(i_publisher),
           m_providerCallback(i_providerCallback),
           m_Id(m_sender.guid()),
+          m_lastReqeustId(Guid::UNKNOWN()),
           m_serviceName(i_serviceName)
     {
     }
@@ -49,6 +51,7 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
         while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
             if (info.valid_data) {
                 Guid relatedId = toLetsTalkGuid(info.sample_identity);
+                if (relatedId == m_lastReqeustId) { return; }
                 LT_LOG << m_serviceName << ": Request " << relatedId << " received\n";
                 submitJob([this, data, relatedId]() {
                     Rep reply;

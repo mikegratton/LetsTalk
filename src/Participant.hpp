@@ -70,7 +70,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
      * @return thread safe queue pointer where samples will appear
      */
     template <class T>
-    QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 128);
+    QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 8);
 
     /**
      * unsubscribe(topic)

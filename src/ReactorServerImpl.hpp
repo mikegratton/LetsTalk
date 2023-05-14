@@ -89,8 +89,6 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     /// Get the next pending session and it's id
     std::pair<Guid, Req> getPendingSessionData(std::chrono::nanoseconds i_wait)
     {
-        std::cout << "Accessing the pending queue" << std::endl;
-
         LockGuard guard(m_requestMutex);
         if (m_arePending.wait_for(guard, i_wait, [this]() { return !m_pending.empty(); })) {
             auto sessionData = std::move(m_pending.front());

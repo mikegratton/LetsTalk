@@ -1,5 +1,5 @@
 #pragma once
-#include <deque>
+#include <queue>
 
 #include "Reactor.hpp"
 #include "ReactorClient.hpp"
@@ -60,7 +60,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
                    << i_progress.data().size() << " bytes data \n";
             if (i_progress.data().size() > 0) {
                 if (haveData) {
-                    it->second.progressData.emplace_back(std::move(sample));
+                    it->second.progressData.push({i_progress.progress(), std::move(sample)});
                     it->second.cvProgressData.notify_one();
                 } else {
                     LT_LOG << m_participant.get() << ":" << m_service << "-client"
@@ -161,8 +161,8 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
         auto& session = it->second;
         auto waitLambda = [&session]() { return !session.progressData.empty(); };
         if (session.cvProgressData.wait_for(guard, i_wait, waitLambda)) {
-            o_progress = std::move(session.progressData.front());
-            session.progressData.pop_front();
+            o_progress = std::move(session.progressData.top().second);
+            session.progressData.pop();
             return true;
         }
         return false;
@@ -186,12 +186,21 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     Guid m_lastId;  /// This is incremented with each session
 
     struct SessionData {
-        int progress;  /// Current progress mark
-        std::condition_variable cvProgressData;
-        std::deque<ProgressData> progressData;  /// Queue of all recieved but not retrieved progress data samples
-        std::condition_variable cvReply;
-        Rep reply;
-        bool replyReady;
+        using ProgressMark = std::pair<int, ProgressData>;
+        struct LowestProgress {
+            bool operator()(ProgressMark const& i_left, ProgressMark const& i_right)
+            {
+                return i_left.first > i_right.first;
+            }
+        };
+        using ProgressQueue = std::priority_queue<ProgressMark, std::vector<ProgressMark>, LowestProgress>;
+
+        int progress;                            /// Current progress mark level
+        std::condition_variable cvProgressData;  /// Coordination for data in progressData queue
+        ProgressQueue progressData;              /// Queue of all recieved but not retrieved progress data samples
+        std::condition_variable cvReply;         /// Coordination for replyReady
+        Rep reply;                               /// Reply data (only available at session end)
+        bool replyReady;                         /// True when reply data is valid
 
         /// When SessionData is created, a request has been sent
         SessionData() : progress(PROG_SENT), replyReady(false) {}

@@ -2,13 +2,23 @@ Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 =================================================
 
 
-# TODO -- Stuff standing in the way of initial release
+# Roadmap 
 
-1. Test custom progress data
+## For 1.0 Release
 
-2. Document uptr variants
+1. Document uptr variants
 
-4. Create reactor examples
+2. Fix reactor example
+
+3. Debug lingering request/reply issues
+
+## Future Features
+
+1. `select()` mechanism for waiting on multiple `ThreadSafeQueue`s
+
+2. Automate FastDDS version upgrade
+
+3. To/from json additions for fastddsgen
 
 
 # Introduction
@@ -105,11 +115,151 @@ Let's talk offers three communication patters:
   appreciable time during which the requesting process may need to 
   cancel or retask the service provider as the situation changes.
 
+Below are some more details on each.  See also the `examples` directory with
+sample code to crib from.
+
 ## Publish/Subscribe
+
+In pub/sub, a group of publishers send data to all subscribers that match on
+a topic.  Topics are strings (e.g. "robot.motion.command") but also have a 
+defined type.  To subscribe, you register a callback with a participant,
+```cpp
+lt::ParticipantPtr node = lt::Participant::create();
+node->subscribe<MyType>("my.topic", [](MyType const& sample) {
+    std::cout << "Got some data!\n";
+});
+```
+or, if you wish to get samples as unique_ptrs (because you plan to move them
+to another thread),
+```cpp
+node->subscribe<MyType>("my.topic", [](std::unique_ptr<MyType> sample) {
+    std::cout << "Got some data!\n";
+});
+```
+*IMPORTANT:* This callback is run on a pub/sub thread, so long calculations or
+waits for a lock will negatively impact the whole system. A good practice is to 
+simply enqueue the data on a thread-safe queue for later processing. Let's Talk
+provides such a queue as `ThreadSafeQueue`, and a convenience subscription mode,
+```cpp
+lt::QueuePtr<MyType> myTypeQueue = lt::node->subscribe<MyType>("my.topic");
+```
+The queue then supplies `pop()` to get a sample (with an optional wait time) and 
+`popAll()` to get all pending samples,
+```cpp
+std::unique_ptr<T> pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
+Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
+```
+where the `Queue` type is a `std::list<std::unique_ptr<T>>` by default.
+
+To cancel a subscription, the Participant provides an unsubscribe function,
+```cpp
+node->unsubscribe("my.topic");
+```
+You can also query how many publishers have been discovered for the topic,
+```cpp
+int count = node->publisherCount("my.topic");
+```
+
+On the publisher end, Participant acts as a factory for creating lightweight `Publisher`
+objects,
+```cpp
+lt::ParticipantPtr node = lt::Participant::create();
+lt::Publisher pub = node->advertise<MyType>("my.topic");
+```
+To use it,
+```cpp
+MyType sample;
+/* ... fill out sample here */
+pub.publish(sample);
+```
+or via unique_ptr,
+```cpp
+auto sample = std::make_unique<MyType>();
+/* ... fill out sample here */
+pub.publish(std::move(sample));
+```
+Publisher erases the `MyType` information, but publishing a type other than `MyType` will 
+result in an error. Calling `pub.topicType()` will return the typename as a string. 
+You can check for subscribers using the Participant,
+```cpp
+int count = node->subscriberCount("my.topic")
+```
+To stop advertising data, simply dispose of the Publisher object.
+
+Let's Talk also supports differen "Quality of Service" (QoS) settings for publishers and
+subscribers.  An optional string argument to `advertise()` and `subscribe()` 
+gives the name of the QoS profile to use. For example,
+```
+auto frameQueue = node->subscribe<VideoFrame>("video.stream", "bulk");
+```
+will set the QoS to the bulk mode. See below for a full description of QoS settings in
+Let's Talk.
 
 ## Request/Response
 
 ## Reactor
+
+The Reactor uses pull-style API with session objects rather than callbacks. The server-side
+differs from the request/response. To provide a reactor service, we first create the server
+object,
+```cpp
+lt::ParticipantPtr node = lt::Participant::create();
+auto motionServer = node->makeReactorServer<RequestType, ReplyType, ProgressType>("robot.move");
+```
+Here, `ProgressType` is optional; if your service doesn't provide progress data you can omit the
+argument. `ReactorServer` objects are lightweight and may be copied cheaply. To see if clients have connected,
+```cpp
+int knownClientCount = motionServer.discoveredClients());
+```
+and to check for pending sessions,
+```cpp
+bool pending = motionServer.havePendingSession();
+```
+If this is true, a request has been recieved. To service it, we get a `Session` object,
+```cpp
+auto motionSession = motionServer.getPendingSession();
+```
+This takes an optional wait time if you want to have a blocking wait for sessions. Like the 
+server object, this is a lightweight object that may be copied cheaply. Copies all refer to the 
+same logical session. The session object provides accessors for the request data
+```cpp
+RequestType const& request = motionSession.request();
+```
+We can begin processing the request now.  As we go, we can send back progress reports via
+```cpp
+ProgressData mySpecialProgress;
+// ... fill out data
+motionSession.progress(25, mySpecialProgress);
+```
+If you didn't specify a `ProgressData` type, you may still send progress marks with
+```
+motionSession.progress(25);
+```
+The progress mark integer uses values from 1 to 100, with 1 being a special value for "started" and 100
+signaling completion. The ReactorServer will automatically send these when you start and finish a session.
+Note you may send duplicate progress marks, or even have progress decreasing. To signal failure,
+`motionSession.fail()` will dispose of the session, notifying the client. To finish a session,
+```cpp
+ReplyType reply;
+// ... fill out reply
+motionSession.reply(reply);
+```
+Additionally, the client may cancel a session at any time. You can check if the session has been cancelled by
+calling `isAlive()`.
+
+The client end is similar to the request/reply client. First, we create a client object on the participant:
+```cpp
+auto motionClient = node->makeReactorClient<RequestType, ReplyType, ProgressType>("robot.motion");
+```
+We can then check for connections with `motionClient.discoveredServer()`. Sending a request starts a session
+```cpp
+RequestData request;
+// ... fill out request
+auto clientSession = motionClient.request(request);
+```
+The session API provides calls to determine if the session is alive (started by the server), get the current 
+progress, get a progress data sample, or await the final reply.  There's also a `cancel()` call to end the 
+session early.
 
 ## Examples
 
@@ -122,6 +272,32 @@ $ ln -s <lets talk install dir> install
 $ mkdir build && cd build
 $ cmake ..
 ```
+
+# Quality of Service (QoS)
+
+Let's Talk defines three levels of service by default:
+
+* "reliable" -- the default. This QoS will resend messages when not acknowledged. Publishers 
+will also keep the last published message cached so that late-joining subscribers can be 
+immediately sent the last message on a topic upon discovery. 
+
+* "bulk" -- Failed sending attempts are not repeated. No queue of old messages is maintained.
+This is intended for streaming data where it is better to press ahead than dwell upon the past.
+
+* "stateful" -- Like reliable, but samples are delivered in-order to the subscriber. This is for
+topics where samples refer to state provided by previous samples. Note that FastDDS doesn't yet
+support this, so "stateful" behaves exactly as "reliable" for now.
+
+In addition, Participants may have QoS profiles. These are used to alter the underlying
+protocol from UDP to TCP or something else. Currently only UDP profiles are defined by default.
+
+## Using Custom QoS
+
+If you wish to develop your own QoS profiles, see https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html
+
+When invoking your program, set the enivronment variable `LT_PROFILE` to the path to your xml.  The
+`profile_name` attribute may be used as the optional argument for `subscribe` and `advertise` to
+use these QoS settings.
 
 # DDS Concepts in Let's Talk
 
@@ -140,6 +316,7 @@ behavior at runtime.
 
 * `LT_VERBOSE` -- enables debug print messages about discovery and message passing
 * `LT_LOCAL_ONLY` -- If 1, prevents discovery from finding participants on another host
+* `LT_PROFILE` -- Path to custom QoS profile XML file
 
 To use this on you program `foo`, you can launch foo from the shell like this:
 ```

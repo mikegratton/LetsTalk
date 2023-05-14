@@ -84,7 +84,6 @@ TEST_CASE("Reactor.CustomProgress")
     auto clientSession = garageRemote.request(request);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     auto serverSession = garageService.getPendingSession(std::chrono::seconds(3));
-    std::cout << "This session is " << serverSession.id() << "\n";
     REQUIRE(serverSession.isAlive() == true);
     CHECK(serverSession.request().desired_state() == GarageDoorState::kopen);
 

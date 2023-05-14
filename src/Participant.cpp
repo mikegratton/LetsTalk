@@ -1,5 +1,3 @@
-#include "LetsTalk.hpp"
-
 #include <cstdlib>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
@@ -7,6 +5,8 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <iostream>
+
+#include "LetsTalk.hpp"
 
 namespace lt {
 
@@ -171,6 +171,7 @@ void Participant::unsubscribe(std::string const& i_topic)
 {
     auto reader = m_subscriber->lookup_datareader(i_topic);
     if (reader) {
+        reader->delete_contained_entities();
         auto code = m_subscriber->delete_datareader(reader);
         LT_LOG << m_participant << " Unsubscribed from " << i_topic << "; " << code << "\n";
     }
@@ -180,11 +181,14 @@ void Participant::unsubscribe(std::string const& i_topic)
 // under that object here
 void Participant::unadvertise(std::string const& i_service)
 {
-    auto writer = m_publisher->lookup_datawriter(detail::requestName(i_service));
-    if (writer) {
-        auto code = m_publisher->delete_datawriter(writer);
+    auto server = m_subscriber->lookup_datareader(detail::requestName(i_service));
+    if (server) {
+        server->delete_contained_entities();
+        auto code = m_subscriber->delete_datareader(server);
         LT_LOG << m_participant << " Unadverised service " << i_service << "; " << code << "\n";
     }
+    auto replier = m_publisher->lookup_datawriter(detail::replyName(i_service));
+    if (replier) { m_publisher->delete_datawriter(replier); }
 }
 
 // Callback to update the table of counts
