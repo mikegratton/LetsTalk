@@ -22,16 +22,19 @@ TEST_CASE("Reactor.Basic")
     message.message("hello?");
     message.index(0);
     auto clientSession = AskForGreeting.request(message);
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-    std::cout << "Starting" << std::endl;
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (SayHi.havePendingSession()) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    CHECK(i != 10);
 
-    CHECK(SayHi.havePendingSession() == true);
     auto serverSession = SayHi.getPendingSession(std::chrono::seconds(1));
     CHECK(serverSession.isAlive() == true);
     CHECK(clientSession.isAlive() == true);
     serverSession.progress(10);
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     CHECK(clientSession.progress() == 10);
     message.message("Hi hi hi!");
     message.index(1);

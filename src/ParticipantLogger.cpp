@@ -1,10 +1,12 @@
 #include "ParticipantLogger.hpp"
 
+#include <memory>
+
 #include "LetsTalk.hpp"
 namespace lt {
 namespace detail {
 
-ParticipantLogger::ParticipantLogger(ParticipantPtr i_participant)
+ParticipantLogger::ParticipantLogger(std::weak_ptr<Participant> i_participant)
     : m_participant(i_participant), m_callback([](efd::DomainParticipant*, efr::ParticipantDiscoveryInfo&&) {})
 {
 }
@@ -31,7 +33,8 @@ void ParticipantLogger::on_publication_matched(efd::DataWriter* i_writer, efd::P
 {
     auto const& topic = i_writer->get_topic()->get_name();
     auto* participant = i_writer->get_publisher()->get_participant();
-    if (m_participant) { m_participant->updateSubscriberCount(topic, info.current_count_change); }
+    std::shared_ptr<Participant> lockedLtParticipant = m_participant.lock();
+    if (lockedLtParticipant) { lockedLtParticipant->updateSubscriberCount(topic, info.current_count_change); }
     if (info.current_count_change > 0) {
         LT_LOG << participant << " topic \"" << topic << "\" matched " << info.current_count << " subscriber(s)\n";
     } else {
@@ -42,7 +45,8 @@ void ParticipantLogger::on_publication_matched(efd::DataWriter* i_writer, efd::P
 void ParticipantLogger::on_subscription_matched(efd::DataReader* i_reader, efd::SubscriptionMatchedStatus const& i_info)
 {
     auto const& topic = i_reader->get_topicdescription()->get_name();
-    if (m_participant) { m_participant->updatePublisherCount(topic, i_info.current_count_change); }
+    std::shared_ptr<Participant> lockedLtParticipant = m_participant.lock();
+    if (lockedLtParticipant) { lockedLtParticipant->updatePublisherCount(topic, i_info.current_count_change); }
     if (i_info.current_count_change > 0) {
         LT_LOG << i_reader->get_subscriber()->get_participant() << " topic \"" << topic << "\" matched "
                << i_info.current_count << " publisher(s)\n";

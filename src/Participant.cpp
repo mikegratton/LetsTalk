@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "LetsTalk.hpp"
+#include "LetsTalkFwd.hpp"
 
 namespace lt {
 
@@ -65,19 +66,25 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
 
     rawParticipant = factory->create_participant(i_domain, qos);
     auto participantDeleter = [factory](efd::DomainParticipant* raw) {
-        raw->delete_contained_entities();
-        factory->delete_participant(raw);
+        auto d1 = raw->delete_contained_entities();
+        auto d2 = factory->delete_participant(raw);
     };
     auto participant = std::shared_ptr<efd::DomainParticipant>(rawParticipant, participantDeleter);
 
     // Create the publisher
     auto rawPub = rawParticipant->create_publisher(rawParticipant->get_default_publisher_qos());
-    auto pubDeleter = [participant](efd::Publisher* pub) { participant->delete_publisher(pub); };
+    auto pubDeleter = [participant](efd::Publisher* pub) {
+        pub->delete_contained_entities();
+        participant->delete_publisher(pub);
+    };
     auto publisher = std::shared_ptr<efd::Publisher>(rawPub, pubDeleter);
 
     // Create the subscriber
     auto rawSub = rawParticipant->create_subscriber(rawParticipant->get_default_subscriber_qos());
-    auto subDeleter = [participant](efd::Subscriber* sub) { participant->delete_subscriber(sub); };
+    auto subDeleter = [participant](efd::Subscriber* sub) {
+        sub->delete_contained_entities();
+        participant->delete_subscriber(sub);
+    };
     auto subscriber = std::shared_ptr<efd::Subscriber>(rawSub, subDeleter);
 
     // Make the lt::Participant instance
@@ -97,10 +104,9 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
 
 Participant::~Participant()
 {
-    // Ensure all readers and writers are destructed. This isn't strictly needed
-    m_publisher->delete_contained_entities();
-    m_subscriber->delete_contained_entities();
-    m_participant->delete_contained_entities();
+    m_publisher.reset();
+    m_subscriber.reset();
+    m_participant.reset();
 }
 
 std::string Participant::name() const

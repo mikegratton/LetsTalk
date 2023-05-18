@@ -5,12 +5,6 @@
 #include "doctest.h"
 #include "idl/HelloWorld.h"
 
-/*
- * TCP, UDP
- *
- * reliable, bulk, stateful
- */
-
 TEST_CASE("BulkProfile")
 {
     auto participant = lt::Participant::create();
@@ -65,15 +59,17 @@ TEST_CASE("StatefulProfile")
     participant->subscribe<HelloWorld>(
         "HelloWorldTopic",
         [](HelloWorld const& data) { std::cout << data.message() << " " << data.index() << std::endl; }, "stateful", 6);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    while (participant2->subscriberCount("HelloWorldTopic") == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 }
 
 TEST_CASE("UptrOperation")
 {
     auto participant = lt::Participant::create();
-    auto publisher = participant->advertise<HelloWorld>("HelloWorldTopic");
     auto participant2 = lt::Participant::create();
+    auto publisher = participant->advertise<HelloWorld>("HelloWorldTopic");
     participant2->subscribe<HelloWorld>("HelloWorldTopic", [](std::unique_ptr<HelloWorld> ptr) {
         REQUIRE(ptr != nullptr);
         CHECK(ptr->index() == 7);
@@ -90,4 +86,23 @@ TEST_CASE("UptrOperation")
     samplePtr->index(7);
     publisher.publish(std::move(samplePtr));
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
+}
+
+TEST_CASE("ValueOperation")
+{
+    auto participant = lt::Participant::create();
+    auto participant2 = lt::Participant::create();
+
+    auto publisher = participant->advertise<HelloWorld>("HelloWorldTopic");
+    participant2->subscribe<HelloWorld>("HelloWorldTopic", [](HelloWorld const& ptr) { CHECK(ptr.index() == 7); });
+
+    while (participant->subscriberCount("HelloWorldTopic") == 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    HelloWorld sample;
+    sample.index(7);
+    publisher.publish(sample);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    participant2->unsubscribe("HelloWorldTopic");
 }

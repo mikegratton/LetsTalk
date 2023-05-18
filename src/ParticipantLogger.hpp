@@ -11,7 +11,6 @@
 namespace lt {
 
 class Participant;
-using ParticipantPtr = std::shared_ptr<Participant>;
 
 namespace detail {
 
@@ -22,7 +21,7 @@ class ParticipantLogger : public efd::DomainParticipantListener {
    public:
     using Callback = std::function<void(efd::DomainParticipant* i_participant, efr::ParticipantDiscoveryInfo&& i_info)>;
 
-    ParticipantLogger(ParticipantPtr i_participant);
+    ParticipantLogger(std::weak_ptr<Participant> i_participant);
 
     void on_participant_discovery(efd::DomainParticipant* i_participant, efr::ParticipantDiscoveryInfo&& i_info) final;
 
@@ -31,7 +30,7 @@ class ParticipantLogger : public efd::DomainParticipantListener {
     void on_publication_matched(efd::DataWriter* i_writer, efd::PublicationMatchedStatus const& i_info) final;
 
    protected:
-    ParticipantPtr m_participant;
+    std::weak_ptr<Participant> m_participant;
     Callback m_callback;
 };
 }  // namespace detail

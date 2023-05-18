@@ -4,7 +4,7 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/install/lib/cmake/letstalk)
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/install/lib/cmake/letstalk)
 
 find_package(letstalk)
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(pubsub)
 add_subdirectory(fastdds)
 add_subdirectory(reqrep)

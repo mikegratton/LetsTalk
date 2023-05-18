@@ -29,13 +29,14 @@ bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, wants_guid_t
 {
     T data;
     efd::SampleInfo info;
+    bool readAnything = false;
     while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
         if (info.valid_data) {
             m_callback(data, toLetsTalkGuid(info.sample_identity), toLetsTalkGuid(info.related_sample_identity));
-            return true;
+            readAnything = true;
         }
     }
-    return false;
+    return readAnything;
 }
 
 template <class T, class C>
@@ -43,42 +44,47 @@ bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, plain_tag)
 {
     T data;
     efd::SampleInfo info;
+    bool readAnything = false;
     while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
         if (info.valid_data) {
             m_callback(data);
-            return true;
+            readAnything = true;
         }
     }
-    return false;
+    return readAnything;
 }
 
 template <class T, class C>
 bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, uptr_with_guid_tag)
 {
-    std::unique_ptr<T> data(new T);
+    T data;
     efd::SampleInfo info;
+    bool readAnything = false;
     while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
         if (info.valid_data) {
-            m_callback(std::move(data), toLetsTalkGuid(info.sample_identity),
+            std::unique_ptr<T> tptr(new T(data));
+            m_callback(std::move(tptr), toLetsTalkGuid(info.sample_identity),
                        toLetsTalkGuid(info.related_sample_identity));
-            return true;
+            readAnything = true;
         }
     }
-    return false;
+    return readAnything;
 }
 
 template <class T, class C>
 bool ReaderListener<T, C>::handle_sample(efd::DataReader* i_reader, uptr_tag)
 {
-    std::unique_ptr<T> data(new T);
     efd::SampleInfo info;
+    T data;
+    bool readAnything = false;
     while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
         if (info.valid_data) {
-            m_callback(std::move(data));
-            return true;
+            std::unique_ptr<T> tptr(new T(data));
+            m_callback(std::move(tptr));
+            readAnything = true;
         }
     }
-    return false;
+    return readAnything;
 }
 
 template <class T, class C>

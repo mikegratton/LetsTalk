@@ -82,6 +82,12 @@ TEST_CASE("Request.Basic")
         CHECK(true == false);
     }
     p1->unadvertise("greet");
+    requester.~Requester();
+    requester2.~Requester();
+
+    std::cout << "Use count p1: " << p1.use_count() << ", p2: " << p2.use_count() << "\n";
+    p1.reset();
+    p2.reset();
 }
 
 TEST_CASE("Request.PingPong")
