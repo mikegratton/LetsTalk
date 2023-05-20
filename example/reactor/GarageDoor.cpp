@@ -12,12 +12,16 @@ int main(int argc, char** argv)
     std::cout << "Waiting for requests\n";
     while (true) {
         auto serverSession = garageService.getPendingSession();
+        if (serverSession.isAlive() == false) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
         std::cout << "Request for status: " << serverSession.request().desired_state() << "\n";
         ChangeStatus status;
         status.current_state(GarageDoorState::kopening);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         serverSession.progress(20, status);
-        std::cout << "Progress " << 20;
+        std::cout << "Progress " << 20 << "\n";
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         serverSession.progress(40, status);
         std::cout << "Progress " << 40 << "\n";

@@ -2,25 +2,6 @@ Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 =================================================
 
 
-# Roadmap 
-
-## For 1.0 Release
-
-1. Document uptr variants
-
-2. Fix reactor example
-
-3. Debug lingering request/reply issues
-
-## Future Features
-
-1. `select()` mechanism for waiting on multiple `ThreadSafeQueue`s
-
-2. Automate FastDDS version upgrade
-
-3. To/from json additions for fastddsgen
-
-
 # Introduction
 
 Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) 
@@ -101,7 +82,7 @@ Let's talk offers three communication patters:
   effort connections, but does not provide support for persistence
   between multiple runs of a program.
   
-* Request/Response: Also known as remote proceedure call (RPC), each
+* Request/Reply: Also known as remote proceedure call (RPC), each
   request will be served by a responder.  Each service is identified 
   by its service name, the request type, and the reply type. Let's 
   Talk implementation is simple. If there are multiple providers for 
@@ -109,7 +90,7 @@ Let's talk offers three communication patters:
   which provider will handle a given call. Calls use the C++ promise/
   future types, including setting exceptions on failure.
   
-* Reactor: A request/response pattern where requests recieve multiple
+* Reactor: A request/reply pattern where requests recieve multiple
   "progress" replies, before finally ending with a final reply.  These
   are useful in robotics where calculations or actions take 
   appreciable time during which the requesting process may need to 
@@ -195,12 +176,51 @@ auto frameQueue = node->subscribe<VideoFrame>("video.stream", "bulk");
 will set the QoS to the bulk mode. See below for a full description of QoS settings in
 Let's Talk.
 
-## Request/Response
+## Request/Reply
+
+In request/reply, a service is defined by a string name, a request type, and a reply type.
+Let's Talk automatically generates topics for the request and reply from this information. The
+server side, the one providing the service, registers a callback to perform the service work.
+Callbacks take the form
+```cpp
+auto myCallback = [](MyRequestType const& i_request) -> MyReplyType { /* ... */ };
+```
+and the registration call on a participant pointer `node` looks like
+```cpp
+node->advertise<MyRequestType, MyReplyType>("my.topic", myCallback);
+```
+A new thread is spawned for running the callback, so efficiency in the callback is not essential.
+
+To make a request from another participant, first create a Requester object on that node:
+```cpp
+auto requester = participant->request<MyRequestType,MyReplyType>("my.topic");
+```
+The requester can be used to make multiple requests. Creating it performs all of the discovery tasks
+that can be time-consuming. The requester API is straightforward. Making a request returns as
+`std::future` of the reply type. You may block waiting on that future immediately, like so
+```cpp
+MyRequestType request;
+/* ... fill out request */
+auto reply = requester.request(request).get();
+```
+or wait as much as you can afford and come back to the future later.  The requester also has
+the `isConnected()` method to check if the server has been found.
+
+Two warnings about request/reply:
+
+1. The service callbacks are allowed to throw exceptions. While the error message isn't propigated to the 
+requester, the `std::future` will throw a `std::runtime_error` when `get()` is called. You should use `try/catch`
+if the service you are calling will throw.
+
+2. Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name
+from existing or forward requests to exactly one provider. It will however warn you if more than one provider
+exists for a given service. The Requester has a function call `impostorsExist()` to check for this state of 
+affairs.
 
 ## Reactor
 
 The Reactor uses pull-style API with session objects rather than callbacks. The server-side
-differs from the request/response. To provide a reactor service, we first create the server
+differs from the request/reply. To provide a reactor service, we first create the server
 object,
 ```cpp
 lt::ParticipantPtr node = lt::Participant::create();
@@ -301,13 +321,31 @@ use these QoS settings.
 
 # DDS Concepts in Let's Talk
 
+The DDS is a publish/subscribe messaging system with automatic discovery. Here's a small primer.
+
 ## Participant
+
+Each node in the DDS network is a "participant."  Participants discover each other, trading information
+on available topics and types. Participants also function as factories for the other objects -- topic
+objects, types, publishers, and subscribers.
 
 ## Topics
 
+A topic is a channel for data. It's the combination of a string topic name and a data type. The types 
+generally must be derived from IDL.
+
 ## Types and IDL
 
+Types in DDS are typically derived from IDL source. IDL provides a C-like language for describing structured 
+data. The IDL compiler produces C++ source code from these files that includes serialization and deserialization
+methods to/from the Common Data Format (CDR). DDS automatically performs the required serialization and
+deserialization as required.
+
 ## Quality of Service (QoS)
+
+An overloaded term, QoS refers to all of the run-time settings available in DDS. It includes the network
+protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored,
+and many other details.
 
 # Environment variables
 
@@ -383,4 +421,14 @@ IDL compilers generate native code from IDL that handles serialization to/deseri
 Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire.
 Given DDS's emphasis on local network communication vs protobuf's focus on internet communication,
 this makes sense.
+
+# Roadmap 
+
+## Future Features
+
+1. `select()` mechanism for waiting on multiple `ThreadSafeQueue`s
+
+2. Automate FastDDS version upgrade
+
+3. To/from json additions for fastddsgen
 

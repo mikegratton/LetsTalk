@@ -82,15 +82,6 @@ class Participant : public std::enable_shared_from_this<Participant> {
     void unsubscribe(std::string const& i_topic);
 
     /**
-     * unadvertise(service)
-     *
-     * Stop providing the named service
-     *
-     * @param i_service Service to discontinue
-     */
-    void unadvertise(std::string const& i_service);
-
-    /**
      * advertise<T>(topic)
      *
      * Get a Publisher object you can use to send messages of type T on the topic.
@@ -107,7 +98,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
      * ```
      * bool publish(std::unique_ptr<T> i_data);
      * ```
-     * which returns true if the data was sent successfully.
+     * which returns true if the data was sent successfully. Publishers do not have an explicit
+     * unadvertise() method. If the last publisher referring to i_topic goes out of scope, the
+     * publication will automatically be reported as terminated by the library.
      */
     template <class T>
     Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 1);
@@ -124,6 +117,15 @@ class Participant : public std::enable_shared_from_this<Participant> {
      */
     template <class Req, class Rep, class C>
     void advertise(std::string const& i_serviceName, C i_serviceProvider);
+
+    /**
+     * unadvertise(service)
+     *
+     * Stop providing the named service
+     *
+     * @param i_service Service to discontinue
+     */
+    void unadvertise(std::string const& i_service);
 
     /**
      * Build a requester object for making requests to a service. Each request
