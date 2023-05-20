@@ -7,6 +7,8 @@
 namespace lt {
 
 /**
+ * @brief Submit reactor requests and control reactor sessions
+ *
  * The ReactorClient controls the client side of a reactor. It can start multiple sessions, possibly
  * active simultaneously.
  *
@@ -22,7 +24,7 @@ class ReactorClient {
 
    public:
     /**
-     * Each session is modeled by this class. It is lightweight and copyable.
+     * @brief Each session is modeled by this class. It is lightweight and copyable.
      */
     class Session {
        public:
@@ -30,7 +32,8 @@ class ReactorClient {
         int progress() const;
 
         /**
-         * Get the next progress data sample.
+         * @brief Get the next progress data sample.
+         *
          * @param o_data The returned progress data is written here.
          * @param i_wait Time to wait for data to appear. By default, return immediately if there is no pending data
          * @return true if o_data contains a new sample.
@@ -47,7 +50,8 @@ class ReactorClient {
         Guid const& id() const { return m_id; }
 
         /**
-         *  Get the response. Will return false if the response is not ready by i_wait
+         * @brief Get the response. Will return false if the response is not ready by i_wait
+         *
          * @param o_reply The returned reply data is written here.
          * @param i_wait Time to wait for data to appear. By default, return immediately if there is no pending data
          * @return true of o_data has the reply
@@ -58,6 +62,7 @@ class ReactorClient {
 
        protected:
         friend Backend;
+
         Session(std::shared_ptr<Backend> m_reactor, Guid i_id);
 
         std::shared_ptr<Backend> m_reactor;  /// All functions just forward to this
@@ -65,7 +70,7 @@ class ReactorClient {
     };
 
     /**
-     * Make a request to the reactor service, starting a new session
+     * @brief Make a request to the reactor service, starting a new session
      * @param i_request Request data
      * @return Session object used to interact with this session
      */

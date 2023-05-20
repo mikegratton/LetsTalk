@@ -72,6 +72,66 @@ poor compatibility between vendors, and Let's Talk doesn't try to
 solve that.
 
 
+# Installation
+
+## As a submodule
+The easiest way to use Let's Talk is as a git submodule.
+```
+git submodule add -b 0.1 git@github.com:mikegratton/LetsTalk.git
+```
+In your CMakeLists.txt, add
+```
+add_subdirectory(LetsTalk)
+```
+This will provide the following cmake targets:
+ 
+ * letstalk -- The library (with appropriate includes)
+ * fastrtps -- The underlying FastDDS library 
+ 
+ To include and link `myTarget` to letstalk, you just need to add the CMake
+ ```
+ target_link_libraries(myTarget PUBLIC letstalk)
+ ```
+ (Letstalk depends on fastrtps, but you don't need to reference it directly.)
+
+ ## Via an installation
+ If you have several projects that depend on Let's Talk, it is more efficient
+ to install the library per usual. In this case, check out the code and do
+ ```
+ mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=<your install dir> -DCMAKE_BUILD_TYPE=Release && make install
+ ```
+ This will provide a cmake config script at `<your install dir>/lib/cmake/letstalk` that you can use 
+ in your cmake like
+ ```
+ list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
+list(APPEND CMAKE_PREFIX_PATH <your install dir>/lib/cmake/letstalk)
+ find_package(letstalk)
+ ```
+ This will provide the same cmake targets (`letstalk` and `fastrtps`) for linking as 
+ above.
+
+## IDL Support in CMake
+
+Working with IDL in Let's Talk is especially easy. Inspired by the protobuf
+CMake support, Let's Talk provides an "IdlTarget.cmake" macro.  Basic operation
+is
+```
+list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
+include(IdlTarget)
+IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)
+...
+target_link_library(myTarget PUBLIC myIdlTarget)
+```
+That is, IdlTarget creates a cmake target consisting of a library built from the 
+provided compiled IDLs, linking transitively to Fast CDR, and providing access
+to the header include path as a target property.  The header and source files
+are stored in the build directory.  If the IDL is changed, make/ninja will correctly
+re-run the IDL compiler, recompile the IDL target, and re-link.  The intention is 
+to have machine-generated code segregated from the rest of the codebase.  More options
+for controlling the include path are documented in IdlTarget.cmake.
+
+
+
 # Communication Patterns
 
 Let's talk offers three communication patters:
@@ -361,43 +421,6 @@ To use this on you program `foo`, you can launch foo from the shell like this:
 $ LT_VERBOSE=1 ./foo
 ```
 
-
-# CMake Support
-
-In addition to the API, Let's Talk provides a simple way to use Fast DDS 
-with cmake.  The bundled Fast DDS distribution is complete -- it will 
-build alongside Let's Talk without other requirements. Adding Let's Talk
-as a subdirectory of your CMake project will provide the targets
-
-* letstalk -- The Let's Talk library and transitive dependencies
-* fastdds  -- Just the Fast DDS library
-
-Installing the Let's Talk project provides a CMake config script
-Using
-```
-find_package(letstalk)
-```
-will provide the target "letstalk" to link against.
-
-## IDL Support in CMake
-
-Working with IDL in Let's Talk is especially easy. Inspired by the protobuf
-CMake support, Let's Talk provides an "IdlTarget.cmake" macro.  Basic operation
-is
-```
-list(APPEND CMAKE_MODULE_PATH [path/to/IdlTarget.cmake])
-include(IdlTarget)
-IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)
-...
-target_link_library(myTarget PUBLIC myIdlTarget)
-```
-That is, IdlTarget creates a cmake target consisting of a library built from the 
-provided compiled IDLs, linking transitively to Fast CDR, and providing access
-to the header include path as a target property.  The header and source files
-are stored in the build directory.  If the IDL is changed, make/ninja will correctly
-re-run the IDL compiler, recompile the IDL target, and re-link.  The intention is 
-to have machine-generated code segregated from the rest of the codebase.  More options
-for controlling the include path are documented in IdlTarget.cmake.
 
 # About DDS
 

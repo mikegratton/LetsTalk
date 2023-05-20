@@ -9,9 +9,13 @@
 #include "Reactor.hpp"
 #include "RequestReply.hpp"
 #include "ThreadSafeQueue.hpp"
+
+//! All Let's Talk symbols reside in namespace "lt"
 namespace lt {
 
 /**
+ * @brief Allows participating in DDS communication.
+ *
  * Participant is a node in the pub/sub network.  It is responsible for discovering other nodes,
  * running callbacks on message reciept and handling the business of socket management.
  *
@@ -20,7 +24,7 @@ namespace lt {
 class Participant : public std::enable_shared_from_this<Participant> {
    public:
     /**
-     * create() makes a new Participant.
+     * @brief Makes a new Participant. (There is no public constructor)
      *
      * @param i_domain Domains are logically isolated pub/sub communities. Valid values are
      *                 0 to 232
@@ -34,10 +38,10 @@ class Participant : public std::enable_shared_from_this<Participant> {
     ~Participant();
 
     /**
-     * subscribe<T>(topic, callback, profile)
+     * @brief Register a callback on the named topic expecting type T.  When data arrives, the callback
+     * will be called.
      *
-     * Register a callback on the named topic expecting type T.  When data arrives, the callback
-     * will be called.  Callbacks take the form
+     * Callbacks take the form
      * ```
      *   void my_callback(std::unique_ptr<T> new_data);
      * ```
@@ -56,9 +60,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
                    int i_historyDepth = 1);
 
     /**
-     * subscribe<T>(topic, profile, history)
-     *
-     * Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
+     * @brief Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
      * to the history level, at which point the oldest sample will be discarded.
      *
      * @param i_topic Topic name to subscribe to
@@ -73,18 +75,15 @@ class Participant : public std::enable_shared_from_this<Participant> {
     QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 8);
 
     /**
-     * unsubscribe(topic)
-     *
-     * Unsubscribe from the given topic if subscribed.
+     * @brief Unsubscribe from the given topic
      *
      * @param i_topic Topic to unsubscribe from
      */
     void unsubscribe(std::string const& i_topic);
 
     /**
-     * advertise<T>(topic)
      *
-     * Get a Publisher object you can use to send messages of type T on the topic.
+     * @brief Get a Publisher object you can use to send messages of type T on the topic.
      *
      * @param i_topic Name of the topic
      *
@@ -106,7 +105,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
     Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 1);
 
     /**
-     * Advertise a new request/reply service. This will create a new work thread and call i_serviceProvider
+     * @brief Advertise a new request/reply service.
+     *
+     * This will create a new work thread and call i_serviceProvider
      * on each recieved Req to produce a Rep, then publish the Rep. If i_serviceProvider throws an exception,
      * this failure will be communicated back to the requester.
      *
@@ -119,16 +120,16 @@ class Participant : public std::enable_shared_from_this<Participant> {
     void advertise(std::string const& i_serviceName, C i_serviceProvider);
 
     /**
-     * unadvertise(service)
-     *
-     * Stop providing the named service
+     * @brief Stop providing the named service
      *
      * @param i_service Service to discontinue
      */
     void unadvertise(std::string const& i_service);
 
     /**
-     * Build a requester object for making requests to a service. Each request
+     * @brief Build a requester object for making requests to a service.
+     *
+     * Each request
      * is an object of type Req and will correspond to one response object of
      * type std::promise<Rep>.
      *
@@ -148,7 +149,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     Requester<Req, Rep> makeRequester(std::string const& i_serviceName);
 
     /**
-     * Make a reactor server object. This is a lightweight object that may be
+     * @brief Make a reactor server object. This is a lightweight object that may be
      * cheaply copied.
      *
      * The ReactorServer handles the server-side of the reactor pattern. This is a pull-style API,
@@ -161,7 +162,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     ReactorServer<Req, Rep, P> makeReactorServer(std::string const& i_serviceName);
 
     /**
-     * Make a reactor client object. This is a lightweight object that may be
+     * @brief Make a reactor client object. This is a lightweight object that may be
      * cheaply copied.
      *
      * The ReactorClient controls the client side of a reactor. It can start multiple sessions, possibly
@@ -179,7 +180,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     ReactorClient<Req, Rep, P> makeReactorClient(std::string const& i_serviceName);
 
     /**
-     * Obtain the current known number of publishers on a given topic
+     * @brief Obtain the current known number of publishers on a given topic
      *
      * @param i_topic Topic to query
      *
@@ -188,7 +189,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     int publisherCount(std::string const& i_topic) const;
 
     /**
-     * Obtain the current known number of subscribers on a given topic
+     * @brief Obtain the current known number of subscribers on a given topic
      *
      * @param i_topic Topic to query
      *
@@ -197,7 +198,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     int subscriberCount(std::string const& i_topic) const;
 
     /**
-     * Get the name (demangled) of the type in use on a given topic
+     * @brief Get the name (demangled) of the type in use on a given topic
      *
      * @param i_topic Topic to query
      *
@@ -206,7 +207,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     std::string topicType(std::string const& i_topic) const;
 
     /**
-     * Get the name of the participant
+     * @brief Get the name of the participant
      *
      * @return Name of the participant
      */
@@ -254,7 +255,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
     std::map<std::string, int> m_publisherCount;   // Number of writers per topic
 };
 
-/*
+/**
+ * @brief Sends messages to a topic
+ *
  * A type-erased lightweight publisher object used to send  data on a topic.
  * These are created by the Participant and may be cheaply copied.
  */

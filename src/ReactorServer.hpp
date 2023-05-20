@@ -5,6 +5,8 @@
 namespace lt {
 
 /**
+ * @brief Receive reactor requests and post progress and results.
+ *
  * The ReactorServer handles the server-side of the reactor pattern. This is a pull-style API.
  * The ReactorServer provides methods to find about pending sessions and interact with them, but
  * does not run callbacks that do the work. That's done by your code.
@@ -25,14 +27,14 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
         Req const& request() const { return m_request; }
 
         /**
-         * Transmit progress information to the client
+         * @brief Transmit progress information to the client
          * @param i_progress Current progress mark
          * @param i_data Related progress data
          */
         void progress(int i_progress, ProgressData const& i_data);
 
         /**
-         * Transmit progress information to the client. This version does not send progress data
+         * @brief Transmit progress information to the client. This version does not send progress data
          * @param i_progress Current progress mark
          */
         void progress(int i_progress) { progress(i_progress, reactor_void_progress()); }

@@ -13,7 +13,7 @@ class RequesterImpl;
 }
 
 /**
- * A lightweight requester wrapper
+ * @brief A lightweight requester wrapper
  *
  * A Requester is an object used for making requests to a remote service.
  * Each request returns a future response that can be waited upon for the

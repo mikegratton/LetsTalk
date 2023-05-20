@@ -9,6 +9,8 @@
 namespace lt {
 
 /**
+ * @brief A class with an internal worker thread to synchronize access to private members
+ *
  * ActiveObject is a virtual base class for the active object pattern.
  * This creates a private thread with an internal queue of jobs. The jobs
  * are run one at a time in order of insertion into the queue.
@@ -64,22 +66,22 @@ class ActiveObject {
     ActiveObject() : m_keepAlive(false) { startWork(); }
 
     /**
-     * Stops the work thread and finishes any pending jobs
+     * @brief Stops the work thread and finishes any pending jobs
      */
     virtual ~ActiveObject() { stopWork(); }
 
     /**
-     * Checks if the work thread is running
+     * @brief Checks if the work thread is running
      */
     bool isWorking() const { return m_keepAlive.load(); }
 
     /**
-     * Starts the work thread if it is not already started
+     * @brief Starts the work thread if it is not already started
      */
     void startWork();
 
     /**
-     * Stops the work thread if it is running, finishing any pending
+     * @brief Stops the work thread if it is running, finishing any pending
      * jobs on the caller's thread.
      */
     void stopWork();

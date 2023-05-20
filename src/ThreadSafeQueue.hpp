@@ -7,6 +7,8 @@
 namespace lt {
 
 /**
+ * @brief A simple producer/subscriber queue using unique_ptr
+ *
  * A thread-safe queue storing a list of unique_ptr<T>'s. Supports bulk push/pop
  * operations. This queue is optionally bounded. If more items that the high
  * water mark are inserted, the oldest items are discarded to keep the queue to the
@@ -17,7 +19,7 @@ class ThreadSafeQueue {
    public:
     using Queue = std::list<std::unique_ptr<T>>;
 
-    /// Ctor
+    /// Construct a queue with an optional capacity bound
     /// @param i_capacity If nonzero, discard old samples when the queue length exceeds this value
     ThreadSafeQueue(std::size_t i_capacity = 0) : m_capacity(i_capacity) {}
 
@@ -46,7 +48,8 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Return the front element of the queue, removing it from the queue.
+     * @brief Return the front element of the queue, removing it from the queue.
+     *
      * If the queue is empty or if it is locked for longer than i_wait,
      * return nullptr.
      *
@@ -64,8 +67,9 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Return the contents queue, emptying it. If the queue is empty or if
-     * it is locked for longer than i_wait, return an empty list.
+     * @brief Return the contents queue, emptying it.
+     *
+     * If the queue is empty or if it is locked for longer than i_wait, return an empty list.
      *
      * @param i_wait Wait duration for access and data
      */
@@ -78,7 +82,7 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Move data onto back of queue
+     * @brief Move data onto back of queue
      */
     void push(std::unique_ptr<T> i_data)
     {
@@ -90,7 +94,7 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Copy data onto the back of the queue
+     * @brief Copy data onto the back of the queue
      */
     void push(T const& i_data)
     {
@@ -100,7 +104,7 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Move all data onto back of queue
+     * @brief Move all data onto back of queue
      */
     void pushAll(Queue&& i_data)
     {
@@ -112,7 +116,7 @@ class ThreadSafeQueue {
     }
 
     /**
-     * Construct T onto the back of the queue
+     * @brief Construct T onto the back of the queue
      */
     template <class... Args>
     void emplace(Args&&... i_args)
@@ -125,7 +129,7 @@ class ThreadSafeQueue {
     }
 
     /*
-     * Swap contents with another queue. Handle deadlock avoidance.
+     * @brief Swap contents with another queue. Handles deadlock avoidance.
      */
     void swap(ThreadSafeQueue& io_other)
     {

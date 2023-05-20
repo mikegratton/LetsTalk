@@ -1,0 +1,4 @@
+<map id="lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::Session" name="lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::Session">
+<area shape="rect" id="node1" title="Each request starts a session, modeled by an instance of this class." alt="" coords="5,95,184,151"/>
+<area shape="rect" id="node2" href="$structlt_1_1Guid.html" title="Unique identifer attached to a message." alt="" coords="60,5,129,32"/>
+</map>

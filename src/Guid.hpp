@@ -7,6 +7,8 @@
 
 namespace lt {
 /**
+ * @brief Unique identifer attached to a message
+ *
  * Guid is a unique identifier attached to each message. Guids are
  * 16 byte identifiers of the host, participant, pub/sub, and writer/reader
  * plus an extra 8 byte sequence number that is incremented.
@@ -14,19 +16,28 @@ namespace lt {
 struct Guid {
     unsigned char data[16];
     uint64_t sequence;
+
     Guid()
     {
         memset(data, 0, 16);
         sequence = 0;
     }
+
+    /// A Guid representing unknown data
     static Guid UNKNOWN() { return Guid(); }
+
+    /// Increment the sequence part of the guid, return a copy of the update
     Guid increment()
     {
         sequence += 1;
         if (sequence == 0) sequence = 1;
         return *this;
     }
+
+    /// Returns the Guid associated with failures
     Guid makeBadVersion() const;
+
+    /// Check if this Guid is the bad version of other
     bool isBadVersionOf(Guid const& i_other) const;
 };
 

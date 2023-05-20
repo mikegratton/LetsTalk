@@ -25,7 +25,7 @@ void Participant::subscribe(std::string const& i_topic, C i_callback, std::strin
                             int i_historyDepth)
 {
     auto listener = detail::makeListener<T, C>(i_callback);
-    doSubscribe(i_topic, efd::TypeSupport(new PubSubType<T>()), listener, i_qosProfile, i_historyDepth);
+    doSubscribe(i_topic, efd::TypeSupport(new detail::PubSubType<T>()), listener, i_qosProfile, i_historyDepth);
 }
 
 /*
@@ -37,7 +37,7 @@ QueuePtr<T> Participant::subscribe(std::string const& i_topic, std::string const
     auto queue = std::make_shared<ThreadSafeQueue<T>>(i_historyDepth);
     auto listener = detail::makeListener<T>([queue](std::unique_ptr<T> i_sample) { queue.push(std::move(i_sample)); },
                                             i_topic, shared_from_this());
-    doSubscribe(i_topic, efd::TypeSupport(new PubSubType<T>()), listener, i_qosProfile, 1);
+    doSubscribe(i_topic, efd::TypeSupport(new detail::PubSubType<T>()), listener, i_qosProfile, 1);
 }
 
 /*
@@ -46,7 +46,7 @@ QueuePtr<T> Participant::subscribe(std::string const& i_topic, std::string const
 template <class T>
 Publisher Participant::advertise(std::string const& i_topic, std::string const& i_qosProfile, int i_historyDepth)
 {
-    return doAdvertise(i_topic, efd::TypeSupport(new PubSubType<T>()), i_qosProfile, i_historyDepth);
+    return doAdvertise(i_topic, efd::TypeSupport(new detail::PubSubType<T>()), i_qosProfile, i_historyDepth);
 }
 
 /*
@@ -86,7 +86,7 @@ void Participant::advertise(std::string const& i_serviceName, C i_serviceProvide
 {
     Publisher sender = advertise<Rep>(detail::replyName(i_serviceName));
     auto listener = new detail::ServiceProvider<Req, Rep, C>(i_serviceName, i_serviceProvider, sender);
-    doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new PubSubType<Req>()), listener, "", 1);
+    doSubscribe(detail::requestName(i_serviceName), efd::TypeSupport(new detail::PubSubType<Req>()), listener, "", 1);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
