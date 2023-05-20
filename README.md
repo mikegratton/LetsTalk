@@ -77,7 +77,7 @@ solve that.
 ## As a submodule
 The easiest way to use Let's Talk is as a git submodule.
 ```
-git submodule add -b 0.1 git@github.com:mikegratton/LetsTalk.git
+git submodule add -b <desired version branch> git@github.com:mikegratton/LetsTalk.git
 ```
 In your CMakeLists.txt, add
 ```
