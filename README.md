@@ -1,8 +1,6 @@
 Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 =================================================
 
-[Documentation here](../doc/index.html)
-
 # Introduction
 
 Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) 
