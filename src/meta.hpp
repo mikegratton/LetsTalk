@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <tuple>
 #include <type_traits>
 
 #include "Guid.hpp"
@@ -48,14 +49,10 @@ struct wants_uptr_with_guid<
                                                  std::declval<Guid const&>()))>> : std::true_type {
 };
 
-struct wants_guid_tag {
-};
-struct plain_tag {
-};
-struct uptr_tag {
-};
-struct uptr_with_guid_tag {
-};
+struct wants_guid_tag {};
+struct plain_tag {};
+struct uptr_tag {};
+struct uptr_with_guid_tag {};
 
 template <bool B, class T, class F>
 using conditional_t = typename std::conditional<B, T, F>::type;
@@ -67,5 +64,38 @@ struct functor_tagger {
         conditional_t<wants_uptr<C, T, D>::value, uptr_tag,
                       conditional_t<wants_uptr_with_guid<C, T, D>::value, uptr_with_guid_tag, plain_tag>>>;
 };
+
+namespace cxx11fix {
+
+// Modified from https://stackoverflow.com/questions/16387354/template-tuple-calling-a-function-on-each-element
+template <int... Is>
+struct integer_sequence {
+};
+
+template <int N, int... Is>
+struct generate_sequence : generate_sequence<N - 1, N - 1, Is...> {
+};
+
+template <int... Is>
+struct generate_sequence<0, Is...> : integer_sequence<Is...> {
+};
+
+template <class T, class F, int... Is>
+void for_each(T&& t, F& f, integer_sequence<Is...>)
+{
+    auto l = {(f(std::get<Is>(t)), 0)...};
+}
+
+}  // namespace cxx11fix
+
+/*
+ * @param Ts tuple template args
+ * @param F functor
+ */
+template <class... Ts, class F>
+void for_each_in_tuple(std::tuple<Ts...> const& t, F& f)
+{
+    cxx11fix::for_each(t, f, cxx11fix::generate_sequence<sizeof...(Ts)>());
+}
 
 }  // namespace lt

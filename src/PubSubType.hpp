@@ -1,9 +1,13 @@
 #pragma once
 
+#include <fastcdr/Cdr.h>
+#include <fastcdr/FastBuffer.h>
 #include <fastdds/rtps/common/SerializedPayload.h>
 #include <fastrtps/utils/md5.h>
 
 #include <fastdds/dds/topic/TopicDataType.hpp>
+
+#include "LetsTalkFwd.hpp"
 
 namespace lt {
 
@@ -43,11 +47,17 @@ class PubSubType : public eprosima::fastdds::dds::TopicDataType {
     virtual void deleteData(void* data) override { delete reinterpret_cast<T*>(data); }
 
 #ifdef TOPIC_DATA_TYPE_API_HAS_IS_BOUNDED
-    inline bool is_bounded() const override { return false; }
+    inline bool is_bounded() const override
+    {
+        return false;
+    }
 #endif  // TOPIC_DATA_TYPE_API_HAS_IS_BOUNDED
 
 #ifdef TOPIC_DATA_TYPE_API_HAS_IS_PLAIN
-    inline bool is_plain() const override { return false; }
+    inline bool is_plain() const override
+    {
+        return false;
+    }
 #endif  // TOPIC_DATA_TYPE_API_HAS_IS_PLAIN
 
 #ifdef TOPIC_DATA_TYPE_API_HAS_CONSTRUCT_SAMPLE
@@ -61,14 +71,9 @@ class PubSubType : public eprosima::fastdds::dds::TopicDataType {
     MD5 m_md5;
     unsigned char* m_keyBuffer;
 };
-}  // namespace detail
+
 ////////////////////////////////////////////
 
-#include <fastcdr/Cdr.h>
-#include <fastcdr/FastBuffer.h>
-
-#include "LetsTalkFwd.hpp"
-namespace lt {
 template <class T>
 PubSubType<T>::PubSubType()
 {
@@ -153,5 +158,5 @@ inline bool PubSubType<T>::getKey(void* data, ::eprosima::fastrtps::rtps::Instan
     }
     return true;
 }
-}  // namespace lt
+}  // namespace detail
 }  // namespace lt

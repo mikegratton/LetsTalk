@@ -222,12 +222,12 @@ void ReactorServer<Req, Rep, ProgressData>::Session::progress(int i_progress, Pr
         std::vector<unsigned char> truePayload;
         if (typeid(ProgressData) != typeid(reactor_void_progress)) {
             void* rawData = &const_cast<ProgressData&>(i_data);
-            auto serSize = PubSubType<ProgressData>{}.getSerializedSizeProvider(rawData)();
+            auto serSize = detail::PubSubType<ProgressData>{}.getSerializedSizeProvider(rawData)();
             truePayload.resize(serSize);
             efr::SerializedPayload_t payloadWrapper;
             payloadWrapper.data = truePayload.data();
             payloadWrapper.max_size = truePayload.size();
-            PubSubType<ProgressData> ser;
+            detail::PubSubType<ProgressData> ser;
             ser.serialize(rawData, &payloadWrapper);
             payloadWrapper.data = nullptr;
         }

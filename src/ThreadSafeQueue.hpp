@@ -1,6 +1,6 @@
 #pragma once
 #include <condition_variable>
-#include <list>
+#include <deque>
 #include <memory>
 #include <mutex>
 
@@ -9,7 +9,7 @@ namespace lt {
 /**
  * @brief A simple producer/subscriber queue using unique_ptr
  *
- * A thread-safe queue storing a list of unique_ptr<T>'s. Supports bulk push/pop
+ * A thread-safe queue storing a deque of unique_ptr<T>'s. Supports bulk push/pop
  * operations. This queue is optionally bounded. If more items that the high
  * water mark are inserted, the oldest items are discarded to keep the queue to the
  * desired maximum size
@@ -17,11 +17,11 @@ namespace lt {
 template <class T>
 class ThreadSafeQueue {
    public:
-    using Queue = std::list<std::unique_ptr<T>>;
+    using Queue = std::deque<std::unique_ptr<T>>;
 
     /// Construct a queue with an optional capacity bound
     /// @param i_capacity If nonzero, discard old samples when the queue length exceeds this value
-    ThreadSafeQueue(std::size_t i_capacity = 0) : m_capacity(i_capacity) {}
+    ThreadSafeQueue(std::size_t i_capacity = 0) : m_capacity(i_capacity), m_waitset(nullptr) {}
 
     /// Number of samples in the queue
     std::size_t size() const
@@ -109,7 +109,7 @@ class ThreadSafeQueue {
     void pushAll(Queue&& i_data)
     {
         LockGuard guard(m_mutex);
-        m_queue.splice(m_queue.end(), i_data);
+        for (auto& item : i_data) { m_queue.emplace_back(std::move(item)); }
         while (m_capacity > 0 && m_queue.size() > m_capacity) { m_queue.pop_front(); }
         guard.unlock();
         m_nonempty.notify_one();
@@ -126,9 +126,10 @@ class ThreadSafeQueue {
         while (m_capacity > 0 && m_queue.size() > m_capacity) { m_queue.pop_front(); }
         guard.unlock();
         m_nonempty.notify_one();
+        if (m_waitset) { m_waitset->notify_one(); }
     }
 
-    /*
+    /**
      * @brief Swap contents with another queue. Handles deadlock avoidance.
      */
     void swap(ThreadSafeQueue& io_other)
@@ -139,6 +140,9 @@ class ThreadSafeQueue {
         m_queue.swap(io_other.m_queue);
     }
 
+    /// Attach to a waitset
+    void attachWaitsetCondition(std::condition_variable* i_waitset) { m_waitset = i_waitset; }
+
    protected:
     const std::size_t m_capacity;
 
@@ -146,6 +150,7 @@ class ThreadSafeQueue {
     mutable std::mutex m_mutex;
     using LockGuard = std::unique_lock<std::mutex>;
     std::condition_variable m_nonempty;
+    std::condition_variable* m_waitset;
 };
 
 template <class T>

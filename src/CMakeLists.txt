@@ -33,6 +33,7 @@ set(headers
     ReactorClientImpl.hpp
     ReactorServer.hpp
     ReactorServerImpl.hpp
+    QueueWaitset.hpp
     meta.hpp
 )
 

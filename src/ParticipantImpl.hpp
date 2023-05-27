@@ -35,9 +35,9 @@ template <class T>
 QueuePtr<T> Participant::subscribe(std::string const& i_topic, std::string const& i_qosProfile, int i_historyDepth)
 {
     auto queue = std::make_shared<ThreadSafeQueue<T>>(i_historyDepth);
-    auto listener = detail::makeListener<T>([queue](std::unique_ptr<T> i_sample) { queue.push(std::move(i_sample)); },
-                                            i_topic, shared_from_this());
+    auto listener = detail::makeListener<T>([queue](std::unique_ptr<T> i_sample) { queue->push(std::move(i_sample)); });
     doSubscribe(i_topic, efd::TypeSupport(new detail::PubSubType<T>()), listener, i_qosProfile, 1);
+    return queue;
 }
 
 /*

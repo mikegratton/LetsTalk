@@ -189,7 +189,36 @@ The queue then supplies `pop()` to get a sample (with an optional wait time) and
 std::unique_ptr<T> pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 ```
-where the `Queue` type is a `std::list<std::unique_ptr<T>>` by default.
+where the `Queue` type is a `std::deque<std::unique_ptr<T>>` by default. 
+
+You can use the `QueueWaitset` to wait on multiple queues in a `select`-like manner.
+First, register all the queues with the waitset at construction:
+```cpp
+auto queue1 = node->subscribe<MyType1>("my.topic.1");
+auto queue2 = node->subscribe<MyType2>("my.topic.2");
+auto waitset = makeQueueWaitset(queue1, queue2);
+```
+Later, you may `wait` for data, blocking the calling thread and returning the index
+of the first queue with pending messages
+```cpp
+int triggerIndex = waitset.wait();
+switch (triggerIndex) {
+    case 0: {
+        auto content = queue1->popAll();
+        if (queue1.size() > 0) {
+            // Process the data                    
+        }
+    }
+    // Note fallthrough
+    case 1: {
+        auto content = queue2->popAll();
+        if (queue2.size() > 0) {
+            // Process the data
+        }
+    }
+}
+```
+See `example/waitset`
 
 To cancel a subscription, the Participant provides an unsubscribe function,
 ```cpp
@@ -448,9 +477,7 @@ this makes sense.
 
 ## Future Features
 
-1. `select()` mechanism for waiting on multiple `ThreadSafeQueue`s
+1. Automate FastDDS version upgrade
 
-2. Automate FastDDS version upgrade
-
-3. To/from json additions for fastddsgen
+2. To/from json additions for fastddsgen
 
