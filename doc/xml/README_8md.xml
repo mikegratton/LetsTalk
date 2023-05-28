@@ -1,0 +1,496 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="README_8md" kind="file" language="Markdown">
+    <compoundname>README.md</compoundname>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk:<sp/>A<sp/>C++<sp/>Interprocess<sp/>Communication<sp/>System<sp/>Based<sp/>on<sp/>FastDDS</highlight></codeline>
+<codeline><highlight class="normal">=================================================</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Introduction</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk<sp/>is<sp/>a<sp/>C++<sp/>communication<sp/>library<sp/>compatible<sp/>with<sp/>DDS<sp/>(the<sp/>Data<sp/>Distribution<sp/>Service)<sp/></highlight></codeline>
+<codeline><highlight class="normal">designed<sp/>for<sp/>simple<sp/>and<sp/>efficient<sp/>interprocess<sp/>coordination<sp/>on<sp/>local<sp/>networks.<sp/>As<sp/>DDS<sp/>is</highlight></codeline>
+<codeline><highlight class="normal">the<sp/>communication<sp/>standard<sp/>used<sp/>by<sp/>ROS2,<sp/>it&apos;s<sp/>compatible<sp/>with<sp/>ROS2.<sp/>The<sp/>library<sp/>is<sp/></highlight></codeline>
+<codeline><highlight class="normal">an<sp/>API<sp/>wrapped<sp/>around<sp/>the<sp/>FastDDS<sp/>library,<sp/>along<sp/>with<sp/>a<sp/>distribution<sp/>of<sp/>that<sp/>library</highlight></codeline>
+<codeline><highlight class="normal">and<sp/>cmake<sp/>tools<sp/>for<sp/>compiling/linking<sp/>to<sp/>DDS.<sp/><sp/>It&apos;s<sp/>guiding<sp/>principle<sp/>is<sp/>that<sp/></highlight></codeline>
+<codeline><highlight class="normal">*simple<sp/>things<sp/>should<sp/>be<sp/>easy*.<sp/><sp/>So<sp/>it<sp/>trys<sp/>to<sp/>adopt<sp/>sensible<sp/>defaults<sp/>while<sp/>providing<sp/></highlight></codeline>
+<codeline><highlight class="normal">access<sp/>to<sp/>more<sp/>functionality<sp/>through<sp/>optional<sp/>arguments.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Here&apos;s<sp/>the<sp/>basic<sp/>&quot;hello<sp/>world&quot;<sp/>example<sp/>from<sp/>[Fast<sp/>DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html)<sp/></highlight></codeline>
+<codeline><highlight class="normal">using<sp/>the<sp/>Let&apos;s<sp/>Talk<sp/>API:</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">```c++</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;LetsTalk.hpp&quot;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&lt;iostream&gt;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;HelloWorld.h&quot;</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">int<sp/>main(int,<sp/>char**)</highlight></codeline>
+<codeline><highlight class="normal">{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>node-&gt;subscribe&lt;HelloWorld&gt;(&quot;HelloWorldTopic&quot;,<sp/>[](HelloWorld<sp/>const&amp;<sp/>data)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>data.message()<sp/>&lt;&lt;<sp/>&quot;<sp/>&quot;<sp/>&lt;&lt;<sp/>data.index()<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>});<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::minutes(1));<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>return<sp/>0;</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">and</highlight></codeline>
+<codeline><highlight class="normal">```c++</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;LetsTalk.hpp&quot;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&lt;iostream&gt;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;HelloWorld.h&quot;</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">int<sp/>main(int<sp/>argc,<sp/>char**<sp/>argv)</highlight></codeline>
+<codeline><highlight class="normal">{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>pub<sp/>=<sp/>node-&gt;advertise&lt;HelloWorld&gt;(&quot;HelloWorldTopic&quot;);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>while(node-&gt;subscriberCount(&quot;HelloWorldTopic&quot;)<sp/>==<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::milliseconds(100));</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Publication<sp/>begins...\n&quot;;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>for(int<sp/>i=0;<sp/>i&lt;100;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HelloWorld<sp/>msg;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>msg.message(&quot;Test&quot;);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>msg.index(i);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>bool<sp/>okay<sp/>=<sp/>pub.publish(msg);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Sent<sp/>&quot;<sp/>&lt;&lt;<sp/>i<sp/>&lt;&lt;<sp/>&quot;<sp/><sp/>&quot;<sp/>&lt;&lt;<sp/>(okay?<sp/>&quot;okay&quot;<sp/>:<sp/>&quot;FAILED&quot;)<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::milliseconds(500));</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>if<sp/>(node-&gt;subscriberCount(&quot;HelloWorldTopic&quot;)<sp/>==<sp/>0<sp/>||<sp/>!okay)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>return<sp/>0;</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">As<sp/>you<sp/>can<sp/>see,<sp/>subscription<sp/>involves<sp/>providing<sp/>a<sp/>callback<sp/>function,<sp/>typically<sp/>a</highlight></codeline>
+<codeline><highlight class="normal">lambda.<sp/><sp/>Publication<sp/>uses<sp/>a<sp/>Publisher<sp/>object.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>design<sp/>of<sp/>the<sp/>main<sp/>Participant<sp/>API<sp/>is<sp/>largely<sp/>based<sp/>on<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">ignition::transport<sp/>API,<sp/>a<sp/>very<sp/>convenient<sp/>ZMQ/protobuf<sp/>communication</highlight></codeline>
+<codeline><highlight class="normal">system.<sp/><sp/>Let&apos;s<sp/>Talk<sp/>is<sp/>not<sp/>ignition::transport<sp/>compatible,<sp/>however.<sp/></highlight></codeline>
+<codeline><highlight class="normal">Basic<sp/>publish/subscribe<sp/>should<sp/>be<sp/>compatible<sp/>with<sp/>other<sp/>DDS<sp/>vendors</highlight></codeline>
+<codeline><highlight class="normal">(RTI<sp/>Connext,<sp/>Cyclone,<sp/>etc.),<sp/>but<sp/>DDS<sp/>has<sp/>long<sp/>been<sp/>infamous<sp/>for<sp/></highlight></codeline>
+<codeline><highlight class="normal">poor<sp/>compatibility<sp/>between<sp/>vendors,<sp/>and<sp/>Let&apos;s<sp/>Talk<sp/>doesn&apos;t<sp/>try<sp/>to<sp/></highlight></codeline>
+<codeline><highlight class="normal">solve<sp/>that.</highlight></codeline>
+<codeline></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Installation</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>As<sp/>a<sp/>submodule</highlight></codeline>
+<codeline><highlight class="normal">The<sp/>easiest<sp/>way<sp/>to<sp/>use<sp/>Let&apos;s<sp/>Talk<sp/>is<sp/>as<sp/>a<sp/>git<sp/>submodule.</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">git<sp/>submodule<sp/>add<sp/>-b<sp/>&lt;desired<sp/>version<sp/>branch&gt;<sp/>git@github.com:mikegratton/LetsTalk.git</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">In<sp/>your<sp/>CMakeLists.txt,<sp/>add</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">add_subdirectory(LetsTalk)</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">This<sp/>will<sp/>provide<sp/>the<sp/>following<sp/>cmake<sp/>targets:</highlight></codeline>
+<codeline><highlight class="normal"><sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/>*<sp/>letstalk<sp/>--<sp/>The<sp/>library<sp/>(with<sp/>appropriate<sp/>includes)</highlight></codeline>
+<codeline><highlight class="normal"><sp/>*<sp/>fastrtps<sp/>--<sp/>The<sp/>underlying<sp/>FastDDS<sp/>library<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/>To<sp/>include<sp/>and<sp/>link<sp/>`myTarget`<sp/>to<sp/>letstalk,<sp/>you<sp/>just<sp/>need<sp/>to<sp/>add<sp/>the<sp/>CMake</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>target_link_libraries(myTarget<sp/>PUBLIC<sp/>letstalk)</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>(Letstalk<sp/>depends<sp/>on<sp/>fastrtps,<sp/>but<sp/>you<sp/>don&apos;t<sp/>need<sp/>to<sp/>reference<sp/>it<sp/>directly.)</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal"><sp/>##<sp/>Via<sp/>an<sp/>installation</highlight></codeline>
+<codeline><highlight class="normal"><sp/>If<sp/>you<sp/>have<sp/>several<sp/>projects<sp/>that<sp/>depend<sp/>on<sp/>Let&apos;s<sp/>Talk,<sp/>it<sp/>is<sp/>more<sp/>efficient</highlight></codeline>
+<codeline><highlight class="normal"><sp/>to<sp/>install<sp/>the<sp/>library<sp/>per<sp/>usual.<sp/>In<sp/>this<sp/>case,<sp/>check<sp/>out<sp/>the<sp/>code<sp/>and<sp/>do</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>mkdir<sp/>build<sp/>&amp;&amp;<sp/>cd<sp/>build<sp/>&amp;&amp;<sp/>cmake<sp/>..<sp/>-DCMAKE_INSTALL_PREFIX=&lt;your<sp/>install<sp/>dir&gt;<sp/>-DCMAKE_BUILD_TYPE=Release<sp/>&amp;&amp;<sp/>make<sp/>install</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>This<sp/>will<sp/>provide<sp/>a<sp/>cmake<sp/>config<sp/>script<sp/>at<sp/>`&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk`<sp/>that<sp/>you<sp/>can<sp/>use<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/>in<sp/>your<sp/>cmake<sp/>like</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>list(APPEND<sp/>CMAKE_MODULE_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal">list(APPEND<sp/>CMAKE_PREFIX_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal"><sp/>find_package(letstalk)</highlight></codeline>
+<codeline><highlight class="normal"><sp/>```</highlight></codeline>
+<codeline><highlight class="normal"><sp/>This<sp/>will<sp/>provide<sp/>the<sp/>same<sp/>cmake<sp/>targets<sp/>(`letstalk`<sp/>and<sp/>`fastrtps`)<sp/>for<sp/>linking<sp/>as<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/>above.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>IDL<sp/>Support<sp/>in<sp/>CMake</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Working<sp/>with<sp/>IDL<sp/>in<sp/>Let&apos;s<sp/>Talk<sp/>is<sp/>especially<sp/>easy.<sp/>Inspired<sp/>by<sp/>the<sp/>protobuf</highlight></codeline>
+<codeline><highlight class="normal">CMake<sp/>support,<sp/>Let&apos;s<sp/>Talk<sp/>provides<sp/>an<sp/>&quot;IdlTarget.cmake&quot;<sp/>macro.<sp/><sp/>Basic<sp/>operation</highlight></codeline>
+<codeline><highlight class="normal">is</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">list(APPEND<sp/>CMAKE_MODULE_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal">include(IdlTarget)</highlight></codeline>
+<codeline><highlight class="normal">IdlTarget(myIdlTarget<sp/>SOURCE<sp/>MyIdl.idl<sp/>MyOtherIdl.idl)</highlight></codeline>
+<codeline><highlight class="normal">...</highlight></codeline>
+<codeline><highlight class="normal">target_link_library(myTarget<sp/>PUBLIC<sp/>myIdlTarget)</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">That<sp/>is,<sp/>IdlTarget<sp/>creates<sp/>a<sp/>cmake<sp/>target<sp/>consisting<sp/>of<sp/>a<sp/>library<sp/>built<sp/>from<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">provided<sp/>compiled<sp/>IDLs,<sp/>linking<sp/>transitively<sp/>to<sp/>Fast<sp/>CDR,<sp/>and<sp/>providing<sp/>access</highlight></codeline>
+<codeline><highlight class="normal">to<sp/>the<sp/>header<sp/>include<sp/>path<sp/>as<sp/>a<sp/>target<sp/>property.<sp/><sp/>The<sp/>header<sp/>and<sp/>source<sp/>files</highlight></codeline>
+<codeline><highlight class="normal">are<sp/>stored<sp/>in<sp/>the<sp/>build<sp/>directory.<sp/><sp/>If<sp/>the<sp/>IDL<sp/>is<sp/>changed,<sp/>make/ninja<sp/>will<sp/>correctly</highlight></codeline>
+<codeline><highlight class="normal">re-run<sp/>the<sp/>IDL<sp/>compiler,<sp/>recompile<sp/>the<sp/>IDL<sp/>target,<sp/>and<sp/>re-link.<sp/><sp/>The<sp/>intention<sp/>is<sp/></highlight></codeline>
+<codeline><highlight class="normal">to<sp/>have<sp/>machine-generated<sp/>code<sp/>segregated<sp/>from<sp/>the<sp/>rest<sp/>of<sp/>the<sp/>codebase.<sp/><sp/>More<sp/>options</highlight></codeline>
+<codeline><highlight class="normal">for<sp/>controlling<sp/>the<sp/>include<sp/>path<sp/>are<sp/>documented<sp/>in<sp/>IdlTarget.cmake.</highlight></codeline>
+<codeline></codeline>
+<codeline></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Communication<sp/>Patterns</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>talk<sp/>offers<sp/>three<sp/>communication<sp/>patters:</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>Publish/Subscribe:<sp/>A<sp/>loosely<sp/>coupled<sp/>pattern<sp/>based<sp/>on<sp/>topic<sp/>names.</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>Publishers<sp/>send<sp/>data<sp/>to<sp/>all<sp/>subscribers.<sp/>Subscribers<sp/>get<sp/>data<sp/>from</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>all<sp/>publishers.<sp/>Let&apos;s<sp/>Talk<sp/>is<sp/>capable<sp/>of<sp/>both<sp/>reliable<sp/>and<sp/>best<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>effort<sp/>connections,<sp/>but<sp/>does<sp/>not<sp/>provide<sp/>support<sp/>for<sp/>persistence</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>between<sp/>multiple<sp/>runs<sp/>of<sp/>a<sp/>program.</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline><highlight class="normal">*<sp/>Request/Reply:<sp/>Also<sp/>known<sp/>as<sp/>remote<sp/>proceedure<sp/>call<sp/>(RPC),<sp/>each</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>request<sp/>will<sp/>be<sp/>served<sp/>by<sp/>a<sp/>responder.<sp/><sp/>Each<sp/>service<sp/>is<sp/>identified<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>by<sp/>its<sp/>service<sp/>name,<sp/>the<sp/>request<sp/>type,<sp/>and<sp/>the<sp/>reply<sp/>type.<sp/>Let&apos;s<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>Talk<sp/>implementation<sp/>is<sp/>simple.<sp/>If<sp/>there<sp/>are<sp/>multiple<sp/>providers<sp/>for<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>a<sp/>service,<sp/>an<sp/>error<sp/>is<sp/>logged,<sp/>but<sp/>no<sp/>attempt<sp/>is<sp/>made<sp/>to<sp/>determine</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>which<sp/>provider<sp/>will<sp/>handle<sp/>a<sp/>given<sp/>call.<sp/>Calls<sp/>use<sp/>the<sp/>C++<sp/>promise/</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>future<sp/>types,<sp/>including<sp/>setting<sp/>exceptions<sp/>on<sp/>failure.</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/></highlight></codeline>
+<codeline><highlight class="normal">*<sp/>Reactor:<sp/>A<sp/>request/reply<sp/>pattern<sp/>where<sp/>requests<sp/>recieve<sp/>multiple</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>&quot;progress&quot;<sp/>replies,<sp/>before<sp/>finally<sp/>ending<sp/>with<sp/>a<sp/>final<sp/>reply.<sp/><sp/>These</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>are<sp/>useful<sp/>in<sp/>robotics<sp/>where<sp/>calculations<sp/>or<sp/>actions<sp/>take<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>appreciable<sp/>time<sp/>during<sp/>which<sp/>the<sp/>requesting<sp/>process<sp/>may<sp/>need<sp/>to<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/>cancel<sp/>or<sp/>retask<sp/>the<sp/>service<sp/>provider<sp/>as<sp/>the<sp/>situation<sp/>changes.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Below<sp/>are<sp/>some<sp/>more<sp/>details<sp/>on<sp/>each.<sp/><sp/>See<sp/>also<sp/>the<sp/>`examples`<sp/>directory<sp/>with</highlight></codeline>
+<codeline><highlight class="normal">sample<sp/>code<sp/>to<sp/>crib<sp/>from.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Publish/Subscribe</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">In<sp/>pub/sub,<sp/>a<sp/>group<sp/>of<sp/>publishers<sp/>send<sp/>data<sp/>to<sp/>all<sp/>subscribers<sp/>that<sp/>match<sp/>on</highlight></codeline>
+<codeline><highlight class="normal">a<sp/>topic.<sp/><sp/>Topics<sp/>are<sp/>strings<sp/>(e.g.<sp/>&quot;robot.motion.command&quot;)<sp/>but<sp/>also<sp/>have<sp/>a<sp/></highlight></codeline>
+<codeline><highlight class="normal">defined<sp/>type.<sp/><sp/>To<sp/>subscribe,<sp/>you<sp/>register<sp/>a<sp/>callback<sp/>with<sp/>a<sp/>participant,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal">node-&gt;subscribe&lt;MyType&gt;(&quot;my.topic&quot;,<sp/>[](MyType<sp/>const&amp;<sp/>sample)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Got<sp/>some<sp/>data!\n&quot;;</highlight></codeline>
+<codeline><highlight class="normal">});</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">or,<sp/>if<sp/>you<sp/>wish<sp/>to<sp/>get<sp/>samples<sp/>as<sp/>unique_ptrs<sp/>(because<sp/>you<sp/>plan<sp/>to<sp/>move<sp/>them</highlight></codeline>
+<codeline><highlight class="normal">to<sp/>another<sp/>thread),</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">node-&gt;subscribe&lt;MyType&gt;(&quot;my.topic&quot;,<sp/>[](std::unique_ptr&lt;MyType&gt;<sp/>sample)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Got<sp/>some<sp/>data!\n&quot;;</highlight></codeline>
+<codeline><highlight class="normal">});</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">*IMPORTANT:*<sp/>This<sp/>callback<sp/>is<sp/>run<sp/>on<sp/>a<sp/>pub/sub<sp/>thread,<sp/>so<sp/>long<sp/>calculations<sp/>or</highlight></codeline>
+<codeline><highlight class="normal">waits<sp/>for<sp/>a<sp/>lock<sp/>will<sp/>negatively<sp/>impact<sp/>the<sp/>whole<sp/>system.<sp/>A<sp/>good<sp/>practice<sp/>is<sp/>to<sp/></highlight></codeline>
+<codeline><highlight class="normal">simply<sp/>enqueue<sp/>the<sp/>data<sp/>on<sp/>a<sp/>thread-safe<sp/>queue<sp/>for<sp/>later<sp/>processing.<sp/>Let&apos;s<sp/>Talk</highlight></codeline>
+<codeline><highlight class="normal">provides<sp/>such<sp/>a<sp/>queue<sp/>as<sp/>`ThreadSafeQueue`,<sp/>and<sp/>a<sp/>convenience<sp/>subscription<sp/>mode,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">lt::QueuePtr&lt;MyType&gt;<sp/>myTypeQueue<sp/>=<sp/>lt::node-&gt;subscribe&lt;MyType&gt;(&quot;my.topic&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">The<sp/>queue<sp/>then<sp/>supplies<sp/>`pop()`<sp/>to<sp/>get<sp/>a<sp/>sample<sp/>(with<sp/>an<sp/>optional<sp/>wait<sp/>time)<sp/>and<sp/></highlight></codeline>
+<codeline><highlight class="normal">`popAll()`<sp/>to<sp/>get<sp/>all<sp/>pending<sp/>samples,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">std::unique_ptr&lt;T&gt;<sp/>pop(std::chrono::nanoseconds<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+<codeline><highlight class="normal">Queue<sp/>popAll(std::chrono::nanoseconds<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">where<sp/>the<sp/>`Queue`<sp/>type<sp/>is<sp/>a<sp/>`std::deque&lt;std::unique_ptr&lt;T&gt;&gt;`<sp/>by<sp/>default.<sp/></highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">You<sp/>can<sp/>use<sp/>the<sp/>`QueueWaitset`<sp/>to<sp/>wait<sp/>on<sp/>multiple<sp/>queues<sp/>in<sp/>a<sp/>`select`-like<sp/>manner.</highlight></codeline>
+<codeline><highlight class="normal">First,<sp/>register<sp/>all<sp/>the<sp/>queues<sp/>with<sp/>the<sp/>waitset<sp/>at<sp/>construction:</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>queue1<sp/>=<sp/>node-&gt;subscribe&lt;MyType1&gt;(&quot;my.topic.1&quot;);</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>queue2<sp/>=<sp/>node-&gt;subscribe&lt;MyType2&gt;(&quot;my.topic.2&quot;);</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>waitset<sp/>=<sp/>makeQueueWaitset(queue1,<sp/>queue2);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">Later,<sp/>you<sp/>may<sp/>`wait`<sp/>for<sp/>data,<sp/>blocking<sp/>the<sp/>calling<sp/>thread<sp/>and<sp/>returning<sp/>the<sp/>index</highlight></codeline>
+<codeline><highlight class="normal">of<sp/>the<sp/>first<sp/>queue<sp/>with<sp/>pending<sp/>messages</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">int<sp/>triggerIndex<sp/>=<sp/>waitset.wait();</highlight></codeline>
+<codeline><highlight class="normal">switch<sp/>(triggerIndex)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>case<sp/>0:<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auto<sp/>content<sp/>=<sp/>queue1-&gt;popAll();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>if<sp/>(queue1.size()<sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>//<sp/>Process<sp/>the<sp/>data<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>//<sp/>Note<sp/>fallthrough</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>case<sp/>1:<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>auto<sp/>content<sp/>=<sp/>queue2-&gt;popAll();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>if<sp/>(queue2.size()<sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>//<sp/>Process<sp/>the<sp/>data</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">See<sp/>`example/waitset`</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">To<sp/>cancel<sp/>a<sp/>subscription,<sp/>the<sp/>Participant<sp/>provides<sp/>an<sp/>unsubscribe<sp/>function,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">node-&gt;unsubscribe(&quot;my.topic&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">You<sp/>can<sp/>also<sp/>query<sp/>how<sp/>many<sp/>publishers<sp/>have<sp/>been<sp/>discovered<sp/>for<sp/>the<sp/>topic,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">int<sp/>count<sp/>=<sp/>node-&gt;publisherCount(&quot;my.topic&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">On<sp/>the<sp/>publisher<sp/>end,<sp/>Participant<sp/>acts<sp/>as<sp/>a<sp/>factory<sp/>for<sp/>creating<sp/>lightweight<sp/>`Publisher`</highlight></codeline>
+<codeline><highlight class="normal">objects,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal">lt::Publisher<sp/>pub<sp/>=<sp/>node-&gt;advertise&lt;MyType&gt;(&quot;my.topic&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">To<sp/>use<sp/>it,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">MyType<sp/>sample;</highlight></codeline>
+<codeline><highlight class="normal">/*<sp/>...<sp/>fill<sp/>out<sp/>sample<sp/>here<sp/>*/</highlight></codeline>
+<codeline><highlight class="normal">pub.publish(sample);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">or<sp/>via<sp/>unique_ptr,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>sample<sp/>=<sp/>std::make_unique&lt;MyType&gt;();</highlight></codeline>
+<codeline><highlight class="normal">/*<sp/>...<sp/>fill<sp/>out<sp/>sample<sp/>here<sp/>*/</highlight></codeline>
+<codeline><highlight class="normal">pub.publish(std::move(sample));</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">Publisher<sp/>erases<sp/>the<sp/>`MyType`<sp/>information,<sp/>but<sp/>publishing<sp/>a<sp/>type<sp/>other<sp/>than<sp/>`MyType`<sp/>will<sp/></highlight></codeline>
+<codeline><highlight class="normal">result<sp/>in<sp/>an<sp/>error.<sp/>Calling<sp/>`pub.topicType()`<sp/>will<sp/>return<sp/>the<sp/>typename<sp/>as<sp/>a<sp/>string.<sp/></highlight></codeline>
+<codeline><highlight class="normal">You<sp/>can<sp/>check<sp/>for<sp/>subscribers<sp/>using<sp/>the<sp/>Participant,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">int<sp/>count<sp/>=<sp/>node-&gt;subscriberCount(&quot;my.topic&quot;)</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">To<sp/>stop<sp/>advertising<sp/>data,<sp/>simply<sp/>dispose<sp/>of<sp/>the<sp/>Publisher<sp/>object.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk<sp/>also<sp/>supports<sp/>differen<sp/>&quot;Quality<sp/>of<sp/>Service&quot;<sp/>(QoS)<sp/>settings<sp/>for<sp/>publishers<sp/>and</highlight></codeline>
+<codeline><highlight class="normal">subscribers.<sp/><sp/>An<sp/>optional<sp/>string<sp/>argument<sp/>to<sp/>`advertise()`<sp/>and<sp/>`subscribe()`<sp/></highlight></codeline>
+<codeline><highlight class="normal">gives<sp/>the<sp/>name<sp/>of<sp/>the<sp/>QoS<sp/>profile<sp/>to<sp/>use.<sp/>For<sp/>example,</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>frameQueue<sp/>=<sp/>node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;,<sp/>&quot;bulk&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">will<sp/>set<sp/>the<sp/>QoS<sp/>to<sp/>the<sp/>bulk<sp/>mode.<sp/>See<sp/>below<sp/>for<sp/>a<sp/>full<sp/>description<sp/>of<sp/>QoS<sp/>settings<sp/>in</highlight></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Request/Reply</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">In<sp/>request/reply,<sp/>a<sp/>service<sp/>is<sp/>defined<sp/>by<sp/>a<sp/>string<sp/>name,<sp/>a<sp/>request<sp/>type,<sp/>and<sp/>a<sp/>reply<sp/>type.</highlight></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk<sp/>automatically<sp/>generates<sp/>topics<sp/>for<sp/>the<sp/>request<sp/>and<sp/>reply<sp/>from<sp/>this<sp/>information.<sp/>The</highlight></codeline>
+<codeline><highlight class="normal">server<sp/>side,<sp/>the<sp/>one<sp/>providing<sp/>the<sp/>service,<sp/>registers<sp/>a<sp/>callback<sp/>to<sp/>perform<sp/>the<sp/>service<sp/>work.</highlight></codeline>
+<codeline><highlight class="normal">Callbacks<sp/>take<sp/>the<sp/>form</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>myCallback<sp/>=<sp/>[](MyRequestType<sp/>const&amp;<sp/>i_request)<sp/>-&gt;<sp/>MyReplyType<sp/>{<sp/>/*<sp/>...<sp/>*/<sp/>};</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">and<sp/>the<sp/>registration<sp/>call<sp/>on<sp/>a<sp/>participant<sp/>pointer<sp/>`node`<sp/>looks<sp/>like</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">node-&gt;advertise&lt;MyRequestType,<sp/>MyReplyType&gt;(&quot;my.topic&quot;,<sp/>myCallback);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">A<sp/>new<sp/>thread<sp/>is<sp/>spawned<sp/>for<sp/>running<sp/>the<sp/>callback,<sp/>so<sp/>efficiency<sp/>in<sp/>the<sp/>callback<sp/>is<sp/>not<sp/>essential.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">To<sp/>make<sp/>a<sp/>request<sp/>from<sp/>another<sp/>participant,<sp/>first<sp/>create<sp/>a<sp/>Requester<sp/>object<sp/>on<sp/>that<sp/>node:</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>requester<sp/>=<sp/>participant-&gt;request&lt;MyRequestType,MyReplyType&gt;(&quot;my.topic&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">The<sp/>requester<sp/>can<sp/>be<sp/>used<sp/>to<sp/>make<sp/>multiple<sp/>requests.<sp/>Creating<sp/>it<sp/>performs<sp/>all<sp/>of<sp/>the<sp/>discovery<sp/>tasks</highlight></codeline>
+<codeline><highlight class="normal">that<sp/>can<sp/>be<sp/>time-consuming.<sp/>The<sp/>requester<sp/>API<sp/>is<sp/>straightforward.<sp/>Making<sp/>a<sp/>request<sp/>returns<sp/>as</highlight></codeline>
+<codeline><highlight class="normal">`std::future`<sp/>of<sp/>the<sp/>reply<sp/>type.<sp/>You<sp/>may<sp/>block<sp/>waiting<sp/>on<sp/>that<sp/>future<sp/>immediately,<sp/>like<sp/>so</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">MyRequestType<sp/>request;</highlight></codeline>
+<codeline><highlight class="normal">/*<sp/>...<sp/>fill<sp/>out<sp/>request<sp/>*/</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>reply<sp/>=<sp/>requester.request(request).get();</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">or<sp/>wait<sp/>as<sp/>much<sp/>as<sp/>you<sp/>can<sp/>afford<sp/>and<sp/>come<sp/>back<sp/>to<sp/>the<sp/>future<sp/>later.<sp/><sp/>The<sp/>requester<sp/>also<sp/>has</highlight></codeline>
+<codeline><highlight class="normal">the<sp/>`isConnected()`<sp/>method<sp/>to<sp/>check<sp/>if<sp/>the<sp/>server<sp/>has<sp/>been<sp/>found.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Two<sp/>warnings<sp/>about<sp/>request/reply:</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">1.<sp/>The<sp/>service<sp/>callbacks<sp/>are<sp/>allowed<sp/>to<sp/>throw<sp/>exceptions.<sp/>While<sp/>the<sp/>error<sp/>message<sp/>isn&apos;t<sp/>propigated<sp/>to<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">requester,<sp/>the<sp/>`std::future`<sp/>will<sp/>throw<sp/>a<sp/>`std::runtime_error`<sp/>when<sp/>`get()`<sp/>is<sp/>called.<sp/>You<sp/>should<sp/>use<sp/>`try/catch`</highlight></codeline>
+<codeline><highlight class="normal">if<sp/>the<sp/>service<sp/>you<sp/>are<sp/>calling<sp/>will<sp/>throw.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">2.<sp/>Impostor<sp/>services<sp/>may<sp/>exist.<sp/>Let&apos;s<sp/>Talk<sp/>does<sp/>not<sp/>prevent<sp/>more<sp/>than<sp/>one<sp/>service<sp/>provider<sp/>of<sp/>the<sp/>same<sp/>name</highlight></codeline>
+<codeline><highlight class="normal">from<sp/>existing<sp/>or<sp/>forward<sp/>requests<sp/>to<sp/>exactly<sp/>one<sp/>provider.<sp/>It<sp/>will<sp/>however<sp/>warn<sp/>you<sp/>if<sp/>more<sp/>than<sp/>one<sp/>provider</highlight></codeline>
+<codeline><highlight class="normal">exists<sp/>for<sp/>a<sp/>given<sp/>service.<sp/>The<sp/>Requester<sp/>has<sp/>a<sp/>function<sp/>call<sp/>`impostorsExist()`<sp/>to<sp/>check<sp/>for<sp/>this<sp/>state<sp/>of<sp/></highlight></codeline>
+<codeline><highlight class="normal">affairs.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Reactor</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>Reactor<sp/>uses<sp/>pull-style<sp/>API<sp/>with<sp/>session<sp/>objects<sp/>rather<sp/>than<sp/>callbacks.<sp/>The<sp/>server-side</highlight></codeline>
+<codeline><highlight class="normal">differs<sp/>from<sp/>the<sp/>request/reply.<sp/>To<sp/>provide<sp/>a<sp/>reactor<sp/>service,<sp/>we<sp/>first<sp/>create<sp/>the<sp/>server</highlight></codeline>
+<codeline><highlight class="normal">object,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>motionServer<sp/>=<sp/>node-&gt;makeReactorServer&lt;RequestType,<sp/>ReplyType,<sp/>ProgressType&gt;(&quot;robot.move&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">Here,<sp/>`ProgressType`<sp/>is<sp/>optional;<sp/>if<sp/>your<sp/>service<sp/>doesn&apos;t<sp/>provide<sp/>progress<sp/>data<sp/>you<sp/>can<sp/>omit<sp/>the</highlight></codeline>
+<codeline><highlight class="normal">argument.<sp/>`ReactorServer`<sp/>objects<sp/>are<sp/>lightweight<sp/>and<sp/>may<sp/>be<sp/>copied<sp/>cheaply.<sp/>To<sp/>see<sp/>if<sp/>clients<sp/>have<sp/>connected,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">int<sp/>knownClientCount<sp/>=<sp/>motionServer.discoveredClients());</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">and<sp/>to<sp/>check<sp/>for<sp/>pending<sp/>sessions,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">bool<sp/>pending<sp/>=<sp/>motionServer.havePendingSession();</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">If<sp/>this<sp/>is<sp/>true,<sp/>a<sp/>request<sp/>has<sp/>been<sp/>recieved.<sp/>To<sp/>service<sp/>it,<sp/>we<sp/>get<sp/>a<sp/>`Session`<sp/>object,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>motionSession<sp/>=<sp/>motionServer.getPendingSession();</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">This<sp/>takes<sp/>an<sp/>optional<sp/>wait<sp/>time<sp/>if<sp/>you<sp/>want<sp/>to<sp/>have<sp/>a<sp/>blocking<sp/>wait<sp/>for<sp/>sessions.<sp/>Like<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">server<sp/>object,<sp/>this<sp/>is<sp/>a<sp/>lightweight<sp/>object<sp/>that<sp/>may<sp/>be<sp/>copied<sp/>cheaply.<sp/>Copies<sp/>all<sp/>refer<sp/>to<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">same<sp/>logical<sp/>session.<sp/>The<sp/>session<sp/>object<sp/>provides<sp/>accessors<sp/>for<sp/>the<sp/>request<sp/>data</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">RequestType<sp/>const&amp;<sp/>request<sp/>=<sp/>motionSession.request();</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">We<sp/>can<sp/>begin<sp/>processing<sp/>the<sp/>request<sp/>now.<sp/><sp/>As<sp/>we<sp/>go,<sp/>we<sp/>can<sp/>send<sp/>back<sp/>progress<sp/>reports<sp/>via</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">ProgressData<sp/>mySpecialProgress;</highlight></codeline>
+<codeline><highlight class="normal">//<sp/>...<sp/>fill<sp/>out<sp/>data</highlight></codeline>
+<codeline><highlight class="normal">motionSession.progress(25,<sp/>mySpecialProgress);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">If<sp/>you<sp/>didn&apos;t<sp/>specify<sp/>a<sp/>`ProgressData`<sp/>type,<sp/>you<sp/>may<sp/>still<sp/>send<sp/>progress<sp/>marks<sp/>with</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">motionSession.progress(25);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">The<sp/>progress<sp/>mark<sp/>integer<sp/>uses<sp/>values<sp/>from<sp/>1<sp/>to<sp/>100,<sp/>with<sp/>1<sp/>being<sp/>a<sp/>special<sp/>value<sp/>for<sp/>&quot;started&quot;<sp/>and<sp/>100</highlight></codeline>
+<codeline><highlight class="normal">signaling<sp/>completion.<sp/>The<sp/>ReactorServer<sp/>will<sp/>automatically<sp/>send<sp/>these<sp/>when<sp/>you<sp/>start<sp/>and<sp/>finish<sp/>a<sp/>session.</highlight></codeline>
+<codeline><highlight class="normal">Note<sp/>you<sp/>may<sp/>send<sp/>duplicate<sp/>progress<sp/>marks,<sp/>or<sp/>even<sp/>have<sp/>progress<sp/>decreasing.<sp/>To<sp/>signal<sp/>failure,</highlight></codeline>
+<codeline><highlight class="normal">`motionSession.fail()`<sp/>will<sp/>dispose<sp/>of<sp/>the<sp/>session,<sp/>notifying<sp/>the<sp/>client.<sp/>To<sp/>finish<sp/>a<sp/>session,</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">ReplyType<sp/>reply;</highlight></codeline>
+<codeline><highlight class="normal">//<sp/>...<sp/>fill<sp/>out<sp/>reply</highlight></codeline>
+<codeline><highlight class="normal">motionSession.reply(reply);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">Additionally,<sp/>the<sp/>client<sp/>may<sp/>cancel<sp/>a<sp/>session<sp/>at<sp/>any<sp/>time.<sp/>You<sp/>can<sp/>check<sp/>if<sp/>the<sp/>session<sp/>has<sp/>been<sp/>cancelled<sp/>by</highlight></codeline>
+<codeline><highlight class="normal">calling<sp/>`isAlive()`.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>client<sp/>end<sp/>is<sp/>similar<sp/>to<sp/>the<sp/>request/reply<sp/>client.<sp/>First,<sp/>we<sp/>create<sp/>a<sp/>client<sp/>object<sp/>on<sp/>the<sp/>participant:</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>motionClient<sp/>=<sp/>node-&gt;makeReactorClient&lt;RequestType,<sp/>ReplyType,<sp/>ProgressType&gt;(&quot;robot.motion&quot;);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">We<sp/>can<sp/>then<sp/>check<sp/>for<sp/>connections<sp/>with<sp/>`motionClient.discoveredServer()`.<sp/>Sending<sp/>a<sp/>request<sp/>starts<sp/>a<sp/>session</highlight></codeline>
+<codeline><highlight class="normal">```cpp</highlight></codeline>
+<codeline><highlight class="normal">RequestData<sp/>request;</highlight></codeline>
+<codeline><highlight class="normal">//<sp/>...<sp/>fill<sp/>out<sp/>request</highlight></codeline>
+<codeline><highlight class="normal">auto<sp/>clientSession<sp/>=<sp/>motionClient.request(request);</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">The<sp/>session<sp/>API<sp/>provides<sp/>calls<sp/>to<sp/>determine<sp/>if<sp/>the<sp/>session<sp/>is<sp/>alive<sp/>(started<sp/>by<sp/>the<sp/>server),<sp/>get<sp/>the<sp/>current<sp/></highlight></codeline>
+<codeline><highlight class="normal">progress,<sp/>get<sp/>a<sp/>progress<sp/>data<sp/>sample,<sp/>or<sp/>await<sp/>the<sp/>final<sp/>reply.<sp/><sp/>There&apos;s<sp/>also<sp/>a<sp/>`cancel()`<sp/>call<sp/>to<sp/>end<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">session<sp/>early.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Examples</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>`examples`<sp/>directory<sp/>contains<sp/>demonstration<sp/>programs<sp/>for<sp/>these<sp/>three<sp/>patterns,<sp/>as<sp/>well</highlight></codeline>
+<codeline><highlight class="normal">as<sp/>sample<sp/>CMake<sp/>files.<sp/><sp/>To<sp/>build<sp/>the<sp/>examples,<sp/>first<sp/>build<sp/>and<sp/>install<sp/>Let&apos;s<sp/>Talk,<sp/>then<sp/></highlight></codeline>
+<codeline><highlight class="normal">create<sp/>a<sp/>symlink<sp/>to<sp/>the<sp/>install<sp/>directory<sp/>in<sp/>the<sp/>examples<sp/>directory:</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>cd<sp/>examples</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>ln<sp/>-s<sp/>&lt;lets<sp/>talk<sp/>install<sp/>dir&gt;<sp/>install</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>mkdir<sp/>build<sp/>&amp;&amp;<sp/>cd<sp/>build</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>cmake<sp/>..</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Quality<sp/>of<sp/>Service<sp/>(QoS)</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk<sp/>defines<sp/>three<sp/>levels<sp/>of<sp/>service<sp/>by<sp/>default:</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>&quot;reliable&quot;<sp/>--<sp/>the<sp/>default.<sp/>This<sp/>QoS<sp/>will<sp/>resend<sp/>messages<sp/>when<sp/>not<sp/>acknowledged.<sp/>Publishers<sp/></highlight></codeline>
+<codeline><highlight class="normal">will<sp/>also<sp/>keep<sp/>the<sp/>last<sp/>published<sp/>message<sp/>cached<sp/>so<sp/>that<sp/>late-joining<sp/>subscribers<sp/>can<sp/>be<sp/></highlight></codeline>
+<codeline><highlight class="normal">immediately<sp/>sent<sp/>the<sp/>last<sp/>message<sp/>on<sp/>a<sp/>topic<sp/>upon<sp/>discovery.<sp/></highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>&quot;bulk&quot;<sp/>--<sp/>Failed<sp/>sending<sp/>attempts<sp/>are<sp/>not<sp/>repeated.<sp/>No<sp/>queue<sp/>of<sp/>old<sp/>messages<sp/>is<sp/>maintained.</highlight></codeline>
+<codeline><highlight class="normal">This<sp/>is<sp/>intended<sp/>for<sp/>streaming<sp/>data<sp/>where<sp/>it<sp/>is<sp/>better<sp/>to<sp/>press<sp/>ahead<sp/>than<sp/>dwell<sp/>upon<sp/>the<sp/>past.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>&quot;stateful&quot;<sp/>--<sp/>Like<sp/>reliable,<sp/>but<sp/>samples<sp/>are<sp/>delivered<sp/>in-order<sp/>to<sp/>the<sp/>subscriber.<sp/>This<sp/>is<sp/>for</highlight></codeline>
+<codeline><highlight class="normal">topics<sp/>where<sp/>samples<sp/>refer<sp/>to<sp/>state<sp/>provided<sp/>by<sp/>previous<sp/>samples.<sp/>Note<sp/>that<sp/>FastDDS<sp/>doesn&apos;t<sp/>yet</highlight></codeline>
+<codeline><highlight class="normal">support<sp/>this,<sp/>so<sp/>&quot;stateful&quot;<sp/>behaves<sp/>exactly<sp/>as<sp/>&quot;reliable&quot;<sp/>for<sp/>now.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">In<sp/>addition,<sp/>Participants<sp/>may<sp/>have<sp/>QoS<sp/>profiles.<sp/>These<sp/>are<sp/>used<sp/>to<sp/>alter<sp/>the<sp/>underlying</highlight></codeline>
+<codeline><highlight class="normal">protocol<sp/>from<sp/>UDP<sp/>to<sp/>TCP<sp/>or<sp/>something<sp/>else.<sp/>Currently<sp/>only<sp/>UDP<sp/>profiles<sp/>are<sp/>defined<sp/>by<sp/>default.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Using<sp/>Custom<sp/>QoS</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">If<sp/>you<sp/>wish<sp/>to<sp/>develop<sp/>your<sp/>own<sp/>QoS<sp/>profiles,<sp/>see<sp/>https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">When<sp/>invoking<sp/>your<sp/>program,<sp/>set<sp/>the<sp/>enivronment<sp/>variable<sp/>`LT_PROFILE`<sp/>to<sp/>the<sp/>path<sp/>to<sp/>your<sp/>xml.<sp/><sp/>The</highlight></codeline>
+<codeline><highlight class="normal">`profile_name`<sp/>attribute<sp/>may<sp/>be<sp/>used<sp/>as<sp/>the<sp/>optional<sp/>argument<sp/>for<sp/>`subscribe`<sp/>and<sp/>`advertise`<sp/>to</highlight></codeline>
+<codeline><highlight class="normal">use<sp/>these<sp/>QoS<sp/>settings.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>DDS<sp/>Concepts<sp/>in<sp/>Let&apos;s<sp/>Talk</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>DDS<sp/>is<sp/>a<sp/>publish/subscribe<sp/>messaging<sp/>system<sp/>with<sp/>automatic<sp/>discovery.<sp/>Here&apos;s<sp/>a<sp/>small<sp/>primer.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Participant</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Each<sp/>node<sp/>in<sp/>the<sp/>DDS<sp/>network<sp/>is<sp/>a<sp/>&quot;participant.&quot;<sp/><sp/>Participants<sp/>discover<sp/>each<sp/>other,<sp/>trading<sp/>information</highlight></codeline>
+<codeline><highlight class="normal">on<sp/>available<sp/>topics<sp/>and<sp/>types.<sp/>Participants<sp/>also<sp/>function<sp/>as<sp/>factories<sp/>for<sp/>the<sp/>other<sp/>objects<sp/>--<sp/>topic</highlight></codeline>
+<codeline><highlight class="normal">objects,<sp/>types,<sp/>publishers,<sp/>and<sp/>subscribers.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Topics</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">A<sp/>topic<sp/>is<sp/>a<sp/>channel<sp/>for<sp/>data.<sp/>It&apos;s<sp/>the<sp/>combination<sp/>of<sp/>a<sp/>string<sp/>topic<sp/>name<sp/>and<sp/>a<sp/>data<sp/>type.<sp/>The<sp/>types<sp/></highlight></codeline>
+<codeline><highlight class="normal">generally<sp/>must<sp/>be<sp/>derived<sp/>from<sp/>IDL.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Types<sp/>and<sp/>IDL</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Types<sp/>in<sp/>DDS<sp/>are<sp/>typically<sp/>derived<sp/>from<sp/>IDL<sp/>source.<sp/>IDL<sp/>provides<sp/>a<sp/>C-like<sp/>language<sp/>for<sp/>describing<sp/>structured<sp/></highlight></codeline>
+<codeline><highlight class="normal">data.<sp/>The<sp/>IDL<sp/>compiler<sp/>produces<sp/>C++<sp/>source<sp/>code<sp/>from<sp/>these<sp/>files<sp/>that<sp/>includes<sp/>serialization<sp/>and<sp/>deserialization</highlight></codeline>
+<codeline><highlight class="normal">methods<sp/>to/from<sp/>the<sp/>Common<sp/>Data<sp/>Format<sp/>(CDR).<sp/>DDS<sp/>automatically<sp/>performs<sp/>the<sp/>required<sp/>serialization<sp/>and</highlight></codeline>
+<codeline><highlight class="normal">deserialization<sp/>as<sp/>required.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Quality<sp/>of<sp/>Service<sp/>(QoS)</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">An<sp/>overloaded<sp/>term,<sp/>QoS<sp/>refers<sp/>to<sp/>all<sp/>of<sp/>the<sp/>run-time<sp/>settings<sp/>available<sp/>in<sp/>DDS.<sp/>It<sp/>includes<sp/>the<sp/>network</highlight></codeline>
+<codeline><highlight class="normal">protocol<sp/>(TCP,<sp/>UDP,<sp/>shared<sp/>memory),<sp/>the<sp/>error<sp/>handling<sp/>strategy,<sp/>the<sp/>depth<sp/>of<sp/>message<sp/>history<sp/>that<sp/>is<sp/>stored,</highlight></codeline>
+<codeline><highlight class="normal">and<sp/>many<sp/>other<sp/>details.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Environment<sp/>variables</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">Let&apos;s<sp/>Talk<sp/>uses<sp/>environment<sp/>variables<sp/>so<sp/>that<sp/>programs<sp/>can<sp/>easily<sp/>modify<sp/>the</highlight></codeline>
+<codeline><highlight class="normal">behavior<sp/>at<sp/>runtime.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>`LT_VERBOSE`<sp/>--<sp/>enables<sp/>debug<sp/>print<sp/>messages<sp/>about<sp/>discovery<sp/>and<sp/>message<sp/>passing</highlight></codeline>
+<codeline><highlight class="normal">*<sp/>`LT_LOCAL_ONLY`<sp/>--<sp/>If<sp/>1,<sp/>prevents<sp/>discovery<sp/>from<sp/>finding<sp/>participants<sp/>on<sp/>another<sp/>host</highlight></codeline>
+<codeline><highlight class="normal">*<sp/>`LT_PROFILE`<sp/>--<sp/>Path<sp/>to<sp/>custom<sp/>QoS<sp/>profile<sp/>XML<sp/>file</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">To<sp/>use<sp/>this<sp/>on<sp/>you<sp/>program<sp/>`foo`,<sp/>you<sp/>can<sp/>launch<sp/>foo<sp/>from<sp/>the<sp/>shell<sp/>like<sp/>this:</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>LT_VERBOSE=1<sp/>./foo</highlight></codeline>
+<codeline><highlight class="normal">```</highlight></codeline>
+<codeline></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>About<sp/>DDS</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">The<sp/>Data<sp/>Distribution<sp/>Service<sp/>is<sp/>an<sp/>efficient<sp/>and<sp/>powerful<sp/>publish/subscribe<sp/>framework,</highlight></codeline>
+<codeline><highlight class="normal">but<sp/>it<sp/>is<sp/>very<sp/>complicated.<sp/>It&apos;s<sp/>worth<sp/>exploring<sp/>the<sp/>chain<sp/>of<sp/>acronyms<sp/>that<sp/>make<sp/>it<sp/>up:</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>DDS<sp/>--<sp/>Data<sp/>Distribution<sp/>Service.<sp/>This<sp/>isn&apos;t<sp/>a<sp/>protocol<sp/>standard<sp/>at<sp/>all,<sp/>it<sp/>turns<sp/>out!</highlight></codeline>
+<codeline><highlight class="normal">It&apos;s<sp/>an<sp/>API<sp/>standard.<sp/></highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>RTPS<sp/>--<sp/>Real-Time<sp/>Publish<sp/>Subscribe.<sp/>This<sp/>is<sp/>the<sp/>protocol<sp/>standard.<sp/>It<sp/>covers<sp/>how<sp/>participants</highlight></codeline>
+<codeline><highlight class="normal">discover<sp/>one<sp/>another,<sp/>how<sp/>topics<sp/>and<sp/>types<sp/>are<sp/>communicated,<sp/>how<sp/>data<sp/>is<sp/>sent,<sp/>and<sp/>how<sp/>transmission</highlight></codeline>
+<codeline><highlight class="normal">errors<sp/>are<sp/>handled.<sp/>RTPS<sp/>uses<sp/>a<sp/>peer-to-peer<sp/>design<sp/>rather<sp/>than<sp/>a<sp/>central<sp/>message<sp/>broker,<sp/>making<sp/>it<sp/></highlight></codeline>
+<codeline><highlight class="normal">more<sp/>resillient<sp/>and<sp/>flexible.<sp/>(But<sp/>also<sp/>placing<sp/>larger<sp/>burdens<sp/>on<sp/>those<sp/>peers.)</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>IDL<sp/>--<sp/>Interface<sp/>Description<sp/>Language.<sp/>DDS<sp/>inherited<sp/>this<sp/>from<sp/>the<sp/>90&apos;s<sp/>CORBA<sp/>technology,<sp/>and<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">16/32<sp/>bit<sp/>world<sp/>of<sp/>the<sp/>time<sp/>defintely<sp/>shows<sp/>in<sp/>the<sp/>language.<sp/><sp/>IDL<sp/>is<sp/>ugly<sp/>but<sp/>functional<sp/>for<sp/>the<sp/></highlight></codeline>
+<codeline><highlight class="normal">purpose.<sp/><sp/>It<sp/>isn&apos;t<sp/>as<sp/>fully<sp/>featured<sp/>as<sp/>Google<sp/>Protocol<sp/>Buffers,<sp/>but<sp/>it<sp/>is<sp/>servicable.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>CDR<sp/>--<sp/>Common<sp/>Data<sp/>Representation.<sp/>This<sp/>is<sp/>the<sp/>serialized<sp/>format<sp/>for<sp/>data<sp/>transmitted.<sp/>Typically,<sp/></highlight></codeline>
+<codeline><highlight class="normal">IDL<sp/>compilers<sp/>generate<sp/>native<sp/>code<sp/>from<sp/>IDL<sp/>that<sp/>handles<sp/>serialization<sp/>to/deserialization<sp/>from<sp/>CDR.</highlight></codeline>
+<codeline><highlight class="normal">Compared<sp/>to<sp/>Google<sp/>Protocol<sp/>Buffers,<sp/>CDR<sp/>is<sp/>faster<sp/>to<sp/>serialize/deserialize,<sp/>but<sp/>larger<sp/>on<sp/>the<sp/>wire.</highlight></codeline>
+<codeline><highlight class="normal">Given<sp/>DDS&apos;s<sp/>emphasis<sp/>on<sp/>local<sp/>network<sp/>communication<sp/>vs<sp/>protobuf&apos;s<sp/>focus<sp/>on<sp/>internet<sp/>communication,</highlight></codeline>
+<codeline><highlight class="normal">this<sp/>makes<sp/>sense.</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Roadmap<sp/></highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">##<sp/>Future<sp/>Features</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">1.<sp/>Automate<sp/>FastDDS<sp/>version<sp/>upgrade</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">2.<sp/>To/from<sp/>json<sp/>additions<sp/>for<sp/>fastddsgen</highlight></codeline>
+<codeline></codeline>
+    </programlisting>
+    <location file="/home/mike/git/letstalk/README.md"/>
+  </compounddef>
+</doxygen>

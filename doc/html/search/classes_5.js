@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['threadsafequeue_81',['ThreadSafeQueue',['../classlt_1_1ThreadSafeQueue.html',1,'lt']]]
+  ['queuewaitset_90',['QueueWaitset',['../classlt_1_1QueueWaitset.html',1,'lt']]]
 ];

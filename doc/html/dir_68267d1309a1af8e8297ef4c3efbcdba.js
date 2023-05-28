@@ -9,6 +9,7 @@ var dir_68267d1309a1af8e8297ef4c3efbcdba =
     [ "ParticipantImpl.hpp", "ParticipantImpl_8hpp_source.html", null ],
     [ "ParticipantLogger.hpp", "ParticipantLogger_8hpp_source.html", null ],
     [ "PubSubType.hpp", "PubSubType_8hpp_source.html", null ],
+    [ "QueueWaitset.hpp", "QueueWaitset_8hpp_source.html", null ],
     [ "Reactor.hpp", "Reactor_8hpp_source.html", null ],
     [ "ReactorClient.hpp", "ReactorClient_8hpp_source.html", null ],
     [ "ReactorClientImpl.hpp", "ReactorClientImpl_8hpp_source.html", null ],

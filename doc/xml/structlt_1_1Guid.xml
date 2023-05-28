@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="structlt_1_1Guid" kind="struct" language="C++" prot="public">
+    <compoundname>lt::Guid</compoundname>
+    <includes refid="Guid_8hpp" local="no">Guid.hpp</includes>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structlt_1_1Guid_1afe830f74c10b7a6d2860f3da56614d7e" prot="public" static="no" mutable="no">
+        <type>unsigned char</type>
+        <definition>unsigned char lt::Guid::data[16]</definition>
+        <argsstring>[16]</argsstring>
+        <name>data</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="17" column="19" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="17" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structlt_1_1Guid_1a07ecf33ea211004b01c6a9647bf25016" prot="public" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t lt::Guid::sequence</definition>
+        <argsstring></argsstring>
+        <name>sequence</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="18" column="14" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structlt_1_1Guid_1a0f0561a3358ae924ffa7cddfea33127a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>lt::Guid::Guid</definition>
+        <argsstring>()</argsstring>
+        <name>Guid</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="20" column="5" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="20" bodyend="24"/>
+      </memberdef>
+      <memberdef kind="function" id="structlt_1_1Guid_1aa1c842c9fe0e767ca405710d0b9c3379" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::Guid::increment</definition>
+        <argsstring>()</argsstring>
+        <name>increment</name>
+        <briefdescription>
+<para>Increment the sequence part of the guid, return a copy of the update. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="30" column="10" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="30" bodyend="35"/>
+      </memberdef>
+      <memberdef kind="function" id="structlt_1_1Guid_1a69f36368649cf210ef9e3b59a9ee1a64" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::Guid::makeBadVersion</definition>
+        <argsstring>() const</argsstring>
+        <name>makeBadVersion</name>
+        <briefdescription>
+<para>Returns the <ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> associated with failures. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="38" column="10" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="7" bodyend="13"/>
+      </memberdef>
+      <memberdef kind="function" id="structlt_1_1Guid_1a34a51b6ea92e36032d1d8d90e0d7754b" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Guid::isBadVersionOf</definition>
+        <argsstring>(Guid const &amp;i_other) const</argsstring>
+        <name>isBadVersionOf</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_other</declname>
+        </param>
+        <briefdescription>
+<para>Check if this <ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> is the bad version of other. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="41" column="10" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="15" bodyend="19"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-static-func">
+      <memberdef kind="function" id="structlt_1_1Guid_1a30e970fb6e2e37d17a284b76ea936c95" prot="public" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>static Guid lt::Guid::UNKNOWN</definition>
+        <argsstring>()</argsstring>
+        <name>UNKNOWN</name>
+        <briefdescription>
+<para>A <ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> representing unknown data. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="27" column="17" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="27" bodyend="27"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Unique identifer attached to a message. </para>
+    </briefdescription>
+    <detaileddescription>
+<para><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> is a unique identifier attached to each message. Guids are 16 byte identifiers of the host, participant, pub/sub, and writer/reader plus an extra 8 byte sequence number that is incremented. </para>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/src/Guid.hpp" line="16" column="1" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="16" bodyend="42"/>
+    <listofallmembers>
+      <member refid="structlt_1_1Guid_1afe830f74c10b7a6d2860f3da56614d7e" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>data</name></member>
+      <member refid="structlt_1_1Guid_1a0f0561a3358ae924ffa7cddfea33127a" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>Guid</name></member>
+      <member refid="structlt_1_1Guid_1aa1c842c9fe0e767ca405710d0b9c3379" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>increment</name></member>
+      <member refid="structlt_1_1Guid_1a34a51b6ea92e36032d1d8d90e0d7754b" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>isBadVersionOf</name></member>
+      <member refid="structlt_1_1Guid_1a69f36368649cf210ef9e3b59a9ee1a64" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>makeBadVersion</name></member>
+      <member refid="structlt_1_1Guid_1a07ecf33ea211004b01c6a9647bf25016" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>sequence</name></member>
+      <member refid="structlt_1_1Guid_1a30e970fb6e2e37d17a284b76ea936c95" prot="public" virt="non-virtual"><scope>lt::Guid</scope><name>UNKNOWN</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

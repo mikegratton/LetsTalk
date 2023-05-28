@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classlt_1_1Requester" kind="class" language="C++" prot="public">
+    <compoundname>lt::Requester</compoundname>
+    <includes refid="RequestReply_8hpp" local="no">RequestReply.hpp</includes>
+    <templateparamlist>
+      <param>
+        <type>class Req</type>
+      </param>
+      <param>
+        <type>class Rep</type>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="classlt_1_1Requester_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class Participant</definition>
+        <argsstring></argsstring>
+        <name>Participant</name>
+        <param>
+          <type><ref refid="classlt_1_1Participant" kindref="compound">Participant</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="42" column="5" bodyfile="/home/mike/git/letstalk/src/RequestReply.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-attrib">
+      <memberdef kind="variable" id="classlt_1_1Requester_1aa06205279ac1faa2789e098b78645a9f" prot="protected" static="no" mutable="no">
+        <type>std::shared_ptr&lt; detail::RequesterImpl&lt; Req, Rep &gt; &gt;</type>
+        <definition>std::shared_ptr&lt;detail::RequesterImpl&lt;Req, Rep&gt; &gt; lt::Requester&lt; Req, Rep &gt;::m_backend</definition>
+        <argsstring></argsstring>
+        <name>m_backend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="44" column="21" bodyfile="/home/mike/git/letstalk/src/RequestReply.hpp" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classlt_1_1Requester_1aaed26041cc5c83ecfd391d5d374514aa" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string const  &amp;</type>
+        <definition>std::string const  &amp; lt::Requester&lt; Req, Rep &gt;::serviceName</definition>
+        <argsstring>() const</argsstring>
+        <name>serviceName</name>
+        <briefdescription>
+<para>Retrieve the name of this service. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="28" column="23" bodyfile="/home/mike/git/letstalk/src/RequestReplyImpl.hpp" bodystart="159" bodyend="162"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Requester_1a7e160a410090e37aafd30e433efda865" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::future&lt; Rep &gt;</type>
+        <definition>std::future&lt; Rep &gt; lt::Requester&lt; Req, Rep &gt;::request</definition>
+        <argsstring>(Req const &amp;i_request)</argsstring>
+        <name>request</name>
+        <param>
+          <type>Req const &amp;</type>
+          <declname>i_request</declname>
+        </param>
+        <briefdescription>
+<para>Make a request. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>i_request</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>request data </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>future reply </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="33" column="17" bodyfile="/home/mike/git/letstalk/src/RequestReplyImpl.hpp" bodystart="165" bodyend="168"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Requester_1a62a70c92466b241ae1e08e6fd085ce2d" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Requester&lt; Req, Rep &gt;::isConnected</definition>
+        <argsstring>() const</argsstring>
+        <name>isConnected</name>
+        <briefdescription>
+<para>Check that there is at least one publisher to Req. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="36" column="10" bodyfile="/home/mike/git/letstalk/src/RequestReplyImpl.hpp" bodystart="171" bodyend="174"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Requester_1a81261c367660bbfb45a7675a7b2269f1" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Requester&lt; Req, Rep &gt;::impostorsExist</definition>
+        <argsstring>() const</argsstring>
+        <name>impostorsExist</name>
+        <briefdescription>
+<para>Check that there is at most one subscriber to the Req topic. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="39" column="10" bodyfile="/home/mike/git/letstalk/src/RequestReplyImpl.hpp" bodystart="177" bodyend="180"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-func">
+      <memberdef kind="function" id="classlt_1_1Requester_1acefb79607943f6e971e0a2d97407a5dc" prot="protected" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>lt::Requester&lt; Req, Rep &gt;::Requester</definition>
+        <argsstring>(std::shared_ptr&lt; detail::RequesterImpl&lt; Req, Rep &gt;&gt; i_backend)</argsstring>
+        <name>Requester</name>
+        <param>
+          <type>std::shared_ptr&lt; detail::RequesterImpl&lt; Req, Rep &gt;&gt;</type>
+          <declname>i_backend</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="43" column="5" bodyfile="/home/mike/git/letstalk/src/RequestReply.hpp" bodystart="43" bodyend="43"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>A lightweight requester wrapper. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>A <ref refid="classlt_1_1Requester" kindref="compound">Requester</ref> is an object used for making requests to a remote service. Each request returns a future response that can be waited upon for the reply. These are constructed by the <ref refid="classlt_1_1Participant" kindref="compound">Participant</ref>.</para>
+<para><parameterlist kind="exception"><parameteritem>
+<parameternamelist>
+<parametername>std::runtime_error</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>if the service indicates an error. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/src/RequestReply.hpp" line="25" column="1" bodyfile="/home/mike/git/letstalk/src/RequestReply.hpp" bodystart="25" bodyend="45"/>
+    <listofallmembers>
+      <member refid="classlt_1_1Requester_1a81261c367660bbfb45a7675a7b2269f1" prot="public" virt="non-virtual"><scope>lt::Requester</scope><name>impostorsExist</name></member>
+      <member refid="classlt_1_1Requester_1a62a70c92466b241ae1e08e6fd085ce2d" prot="public" virt="non-virtual"><scope>lt::Requester</scope><name>isConnected</name></member>
+      <member refid="classlt_1_1Requester_1aa06205279ac1faa2789e098b78645a9f" prot="protected" virt="non-virtual"><scope>lt::Requester</scope><name>m_backend</name></member>
+      <member refid="classlt_1_1Requester_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" virt="non-virtual"><scope>lt::Requester</scope><name>Participant</name></member>
+      <member refid="classlt_1_1Requester_1a7e160a410090e37aafd30e433efda865" prot="public" virt="non-virtual"><scope>lt::Requester</scope><name>request</name></member>
+      <member refid="classlt_1_1Requester_1acefb79607943f6e971e0a2d97407a5dc" prot="protected" virt="non-virtual"><scope>lt::Requester</scope><name>Requester</name></member>
+      <member refid="classlt_1_1Requester_1aaed26041cc5c83ecfd391d5d374514aa" prot="public" virt="non-virtual"><scope>lt::Requester</scope><name>serviceName</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

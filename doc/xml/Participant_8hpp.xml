@@ -1,0 +1,546 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="Participant_8hpp" kind="file" language="C++">
+    <compoundname>Participant.hpp</compoundname>
+    <includes local="no">future</includes>
+    <includes local="no">map</includes>
+    <includes local="no">mutex</includes>
+    <includes local="no">vector</includes>
+    <includes refid="LetsTalkFwd_8hpp" local="yes">LetsTalkFwd.hpp</includes>
+    <includes refid="PubSubType_8hpp" local="yes">PubSubType.hpp</includes>
+    <includes refid="Reactor_8hpp" local="yes">Reactor.hpp</includes>
+    <includes refid="RequestReply_8hpp" local="yes">RequestReply.hpp</includes>
+    <includes refid="ThreadSafeQueue_8hpp" local="yes">ThreadSafeQueue.hpp</includes>
+    <includes refid="ParticipantImpl_8hpp" local="yes">ParticipantImpl.hpp</includes>
+    <includedby refid="LetsTalk_8hpp" local="yes">/home/mike/git/letstalk/src/LetsTalk.hpp</includedby>
+    <incdepgraph>
+      <node id="13">
+        <label>list</label>
+      </node>
+      <node id="27">
+        <label>fastdds/dds/subscriber/DataReaderListener.hpp</label>
+      </node>
+      <node id="11">
+        <label>atomic</label>
+      </node>
+      <node id="31">
+        <label>fastcdr/FastBuffer.h</label>
+      </node>
+      <node id="12">
+        <label>functional</label>
+      </node>
+      <node id="48">
+        <label>queue</label>
+      </node>
+      <node id="51">
+        <label>ReaderListenerImpl.hpp</label>
+        <link refid="ReaderListenerImpl_8hpp_source"/>
+        <childnode refid="52" relation="include">
+        </childnode>
+        <childnode refid="46" relation="include">
+        </childnode>
+        <childnode refid="44" relation="include">
+        </childnode>
+      </node>
+      <node id="25">
+        <label>fastdds/dds/subscriber/DataReader.hpp</label>
+      </node>
+      <node id="46">
+        <label>LetsTalk.hpp</label>
+        <link refid="LetsTalk_8hpp_source"/>
+        <childnode refid="1" relation="include">
+        </childnode>
+      </node>
+      <node id="19">
+        <label>cstdint</label>
+      </node>
+      <node id="24">
+        <label>fastdds/dds/publisher/DataWriter.hpp</label>
+      </node>
+      <node id="15">
+        <label>FastDdsAlias.hpp</label>
+        <link refid="FastDdsAlias_8hpp_source"/>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+      </node>
+      <node id="22">
+        <label>fastdds/dds/domain/DomainParticipant.hpp</label>
+      </node>
+      <node id="42">
+        <label>ThreadSafeQueue.hpp</label>
+        <link refid="ThreadSafeQueue_8hpp_source"/>
+        <childnode refid="39" relation="include">
+        </childnode>
+        <childnode refid="43" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="30">
+        <label>fastcdr/Cdr.h</label>
+      </node>
+      <node id="28">
+        <label>meta.hpp</label>
+      </node>
+      <node id="47">
+        <label>ReactorClientImpl.hpp</label>
+        <link refid="ReactorClientImpl_8hpp_source"/>
+        <childnode refid="48" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+        <childnode refid="38" relation="include">
+        </childnode>
+      </node>
+      <node id="45">
+        <label>cassert</label>
+      </node>
+      <node id="23">
+        <label>fastdds/dds/domain/DomainParticipantListener.hpp</label>
+      </node>
+      <node id="36">
+        <label>string</label>
+      </node>
+      <node id="3">
+        <label>map</label>
+      </node>
+      <node id="8">
+        <label>fastdds/dds/topic/TypeSupport.hpp</label>
+      </node>
+      <node id="26">
+        <label>ReaderListener.hpp</label>
+        <link refid="ReaderListener_8hpp_source"/>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="28" relation="include">
+        </childnode>
+      </node>
+      <node id="37">
+        <label>Reactor.h</label>
+      </node>
+      <node id="18">
+        <label>Guid.hpp</label>
+        <link refid="Guid_8hpp_source"/>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+      </node>
+      <node id="41">
+        <label>RequestReply.hpp</label>
+        <link refid="RequestReply_8hpp_source"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="36" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>ActiveObject.hpp</label>
+        <link refid="ActiveObject_8hpp_source"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+      </node>
+      <node id="35">
+        <label>Reactor.hpp</label>
+        <link refid="Reactor_8hpp_source"/>
+        <childnode refid="36" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="37" relation="include">
+        </childnode>
+        <childnode refid="38" relation="include">
+        </childnode>
+        <childnode refid="40" relation="include">
+        </childnode>
+      </node>
+      <node id="32">
+        <label>fastdds/rtps/common/SerializedPayload.h</label>
+      </node>
+      <node id="39">
+        <label>condition_variable</label>
+      </node>
+      <node id="6">
+        <label>LetsTalkFwd.hpp</label>
+        <link refid="LetsTalkFwd_8hpp_source"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>future</label>
+      </node>
+      <node id="33">
+        <label>fastrtps/utils/md5.h</label>
+      </node>
+      <node id="49">
+        <label>ReactorServerImpl.hpp</label>
+        <link refid="ReactorServerImpl_8hpp_source"/>
+        <childnode refid="50" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+        <childnode refid="40" relation="include">
+        </childnode>
+      </node>
+      <node id="44">
+        <label>ParticipantImpl.hpp</label>
+        <link refid="ParticipantImpl_8hpp_source"/>
+        <childnode refid="45" relation="include">
+        </childnode>
+        <childnode refid="36" relation="include">
+        </childnode>
+        <childnode refid="46" relation="include">
+        </childnode>
+        <childnode refid="47" relation="include">
+        </childnode>
+        <childnode refid="49" relation="include">
+        </childnode>
+        <childnode refid="51" relation="include">
+        </childnode>
+        <childnode refid="53" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>vector</label>
+      </node>
+      <node id="16">
+        <label>fastdds/rtps/common/all_common.h</label>
+      </node>
+      <node id="34">
+        <label>fastdds/dds/topic/TopicDataType.hpp</label>
+      </node>
+      <node id="17">
+        <label>iosfwd</label>
+      </node>
+      <node id="29">
+        <label>PubSubType.hpp</label>
+        <link refid="PubSubType_8hpp_source"/>
+        <childnode refid="30" relation="include">
+        </childnode>
+        <childnode refid="31" relation="include">
+        </childnode>
+        <childnode refid="32" relation="include">
+        </childnode>
+        <childnode refid="33" relation="include">
+        </childnode>
+        <childnode refid="34" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+      </node>
+      <node id="43">
+        <label>deque</label>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/Participant.hpp</label>
+        <link refid="Participant_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+        <childnode refid="41" relation="include">
+        </childnode>
+        <childnode refid="42" relation="include">
+        </childnode>
+        <childnode refid="44" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>mutex</label>
+      </node>
+      <node id="52">
+        <label>fastdds/dds/subscriber/Subscriber.hpp</label>
+      </node>
+      <node id="50">
+        <label>chrono</label>
+      </node>
+      <node id="7">
+        <label>fastdds/dds/topic/Topic.hpp</label>
+      </node>
+      <node id="40">
+        <label>ReactorServer.hpp</label>
+        <link refid="ReactorServer_8hpp_source"/>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+      </node>
+      <node id="21">
+        <label>ParticipantLogger.hpp</label>
+        <link refid="ParticipantLogger_8hpp_source"/>
+        <childnode refid="22" relation="include">
+        </childnode>
+        <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+      </node>
+      <node id="14">
+        <label>thread</label>
+      </node>
+      <node id="53">
+        <label>RequestReplyImpl.hpp</label>
+        <link refid="RequestReplyImpl_8hpp_source"/>
+        <childnode refid="54" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="46" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="44" relation="include">
+        </childnode>
+      </node>
+      <node id="38">
+        <label>ReactorClient.hpp</label>
+        <link refid="ReactorClient_8hpp_source"/>
+        <childnode refid="39" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="35" relation="include">
+        </childnode>
+      </node>
+      <node id="20">
+        <label>cstring</label>
+      </node>
+      <node id="9">
+        <label>memory</label>
+      </node>
+      <node id="54">
+        <label>fastdds/dds/publisher/Publisher.hpp</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="4">
+        <label>/home/mike/git/letstalk/src/ReaderListenerImpl.hpp</label>
+        <link refid="ReaderListenerImpl_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>/home/mike/git/letstalk/src/LetsTalk.hpp</label>
+        <link refid="LetsTalk_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>/home/mike/git/letstalk/src/ParticipantImpl.hpp</label>
+        <link refid="ParticipantImpl_8hpp_source"/>
+        <childnode refid="1" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/Participant.hpp</label>
+        <link refid="Participant_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>/home/mike/git/letstalk/src/RequestReplyImpl.hpp</label>
+        <link refid="RequestReplyImpl_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classlt_1_1Participant" prot="public">lt::Participant</innerclass>
+    <innerclass refid="classlt_1_1Publisher" prot="public">lt::Publisher</innerclass>
+    <innernamespace refid="namespacelt">lt</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;future&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;map&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;mutex&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;LetsTalkFwd.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;PubSubType.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;Reactor.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;RequestReply.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;ThreadSafeQueue.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacelt" kindref="compound">lt</ref><sp/>{</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="24" refid="classlt_1_1Participant" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Participant" kindref="compound">Participant</ref><sp/>:<sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal"><sp/>std::enable_shared_from_this&lt;Participant&gt;<sp/>{</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/>ParticipantPtr<sp/><ref refid="classlt_1_1Participant_1a266f5f43e44e21fa68f9b7d83899c0e1" kindref="member">create</ref>(uint8_t<sp/>i_domain<sp/>=<sp/>0,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/>~<ref refid="classlt_1_1Participant" kindref="compound">Participant</ref>();</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight></codeline>
+<codeline lineno="58"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>C&gt;</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1a6b93ed397c29b3b5cfb42707255ec66d" kindref="member">subscribe</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>C<sp/>i_callback,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">,</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth<sp/>=<sp/>1);</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="75"><highlight class="normal"><sp/><sp/><sp/><sp/>QueuePtr&lt;T&gt;<sp/><ref refid="classlt_1_1Participant_1a6b93ed397c29b3b5cfb42707255ec66d" kindref="member">subscribe</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth<sp/>=<sp/>8);</highlight></codeline>
+<codeline lineno="76"><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1a919c1ddc1208c9a209c6630f1bdc18c9" kindref="member">unsubscribe</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic);</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight></codeline>
+<codeline lineno="104"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="105"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1Publisher" kindref="compound">Publisher</ref><sp/><ref refid="classlt_1_1Participant_1ad73d8f2561d6c2b679d402ac909c41fe" kindref="member">advertise</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile<sp/>=<sp/></highlight><highlight class="stringliteral">&quot;&quot;</highlight><highlight class="normal">,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth<sp/>=<sp/>1);</highlight></codeline>
+<codeline lineno="106"><highlight class="normal"></highlight></codeline>
+<codeline lineno="119"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>C&gt;</highlight></codeline>
+<codeline lineno="120"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1ad73d8f2561d6c2b679d402ac909c41fe" kindref="member">advertise</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_serviceName,<sp/>C<sp/>i_serviceProvider);</highlight></codeline>
+<codeline lineno="121"><highlight class="normal"></highlight></codeline>
+<codeline lineno="127"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1ad89e591e3f546a1610e3d6b6b73fabb5" kindref="member">unadvertise</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_service);</highlight></codeline>
+<codeline lineno="128"><highlight class="normal"></highlight></codeline>
+<codeline lineno="148"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep&gt;</highlight></codeline>
+<codeline lineno="149"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1Requester" kindref="compound">Requester&lt;Req, Rep&gt;</ref><sp/><ref refid="classlt_1_1Participant_1a798f568a7141b68812ccf67990c74d3f" kindref="member">makeRequester</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_serviceName);</highlight></codeline>
+<codeline lineno="150"><highlight class="normal"></highlight></codeline>
+<codeline lineno="161"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>P<sp/>=<sp/>reactor_</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">_progress&gt;</highlight></codeline>
+<codeline lineno="162"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1ReactorServer" kindref="compound">ReactorServer&lt;Req, Rep, P&gt;</ref><sp/><ref refid="classlt_1_1Participant_1a40b328a0429210a22782e78996784347" kindref="member">makeReactorServer</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_serviceName);</highlight></codeline>
+<codeline lineno="163"><highlight class="normal"></highlight></codeline>
+<codeline lineno="179"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>P<sp/>=<sp/>reactor_</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">_progress&gt;</highlight></codeline>
+<codeline lineno="180"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1ReactorClient" kindref="compound">ReactorClient&lt;Req, Rep, P&gt;</ref><sp/><ref refid="classlt_1_1Participant_1a730ed9f2cd7bf929767485b419932fa1" kindref="member">makeReactorClient</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_serviceName);</highlight></codeline>
+<codeline lineno="181"><highlight class="normal"></highlight></codeline>
+<codeline lineno="189"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1abcccccd13c198e53390a15e05b7b469e" kindref="member">publisherCount</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="190"><highlight class="normal"></highlight></codeline>
+<codeline lineno="198"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1ab68586bb5172b6b01684f542fdd77e7f" kindref="member">subscriberCount</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="199"><highlight class="normal"></highlight></codeline>
+<codeline lineno="207"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/><ref refid="classlt_1_1Participant_1a28d649a3c7938374e0f0f1949885ff19" kindref="member">topicType</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="208"><highlight class="normal"></highlight></codeline>
+<codeline lineno="214"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/><ref refid="classlt_1_1Participant_1a75c9fb38a78a6fe42b2d80cf4c910331" kindref="member">name</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="215"><highlight class="normal"></highlight></codeline>
+<codeline lineno="216"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">protected</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="220"><highlight class="normal"><sp/><sp/><sp/><sp/>efd::Topic*<sp/><ref refid="classlt_1_1Participant_1af0e8ee785cce7cb9399ea395beb29c22" kindref="member">getTopic</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>efd::TypeSupport<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_type,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth<sp/>=<sp/>1);</highlight></codeline>
+<codeline lineno="221"><highlight class="normal"></highlight></codeline>
+<codeline lineno="223"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1a09e81975e4df04d129c2b7f84ea36309" kindref="member">registerType</ref>(efd::TypeSupport<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_type);</highlight></codeline>
+<codeline lineno="224"><highlight class="normal"></highlight></codeline>
+<codeline lineno="226"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1Publisher" kindref="compound">Publisher</ref><sp/><ref refid="classlt_1_1Participant_1a3dcd9a92e2f4cee0f4dc3a0585f4d829" kindref="member">doAdvertise</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>efd::TypeSupport<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_type,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile,</highlight></codeline>
+<codeline lineno="227"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth);</highlight></codeline>
+<codeline lineno="228"><highlight class="normal"></highlight></codeline>
+<codeline lineno="230"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1a59eab541fa6944e560b65f29102642f2" kindref="member">doSubscribe</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/>efd::TypeSupport<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_typeName,</highlight></codeline>
+<codeline lineno="231"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>efd::DataReaderListener*<sp/>i_listener,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_qosProfile,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_historyDepth);</highlight></codeline>
+<codeline lineno="232"><highlight class="normal"></highlight></codeline>
+<codeline lineno="234"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Participant_1aa0e7c1b2bf28e42b7bc9d5cbc8833ece" kindref="member">updatePublisherCount</ref>(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_update);</highlight></codeline>
+<codeline lineno="235"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>updateSubscriberCount(std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topic,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>i_update);</highlight></codeline>
+<codeline lineno="236"><highlight class="normal"></highlight></codeline>
+<codeline lineno="238"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>C&gt;</highlight></codeline>
+<codeline lineno="239" refid="classlt_1_1Participant_1af6d0b669ba2496c037fd88f53d0432d9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Participant_1af6d0b669ba2496c037fd88f53d0432d9" kindref="member">detail::ReaderListener</ref>;</highlight></codeline>
+<codeline lineno="240"><highlight class="normal"></highlight></codeline>
+<codeline lineno="242" refid="classlt_1_1Participant_1a9544c98126549cae8f3a5cd9af6bcfdd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Publisher" kindref="compound">Publisher</ref>;</highlight></codeline>
+<codeline lineno="243"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep&gt;</highlight></codeline>
+<codeline lineno="244"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Requester" kindref="compound">Requester</ref>;</highlight></codeline>
+<codeline lineno="245"><highlight class="normal"></highlight></codeline>
+<codeline lineno="247" refid="classlt_1_1Participant_1abd655ceb07588fda8e29557c1a434307" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Participant_1abd655ceb07588fda8e29557c1a434307" kindref="member">detail::ParticipantLogger</ref>;</highlight></codeline>
+<codeline lineno="248"><highlight class="normal"></highlight></codeline>
+<codeline lineno="249"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;efd::DomainParticipant&gt;<sp/>m_participant;<sp/><sp/></highlight><highlight class="comment">//<sp/>Underlying<sp/>DDS<sp/>participant</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="250"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;efd::Publisher&gt;<sp/>m_publisher;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Single<sp/>pub<sp/>object<sp/>for<sp/>all<sp/>writers</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="251"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;efd::Subscriber&gt;<sp/>m_subscriber;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Single<sp/>sub<sp/>object<sp/>for<sp/>all<sp/>readers</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="252"><highlight class="normal"></highlight></codeline>
+<codeline lineno="253"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">mutable</highlight><highlight class="normal"><sp/>std::mutex<sp/>m_countMutex;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Guards<sp/>the<sp/>pub/sub<sp/>count<sp/>maps</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="254"><highlight class="normal"><sp/><sp/><sp/><sp/>std::map&lt;std::string,<sp/>int&gt;<sp/>m_subscriberCount;<sp/><sp/></highlight><highlight class="comment">//<sp/>Number<sp/>of<sp/>readers<sp/>per<sp/>topic</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="255"><highlight class="normal"><sp/><sp/><sp/><sp/>std::map&lt;std::string,<sp/>int&gt;<sp/>m_publisherCount;<sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Number<sp/>of<sp/>writers<sp/>per<sp/>topic</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="256"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="257"><highlight class="normal"></highlight></codeline>
+<codeline lineno="264" refid="classlt_1_1Publisher" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Publisher" kindref="compound">Publisher</ref><sp/>{</highlight></codeline>
+<codeline lineno="265"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="269" refid="classlt_1_1Publisher_1ab93a2f0889b144cec2282ff2d6acb38a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">operator</highlight><highlight class="normal"><sp/>bool()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>isOkay();<sp/>}</highlight></codeline>
+<codeline lineno="270"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>isOkay()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>!(</highlight><highlight class="keyword">nullptr</highlight><highlight class="normal"><sp/>==<sp/>m_writer);<sp/>}</highlight></codeline>
+<codeline lineno="271"><highlight class="normal"></highlight></codeline>
+<codeline lineno="275"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="276"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(std::unique_ptr&lt;T&gt;<sp/>i_data);</highlight></codeline>
+<codeline lineno="277"><highlight class="normal"></highlight></codeline>
+<codeline lineno="278"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="279"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(T<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_data);</highlight></codeline>
+<codeline lineno="280"><highlight class="normal"></highlight></codeline>
+<codeline lineno="285"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="286"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(T<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_data,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_myId,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_relatedId,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>i_bad<sp/>=<sp/></highlight><highlight class="keyword">false</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="287"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>T&gt;</highlight></codeline>
+<codeline lineno="288"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(std::unique_ptr&lt;T&gt;<sp/>i_data,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_myId,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_relatedId,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>i_bad<sp/>=<sp/></highlight><highlight class="keyword">false</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="289"><highlight class="normal"></highlight></codeline>
+<codeline lineno="290"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>topic()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>m_topicName;<sp/>}</highlight></codeline>
+<codeline lineno="291"><highlight class="normal"></highlight></codeline>
+<codeline lineno="292"><highlight class="normal"><sp/><sp/><sp/><sp/>Guid<sp/>guid()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="293"><highlight class="normal"></highlight></codeline>
+<codeline lineno="294"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Makes<sp/>a<sp/>dead<sp/>publisher</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="295"><highlight class="normal"><sp/><sp/><sp/><sp/>Publisher()<sp/>=<sp/></highlight><highlight class="keywordflow">default</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="296"><highlight class="normal"></highlight></codeline>
+<codeline lineno="297"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">protected</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="298"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal">Participant;</highlight></codeline>
+<codeline lineno="299"><highlight class="normal"></highlight></codeline>
+<codeline lineno="300"><highlight class="normal"><sp/><sp/><sp/><sp/>Publisher(std::shared_ptr&lt;efd::DataWriter&gt;<sp/>i_writer,<sp/>std::string<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_topicName);</highlight></codeline>
+<codeline lineno="301"><highlight class="normal"></highlight></codeline>
+<codeline lineno="303"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1adb2a8be0326aeeeada28e65b72c8793a" kindref="member">doPublish</ref>(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*<sp/>i_data);</highlight></codeline>
+<codeline lineno="304"><highlight class="normal"></highlight></codeline>
+<codeline lineno="306"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1Publisher_1adb2a8be0326aeeeada28e65b72c8793a" kindref="member">doPublish</ref>(</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">*<sp/>i_data,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_myId,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_relatedId,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>i_bad);</highlight></codeline>
+<codeline lineno="307"><highlight class="normal"></highlight></codeline>
+<codeline lineno="308"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;efd::DataWriter&gt;<sp/>m_writer;</highlight></codeline>
+<codeline lineno="309"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/>m_topicName;</highlight></codeline>
+<codeline lineno="310"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="311"><highlight class="normal"></highlight></codeline>
+<codeline lineno="312"><highlight class="normal">}<sp/><sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>lt</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="313"><highlight class="normal"></highlight></codeline>
+<codeline lineno="314"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;ParticipantImpl.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/mike/git/letstalk/src/Participant.hpp"/>
+  </compounddef>
+</doxygen>

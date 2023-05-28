@@ -1,0 +1,334 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="ReactorClient_8hpp" kind="file" language="C++">
+    <compoundname>ReactorClient.hpp</compoundname>
+    <includes local="no">condition_variable</includes>
+    <includes local="no">mutex</includes>
+    <includes refid="Reactor_8hpp" local="yes">Reactor.hpp</includes>
+    <includedby refid="Reactor_8hpp" local="yes">/home/mike/git/letstalk/src/Reactor.hpp</includedby>
+    <includedby refid="ReactorClientImpl_8hpp" local="yes">/home/mike/git/letstalk/src/ReactorClientImpl.hpp</includedby>
+    <incdepgraph>
+      <node id="13">
+        <label>list</label>
+      </node>
+      <node id="27">
+        <label>fastdds/dds/subscriber/DataReaderListener.hpp</label>
+      </node>
+      <node id="11">
+        <label>atomic</label>
+      </node>
+      <node id="12">
+        <label>functional</label>
+      </node>
+      <node id="25">
+        <label>fastdds/dds/subscriber/DataReader.hpp</label>
+      </node>
+      <node id="19">
+        <label>cstdint</label>
+      </node>
+      <node id="24">
+        <label>fastdds/dds/publisher/DataWriter.hpp</label>
+      </node>
+      <node id="15">
+        <label>FastDdsAlias.hpp</label>
+        <link refid="FastDdsAlias_8hpp_source"/>
+        <childnode refid="16" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+      </node>
+      <node id="22">
+        <label>fastdds/dds/domain/DomainParticipant.hpp</label>
+      </node>
+      <node id="28">
+        <label>meta.hpp</label>
+      </node>
+      <node id="23">
+        <label>fastdds/dds/domain/DomainParticipantListener.hpp</label>
+      </node>
+      <node id="5">
+        <label>string</label>
+      </node>
+      <node id="8">
+        <label>fastdds/dds/topic/TypeSupport.hpp</label>
+      </node>
+      <node id="26">
+        <label>ReaderListener.hpp</label>
+        <link refid="ReaderListener_8hpp_source"/>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="27" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="28" relation="include">
+        </childnode>
+      </node>
+      <node id="29">
+        <label>Reactor.h</label>
+      </node>
+      <node id="18">
+        <label>Guid.hpp</label>
+        <link refid="Guid_8hpp_source"/>
+        <childnode refid="19" relation="include">
+        </childnode>
+        <childnode refid="20" relation="include">
+        </childnode>
+        <childnode refid="17" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>ActiveObject.hpp</label>
+        <link refid="ActiveObject_8hpp_source"/>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="14" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>Reactor.hpp</label>
+        <link refid="Reactor_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="29" relation="include">
+        </childnode>
+        <childnode refid="1" relation="include">
+        </childnode>
+        <childnode refid="30" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>condition_variable</label>
+      </node>
+      <node id="6">
+        <label>LetsTalkFwd.hpp</label>
+        <link refid="LetsTalkFwd_8hpp_source"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+        <childnode refid="18" relation="include">
+        </childnode>
+        <childnode refid="21" relation="include">
+        </childnode>
+        <childnode refid="26" relation="include">
+        </childnode>
+      </node>
+      <node id="16">
+        <label>fastdds/rtps/common/all_common.h</label>
+      </node>
+      <node id="17">
+        <label>iosfwd</label>
+      </node>
+      <node id="3">
+        <label>mutex</label>
+      </node>
+      <node id="7">
+        <label>fastdds/dds/topic/Topic.hpp</label>
+      </node>
+      <node id="30">
+        <label>ReactorServer.hpp</label>
+        <link refid="ReactorServer_8hpp_source"/>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="21">
+        <label>ParticipantLogger.hpp</label>
+        <link refid="ParticipantLogger_8hpp_source"/>
+        <childnode refid="22" relation="include">
+        </childnode>
+        <childnode refid="23" relation="include">
+        </childnode>
+        <childnode refid="24" relation="include">
+        </childnode>
+        <childnode refid="25" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="15" relation="include">
+        </childnode>
+      </node>
+      <node id="14">
+        <label>thread</label>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/ReactorClient.hpp</label>
+        <link refid="ReactorClient_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="20">
+        <label>cstring</label>
+      </node>
+      <node id="9">
+        <label>memory</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="6">
+        <label>/home/mike/git/letstalk/src/ReaderListenerImpl.hpp</label>
+        <link refid="ReaderListenerImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>/home/mike/git/letstalk/src/LetsTalk.hpp</label>
+        <link refid="LetsTalk_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="8">
+        <label>/home/mike/git/letstalk/src/ReactorClientImpl.hpp</label>
+        <link refid="ReactorClientImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>/home/mike/git/letstalk/src/Reactor.hpp</label>
+        <link refid="Reactor_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="1" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>/home/mike/git/letstalk/src/ReactorServerImpl.hpp</label>
+        <link refid="ReactorServerImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>/home/mike/git/letstalk/src/ParticipantImpl.hpp</label>
+        <link refid="ParticipantImpl_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>/home/mike/git/letstalk/src/Participant.hpp</label>
+        <link refid="Participant_8hpp_source"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>/home/mike/git/letstalk/src/ReactorServer.hpp</label>
+        <link refid="ReactorServer_8hpp_source"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>/home/mike/git/letstalk/src/RequestReplyImpl.hpp</label>
+        <link refid="RequestReplyImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/ReactorClient.hpp</label>
+        <link refid="ReactorClient_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="classlt_1_1ReactorClient" prot="public">lt::ReactorClient</innerclass>
+    <innerclass refid="classlt_1_1ReactorClient_1_1Session" prot="public">lt::ReactorClient::Session</innerclass>
+    <innernamespace refid="namespacelt">lt</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;condition_variable&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;mutex&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;Reactor.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacelt" kindref="compound">lt</ref><sp/>{</highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal"><sp/>&lt;</highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Req,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>Rep,<sp/></highlight><highlight class="keyword">class</highlight><highlight class="normal"><sp/>ProgressData<sp/>=<sp/>reactor_</highlight><highlight class="keywordtype">void</highlight><highlight class="normal">_progress&gt;</highlight></codeline>
+<codeline lineno="22" refid="classlt_1_1ReactorClient" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1ReactorClient" kindref="compound">ReactorClient</ref><sp/>{</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using</highlight><highlight class="normal"><sp/>Backend<sp/>=<sp/>detail::ReactorClientBackend&lt;Req,<sp/>Rep,<sp/>ProgressData&gt;;</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="29" refid="classlt_1_1ReactorClient_1_1Session" refkind="compound"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1ReactorClient_1_1Session" kindref="compound">Session</ref><sp/>{</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">public</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ac3939efe86bfd730184953ba738a7e26" kindref="member">progress</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ac46bc722d61a53855858cafe7ba765b1" kindref="member">progressData</ref>(ProgressData&amp;<sp/>o_data,<sp/>std::chrono::nanoseconds<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1a7cd4415249464dfe1e33cee08caa9e31" kindref="member">isAlive</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ae89c4d145f2979626138a836eeea7d73" kindref="member">cancel</ref>();</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="50" refid="classlt_1_1ReactorClient_1_1Session_1ae170157f1274b69958b5811c5c9272df" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ae170157f1274b69958b5811c5c9272df" kindref="member">id</ref>()</highlight><highlight class="keyword"><sp/>const<sp/></highlight><highlight class="normal">{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ae164dc1c422ecbe981a5a0f69e3061d9" kindref="member">m_id</ref>;<sp/>}</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1a219de3299d408354bc3df83c055444f3" kindref="member">get</ref>(Rep&amp;<sp/>o_reply,<sp/>std::chrono::nanoseconds<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"></highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>~<ref refid="classlt_1_1ReactorClient_1_1Session" kindref="compound">Session</ref>();</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">protected</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/>Backend;</highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="classlt_1_1ReactorClient_1_1Session" kindref="compound">Session</ref>(std::shared_ptr&lt;Backend&gt;<sp/>m_reactor,<sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/>i_id);</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="68"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::shared_ptr&lt;Backend&gt;<sp/>m_reactor;<sp/><sp/></highlight></codeline>
+<codeline lineno="69" refid="classlt_1_1ReactorClient_1_1Session_1ae164dc1c422ecbe981a5a0f69e3061d9" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/><ref refid="classlt_1_1ReactorClient_1_1Session_1ae164dc1c422ecbe981a5a0f69e3061d9" kindref="member">m_id</ref>;<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"></highlight></codeline>
+<codeline lineno="77"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1ReactorClient_1_1Session" kindref="compound">Session</ref><sp/><ref refid="classlt_1_1ReactorClient_1aa6aed86d5018d90994881440ce2373b9" kindref="member">request</ref>(Req<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_request);</highlight></codeline>
+<codeline lineno="78"><highlight class="normal"></highlight></codeline>
+<codeline lineno="80"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1a491da94156ce754baa9ef0afe9c03b22" kindref="member">logConnectionStatus</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight></codeline>
+<codeline lineno="83"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="classlt_1_1ReactorClient_1a51e82b450ce8e905bfd4d33766dba893" kindref="member">discoveredServer</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="84"><highlight class="normal"></highlight></codeline>
+<codeline lineno="85"><highlight class="normal"><sp/><sp/><sp/></highlight><highlight class="keyword">protected</highlight><highlight class="normal">:</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">friend</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">class<sp/></highlight><highlight class="normal"><ref refid="classlt_1_1Participant" kindref="compound">Participant</ref>;</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="classlt_1_1ReactorClient" kindref="compound">ReactorClient</ref>(std::shared_ptr&lt;Backend&gt;<sp/>i_backend);</highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal"><sp/><sp/><sp/><sp/>std::shared_ptr&lt;Backend&gt;<sp/>m_backend;</highlight></codeline>
+<codeline lineno="90"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight></codeline>
+<codeline lineno="92"><highlight class="normal">}<sp/><sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>lt</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="/home/mike/git/letstalk/src/ReactorClient.hpp"/>
+  </compounddef>
+</doxygen>

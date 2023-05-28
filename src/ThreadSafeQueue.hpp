@@ -21,7 +21,7 @@ class ThreadSafeQueue {
 
     /// Construct a queue with an optional capacity bound
     /// @param i_capacity If nonzero, discard old samples when the queue length exceeds this value
-    ThreadSafeQueue(std::size_t i_capacity = 0) : m_capacity(i_capacity), m_waitset(nullptr) {}
+    ThreadSafeQueue(std::size_t i_capacity = 0) : m_capacity(i_capacity), m_externalCondition(nullptr) {}
 
     /// Number of samples in the queue
     std::size_t size() const
@@ -126,7 +126,7 @@ class ThreadSafeQueue {
         while (m_capacity > 0 && m_queue.size() > m_capacity) { m_queue.pop_front(); }
         guard.unlock();
         m_nonempty.notify_one();
-        if (m_waitset) { m_waitset->notify_one(); }
+        if (m_externalCondition) { m_externalCondition->notify_one(); }
     }
 
     /**
@@ -140,8 +140,14 @@ class ThreadSafeQueue {
         m_queue.swap(io_other.m_queue);
     }
 
-    /// Attach to a waitset
-    void attachWaitsetCondition(std::condition_variable* i_waitset) { m_waitset = i_waitset; }
+    /**
+     * @brief Attach to another condition variable
+     * @note Only one external condition may be attached at a time. (A queue can only be in one waitset)
+     */
+    void attachToCondition(std::condition_variable* i_condition) { m_externalCondition = i_condition; }
+
+    /// Detach the external condition variable
+    void detachFromCondition() { m_externalCondition = nullptr; }
 
    protected:
     const std::size_t m_capacity;
@@ -150,7 +156,7 @@ class ThreadSafeQueue {
     mutable std::mutex m_mutex;
     using LockGuard = std::unique_lock<std::mutex>;
     std::condition_variable m_nonempty;
-    std::condition_variable* m_waitset;
+    std::condition_variable* m_externalCondition;
 };
 
 template <class T>

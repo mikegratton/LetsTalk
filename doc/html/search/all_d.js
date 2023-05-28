@@ -1,9 +1,4 @@
 var searchData=
 [
-  ['reactorclient_49',['ReactorClient',['../classlt_1_1ReactorClient.html',1,'lt']]],
-  ['reactorserver_50',['ReactorServer',['../classlt_1_1ReactorServer.html',1,'lt']]],
-  ['registertype_51',['registerType',['../classlt_1_1Participant.html#a09e81975e4df04d129c2b7f84ea36309',1,'lt::Participant']]],
-  ['reply_52',['reply',['../classlt_1_1ReactorServer_1_1Session.html#aeb54854aadc43cb2a41073209e23f50c',1,'lt::ReactorServer::Session']]],
-  ['request_53',['request',['../classlt_1_1ReactorClient.html#aa6aed86d5018d90994881440ce2373b9',1,'lt::ReactorClient::request()'],['../classlt_1_1ReactorServer_1_1Session.html#ab9b04997dc12acf76ab9421ef7c681a6',1,'lt::ReactorServer::Session::request()'],['../classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865',1,'lt::Requester::request()']]],
-  ['requester_54',['Requester',['../classlt_1_1Requester.html',1,'lt']]]
+  ['queuewaitset_55',['QueueWaitset',['../classlt_1_1QueueWaitset.html',1,'lt::QueueWaitset&lt; Ts &gt;'],['../classlt_1_1QueueWaitset.html#ac50afa352b4b8bc37b5a41259160af3c',1,'lt::QueueWaitset::QueueWaitset()']]]
 ];

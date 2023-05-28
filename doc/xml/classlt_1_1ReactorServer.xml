@@ -1,0 +1,191 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classlt_1_1ReactorServer" kind="class" language="C++" prot="public">
+    <compoundname>lt::ReactorServer</compoundname>
+    <basecompoundref prot="public" virt="non-virtual">std::enable_shared_from_this&lt; ReactorServer&lt; Req, Rep, reactor_void_progress &gt; &gt;</basecompoundref>
+    <includes refid="ReactorServer_8hpp" local="no">ReactorServer.hpp</includes>
+    <innerclass refid="classlt_1_1ReactorServer_1_1Session" prot="public">lt::ReactorServer::Session</innerclass>
+    <templateparamlist>
+      <param>
+        <type>class Req</type>
+      </param>
+      <param>
+        <type>class Rep</type>
+      </param>
+      <param>
+        <type>class ProgressData</type>
+        <defval>reactor_void_progress</defval>
+      </param>
+    </templateparamlist>
+      <sectiondef kind="private-type">
+      <memberdef kind="typedef" id="classlt_1_1ReactorServer_1a83e5def7865639ec27d99f8666e82675" prot="private" static="no">
+        <type>detail::ReactorServerBackend&lt; Req, Rep, ProgressData &gt;</type>
+        <definition>using lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::Backend =  detail::ReactorServerBackend&lt;Req, Rep, ProgressData&gt;</definition>
+        <argsstring></argsstring>
+        <name>Backend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="20" column="5" bodyfile="/home/mike/git/letstalk/src/ReactorServer.hpp" bodystart="20" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="classlt_1_1ReactorServer_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class Participant</definition>
+        <argsstring></argsstring>
+        <name>Participant</name>
+        <param>
+          <type><ref refid="classlt_1_1Participant" kindref="compound">Participant</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="80" column="5" bodyfile="/home/mike/git/letstalk/src/ReactorServer.hpp" bodystart="80" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-attrib">
+      <memberdef kind="variable" id="classlt_1_1ReactorServer_1a31559335c8c5084b9a33322a567aa5c1" prot="protected" static="no" mutable="no">
+        <type>std::shared_ptr&lt; Backend &gt;</type>
+        <definition>std::shared_ptr&lt;Backend&gt; lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::m_backend</definition>
+        <argsstring></argsstring>
+        <name>m_backend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="82" column="21" bodyfile="/home/mike/git/letstalk/src/ReactorServer.hpp" bodystart="82" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classlt_1_1ReactorServer_1a3c16f052e1bd222c9a457fa39b67123b" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::havePendingSession</definition>
+        <argsstring>() const</argsstring>
+        <name>havePendingSession</name>
+        <briefdescription>
+<para>Check if there is a pending session. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="67" column="10" bodyfile="/home/mike/git/letstalk/src/ReactorServerImpl.hpp" bodystart="277" bodyend="280"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorServer_1a971f59509dbd0dc4f26972f6a0087800" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classlt_1_1ReactorServer_1_1Session" kindref="compound">Session</ref></type>
+        <definition>ReactorServer&lt; Req, Rep, P &gt;::Session lt::ReactorServer&lt; Req, Rep, P &gt;::getPendingSession</definition>
+        <argsstring>(std::chrono::nanoseconds i_wait=std::chrono::nanoseconds(0))</argsstring>
+        <name>getPendingSession</name>
+        <param>
+          <type>std::chrono::nanoseconds</type>
+          <declname>i_wait</declname>
+          <defval>std::chrono::nanoseconds(0)</defval>
+        </param>
+        <briefdescription>
+<para>Get the next pending request as a new session object. If there are no pending requests, this retuns a session object where isAlive() returns false. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="71" column="13" bodyfile="/home/mike/git/letstalk/src/ReactorServerImpl.hpp" bodystart="205" bodyend="209"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorServer_1a1f48a061fa28a64244c81dc3fc96150f" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::logConnectionStatus</definition>
+        <argsstring>() const</argsstring>
+        <name>logConnectionStatus</name>
+        <briefdescription>
+<para>For debugging. Prints connection status if LT_VERBOSE is defined. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="74" column="10" bodyfile="/home/mike/git/letstalk/src/ReactorServerImpl.hpp" bodystart="264" bodyend="267"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorServer_1a201787a2d68e2cf754ed95a59c86aec5" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int lt::ReactorServer&lt; Req, Rep, ProgressData &gt;::discoveredClients</definition>
+        <argsstring>() const</argsstring>
+        <name>discoveredClients</name>
+        <briefdescription>
+<para>Count number of discovered clients. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="77" column="9" bodyfile="/home/mike/git/letstalk/src/ReactorServerImpl.hpp" bodystart="283" bodyend="286"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-func">
+      <memberdef kind="function" id="classlt_1_1ReactorServer_1ae9955f9a7d12bbfe1fe00da9c8116fff" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>lt::ReactorServer&lt; Req, Rep, P &gt;::ReactorServer</definition>
+        <argsstring>(std::shared_ptr&lt; Backend &gt; i_backend)</argsstring>
+        <name>ReactorServer</name>
+        <param>
+          <type>std::shared_ptr&lt; Backend &gt;</type>
+          <declname>i_backend</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="81" column="5" bodyfile="/home/mike/git/letstalk/src/ReactorServerImpl.hpp" bodystart="200" bodyend="202"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Receive reactor requests and post progress and results. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>The <ref refid="classlt_1_1ReactorServer" kindref="compound">ReactorServer</ref> handles the server-side of the reactor pattern. This is a pull-style API. The <ref refid="classlt_1_1ReactorServer" kindref="compound">ReactorServer</ref> provides methods to find about pending sessions and interact with them, but does not run callbacks that do the work. That&apos;s done by your code.</para>
+<para>By default, the ProgressData type is set to reactor_void_progress <ndash/> that is, there&apos;s no associated progress data, just integer progress marks. This enables using the simplified progress() call below. </para>
+    </detaileddescription>
+    <inheritancegraph>
+      <node id="1">
+        <label>lt::ReactorServer&lt; Req, Rep, ProgressData &gt;</label>
+        <link refid="classlt_1_1ReactorServer"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>std::enable_shared_from_this&lt; ReactorServer&lt; Req, Rep, reactor_void_progress &gt; &gt;</label>
+      </node>
+    </inheritancegraph>
+    <collaborationgraph>
+      <node id="1">
+        <label>lt::ReactorServer&lt; Req, Rep, ProgressData &gt;</label>
+        <link refid="classlt_1_1ReactorServer"/>
+        <childnode refid="2" relation="public-inheritance">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>std::enable_shared_from_this&lt; ReactorServer&lt; Req, Rep, reactor_void_progress &gt; &gt;</label>
+      </node>
+    </collaborationgraph>
+    <location file="/home/mike/git/letstalk/src/ReactorServer.hpp" line="19" column="1" bodyfile="/home/mike/git/letstalk/src/ReactorServer.hpp" bodystart="19" bodyend="83"/>
+    <listofallmembers>
+      <member refid="classlt_1_1ReactorServer_1a83e5def7865639ec27d99f8666e82675" prot="private" virt="non-virtual"><scope>lt::ReactorServer</scope><name>Backend</name></member>
+      <member refid="classlt_1_1ReactorServer_1a201787a2d68e2cf754ed95a59c86aec5" prot="public" virt="non-virtual"><scope>lt::ReactorServer</scope><name>discoveredClients</name></member>
+      <member refid="classlt_1_1ReactorServer_1a971f59509dbd0dc4f26972f6a0087800" prot="public" virt="non-virtual"><scope>lt::ReactorServer</scope><name>getPendingSession</name></member>
+      <member refid="classlt_1_1ReactorServer_1a3c16f052e1bd222c9a457fa39b67123b" prot="public" virt="non-virtual"><scope>lt::ReactorServer</scope><name>havePendingSession</name></member>
+      <member refid="classlt_1_1ReactorServer_1a1f48a061fa28a64244c81dc3fc96150f" prot="public" virt="non-virtual"><scope>lt::ReactorServer</scope><name>logConnectionStatus</name></member>
+      <member refid="classlt_1_1ReactorServer_1a31559335c8c5084b9a33322a567aa5c1" prot="protected" virt="non-virtual"><scope>lt::ReactorServer</scope><name>m_backend</name></member>
+      <member refid="classlt_1_1ReactorServer_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" virt="non-virtual"><scope>lt::ReactorServer</scope><name>Participant</name></member>
+      <member refid="classlt_1_1ReactorServer_1ae9955f9a7d12bbfe1fe00da9c8116fff" prot="protected" virt="non-virtual"><scope>lt::ReactorServer</scope><name>ReactorServer</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,382 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="namespacelt" kind="namespace" language="C++">
+    <compoundname>lt</compoundname>
+    <innerclass refid="classlt_1_1ActiveObject" prot="public">lt::ActiveObject</innerclass>
+    <innerclass refid="structlt_1_1Guid" prot="public">lt::Guid</innerclass>
+    <innerclass refid="classlt_1_1Requester" prot="public">lt::Requester</innerclass>
+    <innerclass refid="classlt_1_1Participant" prot="public">lt::Participant</innerclass>
+    <innerclass refid="classlt_1_1Publisher" prot="public">lt::Publisher</innerclass>
+    <innerclass refid="classlt_1_1QueueWaitset" prot="public">lt::QueueWaitset</innerclass>
+    <innerclass refid="classlt_1_1ReactorClient" prot="public">lt::ReactorClient</innerclass>
+    <innerclass refid="classlt_1_1ReactorServer" prot="public">lt::ReactorServer</innerclass>
+    <innerclass refid="classlt_1_1ThreadSafeQueue" prot="public">lt::ThreadSafeQueue</innerclass>
+      <sectiondef kind="enum">
+      <memberdef kind="enum" id="namespacelt_1a95caec055633a0199eb72b74c453e9a6" prot="public" static="no" strong="no">
+        <type>int</type>
+        <name>ReactorProgressMark</name>
+        <enumvalue id="namespacelt_1a95caec055633a0199eb72b74c453e9a6acf91798395fe348509f6f2fe69fc2535" prot="public">
+          <name>PROG_UNKNOWN</name>
+          <initializer>= -200</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacelt_1a95caec055633a0199eb72b74c453e9a6ac1535e6f0c0654dd506137402e3a70e6" prot="public">
+          <name>PROG_FAILED</name>
+          <initializer>= -100</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacelt_1a95caec055633a0199eb72b74c453e9a6a171c09e69aa65a921dd80298810d11ba" prot="public">
+          <name>PROG_SENT</name>
+          <initializer>= 0</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacelt_1a95caec055633a0199eb72b74c453e9a6a4a61a36fe9645f18d38ddd861da84ead" prot="public">
+          <name>PROG_START</name>
+          <initializer>= 1</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacelt_1a95caec055633a0199eb72b74c453e9a6a142b4a0ad592d027d4687c69b076e8d6" prot="public">
+          <name>PROG_SUCCESS</name>
+          <initializer>= 100</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Reactor.hpp" line="37" column="1" bodyfile="/home/mike/git/letstalk/src/Reactor.hpp" bodystart="37" bodyend="43"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespacelt_1a8529a676fd3124a1ef98d5189aa6d931" prot="public" static="no">
+        <type>std::shared_ptr&lt; <ref refid="classlt_1_1Participant" kindref="compound">Participant</ref> &gt;</type>
+        <definition>using lt::ParticipantPtr = typedef std::shared_ptr&lt;Participant&gt;</definition>
+        <argsstring></argsstring>
+        <name>ParticipantPtr</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/LetsTalkFwd.hpp" line="17" column="1" bodyfile="/home/mike/git/letstalk/src/LetsTalkFwd.hpp" bodystart="17" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacelt_1a90a2f17539bf599593b4a125c8296ad5" prot="public" static="no">
+        <templateparamlist>
+          <param>
+            <type>class T</type>
+          </param>
+        </templateparamlist>
+        <type>std::shared_ptr&lt; <ref refid="classlt_1_1ThreadSafeQueue" kindref="compound">ThreadSafeQueue</ref>&lt; T &gt; &gt;</type>
+        <definition>using lt::QueuePtr = typedef std::shared_ptr&lt;ThreadSafeQueue&lt;T&gt; &gt;</definition>
+        <argsstring></argsstring>
+        <name>QueuePtr</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" line="163" column="1" bodyfile="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" bodystart="163" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="namespacelt_1ab071c052492fb5481025d8483272df2f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>efr::GUID_t</type>
+        <definition>efr::GUID_t lt::toFastDdsGuid</definition>
+        <argsstring>(Guid const  &amp;i_guid)</argsstring>
+        <name>toFastDdsGuid</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_guid</declname>
+        </param>
+        <briefdescription>
+<para>Convert to GUID_t. Drops the sequence data. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.cpp" line="21" column="13" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="21" bodyend="27" declfile="/home/mike/git/letstalk/src/Guid.hpp" declline="63" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1afe6f6d4a6f7d87d8e4ec76a6aeb10357" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::toLetsTalkGuid</definition>
+        <argsstring>(efr::GUID_t const  &amp;i_guid)</argsstring>
+        <name>toLetsTalkGuid</name>
+        <param>
+          <type>efr::GUID_t const &amp;</type>
+          <declname>i_guid</declname>
+        </param>
+        <briefdescription>
+<para>Convert from GUID_t. Sets the sequence to zero. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.cpp" line="29" column="6" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="29" bodyend="35" declfile="/home/mike/git/letstalk/src/Guid.hpp" declline="66" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1aa35468c68ca77a5a632f87fad4551f8b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>efr::SampleIdentity</type>
+        <definition>efr::SampleIdentity lt::toSampleId</definition>
+        <argsstring>(Guid const  &amp;i_id)</argsstring>
+        <name>toSampleId</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_id</declname>
+        </param>
+        <briefdescription>
+<para>Convert to SampleIdentity. This is 1-1. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.cpp" line="37" column="21" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="37" bodyend="44" declfile="/home/mike/git/letstalk/src/Guid.hpp" declline="69" declcolumn="21"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a735e9e41d44d6a958879df70f1ab9d14" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::toLetsTalkGuid</definition>
+        <argsstring>(efr::SampleIdentity const  &amp;i_sampleId)</argsstring>
+        <name>toLetsTalkGuid</name>
+        <param>
+          <type>efr::SampleIdentity const &amp;</type>
+          <declname>i_sampleId</declname>
+        </param>
+        <briefdescription>
+<para>Convert from SampleIdentity. This is 1-1. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.cpp" line="46" column="6" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="46" bodyend="51" declfile="/home/mike/git/letstalk/src/Guid.hpp" declline="72" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a0700cfcfb94060ad35c32a48bf6d1a92" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::ostream &amp;</type>
+        <definition>std::ostream &amp; lt::operator&lt;&lt;</definition>
+        <argsstring>(std::ostream &amp;os, Guid const &amp;i_guid)</argsstring>
+        <name>operator&lt;&lt;</name>
+        <param>
+          <type>std::ostream &amp;</type>
+          <declname>os</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_guid</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.cpp" line="53" column="1" bodyfile="/home/mike/git/letstalk/src/Guid.cpp" bodystart="53" bodyend="58" declfile="/home/mike/git/letstalk/src/Guid.hpp" declline="74" declcolumn="1"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1aa4657df944f3c4e4de4f3b92573c3f44" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::operator&lt;</definition>
+        <argsstring>(Guid const &amp;g1, Guid const &amp;g2)</argsstring>
+        <name>operator&lt;</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g1</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="46" column="8" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="46" bodyend="50"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a898bb962837a4d6483af4e292211d2c1" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::operator==</definition>
+        <argsstring>(Guid const &amp;g1, Guid const &amp;g2)</argsstring>
+        <name>operator==</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g1</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="52" column="13" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="52" bodyend="55"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1adaaa2cfbf2c14703802904b18f5776f2" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::operator!=</definition>
+        <argsstring>(Guid const &amp;g1, Guid const &amp;g2)</argsstring>
+        <name>operator!=</name>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g1</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>g2</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Guid.hpp" line="57" column="13" bodyfile="/home/mike/git/letstalk/src/Guid.hpp" bodystart="57" bodyend="60"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a36721e693ecfaf822d4700ffd8232acc" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string lt::getDefaultProfileXml</definition>
+        <argsstring>()</argsstring>
+        <name>getDefaultProfileXml</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.cpp" line="18" column="13" declfile="/home/mike/git/letstalk/src/Participant.cpp" declline="18" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a5f18cbd891c604c0531c6c3a06e5c914" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class...</type>
+            <declname>Ts</declname>
+            <defname>Ts</defname>
+          </param>
+        </templateparamlist>
+        <type>auto</type>
+        <definition>auto lt::makeQueueWaitset</definition>
+        <argsstring>(QueuePtr&lt; Ts &gt; &amp;... io_waitsets)</argsstring>
+        <name>makeQueueWaitset</name>
+        <param>
+          <type>QueuePtr&lt; Ts &gt; &amp;...</type>
+          <declname>io_waitsets</declname>
+        </param>
+        <briefdescription>
+<para>Build a waitset out of one or more QueuePtr&lt;T&gt;&apos;s. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Example: <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>node<sp/>=<sp/><ref refid="classlt_1_1Participant_1a266f5f43e44e21fa68f9b7d83899c0e1" kindref="member">lt::Participant::create</ref>();</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>type1Sub<sp/>=<sp/>node-&gt;subscribe&lt;MyType1&gt;(</highlight><highlight class="stringliteral">&quot;topic1&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>type2Sub<sp/>=<sp/>node-&gt;subscribe&lt;MyType2&gt;(</highlight><highlight class="stringliteral">&quot;topic2&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>waitset<sp/>=<sp/><ref refid="namespacelt_1a5f18cbd891c604c0531c6c3a06e5c914" kindref="member">makeQueueWaitset</ref>(type1Sub,<sp/>type2Sub);</highlight></codeline>
+</programlisting> </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/QueueWaitset.hpp" line="133" column="6" bodyfile="/home/mike/git/letstalk/src/QueueWaitset.hpp" bodystart="133" bodyend="136"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a068c1ef7361f9193f2695a4e90944b3b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string lt::reactorCommandName</definition>
+        <argsstring>(std::string const &amp;i_name)</argsstring>
+        <name>reactorCommandName</name>
+        <param>
+          <type>std::string const &amp;</type>
+          <declname>i_name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Reactor.hpp" line="32" column="13" declfile="/home/mike/git/letstalk/src/Reactor.hpp" declline="32" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1ae8113c5640d71e53c93381f0088fc621" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string lt::reactorProgressName</definition>
+        <argsstring>(std::string const &amp;i_name)</argsstring>
+        <name>reactorProgressName</name>
+        <param>
+          <type>std::string const &amp;</type>
+          <declname>i_name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Reactor.hpp" line="33" column="13" declfile="/home/mike/git/letstalk/src/Reactor.hpp" declline="33" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a803f6c9f93e888a658b0f2d208805abe" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string lt::reactorReplyName</definition>
+        <argsstring>(std::string const &amp;i_name)</argsstring>
+        <name>reactorReplyName</name>
+        <param>
+          <type>std::string const &amp;</type>
+          <declname>i_name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Reactor.hpp" line="34" column="13" declfile="/home/mike/git/letstalk/src/Reactor.hpp" declline="34" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacelt_1a73055a0cecb1f3303c0b155f0b64c09f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string lt::reactorRequestName</definition>
+        <argsstring>(std::string const &amp;i_name)</argsstring>
+        <name>reactorRequestName</name>
+        <param>
+          <type>std::string const &amp;</type>
+          <declname>i_name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Reactor.hpp" line="35" column="13" declfile="/home/mike/git/letstalk/src/Reactor.hpp" declline="35" declcolumn="13"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>All Let&apos;s Talk symbols reside in namespace &quot;lt&quot;. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>Namespace aliases and the like for interacting with fastdds</para>
+<para>A reactor is a communication pattern that is like an extended request/reply session.</para>
+<para>The client sends an initial request, starting a session. The server then sends back multiple progress messages, delivering both a status counter and optional progress data. Finally, the server sends a reply message, ending the session. During its execution, the client may send a cancel command, ending the session early.</para>
+<para>Some examples of reactors:</para>
+<para>A garage door opener service. The client requests the door to be opened, and the server sends back progress related to how open the door is now. The reply type may be blank. Cancellation could cause the server to try to restore the door to its previous state (open or closed).</para>
+<para>A route planner service. The client requests a safe route from a start to a goal. The server runs an anytime algorithm with a fixed time budget. Progress messages are sent at a regular interval, but may jump to fully complete if the algorithm solves the problem before the time elapses. The reply is the safe route. The client may cancel the calculation if the upcoming task of the robot has changed. </para>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/src/ActiveObject.cpp" line="3" column="1"/>
+  </compounddef>
+</doxygen>

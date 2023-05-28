@@ -1,5 +1,5 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" title=" " alt="" coords="5,35,192,61"/>
-<area shape="rect" id="node2" href="$classlt_1_1Participant.html" title="Allows participating in DDS communication." alt="" coords="283,5,391,32"/>
-<area shape="rect" id="node3" href="$classlt_1_1ReactorServer.html" title="Receive reactor requests and post progress and results." alt="" coords="240,57,435,98"/>
+<area shape="rect" id="node1" title=" " alt="" coords="5,27,151,69"/>
+<area shape="rect" id="node2" href="$classlt_1_1Participant.html" title="Allows participating in DDS communication." alt="" coords="242,5,350,32"/>
+<area shape="rect" id="node3" href="$classlt_1_1ReactorServer.html" title="Receive reactor requests and post progress and results." alt="" coords="199,57,393,98"/>
 </map>

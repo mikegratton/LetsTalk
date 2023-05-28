@@ -1,0 +1,332 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classlt_1_1Publisher" kind="class" language="C++" prot="public">
+    <compoundname>lt::Publisher</compoundname>
+    <includes refid="Participant_8hpp" local="no">Participant.hpp</includes>
+      <sectiondef kind="friend">
+      <memberdef kind="friend" id="classlt_1_1Publisher_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class Participant</definition>
+        <argsstring></argsstring>
+        <name>Participant</name>
+        <param>
+          <type><ref refid="classlt_1_1Participant" kindref="compound">Participant</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="298" column="5" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="298" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-attrib">
+      <memberdef kind="variable" id="classlt_1_1Publisher_1aae58fd3afed09885dc7dd8306cf6696f" prot="protected" static="no" mutable="no">
+        <type>std::shared_ptr&lt; efd::DataWriter &gt;</type>
+        <definition>std::shared_ptr&lt;efd::DataWriter&gt; lt::Publisher::m_writer</definition>
+        <argsstring></argsstring>
+        <name>m_writer</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="308" column="21" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="308" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classlt_1_1Publisher_1a3a7fd6622347c6d352b9a54d6ab9ca5a" prot="protected" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string lt::Publisher::m_topicName</definition>
+        <argsstring></argsstring>
+        <name>m_topicName</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="309" column="17" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="309" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classlt_1_1Publisher_1ab93a2f0889b144cec2282ff2d6acb38a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>lt::Publisher::operator bool</definition>
+        <argsstring>() const</argsstring>
+        <name>operator bool</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Check that this object can send data </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="269" column="5" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="269" bodyend="269"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1ae954339da04785bd239db1f23f385dfd" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Publisher::isOkay</definition>
+        <argsstring>() const</argsstring>
+        <name>isOkay</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="270" column="10" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="270" bodyend="270"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class T</type>
+          </param>
+        </templateparamlist>
+        <type>bool</type>
+        <definition>bool lt::Publisher::publish</definition>
+        <argsstring>(std::unique_ptr&lt; T &gt; i_data)</argsstring>
+        <name>publish</name>
+        <param>
+          <type>std::unique_ptr&lt; T &gt;</type>
+          <declname>i_data</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Take the data sample and publish it. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="276" column="10" bodyfile="/home/mike/git/letstalk/src/ParticipantImpl.hpp" bodystart="71" bodyend="74"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1a1cfbdc5b5745ea65cd32d4bb43744dab" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class T</type>
+          </param>
+        </templateparamlist>
+        <type>bool</type>
+        <definition>bool lt::Publisher::publish</definition>
+        <argsstring>(T const &amp;i_data)</argsstring>
+        <name>publish</name>
+        <param>
+          <type>T const &amp;</type>
+          <declname>i_data</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="279" column="10" bodyfile="/home/mike/git/letstalk/src/ParticipantImpl.hpp" bodystart="56" bodyend="59"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1a258f6e74be05dd14d71919d23ac93e64" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class T</type>
+          </param>
+        </templateparamlist>
+        <type>bool</type>
+        <definition>bool lt::Publisher::publish</definition>
+        <argsstring>(T const &amp;i_data, Guid const &amp;i_myId, Guid const &amp;i_relatedId, bool i_bad=false)</argsstring>
+        <name>publish</name>
+        <param>
+          <type>T const &amp;</type>
+          <declname>i_data</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_myId</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_relatedId</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>i_bad</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para>Publish with a given ID, related ID, and a good/bad flag. This is mainly used by the request/response and reactors. </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="286" column="10" bodyfile="/home/mike/git/letstalk/src/ParticipantImpl.hpp" bodystart="65" bodyend="68"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1ade44e292e2fc55d21cf681739a8a6b68" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>class T</type>
+          </param>
+        </templateparamlist>
+        <type>bool</type>
+        <definition>bool lt::Publisher::publish</definition>
+        <argsstring>(std::unique_ptr&lt; T &gt; i_data, Guid const &amp;i_myId, Guid const &amp;i_relatedId, bool i_bad=false)</argsstring>
+        <name>publish</name>
+        <param>
+          <type>std::unique_ptr&lt; T &gt;</type>
+          <declname>i_data</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_myId</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_relatedId</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>i_bad</declname>
+          <defval>false</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="288" column="10" bodyfile="/home/mike/git/letstalk/src/ParticipantImpl.hpp" bodystart="77" bodyend="80"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1aa62dcb508b40e75289bd5952838c6d97" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>std::string const  &amp;</type>
+        <definition>std::string const&amp; lt::Publisher::topic</definition>
+        <argsstring>() const</argsstring>
+        <name>topic</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="290" column="23" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="290" bodyend="290"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1abf30dd928315ef0540f964e8d4f2d102" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::Publisher::guid</definition>
+        <argsstring>() const</argsstring>
+        <name>guid</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="292" column="10" bodyfile="/home/mike/git/letstalk/src/Participant.cpp" bodystart="20" bodyend="23"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1a124ff81b8fa6593cc4056b752bcc39f5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>lt::Publisher::Publisher</definition>
+        <argsstring>()=default</argsstring>
+        <name>Publisher</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="295" column="5"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-func">
+      <memberdef kind="function" id="classlt_1_1Publisher_1a00eeb61ffc6c60e9691020d79d246ddd" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>lt::Publisher::Publisher</definition>
+        <argsstring>(std::shared_ptr&lt; efd::DataWriter &gt; i_writer, std::string const &amp;i_topicName)</argsstring>
+        <name>Publisher</name>
+        <param>
+          <type>std::shared_ptr&lt; efd::DataWriter &gt;</type>
+          <declname>i_writer</declname>
+        </param>
+        <param>
+          <type>std::string const &amp;</type>
+          <declname>i_topicName</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="300" column="5" bodyfile="/home/mike/git/letstalk/src/Participant.cpp" bodystart="296" bodyend="299"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1adb2a8be0326aeeeada28e65b72c8793a" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Publisher::doPublish</definition>
+        <argsstring>(void *i_data)</argsstring>
+        <name>doPublish</name>
+        <param>
+          <type>void *</type>
+          <declname>i_data</declname>
+        </param>
+        <briefdescription>
+<para>Type-erased publish method. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="303" column="10" bodyfile="/home/mike/git/letstalk/src/Participant.cpp" bodystart="301" bodyend="308"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1Publisher_1a1efd4771d47587a37dc3126adf0f3ff9" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::Publisher::doPublish</definition>
+        <argsstring>(void *i_data, Guid const &amp;i_myId, Guid const &amp;i_relatedId, bool i_bad)</argsstring>
+        <name>doPublish</name>
+        <param>
+          <type>void *</type>
+          <declname>i_data</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_myId</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const &amp;</type>
+          <declname>i_relatedId</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>i_bad</declname>
+        </param>
+        <briefdescription>
+<para>Type-erased publish method. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/Participant.hpp" line="306" column="10" bodyfile="/home/mike/git/letstalk/src/Participant.cpp" bodystart="310" bodyend="324"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Sends messages to a topic. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>A type-erased lightweight publisher object used to send data on a topic. These are created by the <ref refid="classlt_1_1Participant" kindref="compound">Participant</ref> and may be cheaply copied. </para>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/src/Participant.hpp" line="264" column="1" bodyfile="/home/mike/git/letstalk/src/Participant.hpp" bodystart="264" bodyend="310"/>
+    <listofallmembers>
+      <member refid="classlt_1_1Publisher_1adb2a8be0326aeeeada28e65b72c8793a" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>doPublish</name></member>
+      <member refid="classlt_1_1Publisher_1a1efd4771d47587a37dc3126adf0f3ff9" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>doPublish</name></member>
+      <member refid="classlt_1_1Publisher_1abf30dd928315ef0540f964e8d4f2d102" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>guid</name></member>
+      <member refid="classlt_1_1Publisher_1ae954339da04785bd239db1f23f385dfd" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>isOkay</name></member>
+      <member refid="classlt_1_1Publisher_1a3a7fd6622347c6d352b9a54d6ab9ca5a" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>m_topicName</name></member>
+      <member refid="classlt_1_1Publisher_1aae58fd3afed09885dc7dd8306cf6696f" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>m_writer</name></member>
+      <member refid="classlt_1_1Publisher_1ab93a2f0889b144cec2282ff2d6acb38a" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>operator bool</name></member>
+      <member refid="classlt_1_1Publisher_1a1ee7e76afe0ca52b9d7dab8a171e8bfb" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>Participant</name></member>
+      <member refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>publish</name></member>
+      <member refid="classlt_1_1Publisher_1a1cfbdc5b5745ea65cd32d4bb43744dab" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>publish</name></member>
+      <member refid="classlt_1_1Publisher_1a258f6e74be05dd14d71919d23ac93e64" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>publish</name></member>
+      <member refid="classlt_1_1Publisher_1ade44e292e2fc55d21cf681739a8a6b68" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>publish</name></member>
+      <member refid="classlt_1_1Publisher_1a124ff81b8fa6593cc4056b752bcc39f5" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>Publisher</name></member>
+      <member refid="classlt_1_1Publisher_1a00eeb61ffc6c60e9691020d79d246ddd" prot="protected" virt="non-virtual"><scope>lt::Publisher</scope><name>Publisher</name></member>
+      <member refid="classlt_1_1Publisher_1aa62dcb508b40e75289bd5952838c6d97" prot="public" virt="non-virtual"><scope>lt::Publisher</scope><name>topic</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

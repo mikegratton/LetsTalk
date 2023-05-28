@@ -1,0 +1,261 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="classlt_1_1ReactorClient_1_1Session" kind="class" language="C++" prot="public">
+    <compoundname>lt::ReactorClient::Session</compoundname>
+    <includes refid="ReactorClient_8hpp" local="no">ReactorClient.hpp</includes>
+      <sectiondef kind="protected-attrib">
+      <memberdef kind="variable" id="classlt_1_1ReactorClient_1_1Session_1abb5aaf91070349cf9411413003fe9d3a" prot="protected" static="no" mutable="no">
+        <type>friend</type>
+        <definition>friend lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::Backend</definition>
+        <argsstring></argsstring>
+        <name>Backend</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="64" column="16" bodyfile="/home/mike/git/letstalk/src/ReactorClient.hpp" bodystart="64" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classlt_1_1ReactorClient_1_1Session_1a3e2691342c94d8e6cee8e1bb8231b523" prot="protected" static="no" mutable="no">
+        <type>std::shared_ptr&lt; Backend &gt;</type>
+        <definition>std::shared_ptr&lt;Backend&gt; lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::m_reactor</definition>
+        <argsstring></argsstring>
+        <name>m_reactor</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="68" column="25" bodyfile="/home/mike/git/letstalk/src/ReactorClient.hpp" bodystart="68" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="classlt_1_1ReactorClient_1_1Session_1ae164dc1c422ecbe981a5a0f69e3061d9" prot="protected" static="no" mutable="no">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+        <definition>Guid lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::m_id</definition>
+        <argsstring></argsstring>
+        <name>m_id</name>
+        <briefdescription>
+<para>All functions just forward to this. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="69" column="14" bodyfile="/home/mike/git/letstalk/src/ReactorClient.hpp" bodystart="69" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1ac3939efe86bfd730184953ba738a7e26" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::progress</definition>
+        <argsstring>() const</argsstring>
+        <name>progress</name>
+        <briefdescription>
+<para>Get the current progress (0 to 100) </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="32" column="13" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="271" bodyend="275"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1ac46bc722d61a53855858cafe7ba765b1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::progressData</definition>
+        <argsstring>(ProgressData &amp;o_data, std::chrono::nanoseconds const &amp;i_wait=std::chrono::nanoseconds(0))</argsstring>
+        <name>progressData</name>
+        <param>
+          <type>ProgressData &amp;</type>
+          <declname>o_data</declname>
+        </param>
+        <param>
+          <type>std::chrono::nanoseconds const &amp;</type>
+          <declname>i_wait</declname>
+          <defval>std::chrono::nanoseconds(0)</defval>
+        </param>
+        <briefdescription>
+<para>Get the next progress data sample. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>o_data</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The returned progress data is written here. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>i_wait</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Time to wait for data to appear. By default, return immediately if there is no pending data </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true if o_data contains a new sample. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="41" column="14" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="244" bodyend="249"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1a7cd4415249464dfe1e33cee08caa9e31" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::isAlive</definition>
+        <argsstring>() const</argsstring>
+        <name>isAlive</name>
+        <briefdescription>
+<para>Check if this session is alive. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="44" column="14" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="264" bodyend="268"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1ae89c4d145f2979626138a836eeea7d73" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::cancel</definition>
+        <argsstring>()</argsstring>
+        <name>cancel</name>
+        <briefdescription>
+<para>Cancel the request, ending the session. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="47" column="14" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="258" bodyend="261"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1ae170157f1274b69958b5811c5c9272df" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref> const  &amp;</type>
+        <definition>Guid const&amp; lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::id</definition>
+        <argsstring>() const</argsstring>
+        <name>id</name>
+        <briefdescription>
+<para>Get the id of this session. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="50" column="20" bodyfile="/home/mike/git/letstalk/src/ReactorClient.hpp" bodystart="50" bodyend="50"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1a219de3299d408354bc3df83c055444f3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::get</definition>
+        <argsstring>(Rep &amp;o_reply, std::chrono::nanoseconds const &amp;i_wait=std::chrono::nanoseconds(0))</argsstring>
+        <name>get</name>
+        <param>
+          <type>Rep &amp;</type>
+          <declname>o_reply</declname>
+        </param>
+        <param>
+          <type>std::chrono::nanoseconds const &amp;</type>
+          <declname>i_wait</declname>
+          <defval>std::chrono::nanoseconds(0)</defval>
+        </param>
+        <briefdescription>
+<para>Get the response. Will return false if the response is not ready by i_wait. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>o_reply</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The returned reply data is written here. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>i_wait</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Time to wait for data to appear. By default, return immediately if there is no pending data </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>true of o_data has the reply </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="59" column="14" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="252" bodyend="255"/>
+      </memberdef>
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1a553affe87323388223259085108dd802" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::~Session</definition>
+        <argsstring>()</argsstring>
+        <name>~Session</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="61" column="9" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="238" bodyend="241"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="protected-func">
+      <memberdef kind="function" id="classlt_1_1ReactorClient_1_1Session_1a40962c552405da688c0cd27323199c90" prot="protected" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session::Session</definition>
+        <argsstring>(std::shared_ptr&lt; Backend &gt; m_reactor, Guid i_id)</argsstring>
+        <name>Session</name>
+        <param>
+          <type>std::shared_ptr&lt; Backend &gt;</type>
+          <declname>m_reactor</declname>
+        </param>
+        <param>
+          <type><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref></type>
+          <declname>i_id</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="66" column="9" bodyfile="/home/mike/git/letstalk/src/ReactorClientImpl.hpp" bodystart="232" bodyend="235"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+<para>Each session is modeled by this class. It is lightweight and copyable. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="1">
+        <label>lt::ReactorClient&lt; Req, Rep, ProgressData &gt;::Session</label>
+        <link refid="classlt_1_1ReactorClient_1_1Session"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>m_id</edgelabel>
+        </childnode>
+      </node>
+      <node id="2">
+        <label>lt::Guid</label>
+        <link refid="structlt_1_1Guid"/>
+      </node>
+    </collaborationgraph>
+    <location file="/home/mike/git/letstalk/src/ReactorClient.hpp" line="29" column="5" bodyfile="/home/mike/git/letstalk/src/ReactorClient.hpp" bodystart="29" bodyend="70"/>
+    <listofallmembers>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1abb5aaf91070349cf9411413003fe9d3a" prot="protected" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>Backend</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1ae89c4d145f2979626138a836eeea7d73" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>cancel</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1a219de3299d408354bc3df83c055444f3" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>get</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1ae170157f1274b69958b5811c5c9272df" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>id</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1a7cd4415249464dfe1e33cee08caa9e31" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>isAlive</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1ae164dc1c422ecbe981a5a0f69e3061d9" prot="protected" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>m_id</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1a3e2691342c94d8e6cee8e1bb8231b523" prot="protected" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>m_reactor</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1ac3939efe86bfd730184953ba738a7e26" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>progress</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1ac46bc722d61a53855858cafe7ba765b1" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>progressData</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1a40962c552405da688c0cd27323199c90" prot="protected" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>Session</name></member>
+      <member refid="classlt_1_1ReactorClient_1_1Session_1a553affe87323388223259085108dd802" prot="public" virt="non-virtual"><scope>lt::ReactorClient::Session</scope><name>~Session</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

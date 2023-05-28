@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="dir_68267d1309a1af8e8297ef4c3efbcdba" kind="dir">
+    <compoundname>/home/mike/git/letstalk/src</compoundname>
+    <innerfile refid="ActiveObject_8cpp">ActiveObject.cpp</innerfile>
+    <innerfile refid="ActiveObject_8hpp">ActiveObject.hpp</innerfile>
+    <innerfile refid="defaultProfile_8cpp">defaultProfile.cpp</innerfile>
+    <innerfile refid="FastDdsAlias_8hpp">FastDdsAlias.hpp</innerfile>
+    <innerfile refid="Guid_8cpp">Guid.cpp</innerfile>
+    <innerfile refid="Guid_8hpp">Guid.hpp</innerfile>
+    <innerfile refid="LetsTalk_8hpp">LetsTalk.hpp</innerfile>
+    <innerfile refid="LetsTalkDetail_8cpp">LetsTalkDetail.cpp</innerfile>
+    <innerfile refid="LetsTalkFwd_8hpp">LetsTalkFwd.hpp</innerfile>
+    <innerfile refid="Participant_8cpp">Participant.cpp</innerfile>
+    <innerfile refid="Participant_8hpp">Participant.hpp</innerfile>
+    <innerfile refid="ParticipantImpl_8hpp">ParticipantImpl.hpp</innerfile>
+    <innerfile refid="ParticipantLogger_8cpp">ParticipantLogger.cpp</innerfile>
+    <innerfile refid="ParticipantLogger_8hpp">ParticipantLogger.hpp</innerfile>
+    <innerfile refid="PubSubType_8hpp">PubSubType.hpp</innerfile>
+    <innerfile refid="QueueWaitset_8hpp">QueueWaitset.hpp</innerfile>
+    <innerfile refid="Reactor_8cxx">Reactor.cxx</innerfile>
+    <innerfile refid="Reactor_8hpp">Reactor.hpp</innerfile>
+    <innerfile refid="ReactorClient_8hpp">ReactorClient.hpp</innerfile>
+    <innerfile refid="ReactorClientImpl_8hpp">ReactorClientImpl.hpp</innerfile>
+    <innerfile refid="ReactorServer_8hpp">ReactorServer.hpp</innerfile>
+    <innerfile refid="ReactorServerImpl_8hpp">ReactorServerImpl.hpp</innerfile>
+    <innerfile refid="ReaderListener_8hpp">ReaderListener.hpp</innerfile>
+    <innerfile refid="ReaderListenerImpl_8hpp">ReaderListenerImpl.hpp</innerfile>
+    <innerfile refid="RequestReply_8hpp">RequestReply.hpp</innerfile>
+    <innerfile refid="RequestReplyImpl_8hpp">RequestReplyImpl.hpp</innerfile>
+    <innerfile refid="ThreadSafeQueue_8hpp">ThreadSafeQueue.hpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/src/"/>
+  </compounddef>
+</doxygen>

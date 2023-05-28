@@ -1,0 +1,270 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="indexpage" kind="page">
+    <compoundname>index</compoundname>
+    <title>Let&apos;s Talk: A C++ Interprocess Communication System Based on FastDDS</title>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+<para><anchor id="index_1md__home_mike_git_letstalk_README"/></para>
+<sect1 id="index_1autotoc_md0">
+<title>Introduction</title>
+<para>Let&apos;s Talk is a C++ communication library compatible with DDS (the Data Distribution Service) designed for simple and efficient interprocess coordination on local networks. As DDS is the communication standard used by ROS2, it&apos;s compatible with ROS2. The library is an API wrapped around the FastDDS library, along with a distribution of that library and cmake tools for compiling/linking to DDS. It&apos;s guiding principle is that <emphasis>simple things should be easy</emphasis>. So it trys to adopt sensible defaults while providing access to more functionality through optional arguments.</para>
+<para>Here&apos;s the basic &quot;hello world&quot; example from <ulink url="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</ulink> using the Let&apos;s Talk API:</para>
+<para><programlisting><codeline><highlight class="normal"><sp/>{c++}</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;LetsTalk.hpp&quot;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&lt;iostream&gt;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;HelloWorld.h&quot;</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">int<sp/>main(int,<sp/>char**)</highlight></codeline>
+<codeline><highlight class="normal">{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>node-&gt;subscribe&lt;HelloWorld&gt;(&quot;HelloWorldTopic&quot;,<sp/>[](HelloWorld<sp/>const&amp;<sp/>data)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>data.message()<sp/>&lt;&lt;<sp/>&quot;<sp/>&quot;<sp/>&lt;&lt;<sp/>data.index()<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>});<sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::minutes(1));<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>return<sp/>0;</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+</programlisting> and <programlisting><codeline><highlight class="normal"><sp/>{c++}</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;LetsTalk.hpp&quot;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&lt;iostream&gt;</highlight></codeline>
+<codeline><highlight class="normal">#include<sp/>&quot;HelloWorld.h&quot;</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">int<sp/>main(int<sp/>argc,<sp/>char**<sp/>argv)</highlight></codeline>
+<codeline><highlight class="normal">{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>node<sp/>=<sp/>lt::Participant::create();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>auto<sp/>pub<sp/>=<sp/>node-&gt;advertise&lt;HelloWorld&gt;(&quot;HelloWorldTopic&quot;);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>while(node-&gt;subscriberCount(&quot;HelloWorldTopic&quot;)<sp/>==<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::milliseconds(100));</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Publication<sp/>begins...\n&quot;;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>for(int<sp/>i=0;<sp/>i&lt;100;<sp/>i++)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>HelloWorld<sp/>msg;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>msg.message(&quot;Test&quot;);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>msg.index(i);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>bool<sp/>okay<sp/>=<sp/>pub.publish(msg);</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/>&quot;Sent<sp/>&quot;<sp/>&lt;&lt;<sp/>i<sp/>&lt;&lt;<sp/>&quot;<sp/><sp/>&quot;<sp/>&lt;&lt;<sp/>(okay?<sp/>&quot;okay&quot;<sp/>:<sp/>&quot;FAILED&quot;)<sp/>&lt;&lt;<sp/>std::endl;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>std::this_thread::sleep_for(std::chrono::milliseconds(500));</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>if<sp/>(node-&gt;subscriberCount(&quot;HelloWorldTopic&quot;)<sp/>==<sp/>0<sp/>||<sp/>!okay)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>break;</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>return<sp/>0;</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+</programlisting> As you can see, subscription involves providing a callback function, typically a lambda. Publication uses a Publisher object.</para>
+<para>The design of the main Participant API is largely based on the ignition::transport API, a very convenient ZMQ/protobuf communication system. Let&apos;s Talk is not ignition::transport compatible, however. Basic publish/subscribe should be compatible with other DDS vendors (RTI Connext, Cyclone, etc.), but DDS has long been infamous for poor compatibility between vendors, and Let&apos;s Talk doesn&apos;t try to solve that.</para>
+</sect1>
+<sect1 id="index_1autotoc_md1">
+<title>Installation</title>
+<sect2 id="index_1autotoc_md2">
+<title>As a submodule</title>
+<para>The easiest way to use Let&apos;s Talk is as a git submodule. <programlisting><codeline><highlight class="normal">git<sp/>submodule<sp/>add<sp/>-b<sp/>&lt;desired<sp/>version<sp/>branch&gt;<sp/>git@github.com:mikegratton/LetsTalk.git</highlight></codeline>
+</programlisting> In your CMakeLists.txt, add <programlisting><codeline><highlight class="normal">add_subdirectory(LetsTalk)</highlight></codeline>
+</programlisting> This will provide the following cmake targets:</para>
+<para><itemizedlist>
+<listitem><para>letstalk <ndash/> The library (with appropriate includes)</para>
+</listitem><listitem><para>fastrtps <ndash/> The underlying FastDDS library</para>
+</listitem></itemizedlist>
+</para>
+<para>To include and link <computeroutput>myTarget</computeroutput> to letstalk, you just need to add the CMake <programlisting><codeline><highlight class="normal">target_link_libraries(myTarget<sp/>PUBLIC<sp/>letstalk)</highlight></codeline>
+</programlisting> (Letstalk depends on fastrtps, but you don&apos;t need to reference it directly.)</para>
+</sect2>
+<sect2 id="index_1autotoc_md3">
+<title>Via an installation</title>
+<para>If you have several projects that depend on Let&apos;s Talk, it is more efficient to install the library per usual. In this case, check out the code and do <programlisting><codeline><highlight class="normal">mkdir<sp/>build<sp/>&amp;&amp;<sp/>cd<sp/>build<sp/>&amp;&amp;<sp/>cmake<sp/>..<sp/>-DCMAKE_INSTALL_PREFIX=&lt;your<sp/>install<sp/>dir&gt;<sp/>-DCMAKE_BUILD_TYPE=Release<sp/>&amp;&amp;<sp/>make<sp/>install</highlight></codeline>
+</programlisting> This will provide a cmake config script at <computeroutput>&lt;your install dir&gt;/lib/cmake/letstalk</computeroutput> that you can use in your cmake like <programlisting><codeline><highlight class="normal"><sp/>list(APPEND<sp/>CMAKE_MODULE_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal">list(APPEND<sp/>CMAKE_PREFIX_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal"><sp/>find_package(letstalk)</highlight></codeline>
+</programlisting> This will provide the same cmake targets (<computeroutput>letstalk</computeroutput> and <computeroutput>fastrtps</computeroutput>) for linking as above.</para>
+</sect2>
+<sect2 id="index_1autotoc_md4">
+<title>IDL Support in CMake</title>
+<para>Working with IDL in Let&apos;s Talk is especially easy. Inspired by the protobuf CMake support, Let&apos;s Talk provides an &quot;IdlTarget.cmake&quot; macro. Basic operation is <programlisting><codeline><highlight class="normal">list(APPEND<sp/>CMAKE_MODULE_PATH<sp/>&lt;your<sp/>install<sp/>dir&gt;/lib/cmake/letstalk)</highlight></codeline>
+<codeline><highlight class="normal">include(IdlTarget)</highlight></codeline>
+<codeline><highlight class="normal">IdlTarget(myIdlTarget<sp/>SOURCE<sp/>MyIdl.idl<sp/>MyOtherIdl.idl)</highlight></codeline>
+<codeline><highlight class="normal">...</highlight></codeline>
+<codeline><highlight class="normal">target_link_library(myTarget<sp/>PUBLIC<sp/>myIdlTarget)</highlight></codeline>
+</programlisting> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to Fast CDR, and providing access to the header include path as a target property. The header and source files are stored in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile the IDL target, and re-link. The intention is to have machine-generated code segregated from the rest of the codebase. More options for controlling the include path are documented in IdlTarget.cmake.</para>
+</sect2>
+</sect1>
+<sect1 id="index_1autotoc_md5">
+<title>Communication Patterns</title>
+<para>Let&apos;s talk offers three communication patters:</para>
+<para><itemizedlist>
+<listitem><para>Publish/Subscribe: A loosely coupled pattern based on topic names. Publishers send data to all subscribers. Subscribers get data from all publishers. Let&apos;s Talk is capable of both reliable and best effort connections, but does not provide support for persistence between multiple runs of a program.</para>
+</listitem><listitem><para>Request/Reply: Also known as remote proceedure call (RPC), each request will be served by a responder. Each service is identified by its service name, the request type, and the reply type. Let&apos;s Talk implementation is simple. If there are multiple providers for a service, an error is logged, but no attempt is made to determine which provider will handle a given call. Calls use the C++ promise/ future types, including setting exceptions on failure.</para>
+</listitem><listitem><para>Reactor: A request/reply pattern where requests recieve multiple &quot;progress&quot; replies, before finally ending with a final reply. These are useful in robotics where calculations or actions take appreciable time during which the requesting process may need to cancel or retask the service provider as the situation changes.</para>
+</listitem></itemizedlist>
+</para>
+<para>Below are some more details on each. See also the <computeroutput>examples</computeroutput> directory with sample code to crib from.</para>
+<sect2 id="index_1autotoc_md6">
+<title>Publish/Subscribe</title>
+<para>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. &quot;robot.motion.command&quot;) but also have a defined type. To subscribe, you register a callback with a participant, <programlisting filename=".cpp"><codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/><ref refid="classlt_1_1Participant_1a266f5f43e44e21fa68f9b7d83899c0e1" kindref="member">lt::Participant::create</ref>();</highlight></codeline>
+<codeline><highlight class="normal">node-&gt;subscribe&lt;MyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">,<sp/>[](MyType<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>sample)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;Got<sp/>some<sp/>data!\n&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal">});</highlight></codeline>
+</programlisting> or, if you wish to get samples as unique_ptrs (because you plan to move them to another thread), <programlisting filename=".cpp"><codeline><highlight class="normal">node-&gt;subscribe&lt;MyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">,<sp/>[](std::unique_ptr&lt;MyType&gt;<sp/>sample)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>std::cout<sp/>&lt;&lt;<sp/></highlight><highlight class="stringliteral">&quot;Got<sp/>some<sp/>data!\n&quot;</highlight><highlight class="normal">;</highlight></codeline>
+<codeline><highlight class="normal">});</highlight></codeline>
+</programlisting> <emphasis>IMPORTANT:</emphasis> This callback is run on a pub/sub thread, so long calculations or waits for a lock will negatively impact the whole system. A good practice is to simply enqueue the data on a thread-safe queue for later processing. Let&apos;s Talk provides such a queue as <computeroutput>ThreadSafeQueue</computeroutput>, and a convenience subscription mode, <programlisting filename=".cpp"><codeline><highlight class="normal">lt::QueuePtr&lt;MyType&gt;<sp/>myTypeQueue<sp/>=<sp/>lt::node-&gt;subscribe&lt;MyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> The queue then supplies <computeroutput>pop()</computeroutput> to get a sample (with an optional wait time) and <computeroutput>popAll()</computeroutput> to get all pending samples, <programlisting filename=".cpp"><codeline><highlight class="normal">std::unique_ptr&lt;T&gt;<sp/>pop(std::chrono::nanoseconds<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+<codeline><highlight class="normal">Queue<sp/>popAll(std::chrono::nanoseconds<sp/>i_wait<sp/>=<sp/>std::chrono::nanoseconds(0));</highlight></codeline>
+</programlisting> where the <computeroutput>Queue</computeroutput> type is a <computeroutput>std::deque&lt;std::unique_ptr&lt;T&gt;&gt;</computeroutput> by default.</para>
+<para>You can use the <computeroutput>QueueWaitset</computeroutput> to wait on multiple queues in a <computeroutput>select</computeroutput>-like manner. First, register all the queues with the waitset at construction: <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>queue1<sp/>=<sp/>node-&gt;subscribe&lt;MyType1&gt;(</highlight><highlight class="stringliteral">&quot;my.topic.1&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>queue2<sp/>=<sp/>node-&gt;subscribe&lt;MyType2&gt;(</highlight><highlight class="stringliteral">&quot;my.topic.2&quot;</highlight><highlight class="normal">);</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>waitset<sp/>=<sp/><ref refid="namespacelt_1a5f18cbd891c604c0531c6c3a06e5c914" kindref="member">makeQueueWaitset</ref>(queue1,<sp/>queue2);</highlight></codeline>
+</programlisting> Later, you may <computeroutput>wait</computeroutput> for data, blocking the calling thread and returning the index of the first queue with pending messages <programlisting filename=".cpp"><codeline><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>triggerIndex<sp/>=<sp/>waitset.wait();</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keywordflow">switch</highlight><highlight class="normal"><sp/>(triggerIndex)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>0:<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>content<sp/>=<sp/>queue1-&gt;popAll();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(queue1.size()<sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Process<sp/>the<sp/>data<sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Note<sp/>fallthrough</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">case</highlight><highlight class="normal"><sp/>1:<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>content<sp/>=<sp/>queue2-&gt;popAll();</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(queue2.size()<sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Process<sp/>the<sp/>data</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline><highlight class="normal">}</highlight></codeline>
+</programlisting> See <computeroutput>example/waitset</computeroutput></para>
+<para>To cancel a subscription, the Participant provides an unsubscribe function, <programlisting filename=".cpp"><codeline><highlight class="normal">node-&gt;unsubscribe(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> You can also query how many publishers have been discovered for the topic, <programlisting filename=".cpp"><codeline><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>count<sp/>=<sp/>node-&gt;publisherCount(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting></para>
+<para>On the publisher end, Participant acts as a factory for creating lightweight <computeroutput>Publisher</computeroutput> objects, <programlisting filename=".cpp"><codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/><ref refid="classlt_1_1Participant_1a266f5f43e44e21fa68f9b7d83899c0e1" kindref="member">lt::Participant::create</ref>();</highlight></codeline>
+<codeline><highlight class="normal"><ref refid="classlt_1_1Publisher" kindref="compound">lt::Publisher</ref><sp/>pub<sp/>=<sp/>node-&gt;advertise&lt;MyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> To use it, <programlisting filename=".cpp"><codeline><highlight class="normal">MyType<sp/>sample;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">/*<sp/>...<sp/>fill<sp/>out<sp/>sample<sp/>here<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal">pub.<ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(sample);</highlight></codeline>
+</programlisting> or via unique_ptr, <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>sample<sp/>=<sp/>std::make_unique&lt;MyType&gt;();</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">/*<sp/>...<sp/>fill<sp/>out<sp/>sample<sp/>here<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal">pub.<ref refid="classlt_1_1Publisher_1aa9a5ba8316bc12616e663feef7531ad3" kindref="member">publish</ref>(std::move(sample));</highlight></codeline>
+</programlisting> Publisher erases the <computeroutput>MyType</computeroutput> information, but publishing a type other than <computeroutput>MyType</computeroutput> will result in an error. Calling <computeroutput>pub.topicType()</computeroutput> will return the typename as a string. You can check for subscribers using the Participant, <programlisting filename=".cpp"><codeline><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>count<sp/>=<sp/>node-&gt;subscriberCount(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">)</highlight></codeline>
+</programlisting> To stop advertising data, simply dispose of the Publisher object.</para>
+<para>Let&apos;s Talk also supports differen &quot;Quality of Service&quot; (QoS) settings for publishers and subscribers. An optional string argument to <computeroutput>advertise()</computeroutput> and <computeroutput>subscribe()</computeroutput> gives the name of the QoS profile to use. For example, <programlisting><codeline><highlight class="normal">auto<sp/>frameQueue<sp/>=<sp/>node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;,<sp/>&quot;bulk&quot;);</highlight></codeline>
+</programlisting> will set the QoS to the bulk mode. See below for a full description of QoS settings in Let&apos;s Talk.</para>
+</sect2>
+<sect2 id="index_1autotoc_md7">
+<title>Request/Reply</title>
+<para>In request/reply, a service is defined by a string name, a request type, and a reply type. Let&apos;s Talk automatically generates topics for the request and reply from this information. The server side, the one providing the service, registers a callback to perform the service work. Callbacks take the form <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>myCallback<sp/>=<sp/>[](MyRequestType<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_request)<sp/>-&gt;<sp/>MyReplyType<sp/>{<sp/></highlight><highlight class="comment">/*<sp/>...<sp/>*/</highlight><highlight class="normal"><sp/>};</highlight></codeline>
+</programlisting> and the registration call on a participant pointer <computeroutput>node</computeroutput> looks like <programlisting filename=".cpp"><codeline><highlight class="normal">node-&gt;advertise&lt;MyRequestType,<sp/>MyReplyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">,<sp/>myCallback);</highlight></codeline>
+</programlisting> A new thread is spawned for running the callback, so efficiency in the callback is not essential.</para>
+<para>To make a request from another participant, first create a Requester object on that node: <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>requester<sp/>=<sp/>participant-&gt;request&lt;MyRequestType,MyReplyType&gt;(</highlight><highlight class="stringliteral">&quot;my.topic&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> The requester can be used to make multiple requests. Creating it performs all of the discovery tasks that can be time-consuming. The requester API is straightforward. Making a request returns as <computeroutput>std::future</computeroutput> of the reply type. You may block waiting on that future immediately, like so <programlisting filename=".cpp"><codeline><highlight class="normal">MyRequestType<sp/>request;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">/*<sp/>...<sp/>fill<sp/>out<sp/>request<sp/>*/</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>reply<sp/>=<sp/>requester.request(request).get();</highlight></codeline>
+</programlisting> or wait as much as you can afford and come back to the future later. The requester also has the <computeroutput>isConnected()</computeroutput> method to check if the server has been found.</para>
+<para>Two warnings about request/reply:</para>
+<para><orderedlist>
+<listitem><para>The service callbacks are allowed to throw exceptions. While the error message isn&apos;t propigated to the requester, the <computeroutput>std::future</computeroutput> will throw a <computeroutput>std::runtime_error</computeroutput> when <computeroutput>get()</computeroutput> is called. You should use <computeroutput>try/catch</computeroutput> if the service you are calling will throw.</para>
+</listitem><listitem><para>Impostor services may exist. Let&apos;s Talk does not prevent more than one service provider of the same name from existing or forward requests to exactly one provider. It will however warn you if more than one provider exists for a given service. The Requester has a function call <computeroutput>impostorsExist()</computeroutput> to check for this state of affairs.</para>
+</listitem></orderedlist>
+</para>
+</sect2>
+<sect2 id="index_1autotoc_md8">
+<title>Reactor</title>
+<para>The Reactor uses pull-style API with session objects rather than callbacks. The server-side differs from the request/reply. To provide a reactor service, we first create the server object, <programlisting filename=".cpp"><codeline><highlight class="normal">lt::ParticipantPtr<sp/>node<sp/>=<sp/><ref refid="classlt_1_1Participant_1a266f5f43e44e21fa68f9b7d83899c0e1" kindref="member">lt::Participant::create</ref>();</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>motionServer<sp/>=<sp/>node-&gt;makeReactorServer&lt;RequestType,<sp/>ReplyType,<sp/>ProgressType&gt;(</highlight><highlight class="stringliteral">&quot;robot.move&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> Here, <computeroutput>ProgressType</computeroutput> is optional; if your service doesn&apos;t provide progress data you can omit the argument. <computeroutput>ReactorServer</computeroutput> objects are lightweight and may be copied cheaply. To see if clients have connected, <programlisting filename=".cpp"><codeline><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>knownClientCount<sp/>=<sp/>motionServer.discoveredClients());</highlight></codeline>
+</programlisting> and to check for pending sessions, <programlisting filename=".cpp"><codeline><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>pending<sp/>=<sp/>motionServer.havePendingSession();</highlight></codeline>
+</programlisting> If this is true, a request has been recieved. To service it, we get a <computeroutput>Session</computeroutput> object, <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>motionSession<sp/>=<sp/>motionServer.getPendingSession();</highlight></codeline>
+</programlisting> This takes an optional wait time if you want to have a blocking wait for sessions. Like the server object, this is a lightweight object that may be copied cheaply. Copies all refer to the same logical session. The session object provides accessors for the request data <programlisting filename=".cpp"><codeline><highlight class="normal">RequestType<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>request<sp/>=<sp/>motionSession.request();</highlight></codeline>
+</programlisting> We can begin processing the request now. As we go, we can send back progress reports via <programlisting filename=".cpp"><codeline><highlight class="normal">ProgressData<sp/>mySpecialProgress;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">//<sp/>...<sp/>fill<sp/>out<sp/>data</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal">motionSession.progress(25,<sp/>mySpecialProgress);</highlight></codeline>
+</programlisting> If you didn&apos;t specify a <computeroutput>ProgressData</computeroutput> type, you may still send progress marks with <programlisting><codeline><highlight class="normal">motionSession.progress(25);</highlight></codeline>
+</programlisting> The progress mark integer uses values from 1 to 100, with 1 being a special value for &quot;started&quot; and 100 signaling completion. The ReactorServer will automatically send these when you start and finish a session. Note you may send duplicate progress marks, or even have progress decreasing. To signal failure, <computeroutput>motionSession.fail()</computeroutput> will dispose of the session, notifying the client. To finish a session, <programlisting filename=".cpp"><codeline><highlight class="normal">ReplyType<sp/>reply;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">//<sp/>...<sp/>fill<sp/>out<sp/>reply</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal">motionSession.reply(reply);</highlight></codeline>
+</programlisting> Additionally, the client may cancel a session at any time. You can check if the session has been cancelled by calling <computeroutput>isAlive()</computeroutput>.</para>
+<para>The client end is similar to the request/reply client. First, we create a client object on the participant: <programlisting filename=".cpp"><codeline><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>motionClient<sp/>=<sp/>node-&gt;makeReactorClient&lt;RequestType,<sp/>ReplyType,<sp/>ProgressType&gt;(</highlight><highlight class="stringliteral">&quot;robot.motion&quot;</highlight><highlight class="normal">);</highlight></codeline>
+</programlisting> We can then check for connections with <computeroutput>motionClient.discoveredServer()</computeroutput>. Sending a request starts a session <programlisting filename=".cpp"><codeline><highlight class="normal">RequestData<sp/>request;</highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="comment">//<sp/>...<sp/>fill<sp/>out<sp/>request</highlight><highlight class="normal"></highlight></codeline>
+<codeline><highlight class="normal"></highlight><highlight class="keyword">auto</highlight><highlight class="normal"><sp/>clientSession<sp/>=<sp/>motionClient.request(request);</highlight></codeline>
+</programlisting> The session API provides calls to determine if the session is alive (started by the server), get the current progress, get a progress data sample, or await the final reply. There&apos;s also a <computeroutput>cancel()</computeroutput> call to end the session early.</para>
+</sect2>
+<sect2 id="index_1autotoc_md9">
+<title>Examples</title>
+<para>The <computeroutput>examples</computeroutput> directory contains demonstration programs for these three patterns, as well as sample CMake files. To build the examples, first build and install Let&apos;s Talk, then create a symlink to the install directory in the examples directory: <programlisting><codeline><highlight class="normal">$<sp/>cd<sp/>examples</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>ln<sp/>-s<sp/>&lt;lets<sp/>talk<sp/>install<sp/>dir&gt;<sp/>install</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>mkdir<sp/>build<sp/>&amp;&amp;<sp/>cd<sp/>build</highlight></codeline>
+<codeline><highlight class="normal">$<sp/>cmake<sp/>..</highlight></codeline>
+</programlisting></para>
+</sect2>
+</sect1>
+<sect1 id="index_1autotoc_md10">
+<title>Quality of Service (QoS)</title>
+<para>Let&apos;s Talk defines three levels of service by default:</para>
+<para><itemizedlist>
+<listitem><para>&quot;reliable&quot; <ndash/> the default. This QoS will resend messages when not acknowledged. Publishers will also keep the last published message cached so that late-joining subscribers can be immediately sent the last message on a topic upon discovery.</para>
+</listitem><listitem><para>&quot;bulk&quot; <ndash/> Failed sending attempts are not repeated. No queue of old messages is maintained. This is intended for streaming data where it is better to press ahead than dwell upon the past.</para>
+</listitem><listitem><para>&quot;stateful&quot; <ndash/> Like reliable, but samples are delivered in-order to the subscriber. This is for topics where samples refer to state provided by previous samples. Note that FastDDS doesn&apos;t yet support this, so &quot;stateful&quot; behaves exactly as &quot;reliable&quot; for now.</para>
+</listitem></itemizedlist>
+</para>
+<para>In addition, Participants may have QoS profiles. These are used to alter the underlying protocol from UDP to TCP or something else. Currently only UDP profiles are defined by default.</para>
+<sect2 id="index_1autotoc_md11">
+<title>Using Custom QoS</title>
+<para>If you wish to develop your own QoS profiles, see <ulink url="https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html">https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html</ulink></para>
+<para>When invoking your program, set the enivronment variable <computeroutput>LT_PROFILE</computeroutput> to the path to your xml. The <computeroutput>profile_name</computeroutput> attribute may be used as the optional argument for <computeroutput>subscribe</computeroutput> and <computeroutput>advertise</computeroutput> to use these QoS settings.</para>
+</sect2>
+</sect1>
+<sect1 id="index_1autotoc_md12">
+<title>DDS Concepts in Let&apos;s Talk</title>
+<para>The DDS is a publish/subscribe messaging system with automatic discovery. Here&apos;s a small primer.</para>
+<sect2 id="index_1autotoc_md13">
+<title>Participant</title>
+<para>Each node in the DDS network is a &quot;participant.&quot; Participants discover each other, trading information on available topics and types. Participants also function as factories for the other objects <ndash/> topic objects, types, publishers, and subscribers.</para>
+</sect2>
+<sect2 id="index_1autotoc_md14">
+<title>Topics</title>
+<para>A topic is a channel for data. It&apos;s the combination of a string topic name and a data type. The types generally must be derived from IDL.</para>
+</sect2>
+<sect2 id="index_1autotoc_md15">
+<title>Types and IDL</title>
+<para>Types in DDS are typically derived from IDL source. IDL provides a C-like language for describing structured data. The IDL compiler produces C++ source code from these files that includes serialization and deserialization methods to/from the Common Data Format (CDR). DDS automatically performs the required serialization and deserialization as required.</para>
+</sect2>
+<sect2 id="index_1autotoc_md16">
+<title>Quality of Service (QoS)</title>
+<para>An overloaded term, QoS refers to all of the run-time settings available in DDS. It includes the network protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored, and many other details.</para>
+</sect2>
+</sect1>
+<sect1 id="index_1autotoc_md17">
+<title>Environment variables</title>
+<para>Let&apos;s Talk uses environment variables so that programs can easily modify the behavior at runtime.</para>
+<para><itemizedlist>
+<listitem><para><computeroutput>LT_VERBOSE</computeroutput> <ndash/> enables debug print messages about discovery and message passing</para>
+</listitem><listitem><para><computeroutput>LT_LOCAL_ONLY</computeroutput> <ndash/> If 1, prevents discovery from finding participants on another host</para>
+</listitem><listitem><para><computeroutput>LT_PROFILE</computeroutput> <ndash/> Path to custom QoS profile XML file</para>
+</listitem></itemizedlist>
+</para>
+<para>To use this on you program <computeroutput>foo</computeroutput>, you can launch foo from the shell like this: <programlisting><codeline><highlight class="normal">$<sp/>LT_VERBOSE=1<sp/>./foo</highlight></codeline>
+</programlisting></para>
+</sect1>
+<sect1 id="index_1autotoc_md18">
+<title>About DDS</title>
+<para>The Data Distribution Service is an efficient and powerful publish/subscribe framework, but it is very complicated. It&apos;s worth exploring the chain of acronyms that make it up:</para>
+<para><itemizedlist>
+<listitem><para>DDS <ndash/> Data Distribution Service. This isn&apos;t a protocol standard at all, it turns out! It&apos;s an API standard.</para>
+</listitem><listitem><para>RTPS <ndash/> Real-Time Publish Subscribe. This is the protocol standard. It covers how participants discover one another, how topics and types are communicated, how data is sent, and how transmission errors are handled. RTPS uses a peer-to-peer design rather than a central message broker, making it more resillient and flexible. (But also placing larger burdens on those peers.)</para>
+</listitem><listitem><para>IDL <ndash/> Interface Description Language. DDS inherited this from the 90&apos;s CORBA technology, and the 16/32 bit world of the time defintely shows in the language. IDL is ugly but functional for the purpose. It isn&apos;t as fully featured as Google Protocol Buffers, but it is servicable.</para>
+</listitem><listitem><para>CDR <ndash/> Common Data Representation. This is the serialized format for data transmitted. Typically, IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR. Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire. Given DDS&apos;s emphasis on local network communication vs protobuf&apos;s focus on internet communication, this makes sense.</para>
+</listitem></itemizedlist>
+</para>
+</sect1>
+<sect1 id="index_1autotoc_md19">
+<title>Roadmap</title>
+<sect2 id="index_1autotoc_md20">
+<title>Future Features</title>
+<para><orderedlist>
+<listitem><para>Automate FastDDS version upgrade</para>
+</listitem><listitem><para>To/from json additions for fastddsgen </para>
+</listitem></orderedlist>
+</para>
+</sect2>
+</sect1>
+    </detaileddescription>
+    <location file="/home/mike/git/letstalk/README.md"/>
+  </compounddef>
+</doxygen>

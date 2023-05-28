@@ -1,0 +1,222 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.1" xml:lang="en-US">
+  <compounddef id="Guid_8hpp" kind="file" language="C++">
+    <compoundname>Guid.hpp</compoundname>
+    <includes local="no">cstdint</includes>
+    <includes local="no">cstring</includes>
+    <includes local="no">iosfwd</includes>
+    <includes refid="FastDdsAlias_8hpp" local="yes">FastDdsAlias.hpp</includes>
+    <includedby refid="Guid_8cpp" local="yes">/home/mike/git/letstalk/src/Guid.cpp</includedby>
+    <includedby refid="LetsTalkFwd_8hpp" local="yes">/home/mike/git/letstalk/src/LetsTalkFwd.hpp</includedby>
+    <incdepgraph>
+      <node id="2">
+        <label>cstdint</label>
+      </node>
+      <node id="5">
+        <label>FastDdsAlias.hpp</label>
+        <link refid="FastDdsAlias_8hpp_source"/>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/Guid.hpp</label>
+        <link refid="Guid_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>fastdds/rtps/common/all_common.h</label>
+      </node>
+      <node id="4">
+        <label>iosfwd</label>
+      </node>
+      <node id="3">
+        <label>cstring</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="6">
+        <label>/home/mike/git/letstalk/src/ReaderListenerImpl.hpp</label>
+        <link refid="ReaderListenerImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>/home/mike/git/letstalk/src/LetsTalk.hpp</label>
+        <link refid="LetsTalk_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="12">
+        <label>/home/mike/git/letstalk/src/ReactorClientImpl.hpp</label>
+        <link refid="ReactorClientImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>/home/mike/git/letstalk/src/Guid.hpp</label>
+        <link refid="Guid_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>/home/mike/git/letstalk/src/Reactor.hpp</label>
+        <link refid="Reactor_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="11" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+        <childnode refid="13" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>/home/mike/git/letstalk/src/LetsTalkFwd.hpp</label>
+        <link refid="LetsTalkFwd_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="9">
+        <label>/home/mike/git/letstalk/src/ReactorServerImpl.hpp</label>
+        <link refid="ReactorServerImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>/home/mike/git/letstalk/src/ParticipantImpl.hpp</label>
+        <link refid="ParticipantImpl_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="8">
+        <label>/home/mike/git/letstalk/src/PubSubType.hpp</label>
+        <link refid="PubSubType_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>/home/mike/git/letstalk/src/Participant.hpp</label>
+        <link refid="Participant_8hpp_source"/>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="13">
+        <label>/home/mike/git/letstalk/src/ReactorServer.hpp</label>
+        <link refid="ReactorServer_8hpp_source"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>/home/mike/git/letstalk/src/RequestReplyImpl.hpp</label>
+        <link refid="RequestReplyImpl_8hpp_source"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="11">
+        <label>/home/mike/git/letstalk/src/ReactorClient.hpp</label>
+        <link refid="ReactorClient_8hpp_source"/>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="12" relation="include">
+        </childnode>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="structlt_1_1Guid" prot="public">lt::Guid</innerclass>
+    <innernamespace refid="namespacelt">lt</innernamespace>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstdint&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstring&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;iosfwd&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;FastDdsAlias.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacelt" kindref="compound">lt</ref><sp/>{</highlight></codeline>
+<codeline lineno="16" refid="structlt_1_1Guid" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/>{</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">unsigned</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/>data[16];</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/>uint64_t<sp/>sequence;</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref>()</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>memset(data,<sp/>0,<sp/>16);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>sequence<sp/>=<sp/>0;</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight></codeline>
+<codeline lineno="27" refid="structlt_1_1Guid_1a30e970fb6e2e37d17a284b76ea936c95" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">static</highlight><highlight class="normal"><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/><ref refid="structlt_1_1Guid_1a30e970fb6e2e37d17a284b76ea936c95" kindref="member">UNKNOWN</ref>()<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref>();<sp/>}</highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight></codeline>
+<codeline lineno="30" refid="structlt_1_1Guid_1aa1c842c9fe0e767ca405710d0b9c3379" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/><ref refid="structlt_1_1Guid_1aa1c842c9fe0e767ca405710d0b9c3379" kindref="member">increment</ref>()</highlight></codeline>
+<codeline lineno="31"><highlight class="normal"><sp/><sp/><sp/><sp/>{</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>sequence<sp/>+=<sp/>1;</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(sequence<sp/>==<sp/>0)<sp/>sequence<sp/>=<sp/>1;</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>*</highlight><highlight class="keyword">this</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="35"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"><sp/><sp/><sp/><sp/><ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/><ref refid="structlt_1_1Guid_1a69f36368649cf210ef9e3b59a9ee1a64" kindref="member">makeBadVersion</ref>()<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="structlt_1_1Guid_1a34a51b6ea92e36032d1d8d90e0d7754b" kindref="member">isBadVersionOf</ref>(<ref refid="structlt_1_1Guid" kindref="compound">Guid</ref><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_other)<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">;</highlight></codeline>
+<codeline lineno="42"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="comment">//<sp/>Inline<sp/>comparison<sp/>operators<sp/>for<sp/>Guids</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>operator&lt;(Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g1,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g2)</highlight></codeline>
+<codeline lineno="47"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>compare<sp/>=<sp/>memcmp(g1.data,<sp/>g2.data,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(g1.data));</highlight></codeline>
+<codeline lineno="49"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(compare<sp/>&lt;<sp/>0<sp/>||<sp/>(compare<sp/>==<sp/>0<sp/>&amp;&amp;<sp/>g1.sequence<sp/>&lt;<sp/>g2.sequence));</highlight></codeline>
+<codeline lineno="50"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>operator==(Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g1,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g2)</highlight></codeline>
+<codeline lineno="53"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>memcmp(g1.data,<sp/>g2.data,<sp/></highlight><highlight class="keyword">sizeof</highlight><highlight class="normal">(g1.data))<sp/>==<sp/>0<sp/>&amp;&amp;<sp/>g1.sequence<sp/>==<sp/>g2.sequence;</highlight></codeline>
+<codeline lineno="55"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"></highlight></codeline>
+<codeline lineno="57"><highlight class="normal"></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>operator!=(Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g1,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>g2)</highlight></codeline>
+<codeline lineno="58"><highlight class="normal">{</highlight></codeline>
+<codeline lineno="59"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>!(g1<sp/>==<sp/>g2);</highlight></codeline>
+<codeline lineno="60"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"></highlight></codeline>
+<codeline lineno="63"><highlight class="normal">efr::GUID_t<sp/><ref refid="namespacelt_1ab071c052492fb5481025d8483272df2f" kindref="member">toFastDdsGuid</ref>(Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_guid);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight></codeline>
+<codeline lineno="66"><highlight class="normal">Guid<sp/><ref refid="namespacelt_1afe6f6d4a6f7d87d8e4ec76a6aeb10357" kindref="member">toLetsTalkGuid</ref>(efr::GUID_t<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_guid);</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"></highlight></codeline>
+<codeline lineno="69"><highlight class="normal">efr::SampleIdentity<sp/><ref refid="namespacelt_1aa35468c68ca77a5a632f87fad4551f8b" kindref="member">toSampleId</ref>(Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_id);</highlight></codeline>
+<codeline lineno="70"><highlight class="normal"></highlight></codeline>
+<codeline lineno="72"><highlight class="normal">Guid<sp/><ref refid="namespacelt_1afe6f6d4a6f7d87d8e4ec76a6aeb10357" kindref="member">toLetsTalkGuid</ref>(efr::SampleIdentity<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_sampleId);</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal">std::ostream&amp;<sp/>operator&lt;&lt;(std::ostream&amp;<sp/>os,<sp/>Guid<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal">&amp;<sp/>i_guid);</highlight></codeline>
+<codeline lineno="75"><highlight class="normal">}<sp/><sp/></highlight><highlight class="comment">//<sp/>namespace<sp/>lt</highlight></codeline>
+    </programlisting>
+    <location file="/home/mike/git/letstalk/src/Guid.hpp"/>
+  </compounddef>
+</doxygen>

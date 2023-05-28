@@ -40,6 +40,13 @@ class QueueWaitset {
         for_each_in_tuple(m_queue, attach);
     }
 
+    /// Detach from all queues
+    ~QueueWaitset()
+    {
+        DetachFunctor detach;
+        for_each_in_tuple(m_queue, detach);
+    }
+
     /**
      * @brief Wait for messages in one of the queues
      * @param i_timeout maximum wait duration
@@ -53,7 +60,12 @@ class QueueWaitset {
      */
     int wait(std::chrono::milliseconds i_timeout = std::chrono::hours(72))
     {
+        // Check for mail at entry
         CheckMailFunctor check;
+        for_each_in_tuple(m_queue, check);
+        if (check.m_pending >= 0) { return check.m_pending; }
+
+        // Check repeatedly afterwards
         std::unique_lock<std::mutex> guard(m_mutex);
         for (;;) {
             auto status = m_waitset.wait_for(guard, i_timeout);
@@ -73,7 +85,15 @@ class QueueWaitset {
         template <class T>
         void operator()(T& io_queue)
         {
-            io_queue->attachWaitsetCondition(m_condition);
+            io_queue->attachToCondition(m_condition);
+        }
+    };
+
+    struct DetachFunctor {
+        template <class T>
+        void operator()(T& io_queue)
+        {
+            io_queue->detachFromCondition();
         }
     };
 
