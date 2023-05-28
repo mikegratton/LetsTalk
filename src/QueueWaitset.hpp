@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include <condition_variable>
 #include <functional>
 #include <mutex>
@@ -41,22 +42,22 @@ class QueueWaitset {
 
     /**
      * @brief Wait for messages in one of the queues
+     * @param i_timeout maximum wait duration
+     * @return Index in tuple of queue with data or -1 on timeout
      *
-     * @return Index in tuple of queue with data
-     *
-     * Waits (potentially forever) for one of the attached queues
-     * to have data. Note that if there are multiple consumers,
-     * the wakeup may be spurious -- none of the queues may
+     * Waits for one of the attached queues to have data. Note that if
+     * there are multiple consumers, the wakeup may be spurious -- none of the queues may
      * actually have data. The returned value is always the lowest
      * numbered queue with data. Higher numbered queues may also
      * have data.
      */
-    int wait()
+    int wait(std::chrono::milliseconds i_timeout = std::chrono::hours(72))
     {
         CheckMailFunctor check;
         std::unique_lock<std::mutex> guard(m_mutex);
         for (;;) {
-            m_waitset.wait(guard);
+            auto status = m_waitset.wait_for(guard, i_timeout);
+            if (status == std::cv_status::timeout) { return -1; }
             for_each_in_tuple(m_queue, check);
             if (check.m_pending >= 0) { return check.m_pending; }
         }
