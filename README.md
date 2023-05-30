@@ -11,6 +11,13 @@ and cmake tools for compiling/linking to DDS.  It's guiding principle is that
 *simple things should be easy*.  So it trys to adopt sensible defaults while providing 
 access to more functionality through optional arguments.
 
+# Links
+
+* [GitHub Repository](https://github.com/mikegratton/LetsTalk)
+* [Documentation](https://mikegratton.github.io/LetsTalk/)
+
+# Example
+
 Here's the basic "hello world" example from [Fast DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html) 
 using the Let's Talk API:
 

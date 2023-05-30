@@ -27,30 +27,32 @@ var NAVTREE =
   [ "Let's Talk", "index.html", [
     [ "Let's Talk: A C++ Interprocess Communication System Based on FastDDS", "index.html", [
       [ "Introduction", "index.html#autotoc_md0", null ],
-      [ "Installation", "index.html#autotoc_md1", [
-        [ "As a submodule", "index.html#autotoc_md2", null ],
-        [ "Via an installation", "index.html#autotoc_md3", null ],
-        [ "IDL Support in CMake", "index.html#autotoc_md4", null ]
+      [ "Links", "index.html#autotoc_md1", null ],
+      [ "Example", "index.html#autotoc_md2", null ],
+      [ "Installation", "index.html#autotoc_md3", [
+        [ "As a submodule", "index.html#autotoc_md4", null ],
+        [ "Via an installation", "index.html#autotoc_md5", null ],
+        [ "IDL Support in CMake", "index.html#autotoc_md6", null ]
       ] ],
-      [ "Communication Patterns", "index.html#autotoc_md5", [
-        [ "Publish/Subscribe", "index.html#autotoc_md6", null ],
-        [ "Request/Reply", "index.html#autotoc_md7", null ],
-        [ "Reactor", "index.html#autotoc_md8", null ],
-        [ "Examples", "index.html#autotoc_md9", null ]
+      [ "Communication Patterns", "index.html#autotoc_md7", [
+        [ "Publish/Subscribe", "index.html#autotoc_md8", null ],
+        [ "Request/Reply", "index.html#autotoc_md9", null ],
+        [ "Reactor", "index.html#autotoc_md10", null ],
+        [ "Examples", "index.html#autotoc_md11", null ]
       ] ],
-      [ "Quality of Service (QoS)", "index.html#autotoc_md10", [
-        [ "Using Custom QoS", "index.html#autotoc_md11", null ]
+      [ "Quality of Service (QoS)", "index.html#autotoc_md12", [
+        [ "Using Custom QoS", "index.html#autotoc_md13", null ]
       ] ],
-      [ "DDS Concepts in Let's Talk", "index.html#autotoc_md12", [
-        [ "Participant", "index.html#autotoc_md13", null ],
-        [ "Topics", "index.html#autotoc_md14", null ],
-        [ "Types and IDL", "index.html#autotoc_md15", null ],
-        [ "Quality of Service (QoS)", "index.html#autotoc_md16", null ]
+      [ "DDS Concepts in Let's Talk", "index.html#autotoc_md14", [
+        [ "Participant", "index.html#autotoc_md15", null ],
+        [ "Topics", "index.html#autotoc_md16", null ],
+        [ "Types and IDL", "index.html#autotoc_md17", null ],
+        [ "Quality of Service (QoS)", "index.html#autotoc_md18", null ]
       ] ],
-      [ "Environment variables", "index.html#autotoc_md17", null ],
-      [ "About DDS", "index.html#autotoc_md18", null ],
-      [ "Roadmap", "index.html#autotoc_md19", [
-        [ "Future Features", "index.html#autotoc_md20", null ]
+      [ "Environment variables", "index.html#autotoc_md19", null ],
+      [ "About DDS", "index.html#autotoc_md20", null ],
+      [ "Roadmap", "index.html#autotoc_md21", [
+        [ "Future Features", "index.html#autotoc_md22", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [

@@ -91,6 +91,7 @@ class ThreadSafeQueue {
         if (m_capacity > 0 && m_queue.size() > m_capacity) { m_queue.pop_front(); }
         guard.unlock();
         m_nonempty.notify_one();
+        if (m_externalCondition) { m_externalCondition->notify_one(); }
     }
 
     /**
@@ -112,7 +113,9 @@ class ThreadSafeQueue {
         for (auto& item : i_data) { m_queue.emplace_back(std::move(item)); }
         while (m_capacity > 0 && m_queue.size() > m_capacity) { m_queue.pop_front(); }
         guard.unlock();
+        i_data.clear();
         m_nonempty.notify_one();
+        if (m_externalCondition) { m_externalCondition->notify_one(); }
     }
 
     /**

@@ -20,6 +20,13 @@
 <codeline><highlight class="normal">*simple<sp/>things<sp/>should<sp/>be<sp/>easy*.<sp/><sp/>So<sp/>it<sp/>trys<sp/>to<sp/>adopt<sp/>sensible<sp/>defaults<sp/>while<sp/>providing<sp/></highlight></codeline>
 <codeline><highlight class="normal">access<sp/>to<sp/>more<sp/>functionality<sp/>through<sp/>optional<sp/>arguments.</highlight></codeline>
 <codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Links</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">*<sp/>[GitHub<sp/>Repository](https://github.com/mikegratton/LetsTalk)</highlight></codeline>
+<codeline><highlight class="normal">*<sp/>[Documentation](https://mikegratton.github.io/LetsTalk/)</highlight></codeline>
+<codeline></codeline>
+<codeline><highlight class="normal">#<sp/>Example</highlight></codeline>
+<codeline></codeline>
 <codeline><highlight class="normal">Here&apos;s<sp/>the<sp/>basic<sp/>&quot;hello<sp/>world&quot;<sp/>example<sp/>from<sp/>[Fast<sp/>DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html)<sp/></highlight></codeline>
 <codeline><highlight class="normal">using<sp/>the<sp/>Let&apos;s<sp/>Talk<sp/>API:</highlight></codeline>
 <codeline></codeline>

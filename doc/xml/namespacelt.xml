@@ -94,7 +94,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" line="163" column="1" bodyfile="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" bodystart="163" bodyend="-1"/>
+        <location file="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" line="166" column="1" bodyfile="/home/mike/git/letstalk/src/ThreadSafeQueue.hpp" bodystart="166" bodyend="-1"/>
       </memberdef>
       </sectiondef>
       <sectiondef kind="func">

@@ -93,6 +93,14 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <h1><a class="anchor" id="autotoc_md0"></a>
 Introduction</h1>
 <p>Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) designed for simple and efficient interprocess coordination on local networks. As DDS is the communication standard used by ROS2, it's compatible with ROS2. The library is an API wrapped around the FastDDS library, along with a distribution of that library and cmake tools for compiling/linking to DDS. It's guiding principle is that <em>simple things should be easy</em>. So it trys to adopt sensible defaults while providing access to more functionality through optional arguments.</p>
+<h1><a class="anchor" id="autotoc_md1"></a>
+Links</h1>
+<ul>
+<li><a href="https://github.com/mikegratton/LetsTalk">GitHub Repository</a></li>
+<li><a href="https://mikegratton.github.io/LetsTalk/">Documentation</a></li>
+</ul>
+<h1><a class="anchor" id="autotoc_md2"></a>
+Example</h1>
 <p>Here's the basic "hello world" example from <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</a> using the Let's Talk API:</p>
 <div class="fragment"><div class="line"> {c++}</div>
 <div class="line">#include &quot;LetsTalk.hpp&quot;</div>
@@ -136,9 +144,9 @@ Introduction</h1>
 <div class="line">}</div>
 </div><!-- fragment --><p> As you can see, subscription involves providing a callback function, typically a lambda. Publication uses a Publisher object.</p>
 <p>The design of the main Participant API is largely based on the ignition::transport API, a very convenient ZMQ/protobuf communication system. Let's Talk is not ignition::transport compatible, however. Basic publish/subscribe should be compatible with other DDS vendors (RTI Connext, Cyclone, etc.), but DDS has long been infamous for poor compatibility between vendors, and Let's Talk doesn't try to solve that.</p>
-<h1><a class="anchor" id="autotoc_md1"></a>
+<h1><a class="anchor" id="autotoc_md3"></a>
 Installation</h1>
-<h2><a class="anchor" id="autotoc_md2"></a>
+<h2><a class="anchor" id="autotoc_md4"></a>
 As a submodule</h2>
 <p>The easiest way to use Let's Talk is as a git submodule. </p><div class="fragment"><div class="line">git submodule add -b &lt;desired version branch&gt; git@github.com:mikegratton/LetsTalk.git</div>
 </div><!-- fragment --><p> In your CMakeLists.txt, add </p><div class="fragment"><div class="line">add_subdirectory(LetsTalk)</div>
@@ -149,14 +157,14 @@ As a submodule</h2>
 </ul>
 <p>To include and link <code>myTarget</code> to letstalk, you just need to add the CMake </p><div class="fragment"><div class="line">target_link_libraries(myTarget PUBLIC letstalk)</div>
 </div><!-- fragment --><p> (Letstalk depends on fastrtps, but you don't need to reference it directly.)</p>
-<h2><a class="anchor" id="autotoc_md3"></a>
+<h2><a class="anchor" id="autotoc_md5"></a>
 Via an installation</h2>
 <p>If you have several projects that depend on Let's Talk, it is more efficient to install the library per usual. In this case, check out the code and do </p><div class="fragment"><div class="line">mkdir build &amp;&amp; cd build &amp;&amp; cmake .. -DCMAKE_INSTALL_PREFIX=&lt;your install dir&gt; -DCMAKE_BUILD_TYPE=Release &amp;&amp; make install</div>
 </div><!-- fragment --><p> This will provide a cmake config script at <code>&lt;your install dir&gt;/lib/cmake/letstalk</code> that you can use in your cmake like </p><div class="fragment"><div class="line"> list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">list(APPEND CMAKE_PREFIX_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line"> find_package(letstalk)</div>
 </div><!-- fragment --><p> This will provide the same cmake targets (<code>letstalk</code> and <code>fastrtps</code>) for linking as above.</p>
-<h2><a class="anchor" id="autotoc_md4"></a>
+<h2><a class="anchor" id="autotoc_md6"></a>
 IDL Support in CMake</h2>
 <p>Working with IDL in Let's Talk is especially easy. Inspired by the protobuf CMake support, Let's Talk provides an "IdlTarget.cmake" macro. Basic operation is </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">include(IdlTarget)</div>
@@ -164,7 +172,7 @@ IDL Support in CMake</h2>
 <div class="line">...</div>
 <div class="line">target_link_library(myTarget PUBLIC myIdlTarget)</div>
 </div><!-- fragment --><p> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to Fast CDR, and providing access to the header include path as a target property. The header and source files are stored in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile the IDL target, and re-link. The intention is to have machine-generated code segregated from the rest of the codebase. More options for controlling the include path are documented in IdlTarget.cmake.</p>
-<h1><a class="anchor" id="autotoc_md5"></a>
+<h1><a class="anchor" id="autotoc_md7"></a>
 Communication Patterns</h1>
 <p>Let's talk offers three communication patters:</p>
 <ul>
@@ -173,7 +181,7 @@ Communication Patterns</h1>
 <li>Reactor: A request/reply pattern where requests recieve multiple "progress" replies, before finally ending with a final reply. These are useful in robotics where calculations or actions take appreciable time during which the requesting process may need to cancel or retask the service provider as the situation changes.</li>
 </ul>
 <p>Below are some more details on each. See also the <code>examples</code> directory with sample code to crib from.</p>
-<h2><a class="anchor" id="autotoc_md6"></a>
+<h2><a class="anchor" id="autotoc_md8"></a>
 Publish/Subscribe</h2>
 <p>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. "robot.motion.command") but also have a defined type. To subscribe, you register a callback with a participant, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](MyType <span class="keyword">const</span>&amp; sample) {</div>
@@ -224,7 +232,7 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> To stop advertising data, simply dispose of the Publisher object.</p>
 <p>Let's Talk also supports differen "Quality of Service" (QoS) settings for publishers and subscribers. An optional string argument to <code>advertise()</code> and <code>subscribe()</code> gives the name of the QoS profile to use. For example, </p><div class="fragment"><div class="line">auto frameQueue = node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;, &quot;bulk&quot;);</div>
 </div><!-- fragment --><p> will set the QoS to the bulk mode. See below for a full description of QoS settings in Let's Talk.</p>
-<h2><a class="anchor" id="autotoc_md7"></a>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Request/Reply</h2>
 <p>In request/reply, a service is defined by a string name, a request type, and a reply type. Let's Talk automatically generates topics for the request and reply from this information. The server side, the one providing the service, registers a callback to perform the service work. Callbacks take the form </p><div class="fragment"><div class="line"><span class="keyword">auto</span> myCallback = [](MyRequestType <span class="keyword">const</span>&amp; i_request) -&gt; MyReplyType { <span class="comment">/* ... */</span> };</div>
 </div><!-- fragment --><p> and the registration call on a participant pointer <code>node</code> looks like </p><div class="fragment"><div class="line">node-&gt;advertise&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, myCallback);</div>
@@ -239,7 +247,7 @@ Request/Reply</h2>
 <li>The service callbacks are allowed to throw exceptions. While the error message isn't propigated to the requester, the <code>std::future</code> will throw a <code>std::runtime_error</code> when <code>get()</code> is called. You should use <code>try/catch</code> if the service you are calling will throw.</li>
 <li>Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name from existing or forward requests to exactly one provider. It will however warn you if more than one provider exists for a given service. The Requester has a function call <code>impostorsExist()</code> to check for this state of affairs.</li>
 </ol>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Reactor</h2>
 <p>The Reactor uses pull-style API with session objects rather than callbacks. The server-side differs from the request/reply. To provide a reactor service, we first create the server object, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line"><span class="keyword">auto</span> motionServer = node-&gt;makeReactorServer&lt;RequestType, ReplyType, ProgressType&gt;(<span class="stringliteral">&quot;robot.move&quot;</span>);</div>
@@ -260,13 +268,13 @@ Reactor</h2>
 <div class="line"><span class="comment">// ... fill out request</span></div>
 <div class="line"><span class="keyword">auto</span> clientSession = motionClient.request(request);</div>
 </div><!-- fragment --><p> The session API provides calls to determine if the session is alive (started by the server), get the current progress, get a progress data sample, or await the final reply. There's also a <code>cancel()</code> call to end the session early.</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md11"></a>
 Examples</h2>
 <p>The <code>examples</code> directory contains demonstration programs for these three patterns, as well as sample CMake files. To build the examples, first build and install Let's Talk, then create a symlink to the install directory in the examples directory: </p><div class="fragment"><div class="line">$ cd examples</div>
 <div class="line">$ ln -s &lt;lets talk install dir&gt; install</div>
 <div class="line">$ mkdir build &amp;&amp; cd build</div>
 <div class="line">$ cmake ..</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md12"></a>
 Quality of Service (QoS)</h1>
 <p>Let's Talk defines three levels of service by default:</p>
 <ul>
@@ -275,26 +283,26 @@ Quality of Service (QoS)</h1>
 <li>"stateful" &ndash; Like reliable, but samples are delivered in-order to the subscriber. This is for topics where samples refer to state provided by previous samples. Note that FastDDS doesn't yet support this, so "stateful" behaves exactly as "reliable" for now.</li>
 </ul>
 <p>In addition, Participants may have QoS profiles. These are used to alter the underlying protocol from UDP to TCP or something else. Currently only UDP profiles are defined by default.</p>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md13"></a>
 Using Custom QoS</h2>
 <p>If you wish to develop your own QoS profiles, see <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html">https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html</a></p>
 <p>When invoking your program, set the enivronment variable <code>LT_PROFILE</code> to the path to your xml. The <code>profile_name</code> attribute may be used as the optional argument for <code>subscribe</code> and <code>advertise</code> to use these QoS settings.</p>
-<h1><a class="anchor" id="autotoc_md12"></a>
+<h1><a class="anchor" id="autotoc_md14"></a>
 DDS Concepts in Let's Talk</h1>
 <p>The DDS is a publish/subscribe messaging system with automatic discovery. Here's a small primer.</p>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md15"></a>
 Participant</h2>
 <p>Each node in the DDS network is a "participant." Participants discover each other, trading information on available topics and types. Participants also function as factories for the other objects &ndash; topic objects, types, publishers, and subscribers.</p>
-<h2><a class="anchor" id="autotoc_md14"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 Topics</h2>
 <p>A topic is a channel for data. It's the combination of a string topic name and a data type. The types generally must be derived from IDL.</p>
-<h2><a class="anchor" id="autotoc_md15"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Types and IDL</h2>
 <p>Types in DDS are typically derived from IDL source. IDL provides a C-like language for describing structured data. The IDL compiler produces C++ source code from these files that includes serialization and deserialization methods to/from the Common Data Format (CDR). DDS automatically performs the required serialization and deserialization as required.</p>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md18"></a>
 Quality of Service (QoS)</h2>
 <p>An overloaded term, QoS refers to all of the run-time settings available in DDS. It includes the network protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored, and many other details.</p>
-<h1><a class="anchor" id="autotoc_md17"></a>
+<h1><a class="anchor" id="autotoc_md19"></a>
 Environment variables</h1>
 <p>Let's Talk uses environment variables so that programs can easily modify the behavior at runtime.</p>
 <ul>
@@ -303,7 +311,7 @@ Environment variables</h1>
 <li><code>LT_PROFILE</code> &ndash; Path to custom QoS profile XML file</li>
 </ul>
 <p>To use this on you program <code>foo</code>, you can launch foo from the shell like this: </p><div class="fragment"><div class="line">$ LT_VERBOSE=1 ./foo</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md18"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md20"></a>
 About DDS</h1>
 <p>The Data Distribution Service is an efficient and powerful publish/subscribe framework, but it is very complicated. It's worth exploring the chain of acronyms that make it up:</p>
 <ul>
@@ -312,9 +320,9 @@ About DDS</h1>
 <li>IDL &ndash; Interface Description Language. DDS inherited this from the 90's CORBA technology, and the 16/32 bit world of the time defintely shows in the language. IDL is ugly but functional for the purpose. It isn't as fully featured as Google Protocol Buffers, but it is servicable.</li>
 <li>CDR &ndash; Common Data Representation. This is the serialized format for data transmitted. Typically, IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR. Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire. Given DDS's emphasis on local network communication vs protobuf's focus on internet communication, this makes sense.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md19"></a>
+<h1><a class="anchor" id="autotoc_md21"></a>
 Roadmap</h1>
-<h2><a class="anchor" id="autotoc_md20"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Future Features</h2>
 <ol type="1">
 <li>Automate FastDDS version upgrade</li>
