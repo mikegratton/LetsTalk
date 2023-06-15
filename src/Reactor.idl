@@ -3,7 +3,7 @@
 
 struct reactor_progress
 {
-    @key int32 progress;
+    int32 progress;
     sequence<octet> data;
 };
 

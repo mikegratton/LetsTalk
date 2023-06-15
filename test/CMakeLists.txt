@@ -14,6 +14,7 @@ add_executable(ltTest
     reqrep.cpp
     Reactor.cpp
     Guid.cpp
+    KeepAllTest.cpp
     main.cpp
 )
 target_link_libraries(ltTest PUBLIC letstalk testIdl)

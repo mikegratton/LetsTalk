@@ -32,7 +32,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
 
     ReactorClientBackend(ParticipantPtr i_participant, std::string const& i_serviceName)
         : m_participant(i_participant),
-          m_commandSender(i_participant->advertise<reactor_command>(reactorCommandName(i_serviceName), "stateful")),
+          m_commandSender(i_participant->advertise<reactor_command>(reactorCommandName(i_serviceName), "stateful", -1)),
           m_service(i_serviceName)
     {
         auto progressLambda = [this](reactor_progress const& i_progress, Guid const& /*sampleId*/,
@@ -68,9 +68,9 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
                 }
             }
         };
-        m_participant->subscribe<reactor_progress>(reactorProgressName(i_serviceName), progressLambda, "stateful");
+        m_participant->subscribe<reactor_progress>(reactorProgressName(i_serviceName), progressLambda, "stateful", -1);
 
-        m_requestSender = m_participant->advertise<Req>(reactorRequestName(m_service), "stateful", 8);
+        m_requestSender = m_participant->advertise<Req>(reactorRequestName(m_service), "stateful", -1);
         m_lastId = m_requestSender.guid();
         auto repCallback = [this](Rep const& i_reply, Guid const& /*sampleId*/, Guid const& i_relatedId) {
             LockGuard guard(m_mutex);
@@ -84,7 +84,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
             guard.unlock();
             it->second.cvReply.notify_one();
         };
-        m_participant->subscribe<Rep>(reactorReplyName(m_service), repCallback, "stateful");
+        m_participant->subscribe<Rep>(reactorReplyName(m_service), repCallback, "stateful", -1);
     }
 
     ~ReactorClientBackend()

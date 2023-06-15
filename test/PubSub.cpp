@@ -26,8 +26,22 @@ TEST_CASE("BulkProfile")
 
 TEST_CASE("StatefulProfile")
 {
+    std::atomic<int> recCount = 0;
+    auto participant = lt::Participant::create();
+    participant->subscribe<HelloWorld>(
+        "HelloWorldTopic",
+        [&recCount](HelloWorld const& data) {
+            std::cout << data.message() << " " << data.index() << std::endl;
+            recCount++;
+        },
+        "stateful", -1);
+
     auto participant2 = lt::Participant::create();
-    auto publisher = participant2->advertise<HelloWorld>("HelloWorldTopic", "stateful", 20);
+    auto publisher = participant2->advertise<HelloWorld>("HelloWorldTopic", "stateful", -1);
+    auto publisher2 = participant2->advertise<HelloWorld>("HelloWorldTopic", "stateful", -1);
+    while (participant->publisherCount("HelloWorldTopic") < 2) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
     HelloWorld sample;
     sample.message("hello");
     sample.index(0);
@@ -41,7 +55,7 @@ TEST_CASE("StatefulProfile")
     sample.message("hello");
     sample.index(3);
     publisher.publish(sample);
-    auto publisher2 = participant2->advertise<HelloWorld>("HelloWorldTopic", "stateful", 20);
+
     sample.message("goodbye");
     sample.index(0);
     publisher2.publish(std::move(sample));
@@ -55,14 +69,8 @@ TEST_CASE("StatefulProfile")
     sample.index(3);
     publisher2.publish(std::move(sample));
 
-    auto participant = lt::Participant::create();
-    participant->subscribe<HelloWorld>(
-        "HelloWorldTopic",
-        [](HelloWorld const& data) { std::cout << data.message() << " " << data.index() << std::endl; }, "stateful", 6);
-    while (participant2->subscriberCount("HelloWorldTopic") == 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    CHECK(recCount == 8);
 }
 
 TEST_CASE("UptrOperation")

@@ -5,7 +5,8 @@ namespace lt {
 /**
  * Hard-coded XML for default profiles. Profiles are:
  *
- *   - reliable (pub and sub): Default. Failed messages are resent.
+ *   - reliable (pub and sub): Default. Failed messages are resent. A limited
+ *        queue of old messages is kept
  *
  *   - bulk (pub and sub): Best-effort version. Designed for use with
  *        streaming data, where it is more harmful to try to correct errors than
@@ -19,8 +20,21 @@ std::string getDefaultProfileXml()
 {
     std::string xml(R"(
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds>
-<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<profiles>
+    <participant profile_name="default" is_default_profile="true">
+        <rtps>
+            <propertiesPolicy>
+                <properties>
+                    <!-- Avoid local matching of this participant's endpoints -->
+                    <property>
+                        <name>fastdds.ignore_local_endpoints</name>
+                        <value>true</value>
+                    </property>
+                </properties>
+            </propertiesPolicy>
+        </rtps>
+    </participant>
     <transport_descriptors>
         <transport_descriptor>
             <transport_id>UDP</transport_id>
@@ -31,7 +45,7 @@ std::string getDefaultProfileXml()
             <type>TCPv4</type>
         </transport_descriptor>
     </transport_descriptors>
-    <publisher profile_name="reliable" is_default_profile="true">
+    <data_writer profile_name="reliable" is_default_profile="true">
         <qos>
             <durability>
                 <kind>TRANSIENT_LOCAL</kind>
@@ -44,8 +58,8 @@ std::string getDefaultProfileXml()
             </publishMode>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy>
-    </publisher>    
-    <publisher profile_name="bulk" is_default_profile="false">
+    </data_writer>    
+    <data_writer profile_name="bulk" is_default_profile="false">
         <qos>
             <durability>
                 <kind>VOLATILE</kind>
@@ -58,8 +72,8 @@ std::string getDefaultProfileXml()
             </publishMode>
         </qos>        
         <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
-    </publisher>    
-    <publisher profile_name="stateful" is_default_profile="false">
+    </data_writer>    
+    <data_writer profile_name="stateful" is_default_profile="false">
         <qos>
             <durability>
                 <kind>TRANSIENT_LOCAL</kind>
@@ -75,8 +89,8 @@ std::string getDefaultProfileXml()
             </ownership>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy>
-    </publisher>    
-    <subscriber profile_name="reliable" is_default_profile="true">
+    </data_writer>    
+    <data_reader profile_name="reliable" is_default_profile="true">
         <qos>
             <durability>
                 <kind>TRANSIENT_LOCAL</kind>
@@ -86,8 +100,8 @@ std::string getDefaultProfileXml()
             </reliability>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy> 
-    </subscriber>    
-    <subscriber profile_name="bulk" is_default_profile="false">
+    </data_reader>    
+    <data_reader profile_name="bulk" is_default_profile="false">
         <qos>
             <durability>
                 <kind>VOLATILE</kind>
@@ -97,8 +111,8 @@ std::string getDefaultProfileXml()
             </reliability>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
-    </subscriber>    
-    <subscriber profile_name="stateful" is_default_profile="false">
+    </data_reader>    
+    <data_reader profile_name="stateful" is_default_profile="false">
         <qos>
             <durability>
                 <kind>TRANSIENT_LOCAL</kind>
@@ -111,7 +125,7 @@ std::string getDefaultProfileXml()
             </ownership>        
         </qos>        
         <historyMemoryPolicy>DYNAMIC_REUSABLE</historyMemoryPolicy>
-    </subscriber>    
+    </data_reader>    
 </profiles>
 </dds>
 )");

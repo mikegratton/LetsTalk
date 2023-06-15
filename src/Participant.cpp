@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
@@ -128,7 +129,7 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
         }
     }
     m_publisher->copy_from_topic_qos(qos, topic->get_qos());
-
+    qos.history() = topic->get_qos().history();
     // Follow the pattern of binding the raw object with its deleter in a shared_ptr
     efd::DataWriter* rawWriter = m_publisher->create_datawriter(topic, qos);
     auto writerDeleter = [this](efd::DataWriter* raw) { m_publisher->delete_datawriter(raw); };
@@ -166,6 +167,8 @@ void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport const
     }
 
     // Make the data reader. This entity is kept alive by the subscriber
+    auto topicQos = topic->get_qos();
+    qos.history() = topicQos.history();
     m_subscriber->copy_from_topic_qos(qos, topic->get_qos());
     reader = m_subscriber->create_datareader(topic, qos, i_listener, efd::StatusMask::data_available());
     LT_LOG << m_participant << " created new subscriber for type \"" << i_type->getName() << "\" on topic \"" << i_topic
@@ -263,7 +266,11 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport c
 {
     auto qos = m_participant->get_default_topic_qos();
     efd::HistoryQosPolicy& history = qos.history();
-    history.kind = efd::KEEP_LAST_HISTORY_QOS;
+    if (i_historyDepth <= 0) {
+        history.kind = efd::KEEP_ALL_HISTORY_QOS;
+    } else {
+        history.kind = efd::KEEP_LAST_HISTORY_QOS;
+    }
     history.depth = i_historyDepth;
 
     auto topic = m_participant->find_topic(i_topic, eprosima::fastrtps::Duration_t(0, 10000));
@@ -274,6 +281,7 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport c
         LT_LOG << m_participant << " started a new topic for type " << i_type.get_type_name() << " named \"" << i_topic
                << "\"\n";
     }
+
     if (nullptr == topic) {
         LT_LOG << m_participant << " could not create topic \"" << i_topic << "\"\n";
     } else if (topic->get_type_name() != i_type.get_type_name()) {
@@ -281,7 +289,7 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport c
                << " not the requested type " << i_type.get_type_name() << "\n";
         if (foundIt) { m_participant->delete_topic(topic); }
         topic = nullptr;
-    } else if (topic->get_qos().history().depth != i_historyDepth) {
+    } else if (topic->get_qos().history().depth != -1 && topic->get_qos().history().depth < i_historyDepth) {
         LT_LOG << m_participant << " already has topic \"" << i_topic << "\", but history depth is "
                << topic->get_qos().history().depth << " instead of requested depth of " << i_historyDepth << "\n";
         if (foundIt) { m_participant->delete_topic(topic); }

@@ -77,12 +77,13 @@ class RequesterImpl {
     RequesterImpl(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName)
         : m_participant(i_participant),
           m_serviceName(i_serviceName),
-          m_requestPub(m_participant->advertise<Req>(detail::requestName(m_serviceName))),
+          m_requestPub(m_participant->advertise<Req>(detail::requestName(m_serviceName), "stateful", -1)),
           m_sessionId(m_requestPub.guid())
     {
         m_participant->subscribe<Rep>(
             detail::replyName(serviceName()),
-            [this](Rep const& data, Guid const& nope, Guid const& id) { this->onReply(data, nope, id); });
+            [this](Rep const& data, Guid const& nope, Guid const& id) { this->onReply(data, nope, id); }, "stateful",
+            -1);
     }
 
     /// Stop subscribing to req
