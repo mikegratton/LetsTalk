@@ -51,8 +51,12 @@ var NAVTREE =
       ] ],
       [ "Environment variables", "index.html#autotoc_md19", null ],
       [ "About DDS", "index.html#autotoc_md20", null ],
-      [ "Roadmap", "index.html#autotoc_md21", [
-        [ "Future Features", "index.html#autotoc_md22", null ]
+      [ "History", "index.html#autotoc_md21", [
+        [ "0.2", "index.html#autotoc_md22", null ],
+        [ "0.1", "index.html#autotoc_md23", null ]
+      ] ],
+      [ "Roadmap", "index.html#autotoc_md24", [
+        [ "Future Features", "index.html#autotoc_md25", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [

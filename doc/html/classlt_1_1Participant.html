@@ -28,7 +28,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Let&#39;s Talk
-   &#160;<span id="projectnumber">0.1</span>
+   &#160;<span id="projectnumber">0.2</span>
    </div>
    <div id="projectbrief">Simple DDS communication</div>
   </td>
@@ -122,21 +122,21 @@ Collaboration diagram for lt::Participant:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a6b93ed397c29b3b5cfb42707255ec66d"><td class="memTemplParams" colspan="2">template&lt;class T , class C &gt; </td></tr>
-<tr class="memitem:a6b93ed397c29b3b5cfb42707255ec66d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a6b93ed397c29b3b5cfb42707255ec66d">subscribe</a> (std::string const &amp;i_topic, C i_callback, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=1)</td></tr>
-<tr class="memdesc:a6b93ed397c29b3b5cfb42707255ec66d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a callback on the named topic expecting type T. When data arrives, the callback will be called.  <a href="classlt_1_1Participant.html#a6b93ed397c29b3b5cfb42707255ec66d">More...</a><br /></td></tr>
-<tr class="separator:a6b93ed397c29b3b5cfb42707255ec66d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a630cfe645c6dee7e8b44c410f7d42b80"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a630cfe645c6dee7e8b44c410f7d42b80"><td class="memTemplItemLeft" align="right" valign="top">QueuePtr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a630cfe645c6dee7e8b44c410f7d42b80">subscribe</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=8)</td></tr>
-<tr class="memdesc:a630cfe645c6dee7e8b44c410f7d42b80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain a pointer to a shared queue of provided data. Data will be placed in the queue, up to the history level, at which point the oldest sample will be discarded.  <a href="classlt_1_1Participant.html#a630cfe645c6dee7e8b44c410f7d42b80">More...</a><br /></td></tr>
-<tr class="separator:a630cfe645c6dee7e8b44c410f7d42b80"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a721417cf745791190b8c20a56c89ab"><td class="memTemplParams" colspan="2">template&lt;class T , class C &gt; </td></tr>
+<tr class="memitem:a5a721417cf745791190b8c20a56c89ab"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a5a721417cf745791190b8c20a56c89ab">subscribe</a> (std::string const &amp;i_topic, C i_callback, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)</td></tr>
+<tr class="memdesc:a5a721417cf745791190b8c20a56c89ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register a callback on the named topic expecting type T. When data arrives, the callback will be called.  <a href="classlt_1_1Participant.html#a5a721417cf745791190b8c20a56c89ab">More...</a><br /></td></tr>
+<tr class="separator:a5a721417cf745791190b8c20a56c89ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae2bde74670d62580a62ce492419f8f55"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ae2bde74670d62580a62ce492419f8f55"><td class="memTemplItemLeft" align="right" valign="top">QueuePtr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55">subscribe</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)</td></tr>
+<tr class="memdesc:ae2bde74670d62580a62ce492419f8f55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain a pointer to a shared queue of provided data. Data will be placed in the queue, up to the history level, at which point the oldest sample will be discarded.  <a href="classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55">More...</a><br /></td></tr>
+<tr class="separator:ae2bde74670d62580a62ce492419f8f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a919c1ddc1208c9a209c6630f1bdc18c9">unsubscribe</a> (std::string const &amp;i_topic)</td></tr>
 <tr class="memdesc:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsubscribe from the given topic.  <a href="classlt_1_1Participant.html#a919c1ddc1208c9a209c6630f1bdc18c9">More...</a><br /></td></tr>
 <tr class="separator:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad73d8f2561d6c2b679d402ac909c41fe"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:ad73d8f2561d6c2b679d402ac909c41fe"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Publisher.html">Publisher</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#ad73d8f2561d6c2b679d402ac909c41fe">advertise</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=1)</td></tr>
-<tr class="memdesc:ad73d8f2561d6c2b679d402ac909c41fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a <a class="el" href="classlt_1_1Publisher.html" title="Sends messages to a topic.">Publisher</a> object you can use to send messages of type T on the topic.  <a href="classlt_1_1Participant.html#ad73d8f2561d6c2b679d402ac909c41fe">More...</a><br /></td></tr>
-<tr class="separator:ad73d8f2561d6c2b679d402ac909c41fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Publisher.html">Publisher</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a7e94ab47eeba3d81362bf9f7d2945b04">advertise</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)</td></tr>
+<tr class="memdesc:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a <a class="el" href="classlt_1_1Publisher.html" title="Sends messages to a topic.">Publisher</a> object you can use to send messages of type T on the topic.  <a href="classlt_1_1Participant.html#a7e94ab47eeba3d81362bf9f7d2945b04">More...</a><br /></td></tr>
+<tr class="separator:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a73f683deb5bbc57ce3834a0f2694433c"><td class="memTemplParams" colspan="2">template&lt;class Req , class Rep , class C &gt; </td></tr>
 <tr class="memitem:a73f683deb5bbc57ce3834a0f2694433c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a73f683deb5bbc57ce3834a0f2694433c">advertise</a> (std::string const &amp;i_serviceName, C i_serviceProvider)</td></tr>
 <tr class="memdesc:a73f683deb5bbc57ce3834a0f2694433c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advertise a new request/reply service.  <a href="classlt_1_1Participant.html#a73f683deb5bbc57ce3834a0f2694433c">More...</a><br /></td></tr>
@@ -177,10 +177,10 @@ Static Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:af0e8ee785cce7cb9399ea395beb29c22"><td class="memItemLeft" align="right" valign="top"><a id="af0e8ee785cce7cb9399ea395beb29c22"></a>
-efd::Topic *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#af0e8ee785cce7cb9399ea395beb29c22">getTopic</a> (std::string const &amp;i_topic, efd::TypeSupport const &amp;i_type, int i_historyDepth=1)</td></tr>
-<tr class="memdesc:af0e8ee785cce7cb9399ea395beb29c22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a pointer to an existing topic, or create a new topic (registering i_type) and return a pointer to that. If a topic exists using a different type, it will be deleted, and a new topic created for the new (topic, type) pair. <br /></td></tr>
-<tr class="separator:af0e8ee785cce7cb9399ea395beb29c22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84209568624e2f8219e6b2c1f07e1338"><td class="memItemLeft" align="right" valign="top"><a id="a84209568624e2f8219e6b2c1f07e1338"></a>
+efd::Topic *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a84209568624e2f8219e6b2c1f07e1338">getTopic</a> (std::string const &amp;i_topic, efd::TypeSupport const &amp;i_type, int i_historyDepth=-1)</td></tr>
+<tr class="memdesc:a84209568624e2f8219e6b2c1f07e1338"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a pointer to an existing topic, or create a new topic (registering i_type) and return a pointer to that. If a topic exists using a different type, it will be deleted, and a new topic created for the new (topic, type) pair. <br /></td></tr>
+<tr class="separator:a84209568624e2f8219e6b2c1f07e1338"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a09e81975e4df04d129c2b7f84ea36309"><td class="memItemLeft" align="right" valign="top"><a id="a09e81975e4df04d129c2b7f84ea36309"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a09e81975e4df04d129c2b7f84ea36309">registerType</a> (efd::TypeSupport const &amp;i_type)</td></tr>
 <tr class="memdesc:a09e81975e4df04d129c2b7f84ea36309"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register the serialize/deserialize support with the participant. <br /></td></tr>
@@ -287,8 +287,8 @@ template&lt;class Req , class Rep , class C &gt; </div>
 
 </div>
 </div>
-<a id="ad73d8f2561d6c2b679d402ac909c41fe"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad73d8f2561d6c2b679d402ac909c41fe">&#9670;&nbsp;</a></span>advertise() <span class="overload">[2/2]</span></h2>
+<a id="a7e94ab47eeba3d81362bf9f7d2945b04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e94ab47eeba3d81362bf9f7d2945b04">&#9670;&nbsp;</a></span>advertise() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -311,7 +311,7 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>i_historyDepth</em> = <code>1</code>&#160;</td>
+          <td class="paramname"><em>i_historyDepth</em> = <code>-1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -326,6 +326,7 @@ template&lt;class T &gt; </div>
   <table class="params">
     <tr><td class="paramname">i_topic</td><td>Name of the topic</td></tr>
     <tr><td class="paramname">i_qosProfile</td><td>Settings profile</td></tr>
+    <tr><td class="paramname">i_historyDepth</td><td>Number of samples to hold when publishing to a slow reader (use -1 to keep all received messages)</td></tr>
   </table>
   </dd>
 </dl>
@@ -526,8 +527,8 @@ template&lt;class Req , class Rep &gt; </div>
 
 </div>
 </div>
-<a id="a6b93ed397c29b3b5cfb42707255ec66d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6b93ed397c29b3b5cfb42707255ec66d">&#9670;&nbsp;</a></span>subscribe() <span class="overload">[1/2]</span></h2>
+<a id="a5a721417cf745791190b8c20a56c89ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a721417cf745791190b8c20a56c89ab">&#9670;&nbsp;</a></span>subscribe() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -556,7 +557,7 @@ template&lt;class T , class C &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>i_historyDepth</em> = <code>1</code>&#160;</td>
+          <td class="paramname"><em>i_historyDepth</em> = <code>-1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -574,15 +575,15 @@ template&lt;class T , class C &gt; </div>
     <tr><td class="paramname">i_topic</td><td>Topic name to subscribe to</td></tr>
     <tr><td class="paramname">i_callback</td><td>Callback function or lambda.</td></tr>
     <tr><td class="paramname">i_qosProfile</td><td>Settings profile</td></tr>
-    <tr><td class="paramname">i_historyDepth</td><td>Number of historical messages to store </td></tr>
+    <tr><td class="paramname">i_historyDepth</td><td>Number of historical messages to store (use -1 to keep all unread messages) </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="a630cfe645c6dee7e8b44c410f7d42b80"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a630cfe645c6dee7e8b44c410f7d42b80">&#9670;&nbsp;</a></span>subscribe() <span class="overload">[2/2]</span></h2>
+<a id="ae2bde74670d62580a62ce492419f8f55"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae2bde74670d62580a62ce492419f8f55">&#9670;&nbsp;</a></span>subscribe() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -605,7 +606,7 @@ template&lt;class T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>i_historyDepth</em> = <code>8</code>&#160;</td>
+          <td class="paramname"><em>i_historyDepth</em> = <code>-1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -620,7 +621,7 @@ template&lt;class T &gt; </div>
   <table class="params">
     <tr><td class="paramname">i_topic</td><td>Topic name to subscribe to</td></tr>
     <tr><td class="paramname">i_qosProfile</td><td>Settings profile</td></tr>
-    <tr><td class="paramname">i_historyDepth</td><td>Number of historical messages to store</td></tr>
+    <tr><td class="paramname">i_historyDepth</td><td>Number of historical messages to store (use -1 to keep all unread messages)</td></tr>
   </table>
   </dd>
 </dl>

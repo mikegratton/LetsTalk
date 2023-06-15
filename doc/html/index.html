@@ -28,7 +28,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Let&#39;s Talk
-   &#160;<span id="projectnumber">0.1</span>
+   &#160;<span id="projectnumber">0.2</span>
    </div>
    <div id="projectbrief">Simple DDS communication</div>
   </td>
@@ -187,7 +187,7 @@ Publish/Subscribe</h2>
 <div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](MyType <span class="keyword">const</span>&amp; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
-<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:25</div></div>
+<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:26</div></div>
 </div><!-- fragment --><p> or, if you wish to get samples as unique_ptrs (because you plan to move them to another thread), </p><div class="fragment"><div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](std::unique_ptr&lt;MyType&gt; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
@@ -220,7 +220,7 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> You can also query how many publishers have been discovered for the topic, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = node-&gt;publisherCount(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p>On the publisher end, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line"><a class="code" href="classlt_1_1Publisher.html">lt::Publisher</a> pub = node-&gt;advertise&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:264</div></div>
+<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:267</div></div>
 </div><!-- fragment --><p> To use it, </p><div class="fragment"><div class="line">MyType sample;</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
 <div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(sample);</div>
@@ -321,8 +321,21 @@ About DDS</h1>
 <li>CDR &ndash; Common Data Representation. This is the serialized format for data transmitted. Typically, IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR. Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire. Given DDS's emphasis on local network communication vs protobuf's focus on internet communication, this makes sense.</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md21"></a>
-Roadmap</h1>
+History</h1>
 <h2><a class="anchor" id="autotoc_md22"></a>
+0.2</h2>
+<ul>
+<li>Added waitset for waiting on multiple queues in select()-like manner.</li>
+<li>Overhalled builtin QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.</li>
+<li>Fixed foonathan::memory default setting that was causing crashes in examples.</li>
+<li>Changed default participant behavior to ignore messages that originated from the same participant. A subscriber and a publisher on the same topic and from the same participant will no longer interact by default.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md23"></a>
+0.1</h2>
+<p>Initial release. Covers all basic functionality.</p>
+<h1><a class="anchor" id="autotoc_md24"></a>
+Roadmap</h1>
+<h2><a class="anchor" id="autotoc_md25"></a>
 Future Features</h2>
 <ol type="1">
 <li>Automate FastDDS version upgrade</li>

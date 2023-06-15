@@ -28,7 +28,7 @@
  <tr style="height: 56px;">
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Let&#39;s Talk
-   &#160;<span id="projectnumber">0.1</span>
+   &#160;<span id="projectnumber">0.2</span>
    </div>
    <div id="projectbrief">Simple DDS communication</div>
   </td>
@@ -123,7 +123,7 @@ $(document).ready(function(){initNavTree('ReactorClientImpl_8hpp_source.html',''
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    ReactorClientBackend(ParticipantPtr i_participant, std::string <span class="keyword">const</span>&amp; i_serviceName)</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;        : m_participant(i_participant),</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;          m_commandSender(i_participant-&gt;advertise&lt;reactor_command&gt;(reactorCommandName(i_serviceName), <span class="stringliteral">&quot;stateful&quot;</span>)),</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;          m_commandSender(i_participant-&gt;advertise&lt;reactor_command&gt;(reactorCommandName(i_serviceName), <span class="stringliteral">&quot;stateful&quot;</span>, -1)),</div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;          m_service(i_serviceName)</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    {</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;        <span class="keyword">auto</span> progressLambda = [<span class="keyword">this</span>](reactor_progress <span class="keyword">const</span>&amp; i_progress, Guid <span class="keyword">const</span>&amp; <span class="comment">/*sampleId*/</span>,</div>
@@ -159,9 +159,9 @@ $(document).ready(function(){initNavTree('ReactorClientImpl_8hpp_source.html',''
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;                }</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;            }</div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        };</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        m_participant-&gt;subscribe&lt;reactor_progress&gt;(reactorProgressName(i_serviceName), progressLambda, <span class="stringliteral">&quot;stateful&quot;</span>);</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        m_participant-&gt;subscribe&lt;reactor_progress&gt;(reactorProgressName(i_serviceName), progressLambda, <span class="stringliteral">&quot;stateful&quot;</span>, -1);</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160; </div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;        m_requestSender = m_participant-&gt;advertise&lt;Req&gt;(reactorRequestName(m_service), <span class="stringliteral">&quot;stateful&quot;</span>, 8);</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;        m_requestSender = m_participant-&gt;advertise&lt;Req&gt;(reactorRequestName(m_service), <span class="stringliteral">&quot;stateful&quot;</span>, -1);</div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        m_lastId = m_requestSender.guid();</div>
 <div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keyword">auto</span> repCallback = [<span class="keyword">this</span>](Rep <span class="keyword">const</span>&amp; i_reply, Guid <span class="keyword">const</span>&amp; <span class="comment">/*sampleId*/</span>, Guid <span class="keyword">const</span>&amp; i_relatedId) {</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;            LockGuard guard(m_mutex);</div>
@@ -175,7 +175,7 @@ $(document).ready(function(){initNavTree('ReactorClientImpl_8hpp_source.html',''
 <div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            guard.unlock();</div>
 <div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;            it-&gt;second.cvReply.notify_one();</div>
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        };</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        m_participant-&gt;subscribe&lt;Rep&gt;(reactorReplyName(m_service), repCallback, <span class="stringliteral">&quot;stateful&quot;</span>);</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;        m_participant-&gt;subscribe&lt;Rep&gt;(reactorReplyName(m_service), repCallback, <span class="stringliteral">&quot;stateful&quot;</span>, -1);</div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    }</div>
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160; </div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    ~ReactorClientBackend()</div>

@@ -480,6 +480,24 @@ Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but
 Given DDS's emphasis on local network communication vs protobuf's focus on internet communication,
 this makes sense.
 
+# History
+
+
+## 0.2
+
+* Added waitset for waiting on multiple queues in select()-like manner.
+
+* Overhalled builtin QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.
+
+* Fixed foonathan::memory default setting that was causing crashes in examples.
+
+* Changed default participant behavior to ignore messages that originated from the same participant. A subscriber and a publisher on 
+ the same topic and from the same participant will no longer interact by default.
+
+## 0.1 
+
+Initial release. Covers all basic functionality.
+
 # Roadmap 
 
 ## Future Features

@@ -8,7 +8,7 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "Let's Talk"
 # TODO have cmake do this
-PROJECT_NUMBER         = 0.1
+PROJECT_NUMBER         = 0.2
 PROJECT_BRIEF          = "Simple DDS communication"
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
@@ -1738,7 +1738,7 @@ MAN_LINKS              = NO
 # captures the structure of the code including all documentation.
 # The default value is: NO.
 
-GENERATE_XML           = YES
+GENERATE_XML           = NO
 
 # The XML_OUTPUT tag is used to specify where the XML pages will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of

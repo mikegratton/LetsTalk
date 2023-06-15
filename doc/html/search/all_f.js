@@ -6,7 +6,7 @@ var searchData=
   ['startwork_65',['startWork',['../classlt_1_1ActiveObject.html#a5b85dbd06cb6982b7d5b4fe56b33293e',1,'lt::ActiveObject']]],
   ['stopwork_66',['stopWork',['../classlt_1_1ActiveObject.html#a1363a0c730f8b90a7b58ebbd53ee382c',1,'lt::ActiveObject']]],
   ['submitjob_67',['submitJob',['../classlt_1_1ActiveObject.html#a5b075a371f534413a9066ce66ff4c0f8',1,'lt::ActiveObject']]],
-  ['subscribe_68',['subscribe',['../classlt_1_1Participant.html#a6b93ed397c29b3b5cfb42707255ec66d',1,'lt::Participant::subscribe(std::string const &amp;i_topic, C i_callback, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=1)'],['../classlt_1_1Participant.html#a630cfe645c6dee7e8b44c410f7d42b80',1,'lt::Participant::subscribe(std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=8)']]],
+  ['subscribe_68',['subscribe',['../classlt_1_1Participant.html#a5a721417cf745791190b8c20a56c89ab',1,'lt::Participant::subscribe(std::string const &amp;i_topic, C i_callback, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)'],['../classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55',1,'lt::Participant::subscribe(std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)']]],
   ['subscribercount_69',['subscriberCount',['../classlt_1_1Participant.html#ab68586bb5172b6b01684f542fdd77e7f',1,'lt::Participant']]],
   ['swap_70',['swap',['../classlt_1_1ThreadSafeQueue.html#af3e94952c56ed38db39c9ca96f260431',1,'lt::ThreadSafeQueue']]]
 ];
