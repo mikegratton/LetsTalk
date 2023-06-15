@@ -13,6 +13,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
 else()
     set(build_examples_tests 0)
 endif()
+
 set(build_tools 1)
 
 option(FOONATHAN_MEMORY_BUILD_EXAMPLES "whether or not to build the examples" OFF)
@@ -47,7 +48,7 @@ else()
     option(FOONATHAN_MEMORY_DEBUG_FILL
             "whether or not the (de-)allocated memory will be pre-filled" OFF)
     set(FOONATHAN_MEMORY_DEBUG_FENCE 0 CACHE STRING
-            "the amount of memory used as fence to help catching overflow errors" )
+            "the amount of memory used as fence to help catching overflow errors")
     option(FOONATHAN_MEMORY_DEBUG_LEAK_CHECK
             "whether or not leak checking is active" OFF)
     option(FOONATHAN_MEMORY_DEBUG_POINTER_CHECK
@@ -57,8 +58,8 @@ else()
 endif()
 
 # other options
-option(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE
-        "whether or not the size of the allocation will be checked" ON)
+set(FOONATHAN_MEMORY_CHECK_ALLOCATION_SIZE OFF CACHE BOOL
+        "whether or not the size of the allocation will be checked")
 set(FOONATHAN_MEMORY_DEFAULT_ALLOCATOR heap_allocator CACHE STRING
     "the default implementation allocator for higher-level ones")
 set(FOONATHAN_MEMORY_MEMORY_RESOURCE_HEADER "<memory_resource>" CACHE STRING
@@ -68,6 +69,6 @@ set(FOONATHAN_MEMORY_MEMORY_RESOURCE std::memory_resource CACHE STRING
 option(FOONATHAN_MEMORY_EXTERN_TEMPLATE
     "whether or not common template instantiations are already provided by the library" ON)
 set(FOONATHAN_MEMORY_TEMPORARY_STACK_MODE 2 CACHE STRING
-     "set to 0 to disable the per-thread stack completely, to 1 to disable the nitfy counter and to 2 to enable everything")
+    "set to 0 to disable the per-thread stack completely, to 1 to disable the nitfy counter and to 2 to enable everything")
 set(FOONATHAN_MEMORY_CONTAINER_NODE_SIZES_IMPL container_node_sizes_impl.hpp CACHE FILEPATH
-     "the path of the header that defines the node sizes and alignments if pre-generated.")
+    "the path of the header that defines the node sizes and alignments if pre-generated.")

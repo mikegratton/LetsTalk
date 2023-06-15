@@ -53,11 +53,11 @@ class Participant : public std::enable_shared_from_this<Participant> {
      *
      * @param i_qosProfile Settings profile
      *
-     * @param i_historyDepth Number of historical messages to store
+     * @param i_historyDepth Number of historical messages to store (use -1 to keep all unread messages)
      */
     template <class T, class C>
     void subscribe(std::string const& i_topic, C i_callback, std::string const& i_qosProfile = "",
-                   int i_historyDepth = 1);
+                   int i_historyDepth = -1);
 
     /**
      * @brief Obtain a pointer to a shared queue of provided data.  Data will be placed in the queue, up
@@ -67,12 +67,12 @@ class Participant : public std::enable_shared_from_this<Participant> {
      *
      * @param i_qosProfile Settings profile
      *
-     * @param i_historyDepth Number of historical messages to store
+     * @param i_historyDepth Number of historical messages to store (use -1 to keep all unread messages)
      *
      * @return thread safe queue pointer where samples will appear
      */
     template <class T>
-    QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 8);
+    QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = -1);
 
     /**
      * @brief Unsubscribe from the given topic
@@ -89,6 +89,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
      *
      * @param i_qosProfile Settings profile
      *
+     * @param i_historyDepth Number of samples to hold when publishing to a slow reader (use -1 to keep all received
+     * messages)
+     *
      * @return lightweight publisher object. Note that the publish() calls will fail
      *   if the supplied data isn't of type T
      *
@@ -102,7 +105,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
      * publication will automatically be reported as terminated by the library.
      */
     template <class T>
-    Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = 1);
+    Publisher advertise(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = -1);
 
     /**
      * @brief Advertise a new request/reply service.
@@ -217,7 +220,7 @@ class Participant : public std::enable_shared_from_this<Participant> {
     /// Get a pointer to an existing topic, or create a new topic (registering i_type) and
     /// return a pointer to that. If a topic exists using a different type, it will be
     /// deleted, and a new topic created for the new (topic, type) pair.
-    efd::Topic* getTopic(std::string const& i_topic, efd::TypeSupport const& i_type, int i_historyDepth = 1);
+    efd::Topic* getTopic(std::string const& i_topic, efd::TypeSupport const& i_type, int i_historyDepth = -1);
 
     /// Register the serialize/deserialize support with the participant
     void registerType(efd::TypeSupport const& i_type);
