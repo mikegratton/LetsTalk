@@ -4,7 +4,7 @@
 #include <memory>
 #include <thread>
 
-#include "letstalk/QueueWaitset.hpp"
+#include "letstalk/LetsTalk.hpp"
 
 auto intQueue = std::make_shared<lt::ThreadSafeQueue<int>>();
 auto stringQueue = std::make_shared<lt::ThreadSafeQueue<std::string>>();
@@ -12,7 +12,7 @@ std::atomic<bool> keepAlive = true;
 
 int main(int argc, char** argv)
 {
-    auto waitset = lt::makeQueueWaitset(intQueue, stringQueue);
+    lt::Waitset waitset{intQueue, stringQueue};
 
     std::thread produce([]() {
         while (keepAlive) {

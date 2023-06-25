@@ -15,6 +15,7 @@ add_executable(ltTest
     Reactor.cpp
     Guid.cpp
     KeepAllTest.cpp
+    Waitset.cpp
     main.cpp
 )
 target_link_libraries(ltTest PUBLIC letstalk testIdl)

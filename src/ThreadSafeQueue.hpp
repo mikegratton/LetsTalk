@@ -4,6 +4,8 @@
 #include <memory>
 #include <mutex>
 
+#include "Awaitable.hpp"
+
 namespace lt {
 
 /**
@@ -15,7 +17,7 @@ namespace lt {
  * desired maximum size
  */
 template <class T>
-class ThreadSafeQueue {
+class ThreadSafeQueue : public Awaitable {
    public:
     using Queue = std::deque<std::unique_ptr<T>>;
 
@@ -147,10 +149,13 @@ class ThreadSafeQueue {
      * @brief Attach to another condition variable
      * @note Only one external condition may be attached at a time. (A queue can only be in one waitset)
      */
-    void attachToCondition(std::condition_variable* i_condition) { m_externalCondition = i_condition; }
+    void attachToCondition(std::condition_variable* i_condition) final { m_externalCondition = i_condition; }
 
     /// Detach the external condition variable
-    void detachFromCondition() { m_externalCondition = nullptr; }
+    void detachFromCondition() final { m_externalCondition = nullptr; }
+
+    /// Check if data is available
+    bool ready() const final { return !empty(); }
 
    protected:
     const std::size_t m_capacity;

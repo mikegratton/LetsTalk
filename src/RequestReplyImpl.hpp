@@ -1,8 +1,10 @@
 #pragma once
+#include <condition_variable>
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <functional>
 #include <memory>
 
+#include "Awaitable.hpp"
 #include "LetsTalk.hpp"
 #include "LetsTalkFwd.hpp"
 #include "Participant.hpp"
@@ -209,7 +211,7 @@ bool Requester<Req, Rep>::impostorsExist() const
 
 namespace detail {
 template <class Req, class Rep>
-class ReplierImpl : public std::enable_shared_from_this<ReplierImpl<Req, Rep>> {
+class ReplierImpl : public std::enable_shared_from_this<ReplierImpl<Req, Rep>>, public Awaitable {
    public:
     using Session = typename Replier<Req, Rep>::Session;
     ParticipantPtr m_participant;
@@ -265,6 +267,11 @@ class ReplierImpl : public std::enable_shared_from_this<ReplierImpl<Req, Rep>> {
         if (data) { return Session(this->shared_from_this(), std::move(data->request), data->id); }
         return Session(nullptr, nullptr, Guid::UNKNOWN());
     }
+
+    // Awaiter interface
+    void attachToCondition(std::condition_variable* i_condition) final { m_queue.attachToCondition(i_condition); }
+    void detachFromCondition() final { m_queue.detachFromCondition(); }
+    bool ready() const final { return m_queue.ready(); }
 };
 }  // namespace detail
 

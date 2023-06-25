@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 
+#include "Awaitable.hpp"
 #include "Guid.hpp"
 #include "ParticipantLogger.hpp"
 
@@ -92,6 +93,8 @@ class Replier {
 
     /// Check that there is at most one subscriber to the Req topic
     bool impostorsExist() const;
+
+    operator AwaitablePtr() { return m_backend; }
 
    protected:
     friend class Participant;

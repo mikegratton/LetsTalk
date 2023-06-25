@@ -198,12 +198,12 @@ Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 ```
 where the `Queue` type is a `std::deque<std::unique_ptr<T>>` by default. 
 
-You can use the `QueueWaitset` to wait on multiple queues in a `select`-like manner.
+You can use the `Waitset` to wait on multiple queues in a `select`-like manner.
 First, register all the queues with the waitset at construction:
 ```cpp
 auto queue1 = node->subscribe<MyType1>("my.topic.1");
 auto queue2 = node->subscribe<MyType2>("my.topic.2");
-auto waitset = makeQueueWaitset(queue1, queue2);
+Waitset waitset{queue1, queue2};
 ```
 Later, you may `wait` for data, blocking the calling thread and returning the index
 of the first queue with pending messages
@@ -312,7 +312,8 @@ public:
 ```
 You can inspect the request data, provide a reply (closing the session), signal failure (also closing the 
 session), or check if the session is live. If no request arrives in the wait time of `getPendingSession()`,
-the returned `Session` object will not be alive. 
+the returned `Session` object will not be alive. You can attach replier objects to a `Waitset` to wait on
+multiple services in one thread.
 
 To make a request from another participant, first create a Requester object on that node:
 ```cpp
@@ -362,9 +363,10 @@ If this is true, a request has been recieved. To service it, we get a `Session` 
 ```cpp
 auto motionSession = motionServer.getPendingSession();
 ```
-This takes an optional wait time if you want to have a blocking wait for sessions. Like the 
-server object, this is a lightweight object that may be copied cheaply. Copies all refer to the 
-same logical session. The session object provides accessors for the request data
+This takes an optional wait time if you want to have a blocking wait for sessions. You may also attach
+a `ReactorServer` instance to a `Waitset` to wait on multiple servers in one thread in a `select()` like
+manner. Like the server object, the session is a lightweight object that may be copied cheaply. Copies all refer 
+to the same logical session. The session object provides accessors for the request data
 ```cpp
 RequestType const& request = motionSession.request();
 ```
@@ -516,6 +518,9 @@ this makes sense.
 
 * Send cancellation messages for the reactor when a client goes away unexpectedly.
 
+* Extended the waitset to allow for waiting on ReactorServer sessions and Replier sessions. Renamed the object from `QueueWaitset` to 
+  `Waitset`.
+
 ## 0.2
 
 * Added waitset for waiting on multiple queues in select()-like manner.
@@ -538,6 +543,3 @@ Initial release. Covers all basic functionality.
 1. Automate FastDDS version upgrade
 
 2. To/from json additions for fastddsgen
-
-3. Extend waitset to wait on more things (reply sessions, etc)
-

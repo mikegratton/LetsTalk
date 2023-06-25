@@ -1,5 +1,7 @@
 #include <chrono>
+#include <condition_variable>
 
+#include "Awaitable.hpp"
 #include "PubSubType.hpp"
 #include "Reactor.hpp"
 #include "ReactorServer.hpp"
@@ -8,13 +10,15 @@ namespace lt {
 
 namespace detail {
 template <class Req, class Rep, class ProgressData>
-class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBackend<Req, Rep, ProgressData>> {
+class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBackend<Req, Rep, ProgressData>>,
+                             public Awaitable {
    public:
     ReactorServerBackend(ParticipantPtr i_participant, std::string const& i_service)
         : m_participant(i_participant),
           m_replySender(m_participant->advertise<Rep>(reactorReplyName(i_service), "stateful", -1)),
           m_progressSender(m_participant->advertise<reactor_progress>(reactorProgressName(i_service), "stateful", -1)),
-          m_service(i_service)
+          m_service(i_service),
+          m_waitvar(nullptr)
     {
         auto commandCallback = [this](reactor_command const&, Guid const& /*id*/, Guid const& relatedId) {
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
@@ -28,6 +32,7 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
             m_pending.emplace_back(id, i_req);
             guard.unlock();
             m_arePending.notify_one();
+            if (m_waitvar) { m_waitvar->notify_one(); }
             LT_LOG << m_participant.get() << ":" << m_service << "-server"
                    << "  Request ID " << id << " enqued as pending\n";
         };
@@ -185,6 +190,11 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
         m_session.erase(i_id);
     }
 
+    // Awaiter interface
+    void attachToCondition(std::condition_variable* i_cv) final { m_waitvar = i_cv; }
+    void detachFromCondition() final { m_waitvar = nullptr; }
+    bool ready() const final { return havePendingSession(); }
+
    protected:
     enum State { STARTING, RUNNING, CANCELLING, CANCELLED, FAILING, FAILED, SUCCEEDING, SUCCEED };
 
@@ -201,6 +211,7 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     std::condition_variable m_arePending;        /// Thread coordination for pending sessions
     std::map<Guid, State> m_session;             /// Map of id's to session statuses
     std::deque<std::pair<Guid, Req>> m_pending;  /// Pending sessions
+    std::condition_variable* m_waitvar;          /// CV from waitset
 };
 }  // namespace detail
 

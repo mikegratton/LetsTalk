@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 
+#include "Awaitable.hpp"
 #include "Reactor.hpp"
 namespace lt {
 
@@ -75,6 +76,8 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
 
     /// Count number of discovered clients
     int discoveredClients() const;
+
+    operator AwaitablePtr() { return m_backend; }
 
    protected:
     friend class Participant;

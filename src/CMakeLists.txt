@@ -13,6 +13,7 @@ add_library(letstalk
 )
 
 set(headers
+    Awaitable.hpp
     LetsTalk.hpp
     FastDdsAlias.hpp
     ActiveObject.hpp
@@ -33,7 +34,7 @@ set(headers
     ReactorClientImpl.hpp
     ReactorServer.hpp
     ReactorServerImpl.hpp
-    QueueWaitset.hpp
+    Waitset.hpp
     meta.hpp
 )
 
