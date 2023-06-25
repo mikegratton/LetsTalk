@@ -123,6 +123,17 @@ class Participant : public std::enable_shared_from_this<Participant> {
     void advertise(std::string const& i_serviceName, C i_serviceProvider);
 
     /**
+     * @brief Advertise a new request/reply service.
+     *
+     * This will create an object to manage incoming requests. You can make calls on this
+     * object to retrieve requests and send replies
+     *
+     * @param i_serviceName Name of the service for determining the related topics
+     */
+    template <class Req, class Rep>
+    Replier<Req, Rep> advertise(std::string const& i_serviceName);
+
+    /**
      * @brief Stop providing the named service
      *
      * @param i_service Service to discontinue
@@ -237,11 +248,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
     void updatePublisherCount(std::string const& i_topic, int i_update);
     void updateSubscriberCount(std::string const& i_topic, int i_update);
 
-    /// Reader callbacks use this templated class
+    // Private ctor access
     template <class T, class C>
     friend class detail::ReaderListener;
-
-    /// The publisher has a private ctor
     friend class Publisher;
     template <class Req, class Rep>
     friend class Requester;

@@ -17,7 +17,6 @@ TEST_CASE("Reactor.Basic")
     auto AskForGreeting = part2->makeReactorClient<HelloWorld, HelloWorld>("hello");
 
     while (!AskForGreeting.discoveredServer()) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
-
     HelloWorld message;
     message.message("hello?");
     message.index(0);

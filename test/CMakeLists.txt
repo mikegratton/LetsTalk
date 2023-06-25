@@ -11,7 +11,7 @@ add_executable(ltTest
     ActiveObject.cpp
     ThreadSafeQueue.cpp
     PubSub.cpp
-    reqrep.cpp
+    ReqRep.cpp
     Reactor.cpp
     Guid.cpp
     KeepAllTest.cpp

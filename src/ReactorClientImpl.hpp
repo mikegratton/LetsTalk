@@ -26,6 +26,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     typename ReactorClient<Req, Rep, ProgressData>::Session request(Req const& i_request)
     {
         logConnectionStatus();
+        groomSessionList();
         return typename ReactorClient<Req, Rep, ProgressData>::Session(this->shared_from_this(),
                                                                        startNewSession(i_request));
     }
@@ -139,10 +140,31 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
 
     bool isAlive(Guid const& i_id) const
     {
+        if (!discoveredServer()) { return false; }
+
         LockGuard guard(m_mutex);
         auto it = m_session.find(i_id);
-        if (it != m_session.end()) { return (it->second.progress >= 0 && it->second.progress < 100); }
+        if (it != m_session.end()) {
+            bool isAlive = (it->second.progress >= PROG_SENT && it->second.progress < PROG_SUCCESS);
+            return isAlive;
+        }
         return false;
+    }
+
+    void groomSessionList()
+    {
+        if (!discoveredServer()) {
+            LockGuard guard(m_mutex);
+            m_session.clear();
+            return;
+        }
+
+        LockGuard guard(m_mutex);
+        for (auto& session : m_session) {
+            if (session.second.progress < PROG_SENT || session.second.progress >= PROG_SUCCESS) {
+                m_session.erase(session.first);
+            }
+        }
     }
 
     int progress(Guid const& i_id) const
@@ -173,7 +195,19 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     void disposeOfSession(Guid const& i_id)
     {
         LockGuard guard(m_mutex);
+        auto it = m_session.find(i_id);
+        if (it != m_session.end()) {
+            if (it->second.progress >= PROG_SENT && it->second.progress <= PROG_SUCCESS) {
+                reactor_command command;
+                command.command(Command::CANCEL);
+                m_commandSender.publish(command, Guid::UNKNOWN(), i_id);
+                LT_LOG << m_participant.get() << ":" << m_service << "-client"
+                       << "  Cancelled session ID " << i_id << "\n";
+            }
+        }
         m_session.erase(i_id);
+        guard.unlock();
+        groomSessionList();
     }
 
     ParticipantPtr m_participant;  /// Participant holding all pubs and subs
@@ -207,7 +241,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
     };
 
     std::map<Guid, SessionData> m_session;  /// Record of all active sessions indexed by id
-};                                          // namespace detail
+};
 }  // namespace detail
 
 template <class Req, class Rep, class ProgressData>

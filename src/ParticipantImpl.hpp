@@ -90,6 +90,14 @@ void Participant::advertise(std::string const& i_serviceName, C i_serviceProvide
                 "stateful", -1);
 }
 
+// Replier creation: create the shared backend
+template <class Req, class Rep>
+Replier<Req, Rep> Participant::advertise(std::string const& i_serviceName)
+{
+    auto backend = std::make_shared<detail::ReplierImpl<Req, Rep>>(this->shared_from_this(), i_serviceName);
+    return Replier<Req, Rep>(backend);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // Requester creation
 template <class Req, class Rep>

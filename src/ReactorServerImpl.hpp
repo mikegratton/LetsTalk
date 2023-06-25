@@ -174,6 +174,14 @@ class ReactorServerBackend : public std::enable_shared_from_this<ReactorServerBa
     void disposeOfSession(Guid i_id)
     {
         LockGuard guard(m_sessionMutex);
+        auto it = m_session.find(i_id);
+        if (it != m_session.end()) {
+            if (it->second == STARTING || it->second == RUNNING) {
+                reactor_progress message;
+                message.progress(PROG_FAILED);
+                m_progressSender.publish(message, m_progressSender.guid(), i_id);
+            }
+        }
         m_session.erase(i_id);
     }
 

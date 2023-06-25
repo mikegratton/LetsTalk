@@ -274,8 +274,12 @@ Let's Talk.
 ## Request/Reply
 
 In request/reply, a service is defined by a string name, a request type, and a reply type.
-Let's Talk automatically generates topics for the request and reply from this information. The
-server side, the one providing the service, registers a callback to perform the service work.
+Let's Talk automatically generates topics for the request and reply from this information. 
+
+The server side, the one providing the service, has two forms: a "push" form that uses a
+callback and a "pull" form giving you more control.
+
+The push form calls a callback on a special worker thread to perform the service work.
 Callbacks take the form
 ```cpp
 auto myCallback = [](MyRequestType const& i_request) -> MyReplyType { /* ... */ };
@@ -284,7 +288,31 @@ and the registration call on a participant pointer `node` looks like
 ```cpp
 node->advertise<MyRequestType, MyReplyType>("my.topic", myCallback);
 ```
-A new thread is spawned for running the callback, so efficiency in the callback is not essential.
+This form is intended to be very simple to use, but you surrender control over the threading.
+
+The pull form allows you full control over the threading of the 
+service, but at the cost of additional complexity. This form creates a `Replier` object
+```cpp
+auto replier = node->advertise<MyRequestType, MyReplyType>("my.topic");
+```
+You can obtain pending sessions from this object
+```cpp
+auto session = replier->getPendingSession(std::chrono::milliseconds(10));
+```
+specifying a wait time (10 ms here). The session object has a very simple API:
+```cpp
+class Session {
+public:    
+    Req const& request() const { return *m_request; }    
+    void reply(Rep const& i_reply);
+    void reply(std::unique_ptr<Rep> i_reply);
+    void fail();
+    bool isAlive() { return m_backend != nullptr; }
+};
+```
+You can inspect the request data, provide a reply (closing the session), signal failure (also closing the 
+session), or check if the session is live. If no request arrives in the wait time of `getPendingSession()`,
+the returned `Session` object will not be alive. 
 
 To make a request from another participant, first create a Requester object on that node:
 ```cpp
@@ -482,6 +510,11 @@ this makes sense.
 
 # History
 
+## 0.3
+
+* Added a pull-mode replier to request/reply pattern.
+
+* Send cancellation messages for the reactor when a client goes away unexpectedly.
 
 ## 0.2
 
@@ -505,4 +538,6 @@ Initial release. Covers all basic functionality.
 1. Automate FastDDS version upgrade
 
 2. To/from json additions for fastddsgen
+
+3. Extend waitset to wait on more things (reply sessions, etc)
 

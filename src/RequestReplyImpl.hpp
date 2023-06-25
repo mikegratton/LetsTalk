@@ -1,10 +1,13 @@
 #pragma once
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <functional>
+#include <memory>
 
 #include "LetsTalk.hpp"
 #include "LetsTalkFwd.hpp"
+#include "Participant.hpp"
 #include "ParticipantImpl.hpp"
+#include "ThreadSafeQueue.hpp"
 ////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////
 // Request/Reply
@@ -110,6 +113,24 @@ class RequesterImpl {
         return future;
     }
 
+    /// Make a new request
+    /// @param i_request Request data
+    /// @return future Rep supplied when request fulfilled
+    std::future<Rep> request(std::unique_ptr<Req> i_request)
+    {
+        // Send the request
+        Guid requestId;
+        std::future<Rep> future;
+        {
+            std::unique_lock<std::mutex> guard(m_lock);
+            requestId = m_sessionId.increment();
+            future = m_requests[requestId].get_future();
+        }
+        m_requestPub.publish(std::move(i_request), requestId, Guid::UNKNOWN());
+        LT_LOG << serviceName() << ": Making request " << requestId << "\n";
+        return future;
+    }
+
     bool isConnected() const
     {
         int providerCount = m_participant->subscriberCount(detail::requestName(serviceName()));
@@ -169,6 +190,12 @@ std::future<Rep> Requester<Req, Rep>::request(Req const& i_request)
 }
 
 template <class Req, class Rep>
+std::future<Rep> Requester<Req, Rep>::request(std::unique_ptr<Req> i_request)
+{
+    return m_backend->request(std::move(i_request));
+}
+
+template <class Req, class Rep>
 bool Requester<Req, Rep>::isConnected() const
 {
     return m_backend->isConnected();
@@ -176,6 +203,106 @@ bool Requester<Req, Rep>::isConnected() const
 
 template <class Req, class Rep>
 bool Requester<Req, Rep>::impostorsExist() const
+{
+    return m_backend->impostorsExist();
+}
+
+namespace detail {
+template <class Req, class Rep>
+class ReplierImpl : public std::enable_shared_from_this<ReplierImpl<Req, Rep>> {
+   public:
+    using Session = typename Replier<Req, Rep>::Session;
+    ParticipantPtr m_participant;
+    std::string m_serviceName;
+    Publisher m_replyPub;
+    Guid m_myId;
+    struct SessionRequest {
+        std::unique_ptr<Req> request;
+        Guid id;
+    };
+    ThreadSafeQueue<SessionRequest> m_queue;
+
+    ReplierImpl(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName)
+        : m_participant(i_participant),
+          m_serviceName(i_serviceName),
+          m_replyPub(m_participant->advertise<Rep>(detail::replyName(m_serviceName), "stateful", -1)),
+          m_myId(m_replyPub.guid())
+    {
+        m_participant->subscribe<Req>(
+            detail::requestName(serviceName()),
+            [this](std::unique_ptr<Req> data, Guid const& id, Guid const&) {
+                auto sessionData = std::make_unique<SessionRequest>();
+                sessionData->request = std::move(data);
+                sessionData->id = id;
+                m_queue.push(std::move(sessionData));
+            },
+            "stateful", -1);
+    }
+
+    /// Stop subscribing to req
+    ~ReplierImpl() { m_participant->unsubscribe(detail::requestName(serviceName())); }
+
+    void reply(Rep const& i_reply, Guid const& i_related) { m_replyPub.publish(i_reply, m_myId, i_related); }
+
+    void reply(std::unique_ptr<Rep> const& i_reply, Guid const& i_related)
+    {
+        m_replyPub.publish(std::move(i_reply), m_myId, i_related);
+    }
+
+    void fail(Guid const& i_related)
+    {
+        Rep nullReply;
+        m_replyPub.publish(nullReply, m_myId, i_related, true);
+    }
+
+    std::string const& serviceName() const { return m_serviceName; }
+
+    bool impostorsExist() const { return m_participant->subscriberCount(detail::requestName(serviceName())) > 1; }
+
+    Session getPendingSession(std::chrono::nanoseconds i_wait)
+    {
+        auto data = m_queue.pop(i_wait);
+        if (data) { return Session(this->shared_from_this(), std::move(data->request), data->id); }
+        return Session(nullptr, nullptr, Guid::UNKNOWN());
+    }
+};
+}  // namespace detail
+
+template <class Req, class Rep>
+void Replier<Req, Rep>::Session::reply(Rep const& i_reply)
+{
+    m_backend->reply(i_reply, m_relatedGuid);
+    m_backend = nullptr;
+}
+
+template <class Req, class Rep>
+void Replier<Req, Rep>::Session::reply(std::unique_ptr<Rep> i_reply)
+{
+    m_backend->reply(std::move(i_reply), m_relatedGuid);
+    m_backend = nullptr;
+}
+
+template <class Req, class Rep>
+void Replier<Req, Rep>::Session::fail()
+{
+    m_backend->fail(m_relatedGuid);
+    m_backend = nullptr;
+}
+
+template <class Req, class Rep>
+typename Replier<Req, Rep>::Session Replier<Req, Rep>::getPendingSession(std::chrono::nanoseconds i_wait)
+{
+    return m_backend->getPendingSession(i_wait);
+}
+
+template <class Req, class Rep>
+std::string const& Replier<Req, Rep>::serviceName() const
+{
+    return m_backend->serviceName();
+}
+
+template <class Req, class Rep>
+bool Replier<Req, Rep>::impostorsExist() const
 {
     return m_backend->impostorsExist();
 }

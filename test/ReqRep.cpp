@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "LetsTalk.hpp"
 #include "doctest.h"
 #include "idl/HelloWorld.h"
@@ -125,4 +127,52 @@ TEST_CASE("Request.PingPong")
         }
     }
     p1->unadvertise("greet");
+}
+
+TEST_CASE("Request.Pull")
+{
+    lt::ParticipantPtr p1 = lt::Participant::create();
+    auto replier = p1->advertise<HelloWorld, HelloWorld>("greet");
+    lt::ParticipantPtr p2 = lt::Participant::create();
+    auto requester = p2->makeRequester<HelloWorld, HelloWorld>("greet");
+    // Wait to connect
+    // while (!requester.isConnected()) { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
+
+    // Spam requests
+    std::future<HelloWorld> futures[4];
+    for (int i = 0; i < 4; i++) {
+        HelloWorld req;
+        req.index(i);
+        req.message("Hello");
+        futures[i] = requester.request(req);
+    }
+
+    // Process requests
+    for (int i = 0; i < 4; i++) {
+        auto session = replier.getPendingSession(std::chrono::milliseconds(100));
+        CHECK(session.isAlive());
+        CHECK(session.request().index() == i);
+        HelloWorld rep = session.request();
+        rep.message("World");
+        session.reply(rep);
+    }
+    auto session = replier.getPendingSession(std::chrono::milliseconds(1));
+    CHECK(session.isAlive() == false);
+
+    for (int i = 0; i < 4; i++) {
+        auto reply = futures[i].get();
+        CHECK(reply.index() == i);
+    }
+    HelloWorld req;
+    req.index(10);
+    req.message("Won't work");
+    auto failure = requester.request(req);
+    session = replier.getPendingSession(std::chrono::milliseconds(100));
+    CHECK(session.request().index() == 10);
+    session.fail();
+    try {
+        auto nope = failure.get();
+        CHECK(nope.index() != 0);
+    } catch (...) {
+    }
 }
