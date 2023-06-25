@@ -94,39 +94,109 @@ $(document).ready(function(){initNavTree('RequestReply_8hpp_source.html',''); in
 <div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160; </div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &quot;ParticipantLogger.hpp&quot;</span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160; </div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacelt.html">lt</a> {</div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="keyword">class </span>Participant;</div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="keyword">namespace </span>detail {</div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="keyword">class </span>RequesterImpl;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;}</div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160; </div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00025"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html">   25</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlt_1_1Requester.html">Requester</a> {</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;   <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">serviceName</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160; </div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">request</a>(Req <span class="keyword">const</span>&amp; i_request);</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160; </div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">isConnected</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160; </div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">impostorsExist</a>() <span class="keyword">const</span>;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160; </div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;   <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classlt_1_1Participant.html">Participant</a>;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;    <a class="code" href="classlt_1_1Requester.html">Requester</a>(std::shared_ptr&lt;detail::RequesterImpl&lt;Req, Rep&gt;&gt; i_backend) : m_backend(i_backend) {}</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    std::shared_ptr&lt;detail::RequesterImpl&lt;Req, Rep&gt;&gt; m_backend;  <span class="comment">// This class just wraps access to the shared backend</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;};</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;}  <span class="comment">// namespace lt</span></div>
-<div class="ttc" id="aclasslt_1_1Participant_html"><div class="ttname"><a href="classlt_1_1Participant.html">lt::Participant</a></div><div class="ttdoc">Allows participating in DDS communication.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:24</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html"><div class="ttname"><a href="classlt_1_1Requester.html">lt::Requester</a></div><div class="ttdoc">A lightweight requester wrapper.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:25</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a62a70c92466b241ae1e08e6fd085ce2d"><div class="ttname"><a href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">lt::Requester::isConnected</a></div><div class="ttdeci">bool isConnected() const</div><div class="ttdoc">Check that there is at least one publisher to Req.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:172</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a7e160a410090e37aafd30e433efda865"><div class="ttname"><a href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">lt::Requester::request</a></div><div class="ttdeci">std::future&lt; Rep &gt; request(Req const &amp;i_request)</div><div class="ttdoc">Make a request.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:166</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a81261c367660bbfb45a7675a7b2269f1"><div class="ttname"><a href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">lt::Requester::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:178</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_aaed26041cc5c83ecfd391d5d374514aa"><div class="ttname"><a href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">lt::Requester::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:160</div></div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &quot;Awaitable.hpp&quot;</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;Guid.hpp&quot;</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &quot;ParticipantLogger.hpp&quot;</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160; </div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacelt.html">lt</a> {</div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">class </span>Participant;</div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="keyword">namespace </span>detail {</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keyword">class </span>RequesterImpl;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="keyword">class </span>ReplierImpl;</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;}  <span class="comment">// namespace detail</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html">   29</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlt_1_1Requester.html">Requester</a> {</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;   <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;    std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">serviceName</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;    std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">request</a>(Req <span class="keyword">const</span>&amp; i_request);</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;    std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">request</a>(std::unique_ptr&lt;Req&gt; i_request);</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160; </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">isConnected</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160; </div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">impostorsExist</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160; </div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;   <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;    <span class="keyword">friend</span> <span class="keyword">class </span><a class="code" href="classlt_1_1Participant.html">Participant</a>;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;    <a class="code" href="classlt_1_1Requester.html">Requester</a>(std::shared_ptr&lt;detail::RequesterImpl&lt;Req, Rep&gt;&gt; i_backend) : m_backend(i_backend) {}</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    std::shared_ptr&lt;detail::RequesterImpl&lt;Req, Rep&gt;&gt; m_backend;  <span class="comment">// This class just wraps access to the shared backend</span></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;};</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160; </div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00057"></a><span class="lineno"><a class="line" href="classlt_1_1Replier.html">   57</a></span>&#160;<span class="keyword">class </span><a class="code" href="classlt_1_1Replier.html">Replier</a> {</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;   <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00059"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html">   59</a></span>&#160;    <span class="keyword">class </span><a class="code" href="classlt_1_1Replier_1_1Session.html">Session</a> {</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;       <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00062"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html#ab3e9a5e4713b1da211c51f7e3cc939ca">   62</a></span>&#160;        Req <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Replier_1_1Session.html#ab3e9a5e4713b1da211c51f7e3cc939ca">request</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> *m_request; }</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160; </div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">reply</a>(Rep <span class="keyword">const</span>&amp; i_reply);</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">reply</a>(std::unique_ptr&lt;Rep&gt; i_reply);</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160; </div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#ad41c0891951c379917139591b9267a6f">fail</a>();</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160; </div>
+<div class="line"><a name="l00074"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html#a86d68a6ffe282cdcf81daa33e78b39f1">   74</a></span>&#160;        <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#a86d68a6ffe282cdcf81daa33e78b39f1">isAlive</a>() { <span class="keywordflow">return</span> m_backend != <span class="keyword">nullptr</span>; }</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160; </div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;       <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        <span class="keyword">friend</span> detail::ReplierImpl&lt;Req, Rep&gt;;</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        <a class="code" href="classlt_1_1Replier_1_1Session.html">Session</a>(std::shared_ptr&lt;detail::ReplierImpl&lt;Req, Rep&gt;&gt; i_backend, std::unique_ptr&lt;Req&gt; i_request,</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;                <a class="code" href="structlt_1_1Guid.html">Guid</a> i_related)</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;            : m_request(std::move(i_request)), m_relatedGuid(i_related), m_backend(i_backend)</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;        {</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;        }</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160; </div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;        std::unique_ptr&lt;Req&gt; m_request;</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;        <a class="code" href="structlt_1_1Guid.html">Guid</a> m_relatedGuid;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;        std::shared_ptr&lt;detail::ReplierImpl&lt;Req, Rep&gt;&gt; m_backend;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    };</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160; </div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    Session getPendingSession(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160; </div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Replier.html#adf75cd7cf9ad2f83d12ae4c289ffc3f5">serviceName</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160; </div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Replier.html#a6cd97033703456e08747969531835e6e">impostorsExist</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160; </div>
+<div class="line"><a name="l00098"></a><span class="lineno"><a class="line" href="classlt_1_1Replier.html#af27ea5c20d6235c6ae3e4a1513633104">   98</a></span>&#160;    <span class="keyword">operator</span> AwaitablePtr() { <span class="keywordflow">return</span> m_backend; }</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160; </div>
+<div class="line"><a name="l00101"></a><span class="lineno"><a class="line" href="classlt_1_1Replier.html#a63d7a4a83ac66678ecf9728f311224c4">  101</a></span>&#160;    <span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Replier.html#a63d7a4a83ac66678ecf9728f311224c4">isOkay</a>()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_backend != <span class="keyword">nullptr</span>; }</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160; </div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    <a class="code" href="classlt_1_1Replier.html">Replier</a>(std::shared_ptr&lt;detail::ReplierImpl&lt;Req, Rep&gt;&gt; i_backend) : m_backend(i_backend) {}</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160; </div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;   <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;    <span class="keyword">friend</span> <span class="keyword">class </span>Participant;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160; </div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    std::shared_ptr&lt;detail::ReplierImpl&lt;Req, Rep&gt;&gt; m_backend;  <span class="comment">// This class just wraps access to the shared backend</span></div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;};</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160; </div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00115"></a><span class="lineno"><a class="line" href="namespacelt.html#aeb0f707f31a052cb51d60e1e3a3dc2cc">  115</a></span>&#160;<a class="code" href="classlt_1_1Replier.html">Replier&lt;Req, Rep&gt;</a> <a class="code" href="namespacelt.html#aeb0f707f31a052cb51d60e1e3a3dc2cc">castToReplier</a>(AwaitablePtr i_ptr)</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;{</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="keywordflow">return</span> <a class="code" href="classlt_1_1Replier.html">Replier&lt;Req, Rep&gt;</a>(std::dynamic_pointer_cast&lt;detail::ReplierImpl&lt;Req, Rep&gt;&gt;(i_ptr));</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;}</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160; </div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;}  <span class="comment">// namespace lt</span></div>
+<div class="ttc" id="aclasslt_1_1Participant_html"><div class="ttname"><a href="classlt_1_1Participant.html">lt::Participant</a></div><div class="ttdoc">Allows participating in DDS communication.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:25</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html">lt::Replier::Session</a></div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:59</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_a86d68a6ffe282cdcf81daa33e78b39f1"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#a86d68a6ffe282cdcf81daa33e78b39f1">lt::Replier::Session::isAlive</a></div><div class="ttdeci">bool isAlive()</div><div class="ttdoc">Check if the session is viable.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:74</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_ab3e9a5e4713b1da211c51f7e3cc939ca"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#ab3e9a5e4713b1da211c51f7e3cc939ca">lt::Replier::Session::request</a></div><div class="ttdeci">Req const  &amp; request() const</div><div class="ttdoc">Get the request data. Only valid if isAlive() is true.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:62</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_ad41c0891951c379917139591b9267a6f"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#ad41c0891951c379917139591b9267a6f">lt::Replier::Session::fail</a></div><div class="ttdeci">void fail()</div><div class="ttdoc">Mark the request as failed.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:293</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_af43d106a1757604277268020cf225d1f"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">lt::Replier::Session::reply</a></div><div class="ttdeci">void reply(Rep const &amp;i_reply)</div><div class="ttdoc">Send the reply, ending the session.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:279</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html"><div class="ttname"><a href="classlt_1_1Replier.html">lt::Replier</a></div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:57</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html_a63d7a4a83ac66678ecf9728f311224c4"><div class="ttname"><a href="classlt_1_1Replier.html#a63d7a4a83ac66678ecf9728f311224c4">lt::Replier::isOkay</a></div><div class="ttdeci">bool isOkay() const</div><div class="ttdoc">Check that this object has a reference to the backend.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:101</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html_a6cd97033703456e08747969531835e6e"><div class="ttname"><a href="classlt_1_1Replier.html#a6cd97033703456e08747969531835e6e">lt::Replier::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:312</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html_adf75cd7cf9ad2f83d12ae4c289ffc3f5"><div class="ttname"><a href="classlt_1_1Replier.html#adf75cd7cf9ad2f83d12ae4c289ffc3f5">lt::Replier::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:306</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html"><div class="ttname"><a href="classlt_1_1Requester.html">lt::Requester</a></div><div class="ttdoc">A lightweight requester wrapper.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:29</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a62a70c92466b241ae1e08e6fd085ce2d"><div class="ttname"><a href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">lt::Requester::isConnected</a></div><div class="ttdeci">bool isConnected() const</div><div class="ttdoc">Check that there is at least one publisher to Req.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:201</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a7e160a410090e37aafd30e433efda865"><div class="ttname"><a href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">lt::Requester::request</a></div><div class="ttdeci">std::future&lt; Rep &gt; request(Req const &amp;i_request)</div><div class="ttdoc">Make a request.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:189</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a81261c367660bbfb45a7675a7b2269f1"><div class="ttname"><a href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">lt::Requester::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:207</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_aaed26041cc5c83ecfd391d5d374514aa"><div class="ttname"><a href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">lt::Requester::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:183</div></div>
 <div class="ttc" id="anamespacelt_html"><div class="ttname"><a href="namespacelt.html">lt</a></div><div class="ttdoc">All Let's Talk symbols reside in namespace &quot;lt&quot;.</div><div class="ttdef"><b>Definition:</b> ActiveObject.cpp:3</div></div>
+<div class="ttc" id="anamespacelt_html_aeb0f707f31a052cb51d60e1e3a3dc2cc"><div class="ttname"><a href="namespacelt.html#aeb0f707f31a052cb51d60e1e3a3dc2cc">lt::castToReplier</a></div><div class="ttdeci">Replier&lt; Req, Rep &gt; castToReplier(AwaitablePtr i_ptr)</div><div class="ttdoc">Cast an awaitable pointer back into a replier.</div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:115</div></div>
+<div class="ttc" id="astructlt_1_1Guid_html"><div class="ttname"><a href="structlt_1_1Guid.html">lt::Guid</a></div><div class="ttdoc">Unique identifer attached to a message.</div><div class="ttdef"><b>Definition:</b> Guid.hpp:16</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

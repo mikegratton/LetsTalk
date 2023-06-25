@@ -103,6 +103,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1ActiveObject.html">ActiveObject</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class with an internal worker thread to synchronize access to private members.  <a href="classlt_1_1ActiveObject.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Awaitable.html">Awaitable</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structlt_1_1Guid.html">Guid</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unique identifer attached to a message.  <a href="structlt_1_1Guid.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -115,21 +117,26 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Publisher.html">Publisher</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends messages to a topic.  <a href="classlt_1_1Publisher.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1QueueWaitset.html">QueueWaitset</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for any attached <a class="el" href="classlt_1_1ThreadSafeQueue.html" title="A simple producer/subscriber queue using unique_ptr.">ThreadSafeQueue</a> to have messages.  <a href="classlt_1_1QueueWaitset.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1ReactorClient.html">ReactorClient</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Submit reactor requests and control reactor sessions.  <a href="classlt_1_1ReactorClient.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1ReactorServer.html">ReactorServer</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Receive reactor requests and post progress and results.  <a href="classlt_1_1ReactorServer.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Replier.html">Replier</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1ThreadSafeQueue.html">ThreadSafeQueue</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A simple producer/subscriber queue using unique_ptr.  <a href="classlt_1_1ThreadSafeQueue.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Waitset.html">Waitset</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Wait for any attached <a class="el" href="classlt_1_1Awaitable.html">Awaitable</a> to have messages.  <a href="classlt_1_1Waitset.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:a874d18be76083d5109fdf25313ae6327"><td class="memItemLeft" align="right" valign="top"><a id="a874d18be76083d5109fdf25313ae6327"></a>
+using&#160;</td><td class="memItemRight" valign="bottom"><b>AwaitablePtr</b> = std::shared_ptr&lt; <a class="el" href="classlt_1_1Awaitable.html">Awaitable</a> &gt;</td></tr>
+<tr class="separator:a874d18be76083d5109fdf25313ae6327"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8529a676fd3124a1ef98d5189aa6d931"><td class="memItemLeft" align="right" valign="top"><a id="a8529a676fd3124a1ef98d5189aa6d931"></a>
 using&#160;</td><td class="memItemRight" valign="bottom"><b>ParticipantPtr</b> = std::shared_ptr&lt; <a class="el" href="classlt_1_1Participant.html">Participant</a> &gt;</td></tr>
 <tr class="separator:a8529a676fd3124a1ef98d5189aa6d931"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -184,10 +191,6 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (<a cl
 <tr class="memitem:a36721e693ecfaf822d4700ffd8232acc"><td class="memItemLeft" align="right" valign="top"><a id="a36721e693ecfaf822d4700ffd8232acc"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getDefaultProfileXml</b> ()</td></tr>
 <tr class="separator:a36721e693ecfaf822d4700ffd8232acc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f18cbd891c604c0531c6c3a06e5c914"><td class="memTemplParams" colspan="2">template&lt;class... Ts&gt; </td></tr>
-<tr class="memitem:a5f18cbd891c604c0531c6c3a06e5c914"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">makeQueueWaitset</a> (QueuePtr&lt; Ts &gt; &amp;... io_waitsets)</td></tr>
-<tr class="memdesc:a5f18cbd891c604c0531c6c3a06e5c914"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build a waitset out of one or more QueuePtr&lt;T&gt;'s.  <a href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">More...</a><br /></td></tr>
-<tr class="separator:a5f18cbd891c604c0531c6c3a06e5c914"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a068c1ef7361f9193f2695a4e90944b3b"><td class="memItemLeft" align="right" valign="top"><a id="a068c1ef7361f9193f2695a4e90944b3b"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>reactorCommandName</b> (std::string const &amp;i_name)</td></tr>
 <tr class="separator:a068c1ef7361f9193f2695a4e90944b3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -200,6 +203,16 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>reactorReplyNa
 <tr class="memitem:a73055a0cecb1f3303c0b155f0b64c09f"><td class="memItemLeft" align="right" valign="top"><a id="a73055a0cecb1f3303c0b155f0b64c09f"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>reactorRequestName</b> (std::string const &amp;i_name)</td></tr>
 <tr class="separator:a73055a0cecb1f3303c0b155f0b64c09f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e1fb840b0b776bf9229f436cb2c0c24"><td class="memTemplParams" colspan="2"><a id="a7e1fb840b0b776bf9229f436cb2c0c24"></a>
+template&lt;class Req , class Rep , class ProgressData  = reactor_void_progress&gt; </td></tr>
+<tr class="memitem:a7e1fb840b0b776bf9229f436cb2c0c24"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1ReactorServer.html">ReactorServer</a>&lt; Req, Rep, ProgressData &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacelt.html#a7e1fb840b0b776bf9229f436cb2c0c24">castToReactor</a> (AwaitablePtr i_ptr)</td></tr>
+<tr class="memdesc:a7e1fb840b0b776bf9229f436cb2c0c24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cast an awaitable pointer back into a reactor server. <br /></td></tr>
+<tr class="separator:a7e1fb840b0b776bf9229f436cb2c0c24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb0f707f31a052cb51d60e1e3a3dc2cc"><td class="memTemplParams" colspan="2"><a id="aeb0f707f31a052cb51d60e1e3a3dc2cc"></a>
+template&lt;class Req , class Rep &gt; </td></tr>
+<tr class="memitem:aeb0f707f31a052cb51d60e1e3a3dc2cc"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Replier.html">Replier</a>&lt; Req, Rep &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacelt.html#aeb0f707f31a052cb51d60e1e3a3dc2cc">castToReplier</a> (AwaitablePtr i_ptr)</td></tr>
+<tr class="memdesc:aeb0f707f31a052cb51d60e1e3a3dc2cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cast an awaitable pointer back into a replier. <br /></td></tr>
+<tr class="separator:aeb0f707f31a052cb51d60e1e3a3dc2cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>All Let's Talk symbols reside in namespace "lt". </p>
@@ -209,36 +222,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>reactorRequest
 <p>Some examples of reactors:</p>
 <p>A garage door opener service. The client requests the door to be opened, and the server sends back progress related to how open the door is now. The reply type may be blank. Cancellation could cause the server to try to restore the door to its previous state (open or closed).</p>
 <p>A route planner service. The client requests a safe route from a start to a goal. The server runs an anytime algorithm with a fixed time budget. Progress messages are sent at a regular interval, but may jump to fully complete if the algorithm solves the problem before the time elapses. The reply is the safe route. The client may cancel the calculation if the upcoming task of the robot has changed. </p>
-</div><h2 class="groupheader">Function Documentation</h2>
-<a id="a5f18cbd891c604c0531c6c3a06e5c914"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5f18cbd891c604c0531c6c3a06e5c914">&#9670;&nbsp;</a></span>makeQueueWaitset()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class... Ts&gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">auto lt::makeQueueWaitset </td>
-          <td>(</td>
-          <td class="paramtype">QueuePtr&lt; Ts &gt; &amp;...&#160;</td>
-          <td class="paramname"><em>io_waitsets</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Build a waitset out of one or more QueuePtr&lt;T&gt;'s. </p>
-<p>Example: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
-<div class="line"><span class="keyword">auto</span> type1Sub = node-&gt;subscribe&lt;MyType1&gt;(<span class="stringliteral">&quot;topic1&quot;</span>);</div>
-<div class="line"><span class="keyword">auto</span> type2Sub = node-&gt;subscribe&lt;MyType2&gt;(<span class="stringliteral">&quot;topic2&quot;</span>);</div>
-<div class="line"><span class="keyword">auto</span> waitset = <a class="code" href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">makeQueueWaitset</a>(type1Sub, type2Sub);</div>
-<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:26</div></div>
-<div class="ttc" id="anamespacelt_html_a5f18cbd891c604c0531c6c3a06e5c914"><div class="ttname"><a href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">lt::makeQueueWaitset</a></div><div class="ttdeci">auto makeQueueWaitset(QueuePtr&lt; Ts &gt; &amp;... io_waitsets)</div><div class="ttdoc">Build a waitset out of one or more QueuePtr&lt;T&gt;'s.</div><div class="ttdef"><b>Definition:</b> QueueWaitset.hpp:133</div></div>
-</div><!-- fragment --> 
-</div>
-</div>
-</div><!-- contents -->
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

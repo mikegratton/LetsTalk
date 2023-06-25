@@ -77,12 +77,27 @@ class ReactorServer : public std::enable_shared_from_this<ReactorServer<Req, Rep
     /// Count number of discovered clients
     int discoveredClients() const;
 
+    /// Cast to an awaitable for attaching to a waitset
     operator AwaitablePtr() { return m_backend; }
+
+    /// Check that this object is valid
+    bool isOkay() const { return m_backend != nullptr; }
+
+    ReactorServer(std::shared_ptr<Backend> i_backend);
 
    protected:
     friend class Participant;
-    ReactorServer(std::shared_ptr<Backend> i_backend);
     std::shared_ptr<Backend> m_backend;
 };
+
+/**
+ * @brief Cast an awaitable pointer back into a reactor server
+ */
+template <class Req, class Rep, class ProgressData = reactor_void_progress>
+ReactorServer<Req, Rep, ProgressData> castToReactor(AwaitablePtr i_ptr)
+{
+    return ReactorServer<Req, Rep, ProgressData>(
+        std::dynamic_pointer_cast<detail::ReactorServerBackend<Req, Rep, ProgressData>>(i_ptr));
+}
 
 }  // namespace lt

@@ -90,178 +90,318 @@ $(document).ready(function(){initNavTree('RequestReplyImpl_8hpp_source.html','')
 </div><!--header-->
 <div class="contents">
 <div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="preprocessor">#pragma once</span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor">#include &lt;fastdds/dds/publisher/Publisher.hpp&gt;</span></div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor">#include &lt;functional&gt;</span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160; </div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &quot;LetsTalk.hpp&quot;</span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="preprocessor">#include &quot;LetsTalkFwd.hpp&quot;</span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;ParticipantImpl.hpp&quot;</span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">// Request/Reply</span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacelt.html">lt</a> {</div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="keyword">namespace </span>detail {</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160; </div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment">// Request/Reply naming and constants</span></div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;std::string requestName(std::string i_name);</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;std::string replyName(std::string i_name);</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;efr::Time_t getBadTime();</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;efr::SampleIdentity getBadId();</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160; </div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment">// ServiceProvider is an internal active object used to convert a</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment">// subscription to a callback to the actual service provision.</span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="comment">// It tracks the Guid of the request automatically.</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep, <span class="keyword">class</span> C&gt;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="keyword">class </span>ServiceProvider : <span class="keyword">public</span> efd::DataReaderListener, ActiveObject {</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;   <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;    Publisher m_sender;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;    C m_providerCallback;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    Guid m_Id;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    std::string m_serviceName;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160; </div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;   <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    ServiceProvider(std::string <span class="keyword">const</span>&amp; i_serviceName, C i_providerCallback, Publisher i_publisher)</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;        : m_sender(i_publisher),</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;          m_providerCallback(i_providerCallback),</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;          m_Id(m_sender.guid()),</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;          m_serviceName(i_serviceName)</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    {</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    }</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160; </div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    <span class="keywordtype">void</span> on_data_available(efd::DataReader* i_reader)<span class="keyword"> override</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="keyword">    </span>{</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;        <span class="keywordflow">if</span> (<span class="keyword">nullptr</span> == i_reader) { <span class="keywordflow">return</span>; }</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;        Req data;</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        efd::SampleInfo info;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;        <span class="keywordflow">while</span> (ReturnCode_t::RETCODE_OK == i_reader-&gt;take_next_sample(&amp;data, &amp;info)) {</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;            <span class="keywordflow">if</span> (info.valid_data) {</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;                Guid relatedId = <a class="code" href="namespacelt.html#afe6f6d4a6f7d87d8e4ec76a6aeb10357">toLetsTalkGuid</a>(info.sample_identity);</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;                LT_LOG &lt;&lt; m_serviceName &lt;&lt; <span class="stringliteral">&quot;: Request &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot; received\n&quot;</span>;</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;                submitJob([<span class="keyword">this</span>, data, relatedId]() {</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;                    Rep reply;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;                    <span class="keywordtype">bool</span> isBad = <span class="keyword">false</span>;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;                    <span class="keywordflow">try</span> {</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;                        reply = m_providerCallback(data);</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;                    } <span class="keywordflow">catch</span> (...) {</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;                        isBad = <span class="keyword">true</span>;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;                    }</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;                    LT_LOG &lt;&lt; m_serviceName &lt;&lt; <span class="stringliteral">&quot;: Sending reply for &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot;, result &quot;</span></div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;                           &lt;&lt; (isBad ? <span class="stringliteral">&quot;FAILED&quot;</span> : <span class="stringliteral">&quot;okay&quot;</span>) &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;                    m_sender.publish(reply, m_Id.increment(), relatedId, isBad);</div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;                });</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;            }</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;        }</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    }</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;};</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160; </div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="keyword">class </span>RequesterImpl {</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;   <span class="keyword">public</span>:</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    RequesterImpl(std::shared_ptr&lt;Participant&gt; i_participant, std::string <span class="keyword">const</span>&amp; i_serviceName)</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;        : m_participant(i_participant),</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;          m_serviceName(i_serviceName),</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;          m_requestPub(m_participant-&gt;advertise&lt;Req&gt;(detail::requestName(m_serviceName), <span class="stringliteral">&quot;stateful&quot;</span>, -1)),</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;          m_sessionId(m_requestPub.guid())</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    {</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        m_participant-&gt;subscribe&lt;Rep&gt;(</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            detail::replyName(serviceName()),</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;            [<span class="keyword">this</span>](Rep <span class="keyword">const</span>&amp; data, Guid <span class="keyword">const</span>&amp; nope, Guid <span class="keyword">const</span>&amp; id) { this-&gt;onReply(data, nope, <span class="keywordtype">id</span>); }, <span class="stringliteral">&quot;stateful&quot;</span>,</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            -1);</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    }</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160; </div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;    ~RequesterImpl() { m_participant-&gt;unsubscribe(detail::replyName(serviceName())); }</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160; </div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    std::string <span class="keyword">const</span>&amp; serviceName()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_serviceName; }</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160; </div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    std::future&lt;Rep&gt; request(Req <span class="keyword">const</span>&amp; i_request)</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;    {</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;        <span class="comment">// Send the request</span></div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;        Guid requestId;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        std::future&lt;Rep&gt; future;</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        {</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;            std::unique_lock&lt;std::mutex&gt; guard(m_lock);</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;            requestId = m_sessionId.increment();</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;            future = m_requests[requestId].get_future();</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;        }</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        m_requestPub.publish(i_request, requestId, <a class="code" href="structlt_1_1Guid.html#a30e970fb6e2e37d17a284b76ea936c95">Guid::UNKNOWN</a>());</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;        LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Making request &quot;</span> &lt;&lt; requestId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;        <span class="keywordflow">return</span> future;</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;    }</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160; </div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;    <span class="keywordtype">bool</span> isConnected()<span class="keyword"> const</span></div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;<span class="keyword">    </span>{</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        <span class="keywordtype">int</span> providerCount = m_participant-&gt;subscriberCount(detail::requestName(serviceName()));</div>
-<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;        <span class="keywordflow">if</span> (providerCount &gt; 1) {</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;            LT_LOG &lt;&lt; <span class="stringliteral">&quot;Warning! Service &quot;</span> &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot; has &quot;</span> &lt;&lt; providerCount &lt;&lt; <span class="stringliteral">&quot; providers.&quot;</span>;</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;        }</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;        <span class="keywordflow">return</span> providerCount &gt; 0;</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;    }</div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160; </div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;    <span class="keywordtype">bool</span> impostorsExist()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_participant-&gt;subscriberCount(detail::requestName(serviceName())) &gt; 1; }</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160; </div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;   <span class="keyword">protected</span>:</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    <span class="keywordtype">void</span> onReply(Rep <span class="keyword">const</span>&amp; data, Guid <span class="keyword">const</span>&amp; <span class="keywordtype">id</span>, Guid <span class="keyword">const</span>&amp; relatedId)</div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    {</div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;        Guid badId = relatedId.makeBadVersion();</div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;        std::unique_lock&lt;std::mutex&gt; guard(m_lock);</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;        <span class="keyword">auto</span> it = m_requests.find(relatedId);</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        <span class="keywordflow">if</span> (it != m_requests.end()) {</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;            LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Success response received for pending request &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;            it-&gt;second.set_value(data);</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;            m_requests.erase(it);</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;            <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;        }</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;        it = m_requests.find(badId);</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;        <span class="keywordflow">if</span> (it != m_requests.end()) {</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;            LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Failure response received for pending request &quot;</span> &lt;&lt; badId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;            it-&gt;second.set_exception(std::make_exception_ptr(std::runtime_error(<span class="stringliteral">&quot;RPC failed&quot;</span>)));</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;            m_requests.erase(it);</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;            <span class="keywordflow">return</span>;</div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;        }</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;        LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Reply for &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot; (aka &quot;</span> &lt;&lt; badId &lt;&lt; <span class="stringliteral">&quot;) ignored.\n&quot;</span>;</div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    }</div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="preprocessor">#include &lt;condition_variable&gt;</span></div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="preprocessor">#include &lt;fastdds/dds/publisher/Publisher.hpp&gt;</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="preprocessor">#include &lt;functional&gt;</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160; </div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="preprocessor">#include &quot;Awaitable.hpp&quot;</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#include &quot;LetsTalk.hpp&quot;</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor">#include &quot;LetsTalkFwd.hpp&quot;</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor">#include &quot;Participant.hpp&quot;</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor">#include &quot;ParticipantImpl.hpp&quot;</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor">#include &quot;ThreadSafeQueue.hpp&quot;</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment">// Request/Reply</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="keyword">namespace </span><a class="code" href="namespacelt.html">lt</a> {</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="keyword">namespace </span>detail {</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160; </div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">// Request/Reply naming and constants</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;std::string requestName(std::string i_name);</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;std::string replyName(std::string i_name);</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;efr::Time_t getBadTime();</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;efr::SampleIdentity getBadId();</div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160; </div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment">// ServiceProvider is an internal active object used to convert a</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">// subscription to a callback to the actual service provision.</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">// It tracks the Guid of the request automatically.</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep, <span class="keyword">class</span> C&gt;</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keyword">class </span>ServiceProvider : <span class="keyword">public</span> efd::DataReaderListener, ActiveObject {</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;   <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;    Publisher m_sender;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;    C m_providerCallback;</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;    Guid m_Id;</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;    std::string m_serviceName;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160; </div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;   <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    ServiceProvider(std::string <span class="keyword">const</span>&amp; i_serviceName, C i_providerCallback, Publisher i_publisher)</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        : m_sender(i_publisher),</div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;          m_providerCallback(i_providerCallback),</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;          m_Id(m_sender.guid()),</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;          m_serviceName(i_serviceName)</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    {</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    }</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160; </div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;    <span class="keywordtype">void</span> on_data_available(efd::DataReader* i_reader)<span class="keyword"> override</span></div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="keyword">    </span>{</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;        <span class="keywordflow">if</span> (<span class="keyword">nullptr</span> == i_reader) { <span class="keywordflow">return</span>; }</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;        Req data;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        efd::SampleInfo info;</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        <span class="keywordflow">while</span> (ReturnCode_t::RETCODE_OK == i_reader-&gt;take_next_sample(&amp;data, &amp;info)) {</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;            <span class="keywordflow">if</span> (info.valid_data) {</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;                Guid relatedId = <a class="code" href="namespacelt.html#afe6f6d4a6f7d87d8e4ec76a6aeb10357">toLetsTalkGuid</a>(info.sample_identity);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;                LT_LOG &lt;&lt; m_serviceName &lt;&lt; <span class="stringliteral">&quot;: Request &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot; received\n&quot;</span>;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;                submitJob([<span class="keyword">this</span>, data, relatedId]() {</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;                    Rep reply;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;                    <span class="keywordtype">bool</span> isBad = <span class="keyword">false</span>;</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;                    <span class="keywordflow">try</span> {</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;                        reply = m_providerCallback(data);</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;                    } <span class="keywordflow">catch</span> (...) {</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;                        isBad = <span class="keyword">true</span>;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;                    }</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;                    LT_LOG &lt;&lt; m_serviceName &lt;&lt; <span class="stringliteral">&quot;: Sending reply for &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot;, result &quot;</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;                           &lt;&lt; (isBad ? <span class="stringliteral">&quot;FAILED&quot;</span> : <span class="stringliteral">&quot;okay&quot;</span>) &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;                    m_sender.publish(reply, m_Id.increment(), relatedId, isBad);</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;                });</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;            }</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;        }</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    }</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;};</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160; </div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;<span class="keyword">class </span>RequesterImpl : <span class="keyword">public</span> RequesterImplBase {</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;   <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;    RequesterImpl(std::shared_ptr&lt;Participant&gt; i_participant, std::string <span class="keyword">const</span>&amp; i_serviceName)</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;        : m_participant(i_participant),</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;          m_serviceName(i_serviceName),</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;          m_requestPub(m_participant-&gt;advertise&lt;Req&gt;(detail::requestName(m_serviceName), <span class="stringliteral">&quot;stateful&quot;</span>, -1)),</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;          m_sessionId(m_requestPub.guid())</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;        m_participant-&gt;subscribe&lt;Rep&gt;(</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;            detail::replyName(serviceName()),</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;            [<span class="keyword">this</span>](Rep <span class="keyword">const</span>&amp; data, Guid <span class="keyword">const</span>&amp; nope, Guid <span class="keyword">const</span>&amp; id) { this-&gt;onReply(data, nope, <span class="keywordtype">id</span>); }, <span class="stringliteral">&quot;stateful&quot;</span>,</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;            -1);</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;    }</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160; </div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    ~RequesterImpl() { m_participant-&gt;unsubscribe(detail::replyName(serviceName())); }</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160; </div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    std::string <span class="keyword">const</span>&amp; serviceName()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_serviceName; }</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160; </div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    std::future&lt;Rep&gt; request(Req <span class="keyword">const</span>&amp; i_request)</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;    {</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;        <span class="comment">// Send the request</span></div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        Guid requestId;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;        std::future&lt;Rep&gt; future;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        {</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;            std::unique_lock&lt;std::mutex&gt; guard(m_lock);</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;            requestId = m_sessionId.increment();</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;            future = m_requests[requestId].get_future();</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;        }</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;        m_requestPub.publish(i_request, requestId, <a class="code" href="structlt_1_1Guid.html#a30e970fb6e2e37d17a284b76ea936c95">Guid::UNKNOWN</a>());</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Making request &quot;</span> &lt;&lt; requestId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        <span class="keywordflow">return</span> future;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    }</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160; </div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;    std::future&lt;Rep&gt; request(std::unique_ptr&lt;Req&gt; i_request)</div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;    {</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;        <span class="comment">// Send the request</span></div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;        Guid requestId;</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;        std::future&lt;Rep&gt; future;</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;        {</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;            std::unique_lock&lt;std::mutex&gt; guard(m_lock);</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;            requestId = m_sessionId.increment();</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;            future = m_requests[requestId].get_future();</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;        }</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;        m_requestPub.publish(std::move(i_request), requestId, <a class="code" href="structlt_1_1Guid.html#a30e970fb6e2e37d17a284b76ea936c95">Guid::UNKNOWN</a>());</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;        LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Making request &quot;</span> &lt;&lt; requestId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;        <span class="keywordflow">return</span> future;</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;    }</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160; </div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;    <span class="keywordtype">bool</span> isConnected()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;<span class="keyword">    </span>{</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;        <span class="keywordtype">int</span> providerCount = m_participant-&gt;subscriberCount(detail::requestName(serviceName()));</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        <span class="keywordflow">if</span> (providerCount &gt; 1) {</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;            LT_LOG &lt;&lt; <span class="stringliteral">&quot;Warning! Service &quot;</span> &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot; has &quot;</span> &lt;&lt; providerCount &lt;&lt; <span class="stringliteral">&quot; providers.&quot;</span>;</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;        }</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;        <span class="keywordflow">return</span> providerCount &gt; 0;</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    }</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160; </div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    <span class="keywordtype">bool</span> impostorsExist()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_participant-&gt;subscriberCount(detail::requestName(serviceName())) &gt; 1; }</div>
 <div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160; </div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;    std::shared_ptr&lt;Participant&gt; m_participant;  </div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;    std::string m_serviceName;                   </div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    Publisher m_requestPub;                      </div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    Guid m_sessionId;                            </div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160; </div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;    <span class="keyword">using</span> Promise = std::promise&lt;Rep&gt;;   </div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;    std::mutex m_lock;                   </div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;    std::map&lt;Guid, Promise&gt; m_requests;  </div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;};</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160; </div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;}  <span class="comment">// namespace detail</span></div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160; </div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00160"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">  160</a></span>&#160;std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">Requester&lt;Req, Rep&gt;::serviceName</a>()<span class="keyword"> const</span></div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;<span class="keyword"></span>{</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;serviceName();</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;}</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160; </div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00166"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">  166</a></span>&#160;std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">Requester&lt;Req, Rep&gt;::request</a>(Req <span class="keyword">const</span>&amp; i_request)</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;{</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;request(i_request);</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;}</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160; </div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00172"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">  172</a></span>&#160;<span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">Requester&lt;Req, Rep&gt;::isConnected</a>()<span class="keyword"> const</span></div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;<span class="keyword"></span>{</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;isConnected();</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;}</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160; </div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
-<div class="line"><a name="l00178"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">  178</a></span>&#160;<span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">Requester&lt;Req, Rep&gt;::impostorsExist</a>()<span class="keyword"> const</span></div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;<span class="keyword"></span>{</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;impostorsExist();</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;}</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160; </div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;}  <span class="comment">// namespace lt</span></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a62a70c92466b241ae1e08e6fd085ce2d"><div class="ttname"><a href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">lt::Requester::isConnected</a></div><div class="ttdeci">bool isConnected() const</div><div class="ttdoc">Check that there is at least one publisher to Req.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:172</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a7e160a410090e37aafd30e433efda865"><div class="ttname"><a href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">lt::Requester::request</a></div><div class="ttdeci">std::future&lt; Rep &gt; request(Req const &amp;i_request)</div><div class="ttdoc">Make a request.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:166</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_a81261c367660bbfb45a7675a7b2269f1"><div class="ttname"><a href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">lt::Requester::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:178</div></div>
-<div class="ttc" id="aclasslt_1_1Requester_html_aaed26041cc5c83ecfd391d5d374514aa"><div class="ttname"><a href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">lt::Requester::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:160</div></div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;   <span class="keyword">protected</span>:</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    <span class="keywordtype">void</span> onReply(Rep <span class="keyword">const</span>&amp; data, Guid <span class="keyword">const</span>&amp; <span class="keywordtype">id</span>, Guid <span class="keyword">const</span>&amp; relatedId)</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;    {</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        Guid badId = relatedId.makeBadVersion();</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        std::unique_lock&lt;std::mutex&gt; guard(m_lock);</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;        <span class="keyword">auto</span> it = m_requests.find(relatedId);</div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;        <span class="keywordflow">if</span> (it != m_requests.end()) {</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;            LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Success response received for pending request &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;            it-&gt;second.set_value(data);</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;            m_requests.erase(it);</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;            <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;        }</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;        it = m_requests.find(badId);</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;        <span class="keywordflow">if</span> (it != m_requests.end()) {</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;            LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Failure response received for pending request &quot;</span> &lt;&lt; badId &lt;&lt; <span class="stringliteral">&quot;\n&quot;</span>;</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;            it-&gt;second.set_exception(std::make_exception_ptr(std::runtime_error(<span class="stringliteral">&quot;RPC failed&quot;</span>)));</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;            m_requests.erase(it);</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;            <span class="keywordflow">return</span>;</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;        }</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        LT_LOG &lt;&lt; serviceName() &lt;&lt; <span class="stringliteral">&quot;: Reply for &quot;</span> &lt;&lt; relatedId &lt;&lt; <span class="stringliteral">&quot; (aka &quot;</span> &lt;&lt; badId &lt;&lt; <span class="stringliteral">&quot;) ignored.\n&quot;</span>;</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;    }</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160; </div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;    std::shared_ptr&lt;Participant&gt; m_participant;  </div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;    std::string m_serviceName;                   </div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;    Publisher m_requestPub;                      </div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;    Guid m_sessionId;                            </div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160; </div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    <span class="keyword">using</span> Promise = std::promise&lt;Rep&gt;;   </div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;    std::mutex m_lock;                   </div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;    std::map&lt;Guid, Promise&gt; m_requests;  </div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;};</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160; </div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;}  <span class="comment">// namespace detail</span></div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160; </div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00183"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">  183</a></span>&#160;std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">Requester&lt;Req, Rep&gt;::serviceName</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;<span class="keyword"></span>{</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;serviceName();</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;}</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160; </div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00189"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">  189</a></span>&#160;std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">Requester&lt;Req, Rep&gt;::request</a>(Req <span class="keyword">const</span>&amp; i_request)</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;{</div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;request(i_request);</div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;}</div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160; </div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00195"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#abdcf24da7a463572b7d49f2622b079f6">  195</a></span>&#160;std::future&lt;Rep&gt; <a class="code" href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">Requester&lt;Req, Rep&gt;::request</a>(std::unique_ptr&lt;Req&gt; i_request)</div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;{</div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;request(std::move(i_request));</div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;}</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160; </div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00201"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">  201</a></span>&#160;<span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">Requester&lt;Req, Rep&gt;::isConnected</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;<span class="keyword"></span>{</div>
+<div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;isConnected();</div>
+<div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;}</div>
+<div class="line"><a name="l00205"></a><span class="lineno">  205</span>&#160; </div>
+<div class="line"><a name="l00206"></a><span class="lineno">  206</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00207"></a><span class="lineno"><a class="line" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">  207</a></span>&#160;<span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">Requester&lt;Req, Rep&gt;::impostorsExist</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00208"></a><span class="lineno">  208</span>&#160;<span class="keyword"></span>{</div>
+<div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;impostorsExist();</div>
+<div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;}</div>
+<div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160; </div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;<span class="keyword">namespace </span>detail {</div>
+<div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;<span class="keyword">class </span>ReplierImpl : <span class="keyword">public</span> std::enable_shared_from_this&lt;ReplierImpl&lt;Req, Rep&gt;&gt;, <span class="keyword">public</span> <a class="code" href="classlt_1_1Awaitable.html">Awaitable</a> {</div>
+<div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;   <span class="keyword">public</span>:</div>
+<div class="line"><a name="l00216"></a><span class="lineno">  216</span>&#160;    <span class="keyword">using</span> Session = <span class="keyword">typename</span> <a class="code" href="classlt_1_1Replier_1_1Session.html">Replier&lt;Req, Rep&gt;::Session</a>;</div>
+<div class="line"><a name="l00217"></a><span class="lineno">  217</span>&#160;    ParticipantPtr m_participant;</div>
+<div class="line"><a name="l00218"></a><span class="lineno">  218</span>&#160;    std::string m_serviceName;</div>
+<div class="line"><a name="l00219"></a><span class="lineno">  219</span>&#160;    <a class="code" href="classlt_1_1Publisher.html">Publisher</a> m_replyPub;</div>
+<div class="line"><a name="l00220"></a><span class="lineno">  220</span>&#160;    <a class="code" href="structlt_1_1Guid.html">Guid</a> m_myId;</div>
+<div class="line"><a name="l00221"></a><span class="lineno">  221</span>&#160;    <span class="keyword">struct </span>SessionRequest {</div>
+<div class="line"><a name="l00222"></a><span class="lineno">  222</span>&#160;        std::unique_ptr&lt;Req&gt; request;</div>
+<div class="line"><a name="l00223"></a><span class="lineno">  223</span>&#160;        <a class="code" href="structlt_1_1Guid.html">Guid</a> id;</div>
+<div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;    };</div>
+<div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;    ThreadSafeQueue&lt;SessionRequest&gt; m_queue;</div>
+<div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160; </div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    ReplierImpl(std::shared_ptr&lt;Participant&gt; i_participant, std::string <span class="keyword">const</span>&amp; i_serviceName)</div>
+<div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;        : m_participant(i_participant),</div>
+<div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;          m_serviceName(i_serviceName),</div>
+<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;          m_replyPub(m_participant-&gt;advertise&lt;Rep&gt;(detail::replyName(m_serviceName), <span class="stringliteral">&quot;stateful&quot;</span>, -1)),</div>
+<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;          m_myId(m_replyPub.guid())</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;    {</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;        m_participant-&gt;subscribe&lt;Req&gt;(</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;            detail::requestName(serviceName()),</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;            [<span class="keyword">this</span>](std::unique_ptr&lt;Req&gt; data, Guid <span class="keyword">const</span>&amp; id, Guid <span class="keyword">const</span>&amp;) {</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                <span class="keyword">auto</span> sessionData = std::make_unique&lt;SessionRequest&gt;();</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;                sessionData-&gt;request = std::move(data);</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                sessionData-&gt;id = id;</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                m_queue.push(std::move(sessionData));</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;            },</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;            <span class="stringliteral">&quot;stateful&quot;</span>, -1);</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;    }</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160; </div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;    ~ReplierImpl() { m_participant-&gt;unsubscribe(detail::requestName(serviceName())); }</div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160; </div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;    <span class="keywordtype">void</span> reply(Rep <span class="keyword">const</span>&amp; i_reply, Guid <span class="keyword">const</span>&amp; i_related) { m_replyPub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(i_reply, m_myId, i_related); }</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160; </div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;    <span class="keywordtype">void</span> reply(std::unique_ptr&lt;Rep&gt; <span class="keyword">const</span>&amp; i_reply, Guid <span class="keyword">const</span>&amp; i_related)</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;    {</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;        m_replyPub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(std::move(i_reply), m_myId, i_related);</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;    }</div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160; </div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;    <span class="keywordtype">void</span> fail(Guid <span class="keyword">const</span>&amp; i_related)</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;    {</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;        Rep nullReply;</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;        m_replyPub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(nullReply, m_myId, i_related, <span class="keyword">true</span>);</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;    }</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160; </div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;    std::string <span class="keyword">const</span>&amp; serviceName()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_serviceName; }</div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160; </div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;    <span class="keywordtype">bool</span> impostorsExist()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> m_participant-&gt;subscriberCount(detail::requestName(serviceName())) &gt; 1; }</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160; </div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;    Session getPendingSession(std::chrono::nanoseconds i_wait)</div>
+<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;    {</div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;        <span class="keyword">auto</span> data = m_queue.pop(i_wait);</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;        <span class="keywordflow">if</span> (data) { <span class="keywordflow">return</span> Session(this-&gt;shared_from_this(), std::move(data-&gt;request), data-&gt;id); }</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;        <span class="keywordflow">return</span> Session(<span class="keyword">nullptr</span>, <span class="keyword">nullptr</span>, <a class="code" href="structlt_1_1Guid.html#a30e970fb6e2e37d17a284b76ea936c95">Guid::UNKNOWN</a>());</div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;    }</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160; </div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;    <span class="comment">// Awaiter interface</span></div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;    <span class="keywordtype">void</span> attachToCondition(std::condition_variable* i_condition) <span class="keyword">final</span> { m_queue.attachToCondition(i_condition); }</div>
+<div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;    <span class="keywordtype">void</span> detachFromCondition() final { m_queue.detachFromCondition(); }</div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    <span class="keywordtype">bool</span> ready() const final { <span class="keywordflow">return</span> m_queue.ready(); }</div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;};</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;}  <span class="comment">// namespace detail</span></div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160; </div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00279"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">  279</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">Replier&lt;Req, Rep&gt;::Session::reply</a>(Rep <span class="keyword">const</span>&amp; i_reply)</div>
+<div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;{</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;    m_backend-&gt;reply(i_reply, m_relatedGuid);</div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;    m_backend = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;}</div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160; </div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00286"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html#a877041b321581000b006e927ddedc044">  286</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">Replier&lt;Req, Rep&gt;::Session::reply</a>(std::unique_ptr&lt;Rep&gt; i_reply)</div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;{</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;    m_backend-&gt;reply(std::move(i_reply), m_relatedGuid);</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;    m_backend = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;}</div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160; </div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00293"></a><span class="lineno"><a class="line" href="classlt_1_1Replier_1_1Session.html#ad41c0891951c379917139591b9267a6f">  293</a></span>&#160;<span class="keywordtype">void</span> <a class="code" href="classlt_1_1Replier_1_1Session.html#ad41c0891951c379917139591b9267a6f">Replier&lt;Req, Rep&gt;::Session::fail</a>()</div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;{</div>
+<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;    m_backend-&gt;fail(m_relatedGuid);</div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;    m_backend = <span class="keyword">nullptr</span>;</div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;}</div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160; </div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;<span class="keyword">typename</span> <a class="code" href="classlt_1_1Replier_1_1Session.html">Replier&lt;Req, Rep&gt;::Session</a> <a class="code" href="classlt_1_1Replier.html">Replier&lt;Req, Rep&gt;::getPendingSession</a>(std::chrono::nanoseconds i_wait)</div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;{</div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;getPendingSession(i_wait);</div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;}</div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160; </div>
+<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00306"></a><span class="lineno"><a class="line" href="classlt_1_1Replier.html#adf75cd7cf9ad2f83d12ae4c289ffc3f5">  306</a></span>&#160;std::string <span class="keyword">const</span>&amp; <a class="code" href="classlt_1_1Replier.html#adf75cd7cf9ad2f83d12ae4c289ffc3f5">Replier&lt;Req, Rep&gt;::serviceName</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;<span class="keyword"></span>{</div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;serviceName();</div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;}</div>
+<div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160; </div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;<span class="keyword">template</span> &lt;<span class="keyword">class</span> Req, <span class="keyword">class</span> Rep&gt;</div>
+<div class="line"><a name="l00312"></a><span class="lineno"><a class="line" href="classlt_1_1Replier.html#a6cd97033703456e08747969531835e6e">  312</a></span>&#160;<span class="keywordtype">bool</span> <a class="code" href="classlt_1_1Replier.html#a6cd97033703456e08747969531835e6e">Replier&lt;Req, Rep&gt;::impostorsExist</a>()<span class="keyword"> const</span></div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;<span class="keyword"></span>{</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;    <span class="keywordflow">return</span> m_backend-&gt;impostorsExist();</div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;}</div>
+<div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160; </div>
+<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;}  <span class="comment">// namespace lt</span></div>
+<div class="ttc" id="aclasslt_1_1Awaitable_html"><div class="ttname"><a href="classlt_1_1Awaitable.html">lt::Awaitable</a></div><div class="ttdef"><b>Definition:</b> Awaitable.hpp:7</div></div>
+<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:291</div></div>
+<div class="ttc" id="aclasslt_1_1Publisher_html_aa9a5ba8316bc12616e663feef7531ad3"><div class="ttname"><a href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">lt::Publisher::publish</a></div><div class="ttdeci">bool publish(std::unique_ptr&lt; T &gt; i_data)</div><div class="ttdef"><b>Definition:</b> ParticipantImpl.hpp:72</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html">lt::Replier::Session</a></div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:59</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_ad41c0891951c379917139591b9267a6f"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#ad41c0891951c379917139591b9267a6f">lt::Replier::Session::fail</a></div><div class="ttdeci">void fail()</div><div class="ttdoc">Mark the request as failed.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:293</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_1_1Session_html_af43d106a1757604277268020cf225d1f"><div class="ttname"><a href="classlt_1_1Replier_1_1Session.html#af43d106a1757604277268020cf225d1f">lt::Replier::Session::reply</a></div><div class="ttdeci">void reply(Rep const &amp;i_reply)</div><div class="ttdoc">Send the reply, ending the session.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:279</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html"><div class="ttname"><a href="classlt_1_1Replier.html">lt::Replier</a></div><div class="ttdef"><b>Definition:</b> RequestReply.hpp:57</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html_a6cd97033703456e08747969531835e6e"><div class="ttname"><a href="classlt_1_1Replier.html#a6cd97033703456e08747969531835e6e">lt::Replier::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:312</div></div>
+<div class="ttc" id="aclasslt_1_1Replier_html_adf75cd7cf9ad2f83d12ae4c289ffc3f5"><div class="ttname"><a href="classlt_1_1Replier.html#adf75cd7cf9ad2f83d12ae4c289ffc3f5">lt::Replier::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:306</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a62a70c92466b241ae1e08e6fd085ce2d"><div class="ttname"><a href="classlt_1_1Requester.html#a62a70c92466b241ae1e08e6fd085ce2d">lt::Requester::isConnected</a></div><div class="ttdeci">bool isConnected() const</div><div class="ttdoc">Check that there is at least one publisher to Req.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:201</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a7e160a410090e37aafd30e433efda865"><div class="ttname"><a href="classlt_1_1Requester.html#a7e160a410090e37aafd30e433efda865">lt::Requester::request</a></div><div class="ttdeci">std::future&lt; Rep &gt; request(Req const &amp;i_request)</div><div class="ttdoc">Make a request.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:189</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_a81261c367660bbfb45a7675a7b2269f1"><div class="ttname"><a href="classlt_1_1Requester.html#a81261c367660bbfb45a7675a7b2269f1">lt::Requester::impostorsExist</a></div><div class="ttdeci">bool impostorsExist() const</div><div class="ttdoc">Check that there is at most one subscriber to the Req topic.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:207</div></div>
+<div class="ttc" id="aclasslt_1_1Requester_html_aaed26041cc5c83ecfd391d5d374514aa"><div class="ttname"><a href="classlt_1_1Requester.html#aaed26041cc5c83ecfd391d5d374514aa">lt::Requester::serviceName</a></div><div class="ttdeci">std::string const  &amp; serviceName() const</div><div class="ttdoc">Retrieve the name of this service.</div><div class="ttdef"><b>Definition:</b> RequestReplyImpl.hpp:183</div></div>
 <div class="ttc" id="anamespacelt_html"><div class="ttname"><a href="namespacelt.html">lt</a></div><div class="ttdoc">All Let's Talk symbols reside in namespace &quot;lt&quot;.</div><div class="ttdef"><b>Definition:</b> ActiveObject.cpp:3</div></div>
 <div class="ttc" id="anamespacelt_html_afe6f6d4a6f7d87d8e4ec76a6aeb10357"><div class="ttname"><a href="namespacelt.html#afe6f6d4a6f7d87d8e4ec76a6aeb10357">lt::toLetsTalkGuid</a></div><div class="ttdeci">Guid toLetsTalkGuid(efr::GUID_t const &amp;i_guid)</div><div class="ttdoc">Convert from GUID_t. Sets the sequence to zero.</div><div class="ttdef"><b>Definition:</b> Guid.cpp:29</div></div>
+<div class="ttc" id="astructlt_1_1Guid_html"><div class="ttname"><a href="structlt_1_1Guid.html">lt::Guid</a></div><div class="ttdoc">Unique identifer attached to a message.</div><div class="ttdef"><b>Definition:</b> Guid.hpp:16</div></div>
 <div class="ttc" id="astructlt_1_1Guid_html_a30e970fb6e2e37d17a284b76ea936c95"><div class="ttname"><a href="structlt_1_1Guid.html#a30e970fb6e2e37d17a284b76ea936c95">lt::Guid::UNKNOWN</a></div><div class="ttdeci">static Guid UNKNOWN()</div><div class="ttdoc">A Guid representing unknown data.</div><div class="ttdef"><b>Definition:</b> Guid.hpp:27</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

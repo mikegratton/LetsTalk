@@ -1,14 +1,17 @@
 var namespacelt =
 [
     [ "ActiveObject", "classlt_1_1ActiveObject.html", "classlt_1_1ActiveObject" ],
+    [ "Awaitable", "classlt_1_1Awaitable.html", "classlt_1_1Awaitable" ],
     [ "Guid", "structlt_1_1Guid.html", "structlt_1_1Guid" ],
     [ "Requester", "classlt_1_1Requester.html", "classlt_1_1Requester" ],
     [ "Participant", "classlt_1_1Participant.html", "classlt_1_1Participant" ],
     [ "Publisher", "classlt_1_1Publisher.html", "classlt_1_1Publisher" ],
-    [ "QueueWaitset", "classlt_1_1QueueWaitset.html", "classlt_1_1QueueWaitset" ],
     [ "ReactorClient", "classlt_1_1ReactorClient.html", "classlt_1_1ReactorClient" ],
     [ "ReactorServer", "classlt_1_1ReactorServer.html", "classlt_1_1ReactorServer" ],
+    [ "Replier", "classlt_1_1Replier.html", "classlt_1_1Replier" ],
     [ "ThreadSafeQueue", "classlt_1_1ThreadSafeQueue.html", "classlt_1_1ThreadSafeQueue" ],
+    [ "Waitset", "classlt_1_1Waitset.html", "classlt_1_1Waitset" ],
+    [ "AwaitablePtr", "namespacelt.html#a874d18be76083d5109fdf25313ae6327", null ],
     [ "ParticipantPtr", "namespacelt.html#a8529a676fd3124a1ef98d5189aa6d931", null ],
     [ "QueuePtr", "namespacelt.html#a90a2f17539bf599593b4a125c8296ad5", null ],
     [ "ReactorProgressMark", "namespacelt.html#a95caec055633a0199eb72b74c453e9a6", [
@@ -18,8 +21,9 @@ var namespacelt =
       [ "PROG_START", "namespacelt.html#a95caec055633a0199eb72b74c453e9a6a4a61a36fe9645f18d38ddd861da84ead", null ],
       [ "PROG_SUCCESS", "namespacelt.html#a95caec055633a0199eb72b74c453e9a6a142b4a0ad592d027d4687c69b076e8d6", null ]
     ] ],
+    [ "castToReactor", "namespacelt.html#a7e1fb840b0b776bf9229f436cb2c0c24", null ],
+    [ "castToReplier", "namespacelt.html#aeb0f707f31a052cb51d60e1e3a3dc2cc", null ],
     [ "getDefaultProfileXml", "namespacelt.html#a36721e693ecfaf822d4700ffd8232acc", null ],
-    [ "makeQueueWaitset", "namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914", null ],
     [ "operator!=", "namespacelt.html#adaaa2cfbf2c14703802904b18f5776f2", null ],
     [ "operator<", "namespacelt.html#aa4657df944f3c4e4de4f3b92573c3f44", null ],
     [ "operator<<", "namespacelt.html#a0700cfcfb94060ad35c32a48bf6d1a92", null ],

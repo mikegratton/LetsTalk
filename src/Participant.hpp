@@ -4,6 +4,7 @@
 #include <mutex>
 #include <vector>
 
+#include "Awaitable.hpp"
 #include "LetsTalkFwd.hpp"
 #include "PubSubType.hpp"
 #include "Reactor.hpp"
@@ -75,11 +76,11 @@ class Participant : public std::enable_shared_from_this<Participant> {
     QueuePtr<T> subscribe(std::string const& i_topic, std::string const& i_qosProfile = "", int i_historyDepth = -1);
 
     /**
-     * @brief Unsubscribe from the given topic
+     * @brief Unsubscribe from the given topic or service
      *
-     * @param i_topic Topic to unsubscribe from
+     * @param i_topic Topic or service to unsubscribe from
      */
-    void unsubscribe(std::string const& i_topic);
+    void unsubscribe(std::string const& i_topicOrService);
 
     /**
      *
@@ -139,6 +140,17 @@ class Participant : public std::enable_shared_from_this<Participant> {
      * @param i_service Service to discontinue
      */
     void unadvertise(std::string const& i_service);
+
+    /**
+     * @brief Make a single request to a service
+     *
+     * @param i_serviceName Name of the service
+     * @param requestData Data of the request
+     *
+     * Compared to using makeRequester(), this form is less efficient but more convenient.
+     */
+    template <class Req, class Rep>
+    std::future<Rep> request(std::string const& i_serviceName, Req const& i_requestData);
 
     /**
      * @brief Build a requester object for making requests to a service.
@@ -265,6 +277,9 @@ class Participant : public std::enable_shared_from_this<Participant> {
     mutable std::mutex m_countMutex;               // Guards the pub/sub count maps
     std::map<std::string, int> m_subscriberCount;  // Number of readers per topic
     std::map<std::string, int> m_publisherCount;   // Number of writers per topic
+
+    mutable std::mutex m_requesterMutex;
+    std::map<std::string, detail::RequesterImplPtr> m_requesterBackendMap;
 };
 
 /**

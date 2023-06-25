@@ -20,6 +20,14 @@ class Publisher;
 
 template <class Req, class Rep>
 class Requester;
+
+namespace detail {
+class RequesterImplBase {
+   public:
+    virtual ~RequesterImplBase() = default;
+};
+using RequesterImplPtr = std::shared_ptr<RequesterImplBase>;
+}  // namespace detail
 //////////////////////////////////////////////////
 
 //////////////////////////////////////////////////

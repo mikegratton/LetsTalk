@@ -94,12 +94,27 @@ class Replier {
     /// Check that there is at most one subscriber to the Req topic
     bool impostorsExist() const;
 
+    /// Cast to an awaitable ptr (for attaching to a waitset)
     operator AwaitablePtr() { return m_backend; }
+
+    /// Check that this object has a reference to the backend
+    bool isOkay() const { return m_backend != nullptr; }
+
+    Replier(std::shared_ptr<detail::ReplierImpl<Req, Rep>> i_backend) : m_backend(i_backend) {}
 
    protected:
     friend class Participant;
-    Replier(std::shared_ptr<detail::ReplierImpl<Req, Rep>> i_backend) : m_backend(i_backend) {}
+
     std::shared_ptr<detail::ReplierImpl<Req, Rep>> m_backend;  // This class just wraps access to the shared backend
 };
+
+/**
+ * @brief Cast an awaitable pointer back into a replier
+ */
+template <class Req, class Rep>
+Replier<Req, Rep> castToReplier(AwaitablePtr i_ptr)
+{
+    return Replier<Req, Rep>(std::dynamic_pointer_cast<detail::ReplierImpl<Req, Rep>>(i_ptr));
+}
 
 }  // namespace lt

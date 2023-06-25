@@ -25,5 +25,9 @@ TEST_CASE("Waitset.ctor")
     auto clientSession = reactorClient.request(req);
     readyIndex = waitset.wait();
     CHECK(readyIndex == 2);
+    auto server = lt::castToReactor<HelloWorld, HelloWorld>(waitset.get(readyIndex));
+    CHECK(server.isOkay());
+    auto replier2 = lt::castToReplier<HelloWorld, HelloWorld>(waitset.get(1));
+    CHECK(replier2.isOkay());
     lt::Waitset waitset2{q1, replier, reactorServer};
 }

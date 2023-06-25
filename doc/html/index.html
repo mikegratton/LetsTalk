@@ -187,7 +187,7 @@ Publish/Subscribe</h2>
 <div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](MyType <span class="keyword">const</span>&amp; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
-<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:26</div></div>
+<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:27</div></div>
 </div><!-- fragment --><p> or, if you wish to get samples as unique_ptrs (because you plan to move them to another thread), </p><div class="fragment"><div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](std::unique_ptr&lt;MyType&gt; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
@@ -195,10 +195,9 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> The queue then supplies <code>pop()</code> to get a sample (with an optional wait time) and <code>popAll()</code> to get all pending samples, </p><div class="fragment"><div class="line">std::unique_ptr&lt;T&gt; pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
 <div class="line">Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
 </div><!-- fragment --><p> where the <code>Queue</code> type is a <code>std::deque&lt;std::unique_ptr&lt;T&gt;&gt;</code> by default.</p>
-<p>You can use the <code>QueueWaitset</code> to wait on multiple queues in a <code>select</code>-like manner. First, register all the queues with the waitset at construction: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> queue1 = node-&gt;subscribe&lt;MyType1&gt;(<span class="stringliteral">&quot;my.topic.1&quot;</span>);</div>
+<p>You can use the <code>Waitset</code> to wait on multiple queues in a <code>select</code>-like manner. First, register all the queues with the waitset at construction: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> queue1 = node-&gt;subscribe&lt;MyType1&gt;(<span class="stringliteral">&quot;my.topic.1&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> queue2 = node-&gt;subscribe&lt;MyType2&gt;(<span class="stringliteral">&quot;my.topic.2&quot;</span>);</div>
-<div class="line"><span class="keyword">auto</span> waitset = <a class="code" href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">makeQueueWaitset</a>(queue1, queue2);</div>
-<div class="ttc" id="anamespacelt_html_a5f18cbd891c604c0531c6c3a06e5c914"><div class="ttname"><a href="namespacelt.html#a5f18cbd891c604c0531c6c3a06e5c914">lt::makeQueueWaitset</a></div><div class="ttdeci">auto makeQueueWaitset(QueuePtr&lt; Ts &gt; &amp;... io_waitsets)</div><div class="ttdoc">Build a waitset out of one or more QueuePtr&lt;T&gt;'s.</div><div class="ttdef"><b>Definition:</b> QueueWaitset.hpp:133</div></div>
+<div class="line">Waitset waitset{queue1, queue2};</div>
 </div><!-- fragment --><p> Later, you may <code>wait</code> for data, blocking the calling thread and returning the index of the first queue with pending messages </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> triggerIndex = waitset.wait();</div>
 <div class="line"><span class="keywordflow">switch</span> (triggerIndex) {</div>
 <div class="line">    <span class="keywordflow">case</span> 0: {</div>
@@ -220,11 +219,11 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> You can also query how many publishers have been discovered for the topic, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = node-&gt;publisherCount(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p>On the publisher end, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line"><a class="code" href="classlt_1_1Publisher.html">lt::Publisher</a> pub = node-&gt;advertise&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:267</div></div>
+<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:291</div></div>
 </div><!-- fragment --><p> To use it, </p><div class="fragment"><div class="line">MyType sample;</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
 <div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(sample);</div>
-<div class="ttc" id="aclasslt_1_1Publisher_html_aa9a5ba8316bc12616e663feef7531ad3"><div class="ttname"><a href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">lt::Publisher::publish</a></div><div class="ttdeci">bool publish(std::unique_ptr&lt; T &gt; i_data)</div><div class="ttdef"><b>Definition:</b> ParticipantImpl.hpp:71</div></div>
+<div class="ttc" id="aclasslt_1_1Publisher_html_aa9a5ba8316bc12616e663feef7531ad3"><div class="ttname"><a href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">lt::Publisher::publish</a></div><div class="ttdeci">bool publish(std::unique_ptr&lt; T &gt; i_data)</div><div class="ttdef"><b>Definition:</b> ParticipantImpl.hpp:72</div></div>
 </div><!-- fragment --><p> or via unique_ptr, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> sample = std::make_unique&lt;MyType&gt;();</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
 <div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(std::move(sample));</div>
@@ -234,18 +233,38 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> will set the QoS to the bulk mode. See below for a full description of QoS settings in Let's Talk.</p>
 <h2><a class="anchor" id="autotoc_md9"></a>
 Request/Reply</h2>
-<p>In request/reply, a service is defined by a string name, a request type, and a reply type. Let's Talk automatically generates topics for the request and reply from this information. The server side, the one providing the service, registers a callback to perform the service work. Callbacks take the form </p><div class="fragment"><div class="line"><span class="keyword">auto</span> myCallback = [](MyRequestType <span class="keyword">const</span>&amp; i_request) -&gt; MyReplyType { <span class="comment">/* ... */</span> };</div>
+<p>In request/reply, a service is defined by a string name, a request type, and a reply type. Let's Talk automatically generates topics for the request and reply from this information.</p>
+<p>The server side, the one providing the service, has two forms: a "push" form that uses a callback and a "pull" form giving you more control.</p>
+<p>The push form calls a callback on a special worker thread to perform the service work. Callbacks take the form </p><div class="fragment"><div class="line"><span class="keyword">auto</span> myCallback = [](MyRequestType <span class="keyword">const</span>&amp; i_request) -&gt; MyReplyType { <span class="comment">/* ... */</span> };</div>
 </div><!-- fragment --><p> and the registration call on a participant pointer <code>node</code> looks like </p><div class="fragment"><div class="line">node-&gt;advertise&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, myCallback);</div>
-</div><!-- fragment --><p> A new thread is spawned for running the callback, so efficiency in the callback is not essential.</p>
-<p>To make a request from another participant, first create a Requester object on that node: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> requester = participant-&gt;request&lt;MyRequestType,MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-</div><!-- fragment --><p> The requester can be used to make multiple requests. Creating it performs all of the discovery tasks that can be time-consuming. The requester API is straightforward. Making a request returns as <code>std::future</code> of the reply type. You may block waiting on that future immediately, like so </p><div class="fragment"><div class="line">MyRequestType request;</div>
+</div><!-- fragment --><p> Note that you may throw exceptions in the callback to signal failure. The failure of the request (though not the error) will be forwarded to the requester. This form is intended to be very simple to use, but you surrender control over the threading.</p>
+<p>The pull form allows you full control over the threading of the service, but at the cost of additional complexity. This form creates a <code>Replier</code> object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> replier = node-&gt;advertise&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
+</div><!-- fragment --><p> You can obtain pending sessions from this object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> session = replier-&gt;getPendingSession(std::chrono::milliseconds(10));</div>
+</div><!-- fragment --><p> specifying a wait time (10 ms here). The session object has a very simple API: </p><div class="fragment"><div class="line"><span class="keyword">class </span>Session {</div>
+<div class="line"><span class="keyword">public</span>:    </div>
+<div class="line">    Req <span class="keyword">const</span>&amp; request()<span class="keyword"> const </span>{ <span class="keywordflow">return</span> *m_request; }    </div>
+<div class="line">    <span class="keywordtype">void</span> reply(Rep <span class="keyword">const</span>&amp; i_reply);</div>
+<div class="line">    <span class="keywordtype">void</span> reply(std::unique_ptr&lt;Rep&gt; i_reply);</div>
+<div class="line">    <span class="keywordtype">void</span> fail();</div>
+<div class="line">    <span class="keywordtype">bool</span> isAlive() { <span class="keywordflow">return</span> m_backend != <span class="keyword">nullptr</span>; }</div>
+<div class="line">};</div>
+</div><!-- fragment --><p> You can inspect the request data, provide a reply (closing the session), signal failure (also closing the session), or check if the session is live. If no request arrives in the wait time of <code>getPendingSession()</code>, the returned <code>Session</code> object will not be alive. You can attach replier objects to a <code>Waitset</code> to wait on multiple services in one thread.</p>
+<p>There are two options for makint a request from another participant. Simple requests may be made directly on the participant via </p><div class="fragment"><div class="line">MyRequestType request;</div>
 <div class="line"><span class="comment">/* ... fill out request */</span></div>
-<div class="line"><span class="keyword">auto</span> reply = requester.request(request).get();</div>
-</div><!-- fragment --><p> or wait as much as you can afford and come back to the future later. The requester also has the <code>isConnected()</code> method to check if the server has been found.</p>
-<p>Two warnings about request/reply:</p>
+<div class="line">std::future&lt;MyReplyType&gt; reply = participant-&gt;request&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, request);</div>
+</div><!-- fragment --><p> Making a request returns as <code>std::future</code> of the reply type. You may block waiting on that future immediately, or wait as much as you can afford and come back to the future later. <br  />
+ This form is somewhat less efficient on the first call, as all of the discovery occurs while you wait, but the backend is stored in the participant so that subsequent requests will be faster. You may call <code>unsubscribe()</code> on the participant to delete the standing request subscriptions if you are finished with a service.</p>
+<p>Alternatively, you can first create a Requester object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> requester = participant-&gt;request&lt;MyRequestType,MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
+</div><!-- fragment --><p> The requester can be used to make multiple requests, check for connectivity, and check for "impostor" services (more below). Creating it performs all of the discovery tasks that can be time-consuming. The requester API is straightforward: </p><div class="fragment"><div class="line"><span class="keyword">class </span>Requester {</div>
+<div class="line">   <span class="keyword">public</span>:        </div>
+<div class="line">    std::future&lt;Rep&gt; request(Req <span class="keyword">const</span>&amp; i_request);</div>
+<div class="line">    <span class="keywordtype">bool</span> isConnected() <span class="keyword">const</span>;</div>
+<div class="line">    <span class="keywordtype">bool</span> impostorsExist() <span class="keyword">const</span>;</div>
+<div class="line">};</div>
+</div><!-- fragment --><p>Two warnings about request/reply:</p>
 <ol type="1">
-<li>The service callbacks are allowed to throw exceptions. While the error message isn't propigated to the requester, the <code>std::future</code> will throw a <code>std::runtime_error</code> when <code>get()</code> is called. You should use <code>try/catch</code> if the service you are calling will throw.</li>
-<li>Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name from existing or forward requests to exactly one provider. It will however warn you if more than one provider exists for a given service. The Requester has a function call <code>impostorsExist()</code> to check for this state of affairs.</li>
+<li>The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propigated to the requester, the <code>std::future</code> will throw a <code>std::runtime_error</code> when <code>get()</code> is called. You should use <code>try/catch</code> if the service you are calling may signal requests as failed.</li>
+<li>Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name from existing or forward requests to exactly one provider. It will however warn you if more than one provider exists for a given service. The Requester and Replier both have the function <code>impostorsExist()</code> to check for this state of affairs.</li>
 </ol>
 <h2><a class="anchor" id="autotoc_md10"></a>
 Reactor</h2>
@@ -254,7 +273,7 @@ Reactor</h2>
 </div><!-- fragment --><p> Here, <code>ProgressType</code> is optional; if your service doesn't provide progress data you can omit the argument. <code>ReactorServer</code> objects are lightweight and may be copied cheaply. To see if clients have connected, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> knownClientCount = motionServer.discoveredClients());</div>
 </div><!-- fragment --><p> and to check for pending sessions, </p><div class="fragment"><div class="line"><span class="keywordtype">bool</span> pending = motionServer.havePendingSession();</div>
 </div><!-- fragment --><p> If this is true, a request has been recieved. To service it, we get a <code>Session</code> object, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> motionSession = motionServer.getPendingSession();</div>
-</div><!-- fragment --><p> This takes an optional wait time if you want to have a blocking wait for sessions. Like the server object, this is a lightweight object that may be copied cheaply. Copies all refer to the same logical session. The session object provides accessors for the request data </p><div class="fragment"><div class="line">RequestType <span class="keyword">const</span>&amp; request = motionSession.request();</div>
+</div><!-- fragment --><p> This takes an optional wait time if you want to have a blocking wait for sessions. You may also attach a <code>ReactorServer</code> instance to a <code>Waitset</code> to wait on multiple servers in one thread in a <code>select()</code> like manner. Like the server object, the session is a lightweight object that may be copied cheaply. Copies all refer to the same logical session. The session object provides accessors for the request data </p><div class="fragment"><div class="line">RequestType <span class="keyword">const</span>&amp; request = motionSession.request();</div>
 </div><!-- fragment --><p> We can begin processing the request now. As we go, we can send back progress reports via </p><div class="fragment"><div class="line">ProgressData mySpecialProgress;</div>
 <div class="line"><span class="comment">// ... fill out data</span></div>
 <div class="line">motionSession.progress(25, mySpecialProgress);</div>
@@ -323,6 +342,13 @@ About DDS</h1>
 <h1><a class="anchor" id="autotoc_md21"></a>
 History</h1>
 <h2><a class="anchor" id="autotoc_md22"></a>
+0.3</h2>
+<ul>
+<li>Added a pull-mode replier to request/reply pattern, and added a convenience <code>request</code> method to avoid explicitly handling <code>Requester</code> objects.</li>
+<li>Send cancellation messages for the reactor when a client goes away unexpectedly.</li>
+<li>Extended the waitset to allow for waiting on ReactorServer sessions and Replier sessions. Renamed the object from <code>QueueWaitset</code> to <code>Waitset</code>.</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md23"></a>
 0.2</h2>
 <ul>
 <li>Added waitset for waiting on multiple queues in select()-like manner.</li>
@@ -330,12 +356,12 @@ History</h1>
 <li>Fixed foonathan::memory default setting that was causing crashes in examples.</li>
 <li>Changed default participant behavior to ignore messages that originated from the same participant. A subscriber and a publisher on the same topic and from the same participant will no longer interact by default.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 0.1</h2>
 <p>Initial release. Covers all basic functionality.</p>
-<h1><a class="anchor" id="autotoc_md24"></a>
+<h1><a class="anchor" id="autotoc_md25"></a>
 Roadmap</h1>
-<h2><a class="anchor" id="autotoc_md25"></a>
+<h2><a class="anchor" id="autotoc_md26"></a>
 Future Features</h2>
 <ol type="1">
 <li>Automate FastDDS version upgrade</li>

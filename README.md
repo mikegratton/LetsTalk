@@ -288,7 +288,9 @@ and the registration call on a participant pointer `node` looks like
 ```cpp
 node->advertise<MyRequestType, MyReplyType>("my.topic", myCallback);
 ```
-This form is intended to be very simple to use, but you surrender control over the threading.
+Note that you may throw exceptions in the callback to signal failure. The failure of the 
+request (though not the error) will be forwarded to the requester. This form is intended to be 
+very simple to use, but you surrender control over the threading.
 
 The pull form allows you full control over the threading of the 
 service, but at the cost of additional complexity. This form creates a `Replier` object
@@ -315,31 +317,45 @@ session), or check if the session is live. If no request arrives in the wait tim
 the returned `Session` object will not be alive. You can attach replier objects to a `Waitset` to wait on
 multiple services in one thread.
 
-To make a request from another participant, first create a Requester object on that node:
-```cpp
-auto requester = participant->request<MyRequestType,MyReplyType>("my.topic");
-```
-The requester can be used to make multiple requests. Creating it performs all of the discovery tasks
-that can be time-consuming. The requester API is straightforward. Making a request returns as
-`std::future` of the reply type. You may block waiting on that future immediately, like so
+There are two options for makint a request from another participant. Simple requests may be made directly on 
+the participant via
 ```cpp
 MyRequestType request;
 /* ... fill out request */
-auto reply = requester.request(request).get();
+std::future<MyReplyType> reply = participant->request<MyRequestType, MyReplyType>("my.topic", request);
 ```
-or wait as much as you can afford and come back to the future later.  The requester also has
-the `isConnected()` method to check if the server has been found.
+Making a request returns as `std::future` of the reply type. You may block waiting on that future immediately, 
+or wait as much as you can afford and come back to the future later.  
+This form is somewhat less efficient on the first call, as all of the discovery occurs while you wait, but the 
+backend is stored in the participant so that subsequent requests will be faster.  You may call `unsubscribe()` 
+on the participant to delete the standing request subscriptions if you are finished with a service.
+
+Alternatively, you can first create a Requester object 
+```cpp
+auto requester = participant->request<MyRequestType,MyReplyType>("my.topic");
+```
+The requester can be used to make multiple requests, check for connectivity, and check for "impostor" services
+(more below). Creating it performs all of the discovery tasks that can be time-consuming. The requester API is 
+straightforward:
+```cpp
+class Requester {
+   public:        
+    std::future<Rep> request(Req const& i_request);
+    bool isConnected() const;
+    bool impostorsExist() const;
+};
+```
 
 Two warnings about request/reply:
 
-1. The service callbacks are allowed to throw exceptions. While the error message isn't propigated to the 
-requester, the `std::future` will throw a `std::runtime_error` when `get()` is called. You should use `try/catch`
-if the service you are calling will throw.
+1. The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propigated 
+to the requester, the `std::future` will throw a `std::runtime_error` when `get()` is called. You should use `try/catch`
+if the service you are calling may signal requests as failed.
 
 2. Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name
 from existing or forward requests to exactly one provider. It will however warn you if more than one provider
-exists for a given service. The Requester has a function call `impostorsExist()` to check for this state of 
-affairs.
+exists for a given service. The Requester and Replier both have the function `impostorsExist()` to check for this 
+state of affairs.
 
 ## Reactor
 
@@ -514,7 +530,7 @@ this makes sense.
 
 ## 0.3
 
-* Added a pull-mode replier to request/reply pattern.
+* Added a pull-mode replier to request/reply pattern, and added a convenience `request` method to avoid explicitly handling `Requester` objects.
 
 * Send cancellation messages for the reactor when a client goes away unexpectedly.
 

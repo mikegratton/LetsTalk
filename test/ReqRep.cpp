@@ -144,7 +144,7 @@ TEST_CASE("Request.Pull")
         HelloWorld req;
         req.index(i);
         req.message("Hello");
-        futures[i] = requester.request(req);
+        futures[i] = p2->request<HelloWorld, HelloWorld>("greet", req);
     }
 
     // Process requests

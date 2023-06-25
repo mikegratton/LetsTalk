@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['activeobject_83',['ActiveObject',['../classlt_1_1ActiveObject.html',1,'lt']]],
-  ['attachfunctor_84',['AttachFunctor',['../structlt_1_1QueueWaitset_1_1AttachFunctor.html',1,'lt::QueueWaitset']]]
+  ['activeobject_86',['ActiveObject',['../classlt_1_1ActiveObject.html',1,'lt']]],
+  ['awaitable_87',['Awaitable',['../classlt_1_1Awaitable.html',1,'lt']]]
 ];

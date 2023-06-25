@@ -76,7 +76,7 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
  * Backend for requester.
  */
 template <class Req, class Rep>
-class RequesterImpl {
+class RequesterImpl : public RequesterImplBase {
    public:
     /// Ctor. Set up req and rep subscriptions.
     RequesterImpl(std::shared_ptr<Participant> i_participant, std::string const& i_serviceName)

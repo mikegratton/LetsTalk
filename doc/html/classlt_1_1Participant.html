@@ -130,9 +130,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ae2bde74670d62580a62ce492419f8f55"><td class="memTemplItemLeft" align="right" valign="top">QueuePtr&lt; T &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55">subscribe</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)</td></tr>
 <tr class="memdesc:ae2bde74670d62580a62ce492419f8f55"><td class="mdescLeft">&#160;</td><td class="mdescRight">Obtain a pointer to a shared queue of provided data. Data will be placed in the queue, up to the history level, at which point the oldest sample will be discarded.  <a href="classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55">More...</a><br /></td></tr>
 <tr class="separator:ae2bde74670d62580a62ce492419f8f55"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a919c1ddc1208c9a209c6630f1bdc18c9">unsubscribe</a> (std::string const &amp;i_topic)</td></tr>
-<tr class="memdesc:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsubscribe from the given topic.  <a href="classlt_1_1Participant.html#a919c1ddc1208c9a209c6630f1bdc18c9">More...</a><br /></td></tr>
-<tr class="separator:a919c1ddc1208c9a209c6630f1bdc18c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47f4e1846219d062f731eb935a12deec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a47f4e1846219d062f731eb935a12deec">unsubscribe</a> (std::string const &amp;i_topicOrService)</td></tr>
+<tr class="memdesc:a47f4e1846219d062f731eb935a12deec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unsubscribe from the given topic or service.  <a href="classlt_1_1Participant.html#a47f4e1846219d062f731eb935a12deec">More...</a><br /></td></tr>
+<tr class="separator:a47f4e1846219d062f731eb935a12deec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
 <tr class="memitem:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Publisher.html">Publisher</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a7e94ab47eeba3d81362bf9f7d2945b04">advertise</a> (std::string const &amp;i_topic, std::string const &amp;i_qosProfile=&quot;&quot;, int i_historyDepth=-1)</td></tr>
 <tr class="memdesc:a7e94ab47eeba3d81362bf9f7d2945b04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get a <a class="el" href="classlt_1_1Publisher.html" title="Sends messages to a topic.">Publisher</a> object you can use to send messages of type T on the topic.  <a href="classlt_1_1Participant.html#a7e94ab47eeba3d81362bf9f7d2945b04">More...</a><br /></td></tr>
@@ -141,9 +141,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a73f683deb5bbc57ce3834a0f2694433c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a73f683deb5bbc57ce3834a0f2694433c">advertise</a> (std::string const &amp;i_serviceName, C i_serviceProvider)</td></tr>
 <tr class="memdesc:a73f683deb5bbc57ce3834a0f2694433c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advertise a new request/reply service.  <a href="classlt_1_1Participant.html#a73f683deb5bbc57ce3834a0f2694433c">More...</a><br /></td></tr>
 <tr class="separator:a73f683deb5bbc57ce3834a0f2694433c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a73202ab11a8fb273c7965f110051ffff"><td class="memTemplParams" colspan="2">template&lt;class Req , class Rep &gt; </td></tr>
+<tr class="memitem:a73202ab11a8fb273c7965f110051ffff"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Replier.html">Replier</a>&lt; Req, Rep &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a73202ab11a8fb273c7965f110051ffff">advertise</a> (std::string const &amp;i_serviceName)</td></tr>
+<tr class="memdesc:a73202ab11a8fb273c7965f110051ffff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Advertise a new request/reply service.  <a href="classlt_1_1Participant.html#a73202ab11a8fb273c7965f110051ffff">More...</a><br /></td></tr>
+<tr class="separator:a73202ab11a8fb273c7965f110051ffff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad89e591e3f546a1610e3d6b6b73fabb5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#ad89e591e3f546a1610e3d6b6b73fabb5">unadvertise</a> (std::string const &amp;i_service)</td></tr>
 <tr class="memdesc:ad89e591e3f546a1610e3d6b6b73fabb5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop providing the named service.  <a href="classlt_1_1Participant.html#ad89e591e3f546a1610e3d6b6b73fabb5">More...</a><br /></td></tr>
 <tr class="separator:ad89e591e3f546a1610e3d6b6b73fabb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaee03ddd70fcaa7182e2073f9ca9f467"><td class="memTemplParams" colspan="2">template&lt;class Req , class Rep &gt; </td></tr>
+<tr class="memitem:aaee03ddd70fcaa7182e2073f9ca9f467"><td class="memTemplItemLeft" align="right" valign="top">std::future&lt; Rep &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#aaee03ddd70fcaa7182e2073f9ca9f467">request</a> (std::string const &amp;i_serviceName, Req const &amp;i_requestData)</td></tr>
+<tr class="memdesc:aaee03ddd70fcaa7182e2073f9ca9f467"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make a single request to a service.  <a href="classlt_1_1Participant.html#aaee03ddd70fcaa7182e2073f9ca9f467">More...</a><br /></td></tr>
+<tr class="separator:aaee03ddd70fcaa7182e2073f9ca9f467"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a798f568a7141b68812ccf67990c74d3f"><td class="memTemplParams" colspan="2">template&lt;class Req , class Rep &gt; </td></tr>
 <tr class="memitem:a798f568a7141b68812ccf67990c74d3f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classlt_1_1Requester.html">Requester</a>&lt; Req, Rep &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a798f568a7141b68812ccf67990c74d3f">makeRequester</a> (std::string const &amp;i_serviceName)</td></tr>
 <tr class="memdesc:a798f568a7141b68812ccf67990c74d3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build a requester object for making requests to a service.  <a href="classlt_1_1Participant.html#a798f568a7141b68812ccf67990c74d3f">More...</a><br /></td></tr>
@@ -221,17 +229,21 @@ std::map&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bo
 <tr class="memitem:a6948e198be2d7b4a4ddfe26539117a54"><td class="memItemLeft" align="right" valign="top"><a id="a6948e198be2d7b4a4ddfe26539117a54"></a>
 std::map&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>m_publisherCount</b></td></tr>
 <tr class="separator:a6948e198be2d7b4a4ddfe26539117a54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98a7b8a93f4cfeef8983092e787410b8"><td class="memItemLeft" align="right" valign="top"><a id="a98a7b8a93f4cfeef8983092e787410b8"></a>
+std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>m_requesterMutex</b></td></tr>
+<tr class="separator:a98a7b8a93f4cfeef8983092e787410b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88e50f5acdb6e93ce76c141a55eef6eb"><td class="memItemLeft" align="right" valign="top"><a id="a88e50f5acdb6e93ce76c141a55eef6eb"></a>
+std::map&lt; std::string, detail::RequesterImplPtr &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>m_requesterBackendMap</b></td></tr>
+<tr class="separator:a88e50f5acdb6e93ce76c141a55eef6eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:af6d0b669ba2496c037fd88f53d0432d9"><td class="memTemplParams" colspan="2"><a id="af6d0b669ba2496c037fd88f53d0432d9"></a>
 template&lt;class T , class C &gt; </td></tr>
-<tr class="memitem:af6d0b669ba2496c037fd88f53d0432d9"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#af6d0b669ba2496c037fd88f53d0432d9">detail::ReaderListener</a></td></tr>
-<tr class="memdesc:af6d0b669ba2496c037fd88f53d0432d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reader callbacks use this templated class. <br /></td></tr>
+<tr class="memitem:af6d0b669ba2496c037fd88f53d0432d9"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>detail::ReaderListener</b></td></tr>
 <tr class="separator:af6d0b669ba2496c037fd88f53d0432d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9544c98126549cae8f3a5cd9af6bcfdd"><td class="memItemLeft" align="right" valign="top"><a id="a9544c98126549cae8f3a5cd9af6bcfdd"></a>
-class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classlt_1_1Participant.html#a9544c98126549cae8f3a5cd9af6bcfdd">Publisher</a></td></tr>
-<tr class="memdesc:a9544c98126549cae8f3a5cd9af6bcfdd"><td class="mdescLeft">&#160;</td><td class="mdescRight">The publisher has a private ctor. <br /></td></tr>
+class&#160;</td><td class="memItemRight" valign="bottom"><b>Publisher</b></td></tr>
 <tr class="separator:a9544c98126549cae8f3a5cd9af6bcfdd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3896366113c33e33f5c76d69cbed577"><td class="memTemplParams" colspan="2"><a id="ac3896366113c33e33f5c76d69cbed577"></a>
 template&lt;class Req , class Rep &gt; </td></tr>
@@ -247,8 +259,37 @@ class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="cla
 <p><a class="el" href="classlt_1_1Participant.html" title="Allows participating in DDS communication.">Participant</a> is a node in the pub/sub network. It is responsible for discovering other nodes, running callbacks on message reciept and handling the business of socket management.</p>
 <p>Participants are handled as shared pointers. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a73202ab11a8fb273c7965f110051ffff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73202ab11a8fb273c7965f110051ffff">&#9670;&nbsp;</a></span>advertise() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Req , class Rep &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="classlt_1_1Replier.html">Replier</a>&lt; Req, Rep &gt; lt::Participant::advertise </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>i_serviceName</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Advertise a new request/reply service. </p>
+<p>This will create an object to manage incoming requests. You can make calls on this object to retrieve requests and send replies</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i_serviceName</td><td>Name of the service for determining the related topics </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a73f683deb5bbc57ce3834a0f2694433c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a73f683deb5bbc57ce3834a0f2694433c">&#9670;&nbsp;</a></span>advertise() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a73f683deb5bbc57ce3834a0f2694433c">&#9670;&nbsp;</a></span>advertise() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -288,7 +329,7 @@ template&lt;class Req , class Rep , class C &gt; </div>
 </div>
 </div>
 <a id="a7e94ab47eeba3d81362bf9f7d2945b04"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e94ab47eeba3d81362bf9f7d2945b04">&#9670;&nbsp;</a></span>advertise() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e94ab47eeba3d81362bf9f7d2945b04">&#9670;&nbsp;</a></span>advertise() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -527,6 +568,46 @@ template&lt;class Req , class Rep &gt; </div>
 
 </div>
 </div>
+<a id="aaee03ddd70fcaa7182e2073f9ca9f467"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaee03ddd70fcaa7182e2073f9ca9f467">&#9670;&nbsp;</a></span>request()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Req , class Rep &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">std::future&lt; Rep &gt; lt::Participant::request </td>
+          <td>(</td>
+          <td class="paramtype">std::string const &amp;&#160;</td>
+          <td class="paramname"><em>i_serviceName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Req const &amp;&#160;</td>
+          <td class="paramname"><em>i_requestData</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Make a single request to a service. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">i_serviceName</td><td>Name of the service </td></tr>
+    <tr><td class="paramname">requestData</td><td>Data of the request</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Compared to using <a class="el" href="classlt_1_1Participant.html#a798f568a7141b68812ccf67990c74d3f" title="Build a requester object for making requests to a service.">makeRequester()</a>, this form is less efficient but more convenient. </p>
+
+</div>
+</div>
 <a id="a5a721417cf745791190b8c20a56c89ab"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5a721417cf745791190b8c20a56c89ab">&#9670;&nbsp;</a></span>subscribe() <span class="overload">[1/2]</span></h2>
 
@@ -709,8 +790,8 @@ template&lt;class T &gt; </div>
 
 </div>
 </div>
-<a id="a919c1ddc1208c9a209c6630f1bdc18c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a919c1ddc1208c9a209c6630f1bdc18c9">&#9670;&nbsp;</a></span>unsubscribe()</h2>
+<a id="a47f4e1846219d062f731eb935a12deec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47f4e1846219d062f731eb935a12deec">&#9670;&nbsp;</a></span>unsubscribe()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -719,16 +800,16 @@ template&lt;class T &gt; </div>
           <td class="memname">void lt::Participant::unsubscribe </td>
           <td>(</td>
           <td class="paramtype">std::string const &amp;&#160;</td>
-          <td class="paramname"><em>i_topic</em></td><td>)</td>
+          <td class="paramname"><em>i_topicOrService</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Unsubscribe from the given topic. </p>
+<p>Unsubscribe from the given topic or service. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">i_topic</td><td>Topic to unsubscribe from </td></tr>
+    <tr><td class="paramname">i_topic</td><td>Topic or service to unsubscribe from </td></tr>
   </table>
   </dd>
 </dl>

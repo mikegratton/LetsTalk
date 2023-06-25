@@ -37,6 +37,13 @@ class Waitset {
         m_watched.push_back(i_watch);
     }
 
+    /// Retrieve the type-erased pointer
+    AwaitablePtr get(int i)
+    {
+        if (i >= 0 && i < m_watched.size()) { return m_watched[i]; }
+        return nullptr;
+    }
+
     /**
      * @brief Wait for messages in one of the queues
      * @param i_timeout maximum wait duration

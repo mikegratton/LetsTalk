@@ -6,6 +6,7 @@
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <iostream>
+#include <mutex>
 
 #include "LetsTalk.hpp"
 #include "LetsTalkFwd.hpp"
@@ -183,6 +184,9 @@ void Participant::unsubscribe(std::string const& i_topic)
         reader->delete_contained_entities();
         auto code = m_subscriber->delete_datareader(reader);
         LT_LOG << m_participant << " Unsubscribed from " << i_topic << "; " << code << "\n";
+    } else {  // Maybe it is a service?
+        std::unique_lock<std::mutex> guard(m_requesterMutex);
+        m_requesterBackendMap.erase(i_topic);
     }
 }
 

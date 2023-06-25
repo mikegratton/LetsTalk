@@ -1,5 +1,6 @@
 #pragma once
 #include <cassert>
+#include <memory>
 #include <string>
 
 #include "LetsTalk.hpp"
@@ -105,6 +106,23 @@ Requester<Req, Rep> Participant::makeRequester(std::string const& i_serviceName)
 {
     return Requester<Req, Rep>(
         std::make_shared<detail::RequesterImpl<Req, Rep>>(this->shared_from_this(), i_serviceName));
+}
+
+template <class Req, class Rep>
+std::future<Rep> Participant::request(std::string const& i_serviceName, Req const& i_requestData)
+{
+    std::unique_lock<std::mutex> guard(m_requesterMutex);
+    auto it = m_requesterBackendMap.find(i_serviceName);
+    if (it != m_requesterBackendMap.end()) {
+        auto backend = std::dynamic_pointer_cast<detail::RequesterImpl<Req, Rep>>(it->second);
+        if (backend) {
+            Requester<Req, Rep> requester(backend);
+            return requester.request(i_requestData);
+        }
+    }
+    auto requester = makeRequester<Req, Rep>(i_serviceName);
+    m_requesterBackendMap[i_serviceName] = requester.m_backend;
+    return requester.request(i_requestData);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////

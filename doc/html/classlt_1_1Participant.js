@@ -1,6 +1,7 @@
 var classlt_1_1Participant =
 [
     [ "~Participant", "classlt_1_1Participant.html#a07c62fad74d68acdba1be448a7aeec28", null ],
+    [ "advertise", "classlt_1_1Participant.html#a73202ab11a8fb273c7965f110051ffff", null ],
     [ "advertise", "classlt_1_1Participant.html#a73f683deb5bbc57ce3834a0f2694433c", null ],
     [ "advertise", "classlt_1_1Participant.html#a7e94ab47eeba3d81362bf9f7d2945b04", null ],
     [ "doAdvertise", "classlt_1_1Participant.html#a3dcd9a92e2f4cee0f4dc3a0585f4d829", null ],
@@ -12,12 +13,13 @@ var classlt_1_1Participant =
     [ "name", "classlt_1_1Participant.html#a75c9fb38a78a6fe42b2d80cf4c910331", null ],
     [ "publisherCount", "classlt_1_1Participant.html#abcccccd13c198e53390a15e05b7b469e", null ],
     [ "registerType", "classlt_1_1Participant.html#a09e81975e4df04d129c2b7f84ea36309", null ],
+    [ "request", "classlt_1_1Participant.html#aaee03ddd70fcaa7182e2073f9ca9f467", null ],
     [ "subscribe", "classlt_1_1Participant.html#a5a721417cf745791190b8c20a56c89ab", null ],
     [ "subscribe", "classlt_1_1Participant.html#ae2bde74670d62580a62ce492419f8f55", null ],
     [ "subscriberCount", "classlt_1_1Participant.html#ab68586bb5172b6b01684f542fdd77e7f", null ],
     [ "topicType", "classlt_1_1Participant.html#a28d649a3c7938374e0f0f1949885ff19", null ],
     [ "unadvertise", "classlt_1_1Participant.html#ad89e591e3f546a1610e3d6b6b73fabb5", null ],
-    [ "unsubscribe", "classlt_1_1Participant.html#a919c1ddc1208c9a209c6630f1bdc18c9", null ],
+    [ "unsubscribe", "classlt_1_1Participant.html#a47f4e1846219d062f731eb935a12deec", null ],
     [ "updatePublisherCount", "classlt_1_1Participant.html#aa0e7c1b2bf28e42b7bc9d5cbc8833ece", null ],
     [ "updateSubscriberCount", "classlt_1_1Participant.html#ace927a05b1b6caf39a7374f965203cdc", null ],
     [ "detail::ParticipantLogger", "classlt_1_1Participant.html#abd655ceb07588fda8e29557c1a434307", null ],
@@ -28,6 +30,8 @@ var classlt_1_1Participant =
     [ "m_participant", "classlt_1_1Participant.html#a21885f3591db3526f99e11b80b51e19a", null ],
     [ "m_publisher", "classlt_1_1Participant.html#afad93f53687c1f4f7f13227ae1db2151", null ],
     [ "m_publisherCount", "classlt_1_1Participant.html#a6948e198be2d7b4a4ddfe26539117a54", null ],
+    [ "m_requesterBackendMap", "classlt_1_1Participant.html#a88e50f5acdb6e93ce76c141a55eef6eb", null ],
+    [ "m_requesterMutex", "classlt_1_1Participant.html#a98a7b8a93f4cfeef8983092e787410b8", null ],
     [ "m_subscriber", "classlt_1_1Participant.html#a52ca73b7ff0bbf4e1ab86173ba61f2e2", null ],
     [ "m_subscriberCount", "classlt_1_1Participant.html#ae419d1b6604d7efd37a561afea6bb3da", null ]
 ];

@@ -52,11 +52,12 @@ var NAVTREE =
       [ "Environment variables", "index.html#autotoc_md19", null ],
       [ "About DDS", "index.html#autotoc_md20", null ],
       [ "History", "index.html#autotoc_md21", [
-        [ "0.2", "index.html#autotoc_md22", null ],
-        [ "0.1", "index.html#autotoc_md23", null ]
+        [ "0.3", "index.html#autotoc_md22", null ],
+        [ "0.2", "index.html#autotoc_md23", null ],
+        [ "0.1", "index.html#autotoc_md24", null ]
       ] ],
-      [ "Roadmap", "index.html#autotoc_md24", [
-        [ "Future Features", "index.html#autotoc_md25", null ]
+      [ "Roadmap", "index.html#autotoc_md25", [
+        [ "Future Features", "index.html#autotoc_md26", null ]
       ] ]
     ] ],
     [ "Namespaces", "namespaces.html", [
@@ -85,7 +86,8 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"ActiveObject_8hpp_source.html"
+"ActiveObject_8hpp_source.html",
+"namespacemembers.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
