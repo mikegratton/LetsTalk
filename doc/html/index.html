@@ -92,7 +92,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <div class="textblock"><p><a class="anchor" id="md__home_mike_git_letstalk_README"></a></p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 Introduction</h1>
-<p>Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) designed for simple and efficient interprocess coordination on local networks. As DDS is the communication standard used by ROS2, it's compatible with ROS2. The library is an API wrapped around the FastDDS library, along with a distribution of that library and cmake tools for compiling/linking to DDS. It's guiding principle is that <em>simple things should be easy</em>. So it trys to adopt sensible defaults while providing access to more functionality through optional arguments.</p>
+<p>Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) designed for simple and efficient interprocess coordination on local networks. The library is simple API for publish/subscribe, request/reply, and reactor communication patterns, along with some concurrency tools. Let's Talk also ships a self-contained distribution of FastDDS designed to be built inline with you project. CMake support for DDS is provided through macros designed to make handling IDL files as painless as possible. It's guiding principle is that <em>simple things should be easy</em>. It tries to adopt sensible defaults while providing access to more functionality through optional arguments.</p>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Links</h1>
 <ul>
@@ -101,7 +101,7 @@ Links</h1>
 </ul>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Example</h1>
-<p>Here's the basic "hello world" example from <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</a> using the Let's Talk API:</p>
+<p>Here's the basic "hello world" example from <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</a> using the Let's Talk API. The subscriber application:</p>
 <div class="fragment"><div class="line"> {c++}</div>
 <div class="line">#include &quot;LetsTalk.hpp&quot;</div>
 <div class="line">#include &lt;iostream&gt;</div>
@@ -116,7 +116,7 @@ Example</h1>
 <div class="line">    std::this_thread::sleep_for(std::chrono::minutes(1));            </div>
 <div class="line">    return 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p> and </p><div class="fragment"><div class="line"> {c++}</div>
+</div><!-- fragment --><p> and the publisher application: </p><div class="fragment"><div class="line"> {c++}</div>
 <div class="line">#include &quot;LetsTalk.hpp&quot;</div>
 <div class="line">#include &lt;iostream&gt;</div>
 <div class="line">#include &quot;HelloWorld.h&quot;</div>
@@ -125,7 +125,7 @@ Example</h1>
 <div class="line">{</div>
 <div class="line">    auto node = lt::Participant::create();</div>
 <div class="line">    auto pub = node-&gt;advertise&lt;HelloWorld&gt;(&quot;HelloWorldTopic&quot;);</div>
-<div class="line">    while(node-&gt;subscriberCount(&quot;HelloWorldTopic&quot;) == 0) {</div>
+<div class="line">    while(pub.subscriberCount(&quot;HelloWorldTopic&quot;) == 0) {</div>
 <div class="line">        std::this_thread::sleep_for(std::chrono::milliseconds(100));</div>
 <div class="line">    }</div>
 <div class="line">    std::cout &lt;&lt; &quot;Publication begins...\n&quot;;</div>
@@ -142,82 +142,88 @@ Example</h1>
 <div class="line">    }</div>
 <div class="line">    return 0;</div>
 <div class="line">}</div>
-</div><!-- fragment --><p> As you can see, subscription involves providing a callback function, typically a lambda. Publication uses a Publisher object.</p>
-<p>The design of the main Participant API is largely based on the ignition::transport API, a very convenient ZMQ/protobuf communication system. Let's Talk is not ignition::transport compatible, however. Basic publish/subscribe should be compatible with other DDS vendors (RTI Connext, Cyclone, etc.), but DDS has long been infamous for poor compatibility between vendors, and Let's Talk doesn't try to solve that.</p>
+</div><!-- fragment --><p> Subscription involves little more than providing a callback function (typically a lambda) and a topic name. Publication involves creating a <code>Publisher</code> object, then calling <code>publish()</code> to send messages. The publish/subscribe coding is simple and thread-safe; no byzantine class hierarchies, obscure quality of service settings, nothing.</p>
+<p>The design of the main Participant API is based on the ignition::transport API (but Let's Talk is not ignition::transport compatible). Publish/subscribe is compatible with other DDS vendors (RTI Connext, Cyclone, etc.) to the extent that FastDDS is compatible. The request/reply and reactor pattern are not compatible outside of Let's Talk.</p>
 <h1><a class="anchor" id="autotoc_md3"></a>
 Installation</h1>
 <h2><a class="anchor" id="autotoc_md4"></a>
 As a submodule</h2>
-<p>The easiest way to use Let's Talk is as a git submodule. </p><div class="fragment"><div class="line">git submodule add -b &lt;desired version branch&gt; git@github.com:mikegratton/LetsTalk.git</div>
-</div><!-- fragment --><p> In your CMakeLists.txt, add </p><div class="fragment"><div class="line">add_subdirectory(LetsTalk)</div>
+<p>The easiest way to use Let's Talk is as a git submodule. You can add it as a submodule via </p><div class="fragment"><div class="line">git submodule add -b &lt;desired version branch&gt; git@github.com:mikegratton/LetsTalk.git</div>
+</div><!-- fragment --><p> This will create the directory LetsTalk. In your CMakeLists.txt, add </p><div class="fragment"><div class="line">add_subdirectory(LetsTalk)</div>
 </div><!-- fragment --><p> This will provide the following cmake targets:</p>
 <ul>
-<li>letstalk &ndash; The library (with appropriate includes)</li>
-<li>fastrtps &ndash; The underlying FastDDS library</li>
+<li><code>letstalk</code> &ndash; The library (with appropriate includes)</li>
+<li><code>fastrtps</code> &ndash; The underlying FastDDS library</li>
 </ul>
-<p>To include and link <code>myTarget</code> to letstalk, you just need to add the CMake </p><div class="fragment"><div class="line">target_link_libraries(myTarget PUBLIC letstalk)</div>
-</div><!-- fragment --><p> (Letstalk depends on fastrtps, but you don't need to reference it directly.)</p>
+<p>To include and link <code>myTarget</code> to Let's Talk, you just need to add the cmake </p><div class="fragment"><div class="line">target_link_libraries(myTarget PUBLIC letstalk)</div>
+</div><!-- fragment --><p> (The <code>letstalk</code> target depends on <code>fastrtps</code>, so you don't need to reference <code>fastrtps</code> directly.)</p>
 <h2><a class="anchor" id="autotoc_md5"></a>
 Via an installation</h2>
 <p>If you have several projects that depend on Let's Talk, it is more efficient to install the library per usual. In this case, check out the code and do </p><div class="fragment"><div class="line">mkdir build &amp;&amp; cd build &amp;&amp; cmake .. -DCMAKE_INSTALL_PREFIX=&lt;your install dir&gt; -DCMAKE_BUILD_TYPE=Release &amp;&amp; make install</div>
-</div><!-- fragment --><p> This will provide a cmake config script at <code>&lt;your install dir&gt;/lib/cmake/letstalk</code> that you can use in your cmake like </p><div class="fragment"><div class="line"> list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
+</div><!-- fragment --><p> This will provide a cmake config script at <code>&lt;your install dir&gt;/lib/cmake/letstalk</code> that you can use in your cmake like </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">list(APPEND CMAKE_PREFIX_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
-<div class="line"> find_package(letstalk)</div>
+<div class="line">find_package(letstalk)</div>
 </div><!-- fragment --><p> This will provide the same cmake targets (<code>letstalk</code> and <code>fastrtps</code>) for linking as above.</p>
 <h2><a class="anchor" id="autotoc_md6"></a>
 IDL Support in CMake</h2>
-<p>Working with IDL in Let's Talk is especially easy. Inspired by the protobuf CMake support, Let's Talk provides an "IdlTarget.cmake" macro. Basic operation is </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
+<p>Working with IDL in Let's Talk is especially easy. Inspired by the protobuf cmake support, Let's Talk provides an "IdlTarget.cmake" macro. Basic operation is </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">include(IdlTarget)</div>
 <div class="line">IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)</div>
 <div class="line">...</div>
 <div class="line">target_link_library(myTarget PUBLIC myIdlTarget)</div>
-</div><!-- fragment --><p> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to Fast CDR, and providing access to the header include path as a target property. The header and source files are stored in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile the IDL target, and re-link. The intention is to have machine-generated code segregated from the rest of the codebase. More options for controlling the include path are documented in IdlTarget.cmake.</p>
+</div><!-- fragment --><p> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to all required libraries, and providing access to the header include path as a target property. The header and source cpp files are written in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile generated source, and re-link. The intention is to have machine-generated code segregated from the rest of the code base. The full form is </p><div class="fragment"><div class="line">IdlTarget([PATH path] INCLUDE ... SOURCE ...)</div>
+</div><!-- fragment --><p> where</p>
+<ul>
+<li><code>PATH</code> specifies the relative path where the generated code will be placed. This can be used to change the include path. Setting <code>PATH foo/bar</code> will change <code>#include "MyIdl.h"</code> to <code>#include "foo/bar/MyIdl"</code></li>
+<li><code>INCLUDE</code> specifies additional include paths for IDL compilation</li>
+<li><code>SOURCE</code> gives the list of IDL files that comprise the resultant library. These will be used to generate code, the code compiled, and then linked into the library.</li>
+</ul>
 <h1><a class="anchor" id="autotoc_md7"></a>
 Communication Patterns</h1>
 <p>Let's talk offers three communication patters:</p>
 <ul>
-<li>Publish/Subscribe: A loosely coupled pattern based on topic names. Publishers send data to all subscribers. Subscribers get data from all publishers. Let's Talk is capable of both reliable and best effort connections, but does not provide support for persistence between multiple runs of a program.</li>
-<li>Request/Reply: Also known as remote proceedure call (RPC), each request will be served by a responder. Each service is identified by its service name, the request type, and the reply type. Let's Talk implementation is simple. If there are multiple providers for a service, an error is logged, but no attempt is made to determine which provider will handle a given call. Calls use the C++ promise/ future types, including setting exceptions on failure.</li>
-<li>Reactor: A request/reply pattern where requests recieve multiple "progress" replies, before finally ending with a final reply. These are useful in robotics where calculations or actions take appreciable time during which the requesting process may need to cancel or retask the service provider as the situation changes.</li>
+<li>Publish/Subscribe: A loosely coupled pattern based on topic names. Publishers send data to all matching topic subscribers. Subscribers get data from all publishers on that topic. Let's Talk is capable of both reliable and best effort connections.</li>
+<li>Request/Reply: Also known as remote procedure call (RPC), each request will be served by a responder. Each service is identified by its service name, the request type, and the reply type. Calls use the C++ promise/future types, including setting exceptions on failure.</li>
+<li>Reactor: A request/reply pattern where requests receive multiple "progress" replies, before finally ending with a final reply. These are useful in robotics where calculations or actions take appreciable time during which the requesting process may need to cancel or re-task the service provider as the situation changes.</li>
 </ul>
-<p>Below are some more details on each. See also the <code>examples</code> directory with sample code to crib from.</p>
+<p>See below for more details on each pattern. The <code>examples</code> directory provides sample code for each pattern.</p>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Publish/Subscribe</h2>
-<p>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. "robot.motion.command") but also have a defined type. To subscribe, you register a callback with a participant, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
+<p>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. "robot.motion.command") combined with a type. Publishers are only matched to subscribers if both the topic name and topic types match. To subscribe, you register a callback with a participant, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](MyType <span class="keyword">const</span>&amp; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
 <div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:27</div></div>
-</div><!-- fragment --><p> or, if you wish to get samples as unique_ptrs (because you plan to move them to another thread), </p><div class="fragment"><div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](std::unique_ptr&lt;MyType&gt; sample) {</div>
+</div><!-- fragment --><p> or, if you wish to get samples as <code>unique_ptr</code>s (because you plan to move them to another thread), </p><div class="fragment"><div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](std::unique_ptr&lt;MyType&gt; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
-</div><!-- fragment --><p> <em>IMPORTANT:</em> This callback is run on a pub/sub thread, so long calculations or waits for a lock will negatively impact the whole system. A good practice is to simply enqueue the data on a thread-safe queue for later processing. Let's Talk provides such a queue as <code>ThreadSafeQueue</code>, and a convenience subscription mode, </p><div class="fragment"><div class="line">lt::QueuePtr&lt;MyType&gt; myTypeQueue = lt::node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-</div><!-- fragment --><p> The queue then supplies <code>pop()</code> to get a sample (with an optional wait time) and <code>popAll()</code> to get all pending samples, </p><div class="fragment"><div class="line">std::unique_ptr&lt;T&gt; pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
+</div><!-- fragment --><p> <em>IMPORTANT:</em> This callback is run on an internal thread, so long calculations or waiting for a lock will negatively impact the whole system. If you do need to do significant processing, Let's Talk provides a <code>ThreadSafeQueue</code> class, and a convenience subscription mode, </p><div class="fragment"><div class="line">lt::QueuePtr&lt;MyType&gt; myTypeQueue = lt::node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
+</div><!-- fragment --><p> Rather than running a callback, you get a pointer to the queue of messages. The queue then supplies <code>pop()</code> to get a sample (with an optional wait time) and <code>popAll()</code> to get all pending samples, </p><div class="fragment"><div class="line">std::unique_ptr&lt;T&gt; pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
 <div class="line">Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));</div>
-</div><!-- fragment --><p> where the <code>Queue</code> type is a <code>std::deque&lt;std::unique_ptr&lt;T&gt;&gt;</code> by default.</p>
-<p>You can use the <code>Waitset</code> to wait on multiple queues in a <code>select</code>-like manner. First, register all the queues with the waitset at construction: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> queue1 = node-&gt;subscribe&lt;MyType1&gt;(<span class="stringliteral">&quot;my.topic.1&quot;</span>);</div>
+</div><!-- fragment --><p> where the <code>Queue</code> type is a <code>std::deque&lt;std::unique_ptr&lt;T&gt;&gt;</code> by default. This puts you in charge of when to cause your thread to wait for data.</p>
+<p>If you want to service multiple queues from one thread, you can use the <code>Waitset</code> class. First, register all the queues with the waitset in the constructor: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> queue1 = node-&gt;subscribe&lt;MyType1&gt;(<span class="stringliteral">&quot;my.topic.1&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> queue2 = node-&gt;subscribe&lt;MyType2&gt;(<span class="stringliteral">&quot;my.topic.2&quot;</span>);</div>
 <div class="line">Waitset waitset{queue1, queue2};</div>
-</div><!-- fragment --><p> Later, you may <code>wait</code> for data, blocking the calling thread and returning the index of the first queue with pending messages </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> triggerIndex = waitset.wait();</div>
+</div><!-- fragment --><p> Then, you may <code>wait</code> for data to arrive in any of the queue. This blocks the calling thread and returns the index of the first queue with pending messages: </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> triggerIndex = waitset.wait();</div>
 <div class="line"><span class="keywordflow">switch</span> (triggerIndex) {</div>
 <div class="line">    <span class="keywordflow">case</span> 0: {</div>
 <div class="line">        <span class="keyword">auto</span> content = queue1-&gt;popAll();</div>
-<div class="line">        <span class="keywordflow">if</span> (queue1.size() &gt; 0) {</div>
+<div class="line">        <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; item : content) {</div>
 <div class="line">            <span class="comment">// Process the data                    </span></div>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line">    <span class="comment">// Note fallthrough</span></div>
 <div class="line">    <span class="keywordflow">case</span> 1: {</div>
 <div class="line">        <span class="keyword">auto</span> content = queue2-&gt;popAll();</div>
-<div class="line">        <span class="keywordflow">if</span> (queue2.size() &gt; 0) {</div>
+<div class="line">        <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span>&amp; item : content) {</div>
 <div class="line">            <span class="comment">// Process the data</span></div>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line">}</div>
-</div><!-- fragment --><p> See <code>example/waitset</code></p>
+</div><!-- fragment --><p> See <code>example/waitset</code> for a detailed design. Note that the returned index represents the first queue that has data. Higher-numbered queues may also have data. The best practice is to use a fall-through design to check all of the higher indexed queues as well.</p>
 <p>To cancel a subscription, the Participant provides an unsubscribe function, </p><div class="fragment"><div class="line">node-&gt;unsubscribe(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p> You can also query how many publishers have been discovered for the topic, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = node-&gt;publisherCount(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-</div><!-- fragment --><p>On the publisher end, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
+</div><!-- fragment --><p>For publishing, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line"><a class="code" href="classlt_1_1Publisher.html">lt::Publisher</a> pub = node-&gt;advertise&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 <div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:291</div></div>
 </div><!-- fragment --><p> To use it, </p><div class="fragment"><div class="line">MyType sample;</div>
@@ -227,17 +233,17 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> or via unique_ptr, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> sample = std::make_unique&lt;MyType&gt;();</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
 <div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(std::move(sample));</div>
-</div><!-- fragment --><p> Publisher erases the <code>MyType</code> information, but publishing a type other than <code>MyType</code> will result in an error. Calling <code>pub.topicType()</code> will return the typename as a string. You can check for subscribers using the Participant, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = node-&gt;subscriberCount(<span class="stringliteral">&quot;my.topic&quot;</span>)</div>
+</div><!-- fragment --><p> Publisher erases the <code>MyType</code> information (i.e. all Publishers are formally the same type), but publishing a type other than <code>MyType</code> will result in an error. Calling <code>pub.topicType()</code> will return the type name as a string. You can check for subscribers using </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = pub.subscriberCount(<span class="stringliteral">&quot;my.topic&quot;</span>)</div>
 </div><!-- fragment --><p> To stop advertising data, simply dispose of the Publisher object.</p>
-<p>Let's Talk also supports differen "Quality of Service" (QoS) settings for publishers and subscribers. An optional string argument to <code>advertise()</code> and <code>subscribe()</code> gives the name of the QoS profile to use. For example, </p><div class="fragment"><div class="line">auto frameQueue = node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;, &quot;bulk&quot;);</div>
+<p>Let's Talk also supports different "Quality of Service" (QoS) settings for publishers and subscribers. An optional string argument to <code>advertise()</code> and <code>subscribe()</code> gives the name of the QoS profile to use. For example, </p><div class="fragment"><div class="line">auto frameQueue = node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;, &quot;bulk&quot;);</div>
 </div><!-- fragment --><p> will set the QoS to the bulk mode. See below for a full description of QoS settings in Let's Talk.</p>
 <h2><a class="anchor" id="autotoc_md9"></a>
 Request/Reply</h2>
-<p>In request/reply, a service is defined by a string name, a request type, and a reply type. Let's Talk automatically generates topics for the request and reply from this information.</p>
-<p>The server side, the one providing the service, has two forms: a "push" form that uses a callback and a "pull" form giving you more control.</p>
+<p>In request/reply, the "replier" provides a service that the "requester" accesses. A service is defined by a string name, a request type, and a reply type.</p>
+<p>The server side, Let's Talk provides two forms: a "push" form that uses a callback and a "pull" form giving you more control.</p>
 <p>The push form calls a callback on a special worker thread to perform the service work. Callbacks take the form </p><div class="fragment"><div class="line"><span class="keyword">auto</span> myCallback = [](MyRequestType <span class="keyword">const</span>&amp; i_request) -&gt; MyReplyType { <span class="comment">/* ... */</span> };</div>
 </div><!-- fragment --><p> and the registration call on a participant pointer <code>node</code> looks like </p><div class="fragment"><div class="line">node-&gt;advertise&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, myCallback);</div>
-</div><!-- fragment --><p> Note that you may throw exceptions in the callback to signal failure. The failure of the request (though not the error) will be forwarded to the requester. This form is intended to be very simple to use, but you surrender control over the threading.</p>
+</div><!-- fragment --><p> Note that you may throw exceptions in the callback to signal failure. The failure of the request (though not the specific error) will be forwarded to the requester. This form is intended to be very simple to use, but you surrender control over the threading.</p>
 <p>The pull form allows you full control over the threading of the service, but at the cost of additional complexity. This form creates a <code>Replier</code> object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> replier = node-&gt;advertise&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p> You can obtain pending sessions from this object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> session = replier-&gt;getPendingSession(std::chrono::milliseconds(10));</div>
 </div><!-- fragment --><p> specifying a wait time (10 ms here). The session object has a very simple API: </p><div class="fragment"><div class="line"><span class="keyword">class </span>Session {</div>
@@ -248,12 +254,12 @@ Request/Reply</h2>
 <div class="line">    <span class="keywordtype">void</span> fail();</div>
 <div class="line">    <span class="keywordtype">bool</span> isAlive() { <span class="keywordflow">return</span> m_backend != <span class="keyword">nullptr</span>; }</div>
 <div class="line">};</div>
-</div><!-- fragment --><p> You can inspect the request data, provide a reply (closing the session), signal failure (also closing the session), or check if the session is live. If no request arrives in the wait time of <code>getPendingSession()</code>, the returned <code>Session</code> object will not be alive. You can attach replier objects to a <code>Waitset</code> to wait on multiple services in one thread.</p>
-<p>There are two options for makint a request from another participant. Simple requests may be made directly on the participant via </p><div class="fragment"><div class="line">MyRequestType request;</div>
+</div><!-- fragment --><p> You can inspect the request data, provide a reply (closing the session), signal failure (also closing the session), or check if the session is live. If no request arrives in the wait time of <code>getPendingSession()</code>, the returned <code>Session</code> object will not be alive. You can also attach replier objects to a <code>Waitset</code> to wait on multiple services in one thread.</p>
+<p>The client side also has two options. Simple requests may be made directly on the participant via </p><div class="fragment"><div class="line">MyRequestType request;</div>
 <div class="line"><span class="comment">/* ... fill out request */</span></div>
 <div class="line">std::future&lt;MyReplyType&gt; reply = participant-&gt;request&lt;MyRequestType, MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, request);</div>
 </div><!-- fragment --><p> Making a request returns as <code>std::future</code> of the reply type. You may block waiting on that future immediately, or wait as much as you can afford and come back to the future later. <br  />
- This form is somewhat less efficient on the first call, as all of the discovery occurs while you wait, but the backend is stored in the participant so that subsequent requests will be faster. You may call <code>unsubscribe()</code> on the participant to delete the standing request subscriptions if you are finished with a service.</p>
+ This form is somewhat less efficient on the first call, as all of the discovery occurs while you wait, but the back-end is stored in the participant so that subsequent requests will be faster. You may call <code>unsubscribe()</code> on the participant to delete the standing request subscriptions if you are finished with a service.</p>
 <p>Alternatively, you can first create a Requester object </p><div class="fragment"><div class="line"><span class="keyword">auto</span> requester = participant-&gt;request&lt;MyRequestType,MyReplyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p> The requester can be used to make multiple requests, check for connectivity, and check for "impostor" services (more below). Creating it performs all of the discovery tasks that can be time-consuming. The requester API is straightforward: </p><div class="fragment"><div class="line"><span class="keyword">class </span>Requester {</div>
 <div class="line">   <span class="keyword">public</span>:        </div>
@@ -263,81 +269,82 @@ Request/Reply</h2>
 <div class="line">};</div>
 </div><!-- fragment --><p>Two warnings about request/reply:</p>
 <ol type="1">
-<li>The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propigated to the requester, the <code>std::future</code> will throw a <code>std::runtime_error</code> when <code>get()</code> is called. You should use <code>try/catch</code> if the service you are calling may signal requests as failed.</li>
+<li>The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propagated to the requester, the <code>std::future</code> will throw a <code>std::runtime_error</code> when <code>get()</code> is called. You should use <code>try/catch</code> if the service you are calling may signal requests as failed.</li>
 <li>Impostor services may exist. Let's Talk does not prevent more than one service provider of the same name from existing or forward requests to exactly one provider. It will however warn you if more than one provider exists for a given service. The Requester and Replier both have the function <code>impostorsExist()</code> to check for this state of affairs.</li>
 </ol>
 <h2><a class="anchor" id="autotoc_md10"></a>
 Reactor</h2>
-<p>The Reactor uses pull-style API with session objects rather than callbacks. The server-side differs from the request/reply. To provide a reactor service, we first create the server object, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
+<p>The Reactor pattern is similar to the request/reply pattern and uses a pull-style API with session objects, but with more features. To provide a reactor service, we first create the server object, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
 <div class="line"><span class="keyword">auto</span> motionServer = node-&gt;makeReactorServer&lt;RequestType, ReplyType, ProgressType&gt;(<span class="stringliteral">&quot;robot.move&quot;</span>);</div>
 </div><!-- fragment --><p> Here, <code>ProgressType</code> is optional; if your service doesn't provide progress data you can omit the argument. <code>ReactorServer</code> objects are lightweight and may be copied cheaply. To see if clients have connected, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> knownClientCount = motionServer.discoveredClients());</div>
 </div><!-- fragment --><p> and to check for pending sessions, </p><div class="fragment"><div class="line"><span class="keywordtype">bool</span> pending = motionServer.havePendingSession();</div>
-</div><!-- fragment --><p> If this is true, a request has been recieved. To service it, we get a <code>Session</code> object, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> motionSession = motionServer.getPendingSession();</div>
-</div><!-- fragment --><p> This takes an optional wait time if you want to have a blocking wait for sessions. You may also attach a <code>ReactorServer</code> instance to a <code>Waitset</code> to wait on multiple servers in one thread in a <code>select()</code> like manner. Like the server object, the session is a lightweight object that may be copied cheaply. Copies all refer to the same logical session. The session object provides accessors for the request data </p><div class="fragment"><div class="line">RequestType <span class="keyword">const</span>&amp; request = motionSession.request();</div>
-</div><!-- fragment --><p> We can begin processing the request now. As we go, we can send back progress reports via </p><div class="fragment"><div class="line">ProgressData mySpecialProgress;</div>
+</div><!-- fragment --><p> If this is true, a request has been received. To service it, we obtain a <code>Session</code> instance, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> motionSession = motionServer.getPendingSession();</div>
+</div><!-- fragment --><p> This takes an optional wait time if you want to have a blocking wait for sessions. You may also attach a <code>ReactorServer</code> instance to a <code>Waitset</code> just as with queues and Repliers. Like the server object, the session is lightweight. The session provides accessors for the request data </p><div class="fragment"><div class="line">RequestType <span class="keyword">const</span>&amp; request = motionSession.request();</div>
+</div><!-- fragment --><p> As you process the request, you can send back progress reports via </p><div class="fragment"><div class="line">ProgressData mySpecialProgress;</div>
 <div class="line"><span class="comment">// ... fill out data</span></div>
 <div class="line">motionSession.progress(25, mySpecialProgress);</div>
 </div><!-- fragment --><p> If you didn't specify a <code>ProgressData</code> type, you may still send progress marks with </p><div class="fragment"><div class="line">motionSession.progress(25);</div>
-</div><!-- fragment --><p> The progress mark integer uses values from 1 to 100, with 1 being a special value for "started" and 100 signaling completion. The ReactorServer will automatically send these when you start and finish a session. Note you may send duplicate progress marks, or even have progress decreasing. To signal failure, <code>motionSession.fail()</code> will dispose of the session, notifying the client. To finish a session, </p><div class="fragment"><div class="line">ReplyType reply;</div>
+</div><!-- fragment --><p> The progress mark integer uses values from 1 to 100, with 1 being a special value for "started" and 100 signaling completion. The <code>ReactorServer</code> will automatically send these when you start and finish a session. Note you may send duplicate progress marks, or even have progress decreasing. To signal failure, <code>motionSession.fail()</code> will dispose of the session, notifying the client. To finish a session, send the reply </p><div class="fragment"><div class="line">ReplyType reply;</div>
 <div class="line"><span class="comment">// ... fill out reply</span></div>
 <div class="line">motionSession.reply(reply);</div>
-</div><!-- fragment --><p> Additionally, the client may cancel a session at any time. You can check if the session has been cancelled by calling <code>isAlive()</code>.</p>
-<p>The client end is similar to the request/reply client. First, we create a client object on the participant: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> motionClient = node-&gt;makeReactorClient&lt;RequestType, ReplyType, ProgressType&gt;(<span class="stringliteral">&quot;robot.motion&quot;</span>);</div>
+</div><!-- fragment --><p> Additionally, the client may cancel a session at any time. You can check if the session has been canceled by calling <code>isAlive()</code>.</p>
+<p>The client end is likewise similar to the request client. First, we create a client object on the participant: </p><div class="fragment"><div class="line"><span class="keyword">auto</span> motionClient = node-&gt;makeReactorClient&lt;RequestType, ReplyType, ProgressType&gt;(<span class="stringliteral">&quot;robot.motion&quot;</span>);</div>
 </div><!-- fragment --><p> We can then check for connections with <code>motionClient.discoveredServer()</code>. Sending a request starts a session </p><div class="fragment"><div class="line">RequestData request;</div>
 <div class="line"><span class="comment">// ... fill out request</span></div>
 <div class="line"><span class="keyword">auto</span> clientSession = motionClient.request(request);</div>
 </div><!-- fragment --><p> The session API provides calls to determine if the session is alive (started by the server), get the current progress, get a progress data sample, or await the final reply. There's also a <code>cancel()</code> call to end the session early.</p>
 <h2><a class="anchor" id="autotoc_md11"></a>
 Examples</h2>
-<p>The <code>examples</code> directory contains demonstration programs for these three patterns, as well as sample CMake files. To build the examples, first build and install Let's Talk, then create a symlink to the install directory in the examples directory: </p><div class="fragment"><div class="line">$ cd examples</div>
+<p>The <code>examples</code> directory contains demonstration programs for these three patterns, as well as sample cmake files. To build the examples, first build and install Let's Talk, then create a symlink to the install directory in the examples directory: </p><div class="fragment"><div class="line">$ cd examples</div>
 <div class="line">$ ln -s &lt;lets talk install dir&gt; install</div>
 <div class="line">$ mkdir build &amp;&amp; cd build</div>
 <div class="line">$ cmake ..</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md12"></a>
-Quality of Service (QoS)</h1>
-<p>Let's Talk defines three levels of service by default:</p>
-<ul>
-<li>"reliable" &ndash; the default. This QoS will resend messages when not acknowledged. Publishers will also keep the last published message cached so that late-joining subscribers can be immediately sent the last message on a topic upon discovery.</li>
-<li>"bulk" &ndash; Failed sending attempts are not repeated. No queue of old messages is maintained. This is intended for streaming data where it is better to press ahead than dwell upon the past.</li>
-<li>"stateful" &ndash; Like reliable, but samples are delivered in-order to the subscriber. This is for topics where samples refer to state provided by previous samples. Note that FastDDS doesn't yet support this, so "stateful" behaves exactly as "reliable" for now.</li>
-</ul>
-<p>In addition, Participants may have QoS profiles. These are used to alter the underlying protocol from UDP to TCP or something else. Currently only UDP profiles are defined by default.</p>
-<h2><a class="anchor" id="autotoc_md13"></a>
-Using Custom QoS</h2>
-<p>If you wish to develop your own QoS profiles, see <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html">https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html</a></p>
-<p>When invoking your program, set the enivronment variable <code>LT_PROFILE</code> to the path to your xml. The <code>profile_name</code> attribute may be used as the optional argument for <code>subscribe</code> and <code>advertise</code> to use these QoS settings.</p>
-<h1><a class="anchor" id="autotoc_md14"></a>
-DDS Concepts in Let's Talk</h1>
-<p>The DDS is a publish/subscribe messaging system with automatic discovery. Here's a small primer.</p>
-<h2><a class="anchor" id="autotoc_md15"></a>
-Participant</h2>
-<p>Each node in the DDS network is a "participant." Participants discover each other, trading information on available topics and types. Participants also function as factories for the other objects &ndash; topic objects, types, publishers, and subscribers.</p>
-<h2><a class="anchor" id="autotoc_md16"></a>
-Topics</h2>
-<p>A topic is a channel for data. It's the combination of a string topic name and a data type. The types generally must be derived from IDL.</p>
-<h2><a class="anchor" id="autotoc_md17"></a>
-Types and IDL</h2>
-<p>Types in DDS are typically derived from IDL source. IDL provides a C-like language for describing structured data. The IDL compiler produces C++ source code from these files that includes serialization and deserialization methods to/from the Common Data Format (CDR). DDS automatically performs the required serialization and deserialization as required.</p>
-<h2><a class="anchor" id="autotoc_md18"></a>
-Quality of Service (QoS)</h2>
-<p>An overloaded term, QoS refers to all of the run-time settings available in DDS. It includes the network protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored, and many other details.</p>
-<h1><a class="anchor" id="autotoc_md19"></a>
 Environment variables</h1>
-<p>Let's Talk uses environment variables so that programs can easily modify the behavior at runtime.</p>
+<p>Let's Talk inspects several environment variables so that programs can easily modify the behavior at runtime.</p>
 <ul>
 <li><code>LT_VERBOSE</code> &ndash; enables debug print messages about discovery and message passing</li>
-<li><code>LT_LOCAL_ONLY</code> &ndash; If 1, prevents discovery from finding participants on another host</li>
+<li><code>LT_LOCAL_ONLY</code> &ndash; prevents discovery from finding participants on another host</li>
 <li><code>LT_PROFILE</code> &ndash; Path to custom QoS profile XML file</li>
 </ul>
-<p>To use this on you program <code>foo</code>, you can launch foo from the shell like this: </p><div class="fragment"><div class="line">$ LT_VERBOSE=1 ./foo</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md20"></a>
+<p>To use this on your program <code>foo</code>, you can launch foo from the shell like this: </p><div class="fragment"><div class="line">$ LT_VERBOSE=1 ./foo</div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md13"></a>
+Quality of Service (QoS)</h1>
+<p>QoS determines the reliability of message passing. Let's Talk defines three levels of service that are always available:</p>
+<ul>
+<li>"reliable" &ndash; the default. This QoS will resend messages when not acknowledged. Publishers will also keep the last published message cached so that late-joining subscribers can be immediately sent the last message on a topic upon discovery.</li>
+<li>"bulk" &ndash; Failed sending attempts are not repeated. No queue of old messages is maintained. This is intended for streaming data where it is better to wait for the next message than retry sending old data.</li>
+<li>"stateful" &ndash; Like reliable, but samples are delivered in-order to the subscriber. This is for topics where samples refer to state provided by previous samples. The request/reply and Reactor patterns use stateful QoS.</li>
+</ul>
+<p>To use a different QoS from "reliable," pass the QoS string name to the <code>subscribe</code> or <code>advertise</code> method.</p>
+<p>In addition, Participants may have QoS profiles. These are used to alter the underlying protocol from UDP to TCP or something else. Currently only UDP profiles are available in the built-in QoS.</p>
+<h2><a class="anchor" id="autotoc_md14"></a>
+Using Custom QoS</h2>
+<p>If you wish to develop your own QoS profiles, see <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html">https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html</a></p>
+<p>When invoking your program, set the environment variable <code>LT_PROFILE</code> to the path to your xml. The <code>profile_name</code> attribute may be used as the optional argument for <code>subscribe</code> and <code>advertise</code> to use these QoS settings.</p>
+<h1><a class="anchor" id="autotoc_md15"></a>
+DDS Concepts in Let's Talk</h1>
+<p>Let's Talk is based on the DDS is a publish/subscribe messaging system. Here's a small primer on DDS concepts.</p>
+<h2><a class="anchor" id="autotoc_md16"></a>
+Participant</h2>
+<p>Each node in the DDS network is a "participant." Participants discover each other, trading information on available topics and types. Participants also function as factories for the other objects &ndash; topic objects, types, publishers, and subscribers.</p>
+<h2><a class="anchor" id="autotoc_md17"></a>
+Topics</h2>
+<p>A topic is a channel for data. It's the combination of a string topic name and a data type. The types generally must be derived from IDL.</p>
+<h2><a class="anchor" id="autotoc_md18"></a>
+Types and IDL</h2>
+<p>Types in DDS are typically derived from IDL source. IDL provides a C-like language for describing structured data. The IDL compiler produces C++ source code from these files that includes serialization and deserialization methods to/from the Common Data Format (CDR). DDS automatically performs the required serialization and deserialization as required.</p>
+<h2><a class="anchor" id="autotoc_md19"></a>
+Quality of Service (QoS)</h2>
+<p>An overloaded term, QoS refers to all of the run-time settings available in DDS. It includes the network protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored, and many other details.</p>
+<h1><a class="anchor" id="autotoc_md20"></a>
 About DDS</h1>
 <p>The Data Distribution Service is an efficient and powerful publish/subscribe framework, but it is very complicated. It's worth exploring the chain of acronyms that make it up:</p>
 <ul>
 <li>DDS &ndash; Data Distribution Service. This isn't a protocol standard at all, it turns out! It's an API standard.</li>
-<li>RTPS &ndash; Real-Time Publish Subscribe. This is the protocol standard. It covers how participants discover one another, how topics and types are communicated, how data is sent, and how transmission errors are handled. RTPS uses a peer-to-peer design rather than a central message broker, making it more resillient and flexible. (But also placing larger burdens on those peers.)</li>
-<li>IDL &ndash; Interface Description Language. DDS inherited this from the 90's CORBA technology, and the 16/32 bit world of the time defintely shows in the language. IDL is ugly but functional for the purpose. It isn't as fully featured as Google Protocol Buffers, but it is servicable.</li>
-<li>CDR &ndash; Common Data Representation. This is the serialized format for data transmitted. Typically, IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR. Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire. Given DDS's emphasis on local network communication vs protobuf's focus on internet communication, this makes sense.</li>
+<li>RTPS &ndash; Real-Time Publish Subscribe. This is the protocol standard. It covers how participants discover one another, how topics and types are communicated, how data is sent, and how transmission errors are handled. RTPS uses a peer-to-peer design rather than a central message broker, making it more resilient and flexible (but also placing larger burdens on those peers).</li>
+<li>IDL &ndash; Interface Description Language. DDS inherited this from the 90's CORBA technology, and the 16/32 bit world of the time definitely shows in the language. IDL is ugly but functional for the purpose. It isn't as fully featured as Google Protocol Buffers, but it is serviceable.</li>
+<li>CDR &ndash; Common Data Representation. This is the serialized format for data transmitted. Typically, IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR. Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire. Given DDS's emphasis on local network communication vs protobuf's focus on internet communication, these design differences makes sense.</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md21"></a>
 History</h1>
@@ -346,14 +353,14 @@ History</h1>
 <ul>
 <li>Added a pull-mode replier to request/reply pattern, and added a convenience <code>request</code> method to avoid explicitly handling <code>Requester</code> objects.</li>
 <li>Send cancellation messages for the reactor when a client goes away unexpectedly.</li>
-<li>Extended the waitset to allow for waiting on ReactorServer sessions and Replier sessions. Renamed the object from <code>QueueWaitset</code> to <code>Waitset</code>.</li>
+<li>Extended the waitset to allow for waiting on <code>ReactorServer</code> sessions and Replier sessions. Renamed the object from <code>QueueWaitset</code> to <code>Waitset</code>.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md23"></a>
 0.2</h2>
 <ul>
 <li>Added waitset for waiting on multiple queues in select()-like manner.</li>
-<li>Overhalled builtin QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.</li>
-<li>Fixed foonathan::memory default setting that was causing crashes in examples.</li>
+<li>Overhauled the built-in QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.</li>
+<li>Fixed <code>foonathan::memory</code> default setting that was causing crashes in examples.</li>
 <li>Changed default participant behavior to ignore messages that originated from the same participant. A subscriber and a publisher on the same topic and from the same participant will no longer interact by default.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md24"></a>

@@ -40,16 +40,16 @@ var NAVTREE =
         [ "Reactor", "index.html#autotoc_md10", null ],
         [ "Examples", "index.html#autotoc_md11", null ]
       ] ],
-      [ "Quality of Service (QoS)", "index.html#autotoc_md12", [
-        [ "Using Custom QoS", "index.html#autotoc_md13", null ]
+      [ "Environment variables", "index.html#autotoc_md12", null ],
+      [ "Quality of Service (QoS)", "index.html#autotoc_md13", [
+        [ "Using Custom QoS", "index.html#autotoc_md14", null ]
       ] ],
-      [ "DDS Concepts in Let's Talk", "index.html#autotoc_md14", [
-        [ "Participant", "index.html#autotoc_md15", null ],
-        [ "Topics", "index.html#autotoc_md16", null ],
-        [ "Types and IDL", "index.html#autotoc_md17", null ],
-        [ "Quality of Service (QoS)", "index.html#autotoc_md18", null ]
+      [ "DDS Concepts in Let's Talk", "index.html#autotoc_md15", [
+        [ "Participant", "index.html#autotoc_md16", null ],
+        [ "Topics", "index.html#autotoc_md17", null ],
+        [ "Types and IDL", "index.html#autotoc_md18", null ],
+        [ "Quality of Service (QoS)", "index.html#autotoc_md19", null ]
       ] ],
-      [ "Environment variables", "index.html#autotoc_md19", null ],
       [ "About DDS", "index.html#autotoc_md20", null ],
       [ "History", "index.html#autotoc_md21", [
         [ "0.3", "index.html#autotoc_md22", null ],

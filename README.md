@@ -4,11 +4,12 @@ Let's Talk: A C++ Interprocess Communication System Based on FastDDS
 # Introduction
 
 Let's Talk is a C++ communication library compatible with DDS (the Data Distribution Service) 
-designed for simple and efficient interprocess coordination on local networks. As DDS is
-the communication standard used by ROS2, it's compatible with ROS2. The library is 
-an API wrapped around the FastDDS library, along with a distribution of that library
-and cmake tools for compiling/linking to DDS.  It's guiding principle is that 
-*simple things should be easy*.  So it trys to adopt sensible defaults while providing 
+designed for simple and efficient interprocess coordination on local networks. The library is 
+simple API for publish/subscribe, request/reply, and reactor communication patterns, along with 
+some concurrency tools. Let's Talk also ships a self-contained distribution of FastDDS designed to be 
+built inline with you project. CMake support for DDS is provided through macros designed to make
+handling IDL files as painless as possible.  It's guiding principle is that 
+*simple things should be easy*.  It tries to adopt sensible defaults while providing 
 access to more functionality through optional arguments.
 
 # Links
@@ -19,7 +20,7 @@ access to more functionality through optional arguments.
 # Example
 
 Here's the basic "hello world" example from [Fast DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html) 
-using the Let's Talk API:
+using the Let's Talk API. The subscriber application:
 
 ```c++
 #include "LetsTalk.hpp"
@@ -37,7 +38,7 @@ int main(int, char**)
 }
 
 ```
-and
+and the publisher application:
 ```c++
 #include "LetsTalk.hpp"
 #include <iostream>
@@ -47,7 +48,7 @@ int main(int argc, char** argv)
 {
     auto node = lt::Participant::create();
     auto pub = node->advertise<HelloWorld>("HelloWorldTopic");
-    while(node->subscriberCount("HelloWorldTopic") == 0) {
+    while(pub.subscriberCount("HelloWorldTopic") == 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     std::cout << "Publication begins...\n";
@@ -66,60 +67,59 @@ int main(int argc, char** argv)
 }
 
 ```
-As you can see, subscription involves providing a callback function, typically a
-lambda.  Publication uses a Publisher object.
+Subscription involves little more than providing a callback function (typically a lambda) and a 
+topic name.  Publication involves creating a `Publisher` object, then calling `publish()` to send
+messages. The publish/subscribe coding is simple and thread-safe; no byzantine class hierarchies, 
+obscure quality of service settings, nothing.
 
-The design of the main Participant API is largely based on the 
-ignition::transport API, a very convenient ZMQ/protobuf communication
-system.  Let's Talk is not ignition::transport compatible, however. 
-Basic publish/subscribe should be compatible with other DDS vendors
-(RTI Connext, Cyclone, etc.), but DDS has long been infamous for 
-poor compatibility between vendors, and Let's Talk doesn't try to 
-solve that.
+The design of the main Participant API is based on the ignition::transport API (but Let's Talk is 
+not ignition::transport compatible). Publish/subscribe is compatible with other DDS vendors
+(RTI Connext, Cyclone, etc.) to the extent that FastDDS is compatible. The request/reply and reactor
+pattern are not compatible outside of Let's Talk. 
 
 
 # Installation
 
 ## As a submodule
-The easiest way to use Let's Talk is as a git submodule.
+The easiest way to use Let's Talk is as a git submodule. You can add it as a submodule via
 ```
 git submodule add -b <desired version branch> git@github.com:mikegratton/LetsTalk.git
 ```
-In your CMakeLists.txt, add
+This will create the directory LetsTalk. In your CMakeLists.txt, add
 ```
 add_subdirectory(LetsTalk)
 ```
 This will provide the following cmake targets:
  
- * letstalk -- The library (with appropriate includes)
- * fastrtps -- The underlying FastDDS library 
+ * `letstalk` -- The library (with appropriate includes)
+ * `fastrtps` -- The underlying FastDDS library 
  
- To include and link `myTarget` to letstalk, you just need to add the CMake
- ```
- target_link_libraries(myTarget PUBLIC letstalk)
- ```
- (Letstalk depends on fastrtps, but you don't need to reference it directly.)
+To include and link `myTarget` to Let's Talk, you just need to add the cmake
+```
+target_link_libraries(myTarget PUBLIC letstalk)
+```
+(The `letstalk` target depends on `fastrtps`, so you don't need to reference `fastrtps` directly.)
 
- ## Via an installation
- If you have several projects that depend on Let's Talk, it is more efficient
- to install the library per usual. In this case, check out the code and do
- ```
- mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=<your install dir> -DCMAKE_BUILD_TYPE=Release && make install
- ```
- This will provide a cmake config script at `<your install dir>/lib/cmake/letstalk` that you can use 
- in your cmake like
- ```
- list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
+## Via an installation
+If you have several projects that depend on Let's Talk, it is more efficient
+to install the library per usual. In this case, check out the code and do
+```
+mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=<your install dir> -DCMAKE_BUILD_TYPE=Release && make install
+```
+This will provide a cmake config script at `<your install dir>/lib/cmake/letstalk` that you can use 
+in your cmake like
+```
+list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
 list(APPEND CMAKE_PREFIX_PATH <your install dir>/lib/cmake/letstalk)
- find_package(letstalk)
- ```
- This will provide the same cmake targets (`letstalk` and `fastrtps`) for linking as 
- above.
+find_package(letstalk)
+```
+This will provide the same cmake targets (`letstalk` and `fastrtps`) for linking as 
+above.
 
 ## IDL Support in CMake
 
 Working with IDL in Let's Talk is especially easy. Inspired by the protobuf
-CMake support, Let's Talk provides an "IdlTarget.cmake" macro.  Basic operation
+cmake support, Let's Talk provides an "IdlTarget.cmake" macro.  Basic operation
 is
 ```
 list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
@@ -129,13 +129,22 @@ IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)
 target_link_library(myTarget PUBLIC myIdlTarget)
 ```
 That is, IdlTarget creates a cmake target consisting of a library built from the 
-provided compiled IDLs, linking transitively to Fast CDR, and providing access
-to the header include path as a target property.  The header and source files
-are stored in the build directory.  If the IDL is changed, make/ninja will correctly
-re-run the IDL compiler, recompile the IDL target, and re-link.  The intention is 
-to have machine-generated code segregated from the rest of the codebase.  More options
-for controlling the include path are documented in IdlTarget.cmake.
+provided compiled IDLs, linking transitively to all required libraries, and providing access
+to the header include path as a target property.  The header and source cpp files
+are written in the build directory.  If the IDL is changed, make/ninja will correctly
+re-run the IDL compiler, recompile generated source, and re-link.  The intention is 
+to have machine-generated code segregated from the rest of the code base.  The full
+form is 
+```
+IdlTarget([PATH path] INCLUDE ... SOURCE ...)
+```
+where
 
+* `PATH` specifies the relative path where the generated code will be placed. This can be used to
+   change the include path. Setting `PATH foo/bar` will change `#include "MyIdl.h"` to `#include "foo/bar/MyIdl"`
+* `INCLUDE` specifies additional include paths for IDL compilation
+* `SOURCE` gives the list of IDL files that comprise the resultant library. These will be used to generate code,
+the code compiled, and then linked into the library.
 
 
 # Communication Patterns
@@ -143,89 +152,90 @@ for controlling the include path are documented in IdlTarget.cmake.
 Let's talk offers three communication patters:
 
 * Publish/Subscribe: A loosely coupled pattern based on topic names.
-  Publishers send data to all subscribers. Subscribers get data from
-  all publishers. Let's Talk is capable of both reliable and best 
-  effort connections, but does not provide support for persistence
-  between multiple runs of a program.
+  Publishers send data to all matching topic subscribers. Subscribers 
+  get data from all publishers on that topic. Let's Talk is capable of 
+  both reliable and best effort connections.
   
-* Request/Reply: Also known as remote proceedure call (RPC), each
+* Request/Reply: Also known as remote procedure call (RPC), each
   request will be served by a responder.  Each service is identified 
-  by its service name, the request type, and the reply type. Let's 
-  Talk implementation is simple. If there are multiple providers for 
-  a service, an error is logged, but no attempt is made to determine
-  which provider will handle a given call. Calls use the C++ promise/
-  future types, including setting exceptions on failure.
+  by its service name, the request type, and the reply type. Calls use the 
+  C++ promise/future types, including setting exceptions on failure.
   
-* Reactor: A request/reply pattern where requests recieve multiple
+* Reactor: A request/reply pattern where requests receive multiple
   "progress" replies, before finally ending with a final reply.  These
   are useful in robotics where calculations or actions take 
   appreciable time during which the requesting process may need to 
-  cancel or retask the service provider as the situation changes.
+  cancel or re-task the service provider as the situation changes.
 
-Below are some more details on each.  See also the `examples` directory with
-sample code to crib from.
+See below for more details on each pattern.  The `examples` directory provides
+sample code for each pattern.
 
 ## Publish/Subscribe
 
 In pub/sub, a group of publishers send data to all subscribers that match on
-a topic.  Topics are strings (e.g. "robot.motion.command") but also have a 
-defined type.  To subscribe, you register a callback with a participant,
+a topic.  Topics are strings (e.g. "robot.motion.command") combined with a 
+type. Publishers are only matched to subscribers if both the topic name and 
+topic types match. To subscribe, you register a callback with a participant,
 ```cpp
 lt::ParticipantPtr node = lt::Participant::create();
 node->subscribe<MyType>("my.topic", [](MyType const& sample) {
     std::cout << "Got some data!\n";
 });
 ```
-or, if you wish to get samples as unique_ptrs (because you plan to move them
+or, if you wish to get samples as `unique_ptr`s (because you plan to move them
 to another thread),
 ```cpp
 node->subscribe<MyType>("my.topic", [](std::unique_ptr<MyType> sample) {
     std::cout << "Got some data!\n";
 });
 ```
-*IMPORTANT:* This callback is run on a pub/sub thread, so long calculations or
-waits for a lock will negatively impact the whole system. A good practice is to 
-simply enqueue the data on a thread-safe queue for later processing. Let's Talk
-provides such a queue as `ThreadSafeQueue`, and a convenience subscription mode,
+*IMPORTANT:* This callback is run on an internal thread, so long calculations or
+waiting for a lock will negatively impact the whole system. If you do need to do
+significant processing, Let's Talk provides a `ThreadSafeQueue` class, and a 
+convenience subscription mode,
 ```cpp
 lt::QueuePtr<MyType> myTypeQueue = lt::node->subscribe<MyType>("my.topic");
 ```
+Rather than running a callback, you get a pointer to the queue of messages.
 The queue then supplies `pop()` to get a sample (with an optional wait time) and 
 `popAll()` to get all pending samples,
 ```cpp
 std::unique_ptr<T> pop(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 Queue popAll(std::chrono::nanoseconds i_wait = std::chrono::nanoseconds(0));
 ```
-where the `Queue` type is a `std::deque<std::unique_ptr<T>>` by default. 
+where the `Queue` type is a `std::deque<std::unique_ptr<T>>` by default. This puts
+you in charge of when to cause your thread to wait for data. 
 
-You can use the `Waitset` to wait on multiple queues in a `select`-like manner.
-First, register all the queues with the waitset at construction:
+If you want to service multiple queues from one thread, you can use the `Waitset` class.
+First, register all the queues with the waitset in the constructor:
 ```cpp
 auto queue1 = node->subscribe<MyType1>("my.topic.1");
 auto queue2 = node->subscribe<MyType2>("my.topic.2");
 Waitset waitset{queue1, queue2};
 ```
-Later, you may `wait` for data, blocking the calling thread and returning the index
-of the first queue with pending messages
+Then, you may `wait` for data to arrive in any of the queue. This blocks the calling 
+thread and returns the index of the first queue with pending messages:
 ```cpp
 int triggerIndex = waitset.wait();
 switch (triggerIndex) {
     case 0: {
         auto content = queue1->popAll();
-        if (queue1.size() > 0) {
+        for (auto const& item : content) {
             // Process the data                    
         }
     }
     // Note fallthrough
     case 1: {
         auto content = queue2->popAll();
-        if (queue2.size() > 0) {
+        for (auto const& item : content) {
             // Process the data
         }
     }
 }
 ```
-See `example/waitset`
+See `example/waitset` for a detailed design. Note that the returned index represents the first
+queue that has data. Higher-numbered queues may also have data. The best practice is to use a 
+fall-through design to check all of the higher indexed queues as well.
 
 To cancel a subscription, the Participant provides an unsubscribe function,
 ```cpp
@@ -236,7 +246,7 @@ You can also query how many publishers have been discovered for the topic,
 int count = node->publisherCount("my.topic");
 ```
 
-On the publisher end, Participant acts as a factory for creating lightweight `Publisher`
+For publishing, Participant acts as a factory for creating lightweight `Publisher`
 objects,
 ```cpp
 lt::ParticipantPtr node = lt::Participant::create();
@@ -254,15 +264,15 @@ auto sample = std::make_unique<MyType>();
 /* ... fill out sample here */
 pub.publish(std::move(sample));
 ```
-Publisher erases the `MyType` information, but publishing a type other than `MyType` will 
-result in an error. Calling `pub.topicType()` will return the typename as a string. 
-You can check for subscribers using the Participant,
+Publisher erases the `MyType` information (i.e. all Publishers are formally the same type), 
+but publishing a type other than `MyType` will  result in an error. Calling `pub.topicType()` 
+will return the type name as a string. You can check for subscribers using 
 ```cpp
-int count = node->subscriberCount("my.topic")
+int count = pub.subscriberCount("my.topic")
 ```
 To stop advertising data, simply dispose of the Publisher object.
 
-Let's Talk also supports differen "Quality of Service" (QoS) settings for publishers and
+Let's Talk also supports different "Quality of Service" (QoS) settings for publishers and
 subscribers.  An optional string argument to `advertise()` and `subscribe()` 
 gives the name of the QoS profile to use. For example,
 ```
@@ -273,10 +283,10 @@ Let's Talk.
 
 ## Request/Reply
 
-In request/reply, a service is defined by a string name, a request type, and a reply type.
-Let's Talk automatically generates topics for the request and reply from this information. 
+In request/reply, the "replier" provides a service that the "requester" accesses. 
+A service is defined by a string name, a request type, and a reply type.
 
-The server side, the one providing the service, has two forms: a "push" form that uses a
+The server side, Let's Talk provides two forms: a "push" form that uses a
 callback and a "pull" form giving you more control.
 
 The push form calls a callback on a special worker thread to perform the service work.
@@ -289,8 +299,8 @@ and the registration call on a participant pointer `node` looks like
 node->advertise<MyRequestType, MyReplyType>("my.topic", myCallback);
 ```
 Note that you may throw exceptions in the callback to signal failure. The failure of the 
-request (though not the error) will be forwarded to the requester. This form is intended to be 
-very simple to use, but you surrender control over the threading.
+request (though not the specific error) will be forwarded to the requester. This form is 
+intended to be very simple to use, but you surrender control over the threading.
 
 The pull form allows you full control over the threading of the 
 service, but at the cost of additional complexity. This form creates a `Replier` object
@@ -314,11 +324,10 @@ public:
 ```
 You can inspect the request data, provide a reply (closing the session), signal failure (also closing the 
 session), or check if the session is live. If no request arrives in the wait time of `getPendingSession()`,
-the returned `Session` object will not be alive. You can attach replier objects to a `Waitset` to wait on
+the returned `Session` object will not be alive. You can also attach replier objects to a `Waitset` to wait on
 multiple services in one thread.
 
-There are two options for makint a request from another participant. Simple requests may be made directly on 
-the participant via
+The client side also has two options. Simple requests may be made directly on the participant via
 ```cpp
 MyRequestType request;
 /* ... fill out request */
@@ -327,7 +336,7 @@ std::future<MyReplyType> reply = participant->request<MyRequestType, MyReplyType
 Making a request returns as `std::future` of the reply type. You may block waiting on that future immediately, 
 or wait as much as you can afford and come back to the future later.  
 This form is somewhat less efficient on the first call, as all of the discovery occurs while you wait, but the 
-backend is stored in the participant so that subsequent requests will be faster.  You may call `unsubscribe()` 
+back-end is stored in the participant so that subsequent requests will be faster.  You may call `unsubscribe()` 
 on the participant to delete the standing request subscriptions if you are finished with a service.
 
 Alternatively, you can first create a Requester object 
@@ -348,7 +357,7 @@ class Requester {
 
 Two warnings about request/reply:
 
-1. The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propigated 
+1. The service callbacks are allowed to throw exceptions and/or signal failure. While the error message isn't propagated 
 to the requester, the `std::future` will throw a `std::runtime_error` when `get()` is called. You should use `try/catch`
 if the service you are calling may signal requests as failed.
 
@@ -359,9 +368,8 @@ state of affairs.
 
 ## Reactor
 
-The Reactor uses pull-style API with session objects rather than callbacks. The server-side
-differs from the request/reply. To provide a reactor service, we first create the server
-object,
+The Reactor pattern is similar to the request/reply pattern and uses a pull-style API with session objects, but with more 
+features. To provide a reactor service, we first create the server object,
 ```cpp
 lt::ParticipantPtr node = lt::Participant::create();
 auto motionServer = node->makeReactorServer<RequestType, ReplyType, ProgressType>("robot.move");
@@ -375,18 +383,17 @@ and to check for pending sessions,
 ```cpp
 bool pending = motionServer.havePendingSession();
 ```
-If this is true, a request has been recieved. To service it, we get a `Session` object,
+If this is true, a request has been received. To service it, we obtain a `Session` instance,
 ```cpp
 auto motionSession = motionServer.getPendingSession();
 ```
 This takes an optional wait time if you want to have a blocking wait for sessions. You may also attach
-a `ReactorServer` instance to a `Waitset` to wait on multiple servers in one thread in a `select()` like
-manner. Like the server object, the session is a lightweight object that may be copied cheaply. Copies all refer 
-to the same logical session. The session object provides accessors for the request data
+a `ReactorServer` instance to a `Waitset` just as with queues and Repliers. Like the server object, the 
+session is lightweight. The session provides accessors for the request data
 ```cpp
 RequestType const& request = motionSession.request();
 ```
-We can begin processing the request now.  As we go, we can send back progress reports via
+As you process the request, you can send back progress reports via
 ```cpp
 ProgressData mySpecialProgress;
 // ... fill out data
@@ -397,18 +404,18 @@ If you didn't specify a `ProgressData` type, you may still send progress marks w
 motionSession.progress(25);
 ```
 The progress mark integer uses values from 1 to 100, with 1 being a special value for "started" and 100
-signaling completion. The ReactorServer will automatically send these when you start and finish a session.
+signaling completion. The `ReactorServer` will automatically send these when you start and finish a session.
 Note you may send duplicate progress marks, or even have progress decreasing. To signal failure,
-`motionSession.fail()` will dispose of the session, notifying the client. To finish a session,
+`motionSession.fail()` will dispose of the session, notifying the client. To finish a session, send the reply
 ```cpp
 ReplyType reply;
 // ... fill out reply
 motionSession.reply(reply);
 ```
-Additionally, the client may cancel a session at any time. You can check if the session has been cancelled by
+Additionally, the client may cancel a session at any time. You can check if the session has been canceled by
 calling `isAlive()`.
 
-The client end is similar to the request/reply client. First, we create a client object on the participant:
+The client end is likewise similar to the request client. First, we create a client object on the participant:
 ```cpp
 auto motionClient = node->makeReactorClient<RequestType, ReplyType, ProgressType>("robot.motion");
 ```
@@ -425,7 +432,7 @@ session early.
 ## Examples
 
 The `examples` directory contains demonstration programs for these three patterns, as well
-as sample CMake files.  To build the examples, first build and install Let's Talk, then 
+as sample cmake files.  To build the examples, first build and install Let's Talk, then 
 create a symlink to the install directory in the examples directory:
 ```
 $ cd examples
@@ -434,35 +441,54 @@ $ mkdir build && cd build
 $ cmake ..
 ```
 
+# Environment variables
+
+Let's Talk inspects several environment variables so that programs can easily modify the
+behavior at runtime.
+
+* `LT_VERBOSE` -- enables debug print messages about discovery and message passing
+* `LT_LOCAL_ONLY` -- prevents discovery from finding participants on another host
+* `LT_PROFILE` -- Path to custom QoS profile XML file
+
+To use this on your program `foo`, you can launch foo from the shell like this:
+```
+$ LT_VERBOSE=1 ./foo
+```
+
+
 # Quality of Service (QoS)
 
-Let's Talk defines three levels of service by default:
+QoS determines the reliability of message passing. Let's Talk defines three levels of service that are
+always available:
 
 * "reliable" -- the default. This QoS will resend messages when not acknowledged. Publishers 
 will also keep the last published message cached so that late-joining subscribers can be 
 immediately sent the last message on a topic upon discovery. 
 
 * "bulk" -- Failed sending attempts are not repeated. No queue of old messages is maintained.
-This is intended for streaming data where it is better to press ahead than dwell upon the past.
+This is intended for streaming data where it is better to wait for the next message than retry sending
+old data.
 
 * "stateful" -- Like reliable, but samples are delivered in-order to the subscriber. This is for
-topics where samples refer to state provided by previous samples. Note that FastDDS doesn't yet
-support this, so "stateful" behaves exactly as "reliable" for now.
+topics where samples refer to state provided by previous samples. The request/reply and Reactor patterns
+use stateful QoS.
+
+To use a different QoS from "reliable," pass the QoS string name to the `subscribe` or `advertise` method.
 
 In addition, Participants may have QoS profiles. These are used to alter the underlying
-protocol from UDP to TCP or something else. Currently only UDP profiles are defined by default.
+protocol from UDP to TCP or something else. Currently only UDP profiles are available in the built-in QoS.
 
 ## Using Custom QoS
 
 If you wish to develop your own QoS profiles, see https://fast-dds.docs.eprosima.com/en/latest/fastdds/xml_configuration/xml_configuration.html
 
-When invoking your program, set the enivronment variable `LT_PROFILE` to the path to your xml.  The
+When invoking your program, set the environment variable `LT_PROFILE` to the path to your xml.  The
 `profile_name` attribute may be used as the optional argument for `subscribe` and `advertise` to
 use these QoS settings.
 
 # DDS Concepts in Let's Talk
 
-The DDS is a publish/subscribe messaging system with automatic discovery. Here's a small primer.
+Let's Talk is based on the DDS is a publish/subscribe messaging system. Here's a small primer on DDS concepts.
 
 ## Participant
 
@@ -488,20 +514,6 @@ An overloaded term, QoS refers to all of the run-time settings available in DDS.
 protocol (TCP, UDP, shared memory), the error handling strategy, the depth of message history that is stored,
 and many other details.
 
-# Environment variables
-
-Let's Talk uses environment variables so that programs can easily modify the
-behavior at runtime.
-
-* `LT_VERBOSE` -- enables debug print messages about discovery and message passing
-* `LT_LOCAL_ONLY` -- If 1, prevents discovery from finding participants on another host
-* `LT_PROFILE` -- Path to custom QoS profile XML file
-
-To use this on you program `foo`, you can launch foo from the shell like this:
-```
-$ LT_VERBOSE=1 ./foo
-```
-
 
 # About DDS
 
@@ -514,17 +526,17 @@ It's an API standard.
 * RTPS -- Real-Time Publish Subscribe. This is the protocol standard. It covers how participants
 discover one another, how topics and types are communicated, how data is sent, and how transmission
 errors are handled. RTPS uses a peer-to-peer design rather than a central message broker, making it 
-more resillient and flexible. (But also placing larger burdens on those peers.)
+more resilient and flexible (but also placing larger burdens on those peers).
 
 * IDL -- Interface Description Language. DDS inherited this from the 90's CORBA technology, and the 
-16/32 bit world of the time defintely shows in the language.  IDL is ugly but functional for the 
-purpose.  It isn't as fully featured as Google Protocol Buffers, but it is servicable.
+16/32 bit world of the time definitely shows in the language.  IDL is ugly but functional for the 
+purpose.  It isn't as fully featured as Google Protocol Buffers, but it is serviceable.
 
 * CDR -- Common Data Representation. This is the serialized format for data transmitted. Typically, 
 IDL compilers generate native code from IDL that handles serialization to/deserialization from CDR.
 Compared to Google Protocol Buffers, CDR is faster to serialize/deserialize, but larger on the wire.
 Given DDS's emphasis on local network communication vs protobuf's focus on internet communication,
-this makes sense.
+these design differences makes sense.
 
 # History
 
@@ -534,16 +546,16 @@ this makes sense.
 
 * Send cancellation messages for the reactor when a client goes away unexpectedly.
 
-* Extended the waitset to allow for waiting on ReactorServer sessions and Replier sessions. Renamed the object from `QueueWaitset` to 
+* Extended the waitset to allow for waiting on `ReactorServer` sessions and Replier sessions. Renamed the object from `QueueWaitset` to 
   `Waitset`.
 
 ## 0.2
 
 * Added waitset for waiting on multiple queues in select()-like manner.
 
-* Overhalled builtin QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.
+* Overhauled the built-in QoS, fixing the "stateful" profile. Removed no longer needed keys from reactor types.
 
-* Fixed foonathan::memory default setting that was causing crashes in examples.
+* Fixed `foonathan::memory` default setting that was causing crashes in examples.
 
 * Changed default participant behavior to ignore messages that originated from the same participant. A subscriber and a publisher on 
  the same topic and from the same participant will no longer interact by default.
