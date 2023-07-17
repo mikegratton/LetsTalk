@@ -21,7 +21,6 @@ access to more functionality through optional arguments.
 
 Here's the basic "hello world" example from [Fast DDS](https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html) 
 using the Let's Talk API. The subscriber application:
-
 ```c++
 #include "LetsTalk.hpp"
 #include <iostream>
@@ -549,6 +548,8 @@ these design differences makes sense.
 * Extended the waitset to allow for waiting on `ReactorServer` sessions and Replier sessions. Renamed the object from `QueueWaitset` to 
   `Waitset`.
 
+* Add `toJson()` method to idl-generated C++ code.
+
 ## 0.2
 
 * Added waitset for waiting on multiple queues in select()-like manner.
@@ -570,4 +571,4 @@ Initial release. Covers all basic functionality.
 
 1. Automate FastDDS version upgrade
 
-2. To/from json additions for fastddsgen
+2. From json additions for fastddsgen

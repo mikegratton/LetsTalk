@@ -5,10 +5,12 @@ IdlTarget(testIdl
         other.idl
         HelloWorld.idl
         OpenGarage.idl
+        Big.idl
     PATH idl)
 
 add_executable(ltTest
     ActiveObject.cpp
+    BigJson.cpp
     ThreadSafeQueue.cpp
     PubSub.cpp
     ReqRep.cpp

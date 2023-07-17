@@ -1,0 +1,34 @@
+struct Inner
+{
+     unsigned long index;
+     string message;
+};
+
+enum Discriminator
+{
+    First,
+    Second
+};
+
+union TwoFace switch(Discriminator) {
+    case First: int32 x;
+    case Second: sequence<int32> y;
+};
+
+bitset MyBitset
+{
+    bitfield<3> a;
+    bitfield<10> b;
+};
+
+struct Big
+{
+    Inner inner;
+    double array[4];
+    sequence<int32> seq;
+    boolean bool_thing;
+    TwoFace two_face;
+    Discriminator enum_thing;
+    // map<int, int> int_map;
+    MyBitset bitset_thing;
+};
