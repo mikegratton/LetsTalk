@@ -1,7 +1,12 @@
 # This is a specialized find script for the fastrtps lib
 # built and installed by letstalk
 
-find_library(fastrtps_LIB NAMES fastrtps PATHS ${CMAKE_CURRENT_LIST_DIR}/../ ${CMAKE_CURRENT_LIST_DIR}/../../)
+find_library(fastrtps_LIB NAMES fastrtps
+    PATHS
+    ${CMAKE_CURRENT_LIST_DIR}/../external
+    ${CMAKE_CURRENT_LIST_DIR}/../
+    ${CMAKE_CURRENT_LIST_DIR}/../../
+)
 find_path(fastrtps_INCLUDE_DIR NAMES letstalk/LetsTalk.hpp PATHS ${CMAKE_CURRENT_LIST_DIR}/../../../include)
 find_path(fastrtps_LIB_DIR NAMES libfastrtps.so libfastrtps.a PATHS ${CMAKE_CURRENT_LIST_DIR}/../../)
 

@@ -1,4 +1,0 @@
-struct FixedSized
-{
-	unsigned short index;
-};

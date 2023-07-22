@@ -1,5 +1,6 @@
 include(IdlTarget)
 IdlTarget(testIdl
+    JSON
     SOURCE
         message.idl
         other.idl
@@ -20,4 +21,4 @@ add_executable(ltTest
     Waitset.cpp
     main.cpp
 )
-target_link_libraries(ltTest PUBLIC letstalk testIdl)
+target_link_libraries(ltTest PUBLIC json letstalk testIdl)

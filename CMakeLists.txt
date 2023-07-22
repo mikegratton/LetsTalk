@@ -10,8 +10,7 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "install path" FORCE)
 endif()
 
-add_subdirectory(fastdds)
-add_subdirectory(fastddsgen)
+add_subdirectory(external)
 add_subdirectory(src)
 add_subdirectory(test)
 
