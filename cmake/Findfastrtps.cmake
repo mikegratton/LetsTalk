@@ -7,7 +7,7 @@ find_library(fastrtps_LIB NAMES fastrtps
     ${CMAKE_CURRENT_LIST_DIR}/../
     ${CMAKE_CURRENT_LIST_DIR}/../../
 )
-find_path(fastrtps_INCLUDE_DIR NAMES letstalk/LetsTalk.hpp PATHS ${CMAKE_CURRENT_LIST_DIR}/../../../include)
+find_path(fastrtps_INCLUDE_DIR NAMES LetsTalk/LetsTalk.hpp PATHS ${CMAKE_CURRENT_LIST_DIR}/../../../include)
 find_path(fastrtps_LIB_DIR NAMES libfastrtps.so libfastrtps.a PATHS ${CMAKE_CURRENT_LIST_DIR}/../../)
 
 if(fastrtps_LIB AND fastrtps_INCLUDE_DIR AND fastrtps_LIB_DIR)

@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
 
 TEST_CASE("Guid.Conversion")

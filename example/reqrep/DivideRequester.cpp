@@ -2,7 +2,7 @@
 #include <thread>
 
 #include "DivideService.h"
-#include "letstalk/LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 
 int main(int argc, char** argv)
 {

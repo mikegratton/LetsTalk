@@ -2,7 +2,7 @@
 #include <iostream>
 #include <thread>
 
-#include "LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
 #include "idl/HelloWorld.h"
 #include "idl/OpenGarage.h"

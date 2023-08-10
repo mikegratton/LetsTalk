@@ -1,5 +1,4 @@
-#include "LetsTalk.hpp"
-#include "Participant.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
 #include "idl/HelloWorld.h"
 

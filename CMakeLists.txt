@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
-project(letstalk VERSION 0.3.0.0)
+project(LetsTalk VERSION 0.3.0.0)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 set(CMAKE_INSTALL_RPATH $ORIGIN)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# TODO this is busted
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "install path" FORCE)
 endif()
@@ -29,7 +28,7 @@ configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.
 )
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-    VERSION "${letstalk_VERSION_MAJOR}.${letstalk_VERSION_MINOR}"
+    VERSION "${LetsTalk_VERSION_MAJOR}.${LetsTalk_VERSION_MINOR}"
     COMPATIBILITY AnyNewerVersion
 )
 install(FILES

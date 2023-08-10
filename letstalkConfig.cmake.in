@@ -1,3 +1,0 @@
-@PACKAGE_INIT@
-find_package(fastrtps)
-include ( "${CMAKE_CURRENT_LIST_DIR}/letstalk-targets.cmake" )

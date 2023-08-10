@@ -2,8 +2,8 @@
 #include <iostream>
 #include <thread>
 
+#include "LetsTalk/LetsTalk.hpp"
 #include "OpenGarage.h"
-#include "letstalk/LetsTalk.hpp"
 
 int main(int argc, char** argv)
 {

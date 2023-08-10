@@ -9,16 +9,8 @@ IdlTarget(testIdl
         Big.idl
     PATH idl)
 
-add_executable(ltTest
-    ActiveObject.cpp
-    BigJson.cpp
-    ThreadSafeQueue.cpp
-    PubSub.cpp
-    ReqRep.cpp
-    Reactor.cpp
-    Guid.cpp
-    KeepAllTest.cpp
-    Waitset.cpp
-    main.cpp
-)
-target_link_libraries(ltTest PUBLIC json letstalk testIdl)
+file(GLOB source CONFIGURE_DEPENDS "*.cpp")
+
+add_executable(ltTest ${source})
+
+target_link_libraries(ltTest PUBLIC json LetsTalk testIdl)

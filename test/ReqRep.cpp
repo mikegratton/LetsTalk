@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
 #include "idl/HelloWorld.h"
 

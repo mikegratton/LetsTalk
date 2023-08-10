@@ -8,8 +8,7 @@
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <thread>
 
-#include "FastDdsAlias.hpp"
-#include "PubSubType.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
 #include "fastdds/dds/domain/qos/DomainParticipantQos.hpp"
 #include "fastdds/dds/subscriber/DataReaderListener.hpp"

@@ -1,6 +1,6 @@
 include(IdlTarget)
 IdlTarget(DivideServiceIdl SOURCE DivideService.idl)
 add_executable(DivideService DivideService.cpp)
-target_link_libraries(DivideService DivideServiceIdl letstalk)
+target_link_libraries(DivideService DivideServiceIdl LetsTalk)
 add_executable(DivideRequester DivideRequester.cpp)
-target_link_libraries(DivideRequester DivideServiceIdl letstalk)
+target_link_libraries(DivideRequester DivideServiceIdl LetsTalk)

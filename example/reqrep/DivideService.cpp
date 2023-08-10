@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <thread>
 
-#include "letstalk/LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 
 DivideResult doDivision(DivideProblem const& i_problem)
 {

@@ -4,7 +4,7 @@
 #include <memory>
 #include <thread>
 
-#include "letstalk/LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 
 auto intQueue = std::make_shared<lt::ThreadSafeQueue<int>>();
 auto stringQueue = std::make_shared<lt::ThreadSafeQueue<std::string>>();

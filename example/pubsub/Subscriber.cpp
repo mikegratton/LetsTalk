@@ -1,15 +1,17 @@
 #include <iostream>
 
 #include "HelloWorld.h"
-#include "letstalk/LetsTalk.hpp"
+#include "HelloWorldJsonSupport.h"
+#include "LetsTalk/LetsTalk.hpp"
 
 int main(int, char**)
 {
-  auto node = lt::Participant::create();
-  node->subscribe<HelloWorld>("HelloWorldTopic", [](HelloWorld const& data) {
-    std::cout << data.message() << " " << data.index() << std::endl;
-  });
-
-  for (;;) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
-  return 0;
+    auto node = lt::Participant::create();
+    node->subscribe<HelloWorld>("HelloWorldTopic", [](HelloWorld const& data) {
+        std::string j = data.toJson();
+        std::cout << j << std::endl;
+        auto data2 = HelloWorldFromJson(j);
+    });
+    for (;;) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+    return 0;
 }

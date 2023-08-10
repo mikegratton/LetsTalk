@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "HelloWorld.h"
-#include "letstalk/LetsTalk.hpp"
+#include "LetsTalk/LetsTalk.hpp"
 
 int main(int, char**)
 {
