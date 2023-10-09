@@ -28,6 +28,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_xml_root_library_settings_profil
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_xml_profile.xml
     ${CMAKE_CURRENT_BINARY_DIR}/test_xml_profile.xml
     COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_xml_profile_env_var.xml
+    ${CMAKE_CURRENT_BINARY_DIR}/test_xml_profile_env_var.xml
+    COPYONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/test_xml_deprecated.xml
     ${CMAKE_CURRENT_BINARY_DIR}/test_xml_deprecated.xml
     COPYONLY)
@@ -110,6 +113,7 @@ set(XMLPROFILEPARSER_SOURCE
     ${PROJECT_SOURCE_DIR}/src/cpp/dynamic-types/TypesBase.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/dynamic-types/BuiltinAnnotationsTypeObject.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/md5.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
     )
 
@@ -134,7 +138,7 @@ if(TINYXML2_INCLUDE_DIR)
 endif(TINYXML2_INCLUDE_DIR)
 
 add_executable(XMLProfileParserTests ${XMLPROFILEPARSER_SOURCE})
-target_compile_definitions(XMLProfileParserTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(XMLProfileParserTests PRIVATE
     BOOST_ASIO_STANDALONE
     ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
@@ -150,6 +154,7 @@ target_include_directories(XMLProfileParserTests PRIVATE
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/UDPv4TransportDescriptor
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/UDPv6TransportDescriptor
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src/cpp
     ${Asio_INCLUDE_DIR}
     $<$<BOOL:${ANDROID}>:${ANDROID_IFADDRS_INCLUDE_DIR}>
     )
@@ -233,7 +238,7 @@ if(ANDROID)
 endif()
 
 add_executable(XMLParserTests ${XMLPARSER_SOURCE})
-target_compile_definitions(XMLParserTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(XMLParserTests PRIVATE
     BOOST_ASIO_STANDALONE
     ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
@@ -281,7 +286,7 @@ if(ANDROID)
 endif()
 
 add_executable(XMLTreeTests ${XMLTREE_SOURCE})
-target_compile_definitions(XMLTreeTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(XMLTreeTests PRIVATE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
@@ -366,7 +371,7 @@ if(ANDROID)
 endif()
 
 add_executable(XMLEndpointParserTests ${XMLENDPOINTPARSERTESTS_SOURCE})
-target_compile_definitions(XMLEndpointParserTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(XMLEndpointParserTests PRIVATE
     BOOST_ASIO_STANDALONE
     ASIO_STANDALONE
     )

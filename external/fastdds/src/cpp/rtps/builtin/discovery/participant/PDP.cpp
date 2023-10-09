@@ -285,6 +285,8 @@ void PDP::initializeParticipantProxyData(
 
     if (announce_locators)
     {
+        participant_data->m_networkConfiguration = attributes.builtin.network_configuration;
+
         for (const Locator_t& loc : attributes.defaultUnicastLocatorList)
         {
             participant_data->default_locators.add_unicast_locator(loc);
@@ -446,6 +448,14 @@ bool PDP::enable()
             get_participant_proxy_data(mp_RTPSParticipant->getGuid().guidPrefix)->m_properties);
 
     return builtin_endpoints_->enable_pdp_readers(mp_RTPSParticipant);
+}
+
+void PDP::announceParticipantState(
+        bool new_change,
+        bool dispose /* = false */)
+{
+    WriteParams __wp = WriteParams::write_params_default();
+    announceParticipantState(new_change, dispose, __wp);
 }
 
 void PDP::announceParticipantState(
@@ -831,6 +841,9 @@ ReaderProxyData* PDP::addReaderProxyData(
                 reader_proxies_pool_.pop_back();
             }
 
+            // Copy network configuration from participant to reader proxy
+            ret_val->networkConfiguration(pit->m_networkConfiguration);
+
             // Add to ParticipantProxyData
             (*pit->m_readers)[reader_guid.entityId] = ret_val;
 
@@ -925,6 +938,9 @@ WriterProxyData* PDP::addWriterProxyData(
                 ret_val = writer_proxies_pool_.back();
                 writer_proxies_pool_.pop_back();
             }
+
+            // Copy network configuration from participant to writer proxy
+            ret_val->networkConfiguration(pit->m_networkConfiguration);
 
             // Add to ParticipantProxyData
             (*pit->m_writers)[writer_guid.entityId] = ret_val;
@@ -1060,7 +1076,9 @@ bool PDP::remove_remote_participant(
             std::lock_guard<std::mutex> lock(callback_mtx_);
             ParticipantDiscoveryInfo info(*pdata);
             info.status = reason;
-            listener->onParticipantDiscovery(mp_RTPSParticipant->getUserRTPSParticipant(), std::move(info));
+            bool should_be_ignored = false;
+            listener->onParticipantDiscovery(mp_RTPSParticipant->getUserRTPSParticipant(), std::move(
+                        info), should_be_ignored);
         }
 
         this->mp_mutex->lock();
@@ -1068,6 +1086,7 @@ bool PDP::remove_remote_participant(
         // Return reader proxy objects to pool
         for (auto pit : *pdata->m_readers)
         {
+            pit.second->clear();
             reader_proxies_pool_.push_back(pit.second);
         }
         pdata->m_readers->clear();
@@ -1075,6 +1094,7 @@ bool PDP::remove_remote_participant(
         // Return writer proxy objects to pool
         for (auto pit : *pdata->m_writers)
         {
+            pit.second->clear();
             writer_proxies_pool_.push_back(pit.second);
         }
         pdata->m_writers->clear();

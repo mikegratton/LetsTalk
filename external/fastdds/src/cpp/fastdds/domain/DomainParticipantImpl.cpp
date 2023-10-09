@@ -17,7 +17,10 @@
  *
  */
 
+#include "fastdds/rtps/common/Guid.h"
+#include "fastdds/rtps/common/GuidPrefix_t.hpp"
 #include <chrono>
+#include <fastrtps/types/TypesBase.h>
 #include <string>
 
 #include <asio.hpp>
@@ -124,7 +127,10 @@ DomainParticipantImpl::DomainParticipantImpl(
 
     // Pre calculate participant id and generated guid
     participant_id_ = qos_.wire_protocol().participant_id;
-    eprosima::fastrtps::rtps::RTPSDomainImpl::create_participant_guid(participant_id_, guid_);
+    if (!eprosima::fastrtps::rtps::RTPSDomainImpl::create_participant_guid(participant_id_, guid_))
+    {
+        EPROSIMA_LOG_ERROR(DOMAIN_PARTICIPANT, "Error generating GUID for participant");
+    }
 
     /* Fill physical data properties if they are found and empty */
     std::string* property_value = fastrtps::rtps::PropertyPolicyHelper::find_property(
@@ -251,6 +257,8 @@ ReturnCode_t DomainParticipantImpl::enable()
 {
     // Should not have been previously enabled
     assert(get_rtps_participant() == nullptr);
+    // Should not have failed assigning the GUID
+    assert (guid_ != GUID_t::unknown());
 
     fastrtps::rtps::RTPSParticipantAttributes rtps_attr;
     utils::set_attributes_from_qos(rtps_attr, qos_);
@@ -575,6 +583,21 @@ ContentFilteredTopic* DomainParticipantImpl::create_contentfilteredtopic(
         return nullptr;
     }
 
+    if (expression_parameters.size() > qos_.allocation().content_filter.expression_parameters.maximum)
+    {
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Number of expression parameters exceeds maximum allocation limit: "
+                << expression_parameters.size() << " > "
+                << qos_.allocation().content_filter.expression_parameters.maximum);
+        return nullptr;
+    }
+
+    if (expression_parameters.size() > 100)
+    {
+        EPROSIMA_LOG_ERROR(PARTICIPANT, "Number of expression parameters exceeds maximum protocol limit: "
+                << expression_parameters.size() << " > 100");
+        return nullptr;
+    }
+
     TopicProxy* topic_impl = dynamic_cast<TopicProxy*>(related_topic->get_impl());
     assert(nullptr != topic_impl);
     const TypeSupport& type = topic_impl->get_type();
@@ -827,12 +850,12 @@ PublisherImpl* DomainParticipantImpl::create_publisher_impl(
    }
  */
 
-bool DomainParticipantImpl::ignore_participant(
+ReturnCode_t DomainParticipantImpl::ignore_participant(
         const InstanceHandle_t& handle)
 {
-    static_cast<void>(handle);
-    EPROSIMA_LOG_ERROR(PARTICIPANT, "Not implemented.");
-    return false;
+    return (nullptr == rtps_participant_) ? ReturnCode_t::RETCODE_NOT_ENABLED :
+           rtps_participant_->ignore_participant(iHandle2GUID(handle).guidPrefix) ? ReturnCode_t::RETCODE_OK :
+           ReturnCode_t::RETCODE_BAD_PARAMETER;
 }
 
 /* TODO
@@ -1528,12 +1551,19 @@ ReturnCode_t DomainParticipantImpl::unregister_type(
 
 void DomainParticipantImpl::MyRTPSParticipantListener::onParticipantDiscovery(
         RTPSParticipant*,
-        ParticipantDiscoveryInfo&& info)
+        ParticipantDiscoveryInfo&& info,
+        bool& should_be_ignored)
 {
+    should_be_ignored = false;
     Sentry sentinel(this);
     if (sentinel)
     {
-        participant_->listener_->on_participant_discovery(participant_->participant_, std::move(info));
+        participant_->listener_->on_participant_discovery(participant_->participant_, std::move(info),
+                should_be_ignored);
+        if (!should_be_ignored)
+        {
+            participant_->listener_->on_participant_discovery(participant_->participant_, std::move(info));
+        }
     }
 }
 
@@ -1771,7 +1801,7 @@ ReturnCode_t DomainParticipantImpl::register_remote_type(
         // Move the filled vector to the map
         parent_requests_.emplace(std::make_pair(requestId, std::move(vector)));
 
-        return ReturnCode_t::RETCODE_OK;
+        return ReturnCode_t::RETCODE_NO_DATA;
     }
     return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
 }
@@ -2210,6 +2240,8 @@ bool DomainParticipantImpl::can_qos_be_updated(
                 from.wire_protocol().builtin.typelookup_config.use_client) ||
                 !(to.wire_protocol().builtin.typelookup_config.use_server ==
                 from.wire_protocol().builtin.typelookup_config.use_server) ||
+                !(to.wire_protocol().builtin.network_configuration ==
+                from.wire_protocol().builtin.network_configuration) ||
                 !(to.wire_protocol().builtin.metatrafficUnicastLocatorList ==
                 from.wire_protocol().builtin.metatrafficUnicastLocatorList) ||
                 !(to.wire_protocol().builtin.metatrafficMulticastLocatorList ==

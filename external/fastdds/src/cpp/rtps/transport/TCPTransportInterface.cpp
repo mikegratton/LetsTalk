@@ -501,40 +501,51 @@ Locator TCPTransportInterface::RemoteToMainLocal(
 
 bool TCPTransportInterface::transform_remote_locator(
         const Locator& remote_locator,
-        Locator& result_locator) const
+        Locator& result_locator,
+        bool allowed_remote_localhost,
+        bool allowed_local_localhost) const
 {
-    if (!IsLocatorSupported(remote_locator))
+    if (IsLocatorSupported(remote_locator))
     {
-        // remote_locator not supported
-        return false;
-    }
-
-    if (!is_local_locator(remote_locator))
-    {
-        // remote_locator is not local
         result_locator = remote_locator;
+        if (!is_local_locator(result_locator))
+        {
+            // is_local_locator will return false for multicast addresses as well as remote unicast ones.
+            return true;
+        }
+
+        // If we get here, the locator is a local unicast address
+
+        // Attempt conversion to localhost if remote transport listening on it allows it
+        if (allowed_remote_localhost)
+        {
+            Locator loopbackLocator;
+            fill_local_ip(loopbackLocator);
+            if (is_locator_allowed(loopbackLocator))
+            {
+                // Locator localhost is in the whitelist, so use localhost instead of remote_locator
+                fill_local_ip(result_locator);
+                IPLocator::setPhysicalPort(result_locator, IPLocator::getPhysicalPort(remote_locator));
+                IPLocator::setLogicalPort(result_locator, IPLocator::getLogicalPort(remote_locator));
+                return true;
+            }
+            else if (allowed_local_localhost)
+            {
+                // Abort transformation if localhost not allowed by this transport, but it is by other local transport
+                // and the remote one.
+                return false;
+            }
+        }
+
+        if (!is_locator_allowed(result_locator))
+        {
+            // Neither original remote locator nor localhost allowed: abort.
+            return false;
+        }
+
         return true;
     }
-
-    if (!is_locator_allowed(remote_locator))
-    {
-        // remote_locator not in the whitelist
-        return false;
-    }
-
-    fill_local_ip(result_locator);
-    if (is_locator_allowed(result_locator))
-    {
-        // Locator localhost is in the whitelist, so use localhost instead of remote_locator
-        IPLocator::setPhysicalPort(result_locator, IPLocator::getPhysicalPort(remote_locator));
-        IPLocator::setLogicalPort(result_locator, IPLocator::getLogicalPort(remote_locator));
-        return true;
-    }
-
-    // remote_locator is allowed and local. Localhost is not allowed
-    // Then, we can use remote_locator
-    result_locator = remote_locator;
-    return true;
+    return false;
 }
 
 void TCPTransportInterface::CloseOutputChannel(
@@ -829,7 +840,7 @@ void TCPTransportInterface::perform_listen_operation(
         // Blocking receive.
         CDRMessage_t& msg = channel->message_buffer();
         fastrtps::rtps::CDRMessage::initCDRMsg(&msg);
-        if (!Receive(rtcp_manager, channel, msg.buffer, msg.max_size, msg.length, remote_locator))
+        if (!Receive(rtcp_manager, channel, msg.buffer, msg.max_size, msg.length, msg.msg_endian, remote_locator))
         {
             continue;
         }
@@ -970,6 +981,7 @@ bool TCPTransportInterface::Receive(
         octet* receive_buffer,
         uint32_t receive_buffer_capacity,
         uint32_t& receive_buffer_size,
+        fastrtps::rtps::Endianness_t msg_endian,
         Locator& remote_locator)
 {
     bool success = false;
@@ -1006,6 +1018,8 @@ bool TCPTransportInterface::Receive(
         }
         else
         {
+            tcp_header.valid_endianness(msg_endian);
+
             size_t body_size = tcp_header.length - static_cast<uint32_t>(TCPHeader::size());
 
             if (body_size > receive_buffer_capacity)
@@ -1054,7 +1068,7 @@ bool TCPTransportInterface::Receive(
                         {
                             // The channel is not going to be deleted because we lock it for reading.
                             ResponseCode responseCode = rtcp_message_manager->processRTCPMessage(
-                                channel, receive_buffer, body_size);
+                                channel, receive_buffer, body_size, msg_endian);
 
                             if (responseCode != RETCODE_OK)
                             {
@@ -1290,13 +1304,14 @@ void TCPTransportInterface::SocketAccepted(
             channel->thread(std::thread(&TCPTransportInterface::perform_listen_operation, this,
                     channel_weak_ptr, rtcp_manager_weak_ptr));
 
-            EPROSIMA_LOG_INFO(RTCP, " Accepted connection (local: " << IPLocator::to_string(locator)
-                                                                    << ", remote: " << channel->remote_endpoint().address()
-                                                                    << ":" << channel->remote_endpoint().port() << ")");
+            EPROSIMA_LOG_INFO(RTCP, "Accepted connection (local: "
+                    << IPLocator::to_string(locator) << ", remote: "
+                    << channel->remote_endpoint().address() << ":"
+                    << channel->remote_endpoint().port() << ")");
         }
         else
         {
-            EPROSIMA_LOG_INFO(RTCP, " Accepting connection (" << error.message() << ")");
+            EPROSIMA_LOG_INFO(RTCP, "Accepting connection (" << error.message() << ")");
             std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait a little to accept again.
         }
 
@@ -1695,6 +1710,13 @@ std::string TCPTransportInterface::get_password() const
 void TCPTransportInterface::update_network_interfaces()
 {
     // TODO(jlbueno)
+}
+
+bool TCPTransportInterface::is_localhost_allowed() const
+{
+    Locator local_locator;
+    fill_local_ip(local_locator);
+    return is_locator_allowed(local_locator);
 }
 
 } // namespace rtps

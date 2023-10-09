@@ -1,0 +1,92 @@
+group JsonSupportHeader;
+
+fromJsonDeclaration(type) ::= <<
+/*!
+ * @brief Create an instance of $type$ from a JSON string.
+ * @throws std::runtime_error on JSON error.
+ */
+$type$ $type$FromJson(std::string const& jsonText);
+
+/*!
+ * @brief Used between different IDL-derived types
+ */
+$type$ $type$FromJson(void const* opaque);
+>>
+
+toJsonDeclaration(type) ::= <<
+/*!
+ * @brief Serialize an instance of $type$ to a JSON string.
+ */
+std::string $type$ToJson($type$ const& sample);
+>>
+
+main(ctx, definitions) ::= <<
+#ifndef _FAST_DDS_GENERATED_$ctx.headerGuardName$_JSON_SUPPORT_H_
+#define _FAST_DDS_GENERATED_$ctx.headerGuardName$_JSON_SUPPORT_H_
+
+#include <string>
+#include "$ctx.filename$.h"
+
+$definitions; separator="\n"$
+
+#endif // _FAST_DDS_GENERATED_$ctx.headerGuardName$_JSON_SUPPORT_H_
+
+>>
+
+module(ctx, parent, module, definition_list) ::= <<
+namespace $module.name$ {
+$definition_list$
+} // namespace $module.name$
+>>
+
+definition_list(definitions) ::= <<
+$definitions; separator="\n\n"$
+>>
+
+struct_type(ctx, parent, struct, extension) ::= <<
+$fromJsonDeclaration(struct.name)$
+$toJsonDeclaration(struct.name)$
+>>
+
+bitset_type(ctx, parent, bitset) ::= <<
+$fromJsonDeclaration(bitset.name)$
+$toJsonDeclaration(bitset.name)$
+>>
+
+union_type(ctx, parent, union) ::= <<
+$fromJsonDeclaration(union.name)$
+$toJsonDeclaration(union.name)$
+>>
+
+enum_type(ctx, parent, enum) ::= <<
+$fromJsonDeclaration(enum.name)$
+$toJsonDeclaration(enum.name)$
+
+/**
+ * @brief Convert a string to the enum value
+ */
+inline $enum.name$ $enum.name$FromString(std::string const& text) { return $enum.name$FromJson(text); }
+
+/**
+ * @brief Convert an enum value to a string
+ */
+inline std::string $enum.name$ToString($enum.name$ const& sample) { return $enum.name$ToJson(sample); }
+>>
+
+interface(ctx, parent, interface, export_list) ::= <<>>
+
+export_list(exports) ::= <<>>
+
+exception(ctx, parent, exception) ::= <<>>
+
+operation(ctx, parent, operation, param_list) ::= <<>>
+
+param_list(parameters) ::= <<>>
+
+param(parameter) ::= <<>>
+
+const_decl(ctx, parent, const) ::= <<>>
+
+typedef_decl(ctx, parent, typedefs) ::= <<>>
+
+bitmask_type(ctx, parent, bitmask) ::= <<>>

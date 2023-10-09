@@ -24,6 +24,7 @@
 
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <streambuf>
 #include <memory>
 #include <gtest/gtest.h>
@@ -65,6 +66,9 @@ public:
     SHMTransportTests()
     {
         eprosima::fastdds::dds::Log::SetVerbosity(eprosima::fastdds::dds::Log::Kind::Info);
+        std::ostringstream ss;
+        ss << "SHMTests_" << GET_PID();
+        domain_name = ss.str();
     }
 
     ~SHMTransportTests()
@@ -74,6 +78,8 @@ public:
     }
 
     SharedMemTransportDescriptor descriptor;
+
+    std::string domain_name;
 };
 
 class SHMCondition : public ::testing::Test
@@ -779,8 +785,10 @@ TEST_F(SHMTransportTests, transform_remote_locator_returns_input_locator)
 
     // Then
     Locator_t otherLocator;
-    ASSERT_TRUE(transportUnderTest.transform_remote_locator(remote_locator, otherLocator));
+    ASSERT_TRUE(transportUnderTest.transform_remote_locator(remote_locator, otherLocator, false, false));
     ASSERT_EQ(otherLocator, remote_locator);
+    // NOTE: transform_remote_locator only checks for kind compatibility in SharedMemTransport, no transformation is
+    // performed and hence \c allowed_remote_localhost and \c allowed_local_localhost args are irrelevant.
 }
 
 TEST_F(SHMTransportTests, all_shared_mem_locators_are_local)
@@ -961,8 +969,6 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
 
 TEST_F(SHMTransportTests, port_mutex_deadlock_recover)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
     MockPortSharedMemGlobal port_mocker;
@@ -999,8 +1005,6 @@ TEST_F(SHMTransportTests, port_mutex_deadlock_recover)
 
 TEST_F(SHMTransportTests, port_lock_read_exclusive)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
 
     shared_mem_manager->remove_port(0);
@@ -1124,7 +1128,6 @@ TEST_F(SHMTransportTests, robust_shared_lock)
 // when reading / writing in the mapped mem.
 TEST_F(SHMTransportTests, memory_bounds)
 {
-    const std::string domain_name("SHMTests");
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     auto shm_path = SharedDir::get_file_path("");
 
@@ -1259,8 +1262,6 @@ TEST_F(SHMTransportTests, memory_bounds)
 
 TEST_F(SHMTransportTests, port_listener_dead_recover)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
 
@@ -1300,7 +1301,11 @@ TEST_F(SHMTransportTests, port_listener_dead_recover)
     ASSERT_TRUE(buf != nullptr);
     memset(buf->data(), 0, buf->size());
     *static_cast<uint8_t*>(buf->data()) = 1u;
-    ASSERT_TRUE(port_sender->try_push(buf));
+    {
+        bool is_port_ok = false;
+        ASSERT_TRUE(port_sender->try_push(buf, is_port_ok));
+        ASSERT_TRUE(is_port_ok);
+    }
 
     // Wait until message received
     while (thread_listener2_state.load() < 1u)
@@ -1325,10 +1330,18 @@ TEST_F(SHMTransportTests, port_listener_dead_recover)
 
     *static_cast<uint8_t*>(buf->data()) = 2u;
     // This push must fail because port is not OK
-    ASSERT_FALSE(port_sender->try_push(buf));
+    {
+        bool is_port_ok = false;
+        ASSERT_FALSE(port_sender->try_push(buf, is_port_ok));
+        ASSERT_FALSE(is_port_ok);
+    }
 
     // This push must success because port was regenerated in the last try_push call.
-    ASSERT_TRUE(port_sender->try_push(buf));
+    {
+        bool is_port_ok = false;
+        ASSERT_TRUE(port_sender->try_push(buf, is_port_ok));
+        ASSERT_TRUE(is_port_ok);
+    }
 
     // Wait until port is regenerated
     while (thread_listener2_state.load() < 3u)
@@ -1346,8 +1359,6 @@ TEST_F(SHMTransportTests, port_listener_dead_recover)
 
 TEST_F(SHMTransportTests, empty_cv_mutex_deadlocked_try_push)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
     MockPortSharedMemGlobal port_mocker;
@@ -1384,8 +1395,6 @@ TEST_F(SHMTransportTests, empty_cv_mutex_deadlocked_try_push)
 
 TEST_F(SHMTransportTests, dead_listener_sender_port_recover)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
 
@@ -1426,8 +1435,6 @@ TEST_F(SHMTransportTests, dead_listener_sender_port_recover)
 
 TEST_F(SHMTransportTests, port_not_ok_listener_recover)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
 
@@ -1465,16 +1472,22 @@ TEST_F(SHMTransportTests, port_not_ok_listener_recover)
     auto buffer = data_segment->alloc_buffer(1, std::chrono::steady_clock::now() + std::chrono::milliseconds(100));
     *static_cast<uint8_t*>(buffer->data()) = 6;
     // Fail because port regeneration
-    ASSERT_FALSE(managed_port->try_push(buffer));
-    ASSERT_TRUE(managed_port->try_push(buffer));
+    {
+        bool is_port_ok = false;
+        ASSERT_FALSE(managed_port->try_push(buffer, is_port_ok));
+        ASSERT_FALSE(is_port_ok);
+    }
+    {
+        bool is_port_ok = false;
+        ASSERT_TRUE(managed_port->try_push(buffer, is_port_ok));
+        ASSERT_TRUE(is_port_ok);
+    }
 
     thread_listener.join();
 }
 
 TEST_F(SHMTransportTests, buffer_recover)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
 
     auto segment = shared_mem_manager->create_segment(3, 3);
@@ -1538,14 +1551,25 @@ TEST_F(SHMTransportTests, buffer_recover)
 
     // Test 1 (without port overflow)
     uint32_t send_counter = 0u;
+
+    bool is_port_ok = false;
+
     while (listener1_recv_count.load() < 16u)
     {
         {
             // The segment should never overflow
             auto buf = segment->alloc_buffer(1, std::chrono::steady_clock::time_point());
 
-            ASSERT_EQ(true, pub_sub1_write->try_push(buf));
-            ASSERT_EQ(true, pub_sub2_write->try_push(buf));
+            {
+                is_port_ok = false;
+                ASSERT_TRUE(pub_sub1_write->try_push(buf, is_port_ok));
+                ASSERT_TRUE(is_port_ok);
+            }
+            {
+                is_port_ok = false;
+                ASSERT_TRUE(pub_sub2_write->try_push(buf, is_port_ok));
+                ASSERT_TRUE(is_port_ok);
+            }
         }
 
         {
@@ -1580,14 +1604,22 @@ TEST_F(SHMTransportTests, buffer_recover)
             // The segment should never overflow
             auto buf = segment->alloc_buffer(1u, std::chrono::steady_clock::time_point());
 
-            if (!pub_sub1_write->try_push(buf))
             {
-                port_overflows1++;
+                is_port_ok = false;
+                if (!pub_sub1_write->try_push(buf, is_port_ok))
+                {
+                    EXPECT_TRUE(is_port_ok);
+                    port_overflows1++;
+                }
             }
 
-            if (!pub_sub2_write->try_push(buf))
             {
-                port_overflows2++;
+                is_port_ok = false;
+                if (!pub_sub2_write->try_push(buf, is_port_ok))
+                {
+                    EXPECT_TRUE(is_port_ok);
+                    port_overflows2++;
+                }
             }
         }
 
@@ -1611,8 +1643,16 @@ TEST_F(SHMTransportTests, buffer_recover)
 
     {
         auto buf = segment->alloc_buffer(1u, std::chrono::steady_clock::time_point());
-        ASSERT_EQ(true, pub_sub1_write->try_push(buf));
-        ASSERT_EQ(true, pub_sub2_write->try_push(buf));
+        {
+            is_port_ok = false;
+            ASSERT_TRUE(pub_sub1_write->try_push(buf, is_port_ok));
+            ASSERT_TRUE(is_port_ok);
+        }
+        {
+            is_port_ok = false;
+            ASSERT_TRUE(pub_sub2_write->try_push(buf, is_port_ok));
+            ASSERT_TRUE(is_port_ok);
+        }
     }
 
     thread_listener1.join();
@@ -1621,7 +1661,6 @@ TEST_F(SHMTransportTests, buffer_recover)
 
 TEST_F(SHMTransportTests, remote_segments_free)
 {
-    const std::string domain_name("SHMTests");
     uint32_t num_participants = 100;
 
     std::vector<std::shared_ptr<SharedMemManager>> managers;
@@ -1655,7 +1694,9 @@ TEST_F(SHMTransportTests, remote_segments_free)
         {
             if (j != i)
             {
-                ASSERT_TRUE(ports[j]->try_push(buf));
+                bool is_port_ok = false;
+                ASSERT_TRUE(ports[j]->try_push(buf, is_port_ok));
+                ASSERT_TRUE(is_port_ok);
                 ASSERT_TRUE(listeners[j]->pop() != nullptr);
             }
         }
@@ -2163,8 +2204,6 @@ TEST_F(SHMTransportTests, dump_file)
 
 TEST_F(SHMTransportTests, named_mutex_concurrent_open_create)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
     MockPortSharedMemGlobal port_mocker;
@@ -2191,8 +2230,6 @@ TEST_F(SHMTransportTests, named_mutex_concurrent_open_create)
 
 TEST_F(SHMTransportTests, named_mutex_concurrent_open)
 {
-    const std::string domain_name("SHMTests");
-
     auto shared_mem_manager = SharedMemManager::create(domain_name);
     SharedMemGlobal* shared_mem_global = shared_mem_manager->global_segment();
     MockPortSharedMemGlobal port_mocker;

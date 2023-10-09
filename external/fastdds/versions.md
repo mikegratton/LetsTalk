@@ -1,6 +1,39 @@
 Forthcoming
 -----------
 
+Version 2.12.0
+--------------
+
+* Added participant property to configure SHM transport metatraffic behavior.
+  No metatraffic over SHM transport by default.
+* Exposed custom payload pool on DDS endpoints declaration
+* Processing environment variables on XML text
+* Upgrade to support Fast CDR v2.0.0.
+  Default encoding is XCDRv1 to maintain interoperability with previous Fast-DDS versions.
+  Some concerns:
+    - Data type source code generated with Fast DDS-Gen v2 should be regenerated using Fast DDS-Gen v3.
+    - **API break**. Changed a `MEMBER_INVALID` identifier from a `#define` to a `constexpr`.
+      Although this is not a new major version, using a `#define` is a bad conduct which was decided to be changed.
+      Note that new `constexpr` is inside namespace `eprosima::fastrtps::types`.
+
+Version 2.11.0
+--------------
+
+* Added Participant ignore local endpoints feature.
+* Remove `FASTDDS_STATIC` CMake option.
+  Please, use `BUILD_SHARED_LIBS=OFF` instead.
+* Fixed exported symbols on ContentFilteredTopic (ABI break)
+* Deprecated the DDS:Crypto:AES-GCM-GMAC plugin configuration through the DomainParticipant PropertyPolicyQos (security vulnerability).
+* `DomainParticipantListener::on_participant_discovery` changed behavior (fix API break in 2.10.0).
+* Included XML schema for static discovery profile configuration.
+* Extend DynamicDataHelper API providing `print` overload with `std::ostream` parameter (API extension in Dynamic Types).
+* TypeLookup Service configuration through XML.
+
+Version 2.10.1
+--------------
+
+* Added `ignore_participant` implementation.
+
 Version 2.10.0
 --------------
 
@@ -12,7 +45,7 @@ Version 2.10.0
 * Added ignore RTPS entity API in RTPSParticipant (ABI break on RTPS layer).
 * Overload `PDP::removeWriterProxyData` and `PDP::removeReaderProxyData` (ABI break on RTPS layer).
 * Overload RTPS discovery callbacks in RTPSParticipantListener (ABI break on RTPS layer).
-* Overload DDS discovery callbacks in DomainParticipantListener (ABI break on DDS layer). 
+* Overload DDS discovery callbacks in DomainParticipantListener (ABI break on DDS layer).
 * Added on_incompatible_type to RTPS listeners (ABI break on RTPS layer).
 * Added support for QNX 7.1 build.
 

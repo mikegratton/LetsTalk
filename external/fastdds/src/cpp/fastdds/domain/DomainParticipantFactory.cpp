@@ -166,29 +166,37 @@ DomainParticipant* DomainParticipantFactory::create_participant(
             new eprosima::fastdds::statistics::dds::DomainParticipantImpl(dom_part, did, pqos, listen);
 #endif // FASTDDS_STATISTICS
 
+    if (fastrtps::rtps::GUID_t::unknown() != dom_part_impl->guid())
     {
-        std::lock_guard<std::mutex> guard(mtx_participants_);
-        using VectorIt = std::map<DomainId_t, std::vector<DomainParticipantImpl*>>::iterator;
-        VectorIt vector_it = participants_.find(did);
-
-        if (vector_it == participants_.end())
         {
-            // Insert the vector
-            std::vector<DomainParticipantImpl*> new_vector;
-            auto pair_it = participants_.insert(std::make_pair(did, std::move(new_vector)));
-            vector_it = pair_it.first;
+            std::lock_guard<std::mutex> guard(mtx_participants_);
+            using VectorIt = std::map<DomainId_t, std::vector<DomainParticipantImpl*>>::iterator;
+            VectorIt vector_it = participants_.find(did);
+
+            if (vector_it == participants_.end())
+            {
+                // Insert the vector
+                std::vector<DomainParticipantImpl*> new_vector;
+                auto pair_it = participants_.insert(std::make_pair(did, std::move(new_vector)));
+                vector_it = pair_it.first;
+            }
+
+            vector_it->second.push_back(dom_part_impl);
         }
 
-        vector_it->second.push_back(dom_part_impl);
+        if (factory_qos_.entity_factory().autoenable_created_entities)
+        {
+            if (ReturnCode_t::RETCODE_OK != dom_part->enable())
+            {
+                delete_participant(dom_part);
+                return nullptr;
+            }
+        }
     }
-
-    if (factory_qos_.entity_factory().autoenable_created_entities)
+    else
     {
-        if (ReturnCode_t::RETCODE_OK != dom_part->enable())
-        {
-            delete_participant(dom_part);
-            return nullptr;
-        }
+        delete dom_part_impl;
+        return nullptr;
     }
 
     return dom_part;
@@ -313,11 +321,17 @@ ReturnCode_t DomainParticipantFactory::get_participant_qos_from_profile(
 
 ReturnCode_t DomainParticipantFactory::load_profiles()
 {
-    if (false == default_xml_profiles_loaded)
+    // NOTE: This could be done with a bool atomic to avoid taking the mutex in most cases, however the use of
+    // atomic over mutex is not deterministically better, and this way is easier to read and understand.
+
+    // Only load profiles once, if not, wait for profiles to be loaded
+    std::lock_guard<std::mutex> _(default_xml_profiles_loaded_mtx_);
+    if (!default_xml_profiles_loaded)
     {
         SystemInfo::set_environment_file();
         XMLProfileManager::loadDefaultXMLFile();
-        // Only load profile once
+
+        // Change as already loaded
         default_xml_profiles_loaded = true;
 
         // Only change default participant qos when not explicitly set by the user

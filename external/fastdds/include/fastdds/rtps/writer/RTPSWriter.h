@@ -25,10 +25,13 @@
 #include <mutex>
 #include <vector>
 
-#include <fastdds/rtps/Endpoint.h>
+#include <fastcdr/CdrSizeCalculator.hpp>
+
 #include <fastdds/rtps/attributes/HistoryAttributes.h>
 #include <fastdds/rtps/attributes/WriterAttributes.h>
 #include <fastdds/rtps/builtin/data/ReaderProxyData.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastdds/rtps/Endpoint.h>
 #include <fastdds/rtps/interfaces/IReaderDataFilter.hpp>
 #include <fastdds/rtps/messages/RTPSMessageGroup.h>
 #include "DeliveryRetCode.hpp"
@@ -122,7 +125,10 @@ public:
     {
         return new_change([data]() -> uint32_t
                        {
-                           return (uint32_t)T::getCdrSerializedSize(data);
+                           eprosima::fastcdr::CdrSizeCalculator calculator(
+                               eprosima::fastdds::rtps::DEFAULT_XCDR_VERSION);
+                           size_t current_alignment {0};
+                           return (uint32_t)calculator.calculate_serialized_size(data, current_alignment);
                        }, changeKind, handle);
     }
 
@@ -535,7 +541,7 @@ protected:
     /**
      * Add a change to the unsent list.
      * @param change Pointer to the change to add.
-     * @param max_blocking_time
+     * @param[in] max_blocking_time Maximum time this method has to complete the task.
      */
     virtual void unsent_change_added_to_history(
             CacheChange_t* change,
@@ -544,10 +550,12 @@ protected:
     /**
      * Indicate the writer that a change has been removed by the history due to some HistoryQos requirement.
      * @param a_change Pointer to the change that is going to be removed.
+     * @param[in] max_blocking_time Maximum time this method has to complete the task.
      * @return True if removed correctly.
      */
     virtual bool change_removed_by_history(
-            CacheChange_t* a_change) = 0;
+            CacheChange_t* a_change,
+            const std::chrono::time_point<std::chrono::steady_clock>& max_blocking_time) = 0;
 
     bool is_datasharing_compatible_with(
             const ReaderProxyData& rdata) const;

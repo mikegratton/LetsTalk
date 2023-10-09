@@ -667,6 +667,41 @@ TEST(DDSDiscovery, DDSDiscoveryDoesNotDropUDPLocator)
 }
 
 /**
+ * This is a regression test for #1929
+ * Checks that the disposal of an matched Endpoint is correctly received
+ * by a remote participant when DYNAMIC_REUSABLE memory mode is used
+ */
+TEST(DDSDiscovery, WriterAndReaderMatchUsingDynamicReusableMemoryMode)
+{
+    using namespace eprosima::fastdds::dds;
+    using namespace eprosima::fastrtps::rtps;
+
+    WireProtocolConfigQos qos;
+
+    qos.builtin.readerHistoryMemoryPolicy = eprosima::fastrtps::rtps::DYNAMIC_REUSABLE_MEMORY_MODE;
+
+    PubSubWriter<HelloWorldPubSubType> writer("test");
+    PubSubReader<HelloWorldPubSubType> reader("test");
+
+    writer.set_wire_protocol_qos(qos).init();
+    ASSERT_TRUE(writer.isInitialized());
+
+    reader.set_wire_protocol_qos(qos).init();
+    ASSERT_TRUE(reader.isInitialized());
+
+    writer.wait_discovery();
+    reader.wait_discovery();
+
+    ASSERT_TRUE(reader.is_matched());
+    ASSERT_TRUE(writer.is_matched());
+
+    reader.delete_datareader();
+
+    ASSERT_TRUE(writer.wait_reader_undiscovery(std::chrono::seconds(3)));
+
+}
+
+/**
  * This test checks the missing file case of DomainParticipantFactory->check_xml_static_discovery
  * method and checks it returns RETCODE_ERROR
  */
@@ -1510,4 +1545,96 @@ TEST(DDSDiscovery, CheckIncorrectWriterDurabilityQosXmlStaticDiscoveryFile)
 
     DomainParticipantFactory* factory = DomainParticipantFactory::get_instance();
     ASSERT_EQ(factory->check_xml_static_discovery(file), ReturnCode_t::RETCODE_ERROR);
+}
+
+/**
+ * Regression test for redmine issue #17919
+ */
+static void test_DDSDiscovery_WaitSetMatchedStatus(
+        bool with_listener)
+{
+    using namespace eprosima;
+
+    auto factory = fastdds::dds::DomainParticipantFactory::get_instance();
+    fastdds::dds::DomainParticipantQos pqos;
+    factory->get_default_participant_qos(pqos);
+    uint32_t ignore_flags =
+            fastrtps::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_HOST |
+            fastrtps::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS;
+    pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
+            static_cast<fastrtps::rtps::ParticipantFilteringFlags>(ignore_flags);
+
+    fastdds::dds::DomainParticipantListener listener;
+    auto listener_to_use = with_listener ? &listener : nullptr;
+
+    fastdds::dds::DomainParticipant* participant = factory->create_participant(0, pqos, listener_to_use);
+    ASSERT_NE(participant, nullptr);
+
+    fastdds::dds::TypeSupport type(new HelloWorldPubSubType());
+    EXPECT_EQ(type.register_type(participant), ReturnCode_t::RETCODE_OK);
+
+    auto topic = participant->create_topic(TEST_TOPIC_NAME, type->getName(), fastdds::dds::TOPIC_QOS_DEFAULT);
+    ASSERT_NE(topic, nullptr);
+
+    auto publisher = participant->create_publisher(fastdds::dds::PUBLISHER_QOS_DEFAULT);
+    ASSERT_NE(publisher, nullptr);
+
+    auto data_writer = publisher->create_datawriter(topic, fastdds::dds::DATAWRITER_QOS_DEFAULT);
+    ASSERT_NE(data_writer, nullptr);
+
+    auto thread_run = [data_writer]()
+            {
+                fastdds::dds::WaitSet wait_set;
+                fastdds::dds::ConditionSeq triggered_conditions;
+
+                fastdds::dds::StatusCondition& condition = data_writer->get_statuscondition();
+                condition.set_enabled_statuses(fastdds::dds::StatusMask::publication_matched());
+                wait_set.attach_condition(condition);
+
+                fastdds::dds::PublicationMatchedStatus matched_status{};
+                while (1 > matched_status.current_count)
+                {
+                    ReturnCode_t ret_code = wait_set.wait(triggered_conditions, fastrtps::c_TimeInfinite);
+                    if (ReturnCode_t::RETCODE_OK != ret_code)
+                    {
+                        continue;
+                    }
+
+                    for (fastdds::dds::Condition* cond : triggered_conditions)
+                    {
+                        fastdds::dds::StatusCondition* status_cond = dynamic_cast<fastdds::dds::StatusCondition*>(cond);
+                        if (nullptr != status_cond)
+                        {
+                            EXPECT_EQ(status_cond, &condition);
+                            fastdds::dds::Entity* entity = status_cond->get_entity();
+                            EXPECT_EQ(entity, data_writer);
+                            fastdds::dds::StatusMask changed_statuses = entity->get_status_changes();
+
+                            if (changed_statuses.is_active(fastdds::dds::StatusMask::publication_matched()))
+                            {
+                                data_writer->get_publication_matched_status(matched_status);
+                            }
+                        }
+                    }
+                }
+            };
+
+    std::thread waiting_thread(thread_run);
+
+    auto subscriber = participant->create_subscriber(fastdds::dds::SUBSCRIBER_QOS_DEFAULT);
+    ASSERT_NE(subscriber, nullptr);
+
+    auto data_reader = subscriber->create_datareader(topic, fastdds::dds::DATAREADER_QOS_DEFAULT);
+    ASSERT_NE(data_reader, nullptr);
+
+    waiting_thread.join();
+
+    participant->delete_contained_entities();
+    factory->delete_participant(participant);
+}
+
+TEST(DDSDiscovery, WaitSetMatchedStatus)
+{
+    test_DDSDiscovery_WaitSetMatchedStatus(false);
+    test_DDSDiscovery_WaitSetMatchedStatus(true);
 }

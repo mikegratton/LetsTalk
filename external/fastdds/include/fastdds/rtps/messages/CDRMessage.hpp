@@ -88,12 +88,23 @@ inline bool CDRMessage::readData(
         octet* o,
         uint32_t length)
 {
+    if (msg == nullptr)
+    {
+        return false;
+    }
     if (msg->pos + length > msg->length)
     {
         return false;
     }
-    memcpy(o, &msg->buffer[msg->pos], length);
-    msg->pos += length;
+    if (length > 0)
+    {
+        if (o == nullptr)
+        {
+            return false;
+        }
+        memcpy(o, &msg->buffer[msg->pos], length);
+        msg->pos += length;
+    }
     return true;
 }
 
@@ -242,7 +253,7 @@ inline bool CDRMessage::readSequenceNumber(
     }
     bool valid = readInt32(msg, &sn->high);
     valid &= readUInt32(msg, &sn->low);
-    return true;
+    return valid;
 }
 
 inline SequenceNumberSet_t CDRMessage::readSequenceNumberSet(
@@ -464,14 +475,24 @@ inline bool CDRMessage::addData(
         const octet* data,
         const uint32_t length)
 {
+    if (msg == nullptr)
+    {
+        return false;
+    }
     if (msg->pos + length > msg->max_size)
     {
         return false;
     }
-
-    memcpy(&msg->buffer[msg->pos], data, length);
-    msg->pos += length;
-    msg->length += length;
+    if (length > 0)
+    {
+        if (data == nullptr)
+        {
+            return false;
+        }
+        memcpy(&msg->buffer[msg->pos], data, length);
+        msg->pos += length;
+        msg->length += length;
+    }
     return true;
 }
 
@@ -1278,6 +1299,20 @@ inline bool CDRMessage::readParticipantGenericMessage(
     }
 
     return true;
+}
+
+inline bool CDRMessage::skip(
+        CDRMessage_t* msg,
+        uint32_t length)
+{
+    // Validate input
+    bool ret = (msg != nullptr) && (msg->pos + length <= msg->length);
+    if (ret)
+    {
+        // Advance index the number of specified bytes
+        msg->pos += length;
+    }
+    return ret;
 }
 
 } // namespace rtps

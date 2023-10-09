@@ -44,33 +44,23 @@ find_program(ddsgen fastddsgen
         /usr/bin
     )
 set(idl_options -cs;-replace)
-if (idl_JSON)
-    list(APPEND idl_options -json)
-endif()
 
 foreach(idl ${idl_SOURCE})
+    get_filename_component(ddsgen_dir ${ddsgen} DIRECTORY)
     get_filename_component(stem ${idl} NAME_WE)
     get_filename_component(idl_abs ${idl} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
     set(idl_output ${idl_ABS_PATH}/${stem}.h;${idl_ABS_PATH}/${stem}.cxx)
     if (idl_JSON)
-        list(APPEND idl_output ${idl_ABS_PATH}/${stem}JsonSupport.cxx)
+        set(json_source ${stem}JsonSupport.cxx)
+        set(json_header ${stem}JsonSupport.h)
+        set(idl_json_options  -extrastg ${ddsgen_dir}/JsonSupportHeader.stg ${json_header} -extrastg ${ddsgen_dir}/JsonSupportSource.stg ${json_source})        
+        list(APPEND idl_output ${idl_ABS_PATH}/${json_source})
     endif()
-    if(CMAKE_GENERATOR STREQUAL " Ninja ")
-        add_custom_command(OUTPUT ${idl_output}
-            COMMAND cpp ${ddsgen_include} -MM ${idl_abs} -MF ${idl_ABS_PATH}/${stem}.idl.d
-            COMMAND sed -i -e " s,${stem}.o,${relpath}/${stem}.h ${relpath}/${stem}.cxx, " ${idl_ABS_PATH}/${stem}.idl.d
-            COMMAND ${ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${ddsgen_include} ${idl_abs}
-            DEPFILE ${idl_ABS_PATH}/${stem}.idl.d
-            DEPENDS ${idl_abs}
-            COMMENT " Compiling idl ${idl_abs}"
-        )
-    else()
-        add_custom_command(OUTPUT ${idl_output}
-            COMMAND ${ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${ddsgen_include} ${idl_abs}
-            DEPENDS ${idl_abs}
-            COMMENT " Compiling idl ${idl_abs}"
-        )
-    endif()
+    add_custom_command(OUTPUT ${idl_output}
+        COMMAND ${ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${idl_json_options} ${ddsgen_include} ${idl_abs}
+        DEPENDS ${idl_abs}
+        COMMENT " Compiling idl ${idl_abs}"
+    )
     list(APPEND idl_source ${idl_output})    
 endforeach()
 endmacro()
@@ -83,26 +73,7 @@ if (idl_SHARED)
 else()
     add_library(${name} ${idl_source})
 endif()
-target_link_libraries(${name} PUBLIC fastrtps)
-if (idl_JSON)
-    if (TARGET json)
-        target_link_libraries(${name} PRIVATE json)
-    else()
-        find_path(json_header json.hpp
-            PATHS
-            ${PROJECT_SOURCE_DIR}/external/json
-            ${CompileIdl_location}/../../../include
-            ${CompileIdl_location}/../../include
-            ${CompileIdl_location}/../include
-            /usr/local/include            
-            /usr/include
-            PATH_SUFFIXES
-            letstalk
-            nlohmann
-        )
-        target_include_directories(${name} PRIVATE ${json_header})
-    endif()
-endif()
+target_link_libraries(${name} PUBLIC fastcdr)
 target_include_directories(${name}
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

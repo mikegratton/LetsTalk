@@ -55,9 +55,6 @@ public:
     MOCK_METHOD1(assignRemoteEndpoints, void(
             ParticipantProxyData* pdata));
 
-    MOCK_METHOD1(notifyAboveRemoteEndpoints, void(
-            const ParticipantProxyData& pdata));
-
     MOCK_METHOD1(removeRemoteEndpoints, void(
             const ParticipantProxyData* pdata));
 
@@ -82,9 +79,15 @@ public:
             const GUID_t& writer,
             WriterProxyData& wdata));
 
+    MOCK_METHOD2(notifyAboveRemoteEndpoints, void(
+            const ParticipantProxyData& pdata,
+            bool notify_secure_endpoints));
+
     MOCK_METHOD0(ParticipantProxiesBegin, ResourceLimitedVector<ParticipantProxyData*>::const_iterator());
 
     MOCK_METHOD0(ParticipantProxiesEnd, ResourceLimitedVector<ParticipantProxyData*>::const_iterator());
+
+    MOCK_METHOD(RTPSParticipantImpl*, getRTPSParticipant, (), (const));
 
     ProxyPool<ReaderProxyData>& get_temporary_reader_proxies_pool()
     {
@@ -104,7 +107,6 @@ public:
     ProxyPool<ReaderProxyData> temp_proxy_readers = {{4, 1}};
     ProxyPool<WriterProxyData> temp_proxy_writers = {{4, 1}};
 };
-
 
 } //namespace rtps
 } //namespace fastrtps

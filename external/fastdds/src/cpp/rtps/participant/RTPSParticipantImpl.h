@@ -240,12 +240,6 @@ public:
         return (uint32_t)m_att.participantID;
     }
 
-    //!Post to the resource semaphore
-    void ResourceSemaphorePost();
-
-    //!Wait for the resource semaphore
-    void ResourceSemaphoreWait();
-
     //!Get Pointer to the Event Resource.
     ResourceEvent& getEventResource()
     {
@@ -476,7 +470,8 @@ public:
         return false;
     }
 
-    std::unique_ptr<RTPSMessageGroup_t> get_send_buffer();
+    std::unique_ptr<RTPSMessageGroup_t> get_send_buffer(
+            const std::chrono::steady_clock::time_point& max_blocking_time);
     void return_send_buffer(
             std::unique_ptr <RTPSMessageGroup_t>&& buffer);
 
@@ -529,8 +524,6 @@ private:
     ResourceEvent mp_event_thr;
     //! BuiltinProtocols of this RTPSParticipant
     BuiltinProtocols* mp_builtinProtocols;
-    //!Semaphore to wait for the listen thread creation.
-    Semaphore* mp_ResourceSemaphore;
     //!Id counter to correctly assign the ids to writers and readers.
     std::atomic<uint32_t> IdCounter;
     //! Mutex to safely access endpoints collections
@@ -642,6 +635,12 @@ private:
     bool createSendResources(
             Endpoint* pend);
 
+    /** Add participant's external locators to endpoint's when none available
+        @param endpoint - Pointer to the endpoint whose external locators are to be set
+     */
+    void setup_external_locators(
+            Endpoint* endpoint);
+
     /** When we want to create a new Resource but the physical channel specified by the Locator
         can not be opened, we want to mutate the Locator to open a more or less equivalent channel.
         @param loc -  Locator we want to change
@@ -733,6 +732,11 @@ private:
      * Get default unicast locators when not provided by the user.
      */
     void get_default_unicast_locators();
+
+    bool match_local_endpoints_ = true;
+
+    bool should_match_local_endpoints(
+            const RTPSParticipantAttributes& att);
 
 public:
 
@@ -1111,6 +1115,11 @@ public:
             uint32_t enabled_writers) override;
 
 #endif // FASTDDS_STATISTICS
+
+    bool should_match_local_endpoints()
+    {
+        return match_local_endpoints_;
+    }
 
 };
 } // namespace rtps

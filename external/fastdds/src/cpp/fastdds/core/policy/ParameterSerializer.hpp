@@ -507,13 +507,13 @@ inline bool ParameterSerializer<ParameterStatusInfo_t>::read_content_from_cdr_me
     }
     parameter.length = parameter_length;
     //octet status = msg.buffer[msg.pos + 3];
-    bool valid = true;
     fastrtps::rtps::octet tmp;
     //Remove the front three octets, take the fourth
+    bool valid = fastrtps::rtps::CDRMessage::readOctet(cdr_message, &tmp);
     valid &= fastrtps::rtps::CDRMessage::readOctet(cdr_message, &tmp);
     valid &= fastrtps::rtps::CDRMessage::readOctet(cdr_message, &tmp);
-    valid &= fastrtps::rtps::CDRMessage::readOctet(cdr_message, &tmp);
-    return fastrtps::rtps::CDRMessage::readOctet(cdr_message, &parameter.status);
+    valid &= fastrtps::rtps::CDRMessage::readOctet(cdr_message, &parameter.status);
+    return valid;
 }
 
 template<>
@@ -613,6 +613,28 @@ inline bool ParameterSerializer<ParameterBuiltinEndpointSet_t>::read_content_fro
 }
 
 template<>
+inline bool ParameterSerializer<ParameterNetworkConfigSet_t>::add_content_to_cdr_message(
+        const ParameterNetworkConfigSet_t& parameter,
+        fastrtps::rtps::CDRMessage_t* cdr_message)
+{
+    return fastrtps::rtps::CDRMessage::addUInt32(cdr_message, parameter.netconfigSet);
+}
+
+template<>
+inline bool ParameterSerializer<ParameterNetworkConfigSet_t>::read_content_from_cdr_message(
+        ParameterNetworkConfigSet_t& parameter,
+        fastrtps::rtps::CDRMessage_t* cdr_message,
+        const uint16_t parameter_length)
+{
+    if (parameter_length != PARAMETER_NETWORKCONFIGSET_LENGTH)
+    {
+        return false;
+    }
+    parameter.length = parameter_length;
+    return fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &parameter.netconfigSet);
+}
+
+template<>
 inline uint32_t ParameterSerializer<ParameterPropertyList_t>::cdr_serialized_size(
         const ParameterPropertyList_t& parameter)
 {
@@ -671,39 +693,70 @@ inline bool ParameterSerializer<ParameterPropertyList_t>::read_content_from_cdr_
     parameter.length = parameter_length;
 
     uint32_t pos_ref = cdr_message->pos;
+    uint32_t max_pos = pos_ref + parameter_length;
+    uint32_t remain = parameter_length;
+    if ((max_pos > cdr_message->length) || (remain < sizeof(uint32_t)))
+    {
+        return false;
+    }
+
     uint32_t num_properties = 0;
     bool valid = fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &num_properties);
+    remain -= sizeof(uint32_t);
     if (!valid)
     {
         return false;
     }
-    //properties_.reserve(parameter_length - 4);
 
-    for (size_t i = 0; i < num_properties; ++i)
+    for (uint32_t i = 0; i < num_properties; ++i)
     {
-        uint32_t property1_size = 0, alignment1 = 0, property2_size = 0, alignment2 = 0, str1_pos = 0;
+        uint32_t property1_size = 0, alignment1 = 0, property2_size = 0, alignment2 = 0, str1_pos = 0, str2_pos = 0;
 
-        valid &= fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &property1_size);
+        // Read and validate size of property name
+        remain = max_pos - cdr_message->pos;
+        valid &= (remain >= sizeof(uint32_t)) && fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &property1_size);
+        remain -= sizeof(uint32_t);
+        valid = valid && (remain >= property1_size);
         if (!valid)
         {
             return false;
         }
+
         str1_pos = cdr_message->pos;
+        cdr_message->pos += property1_size;
+        remain -= property1_size;
         alignment1 = ((property1_size + 3u) & ~3u) - property1_size;
-        cdr_message->pos += (property1_size + alignment1);
-        valid &= fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &property2_size);
+        if (remain < alignment1)
+        {
+            return false;
+        }
+        cdr_message->pos += alignment1;
+        remain -= alignment1;
+
+        // Read and validate size of property value
+        valid &= (remain >= sizeof(uint32_t)) && fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &property2_size);
+        remain -= sizeof(uint32_t);
+        valid = valid && (remain >= property2_size);
         if (!valid)
         {
             return false;
         }
+
+        str2_pos = cdr_message->pos;
+        cdr_message->pos += property2_size;
+        remain -= property2_size;
+        alignment2 = ((property2_size + 3u) & ~3u) - property2_size;
+        if (remain < alignment2)
+        {
+            return false;
+        }
+        cdr_message->pos += alignment2;
+        remain -= alignment2;
+
         parameter.push_back(
             &cdr_message->buffer[str1_pos], property1_size,
-            &cdr_message->buffer[cdr_message->pos], property2_size);
-
-        alignment2 = ((property2_size + 3u) & ~3u) - property2_size;
-        cdr_message->pos += (property2_size + alignment2);
+            &cdr_message->buffer[str2_pos], property2_size);
     }
-    //Nproperties_ = num_properties;
 
     uint32_t length_diff = cdr_message->pos - pos_ref;
     valid &= (parameter_length >= length_diff);
@@ -869,7 +922,7 @@ public:
                 valid = fastrtps::rtps::CDRMessage::readUInt32(cdr_message, &num_parameters);
                 if (valid)
                 {
-                    valid = (num_parameters < 100) && (num_parameters < parameter.expression_parameters.max_size());
+                    valid = (num_parameters <= 100) && (num_parameters <= parameter.expression_parameters.max_size());
                 }
                 if (valid)
                 {

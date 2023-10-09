@@ -91,4 +91,9 @@ TEST_CASE("QueueUntil")
     queue.push("world");
     auto data = queue.popAll(std::chrono::steady_clock::now() + std::chrono::nanoseconds(-100));
     CHECK(data.size() == 2);
+    auto startTime = std::chrono::steady_clock::now();
+    data = queue.popAll(startTime + std::chrono::milliseconds(100));
+    std::chrono::nanoseconds elapsed = std::chrono::steady_clock::now() - startTime;
+    CHECK(elapsed < std::chrono::milliseconds(150));
+    CHECK(data.size() == 0);
 }

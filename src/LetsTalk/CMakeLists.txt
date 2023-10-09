@@ -10,7 +10,7 @@ target_include_directories(LetsTalk
     $<INSTALL_INTERFACE:include>
 )
 
-export(TARGETS LetsTalk NAMESPACE lt:: FILE LetsTalkTargets.cmake)
+export(TARGETS LetsTalk fastrtps fastcdr NAMESPACE lt:: FILE LetsTalkTargets.cmake)
 install(FILES ${headers} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/LetsTalk)
 install(TARGETS LetsTalk EXPORT LetsTalk-targets)
 install(EXPORT LetsTalk-targets DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/LetsTalk)

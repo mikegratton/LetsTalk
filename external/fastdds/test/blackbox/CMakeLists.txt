@@ -244,6 +244,7 @@ file(GLOB RTPS_BLACKBOXTESTS_TEST_SOURCE "common/RTPSBlackboxTests*.cpp")
 set(RTPS_BLACKBOXTESTS_SOURCE ${RTPS_BLACKBOXTESTS_TEST_SOURCE}
     types/HelloWorld.cxx
     types/HelloWorldPubSubTypes.cxx
+    types/HelloWorldTypeObject.cxx
     types/KeyedHelloWorld.cxx
     types/KeyedHelloWorldPubSubTypes.cxx
     types/StringTest.cxx
@@ -292,11 +293,17 @@ set(BLACKBOXTESTS_SOURCE ${BLACKBOXTESTS_TEST_SOURCE}
     types/KeyedData1mbPubSubTypes.cxx
     types/FixedSized.cxx
     types/FixedSizedPubSubTypes.cxx
+    types/TestIncludeRegression3361.cxx
+    types/TestIncludeRegression3361TypeObject.cxx
+    types/TestRegression3361.cxx
+    types/TestRegression3361PubSubTypes.cxx
+    types/TestRegression3361TypeObject.cxx
 
     utils/data_generators.cpp
     utils/lambda_functions.cpp
     utils/print_functions.cpp
 
+    common/DatagramInjectionTransport.cpp
     common/TCPReqRepHelloWorldRequester.cpp
     common/TCPReqRepHelloWorldReplier.cpp
     )
@@ -327,14 +334,13 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/PubSubReaderPersistence_static_disc.x
     ${CMAKE_CURRENT_BINARY_DIR}/PubSubReaderPersistence_static_disc.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/discovery_participant_flags_profile.xml
     ${CMAKE_CURRENT_BINARY_DIR}/discovery_participant_flags_profile.xml)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/persistence_profile.xml
-    ${CMAKE_CURRENT_BINARY_DIR}/persistence_profile.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/StatisticsDomainParticipant_profile.xml
     ${CMAKE_CURRENT_BINARY_DIR}/StatisticsDomainParticipant_profile.xml)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/check_guid.py
     ${CMAKE_CURRENT_BINARY_DIR}/check_guid.py)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/partitions_profile.xml
     ${CMAKE_CURRENT_BINARY_DIR}/partitions_profile.xml)
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/datagrams" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(FASTRTPS_API_TESTS)
     set(BLACKBOXTESTS_FASTRTPS_SOURCE

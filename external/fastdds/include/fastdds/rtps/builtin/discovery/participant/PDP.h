@@ -90,7 +90,7 @@ public:
 
     /**
      * Constructor
-     * @param builtin Pointer to the BuiltinProcols object.
+     * @param builtin Pointer to the BuiltinProtocols object.
      * @param allocation Participant allocation parameters.
      */
     PDP(
@@ -138,8 +138,15 @@ public:
      */
     virtual void announceParticipantState(
             bool new_change,
-            bool dispose = false,
-            WriteParams& wparams = WriteParams::WRITE_PARAM_DEFAULT) = 0;
+            bool dispose,
+            WriteParams& wparams) = 0;
+
+    /**
+     * \c announceParticipantState method without optional output parameter \c wparams .
+     */
+    virtual void announceParticipantState(
+            bool new_change,
+            bool dispose = false);
 
     //!Stop the RTPSParticipantAnnouncement (only used in tests).
     virtual void stopParticipantAnnouncement();
@@ -246,7 +253,7 @@ public:
     /**
      * This method removes and deletes a WriterProxyData object from its corresponding RTPSParticipant.
      *
-     * @param[in] writer_guid GUID_t of the wtiter to remove.
+     * @param[in] writer_guid GUID_t of the writer to remove.
      * @return true if found and deleted.
      */
     bool removeWriterProxyData(
@@ -255,7 +262,7 @@ public:
     /**
      * This method removes and deletes a WriterProxyData object from its corresponding RTPSParticipant.
      *
-     * @param[in] writer_guid GUID_t of the wtiter to remove.
+     * @param[in] writer_guid GUID_t of the writer to remove.
      * @param[in] reason Why the writer is being removed (dropped, removed, or ignored)
      * @return true if found and deleted.
      */
@@ -279,9 +286,11 @@ public:
     /**
      * Override to match additional endpoints to PDP. Like EDP or WLP.
      * @param pdata Pointer to the ParticipantProxyData object.
+     * @param notify_secure_endpoints Whether to try notifying secure endpoints.
      */
     virtual void notifyAboveRemoteEndpoints(
-            const ParticipantProxyData& pdata) = 0;
+            const ParticipantProxyData& pdata,
+            bool notify_secure_endpoints) = 0;
 
     /**
      * Some PDP classes require EDP matching with update PDP DATAs like EDPStatic

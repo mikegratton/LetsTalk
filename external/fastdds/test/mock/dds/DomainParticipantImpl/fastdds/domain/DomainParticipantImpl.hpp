@@ -16,6 +16,7 @@
 #define _FASTDDS_PARTICIPANTIMPL_HPP_
 
 #include <atomic>
+#include <fastdds/rtps/common/InstanceHandle.h>
 #include <map>
 #include <mutex>
 #include <string>
@@ -84,6 +85,7 @@ protected:
     {
         participant_->impl_ = this;
 
+        guid_.guidPrefix.value[11] = 1;
         eprosima::fastrtps::TopicAttributes top_attr;
         eprosima::fastrtps::xmlparser::XMLProfileManager::getDefaultTopicAttributes(top_attr);
         default_topic_qos_.history() = top_attr.historyQos;
@@ -374,6 +376,10 @@ public:
 
     MOCK_METHOD1(find_content_filter_factory, IContentFilterFactory * (
                 const char* filter_class_name));
+
+    MOCK_METHOD1(ignore_participant, bool (
+                const fastrtps::rtps::InstanceHandle_t& handle));
+
 
     TopicDescription* lookup_topicdescription(
             const std::string& topic_name) const

@@ -81,6 +81,7 @@ extern const char* DISCARD;
 extern const char* FAIL;
 extern const char* RTPS_DUMP_FILE;
 extern const char* ON;
+extern const char* AUTO;
 
 // IntraprocessDeliveryType
 extern const char* OFF;
@@ -272,6 +273,9 @@ extern const char* IGNORE_PARTICIPANT_FLAGS;
 extern const char* FILTER_DIFFERENT_HOST;
 extern const char* FILTER_DIFFERENT_PROCESS;
 extern const char* FILTER_SAME_PROCESS;
+extern const char* TYPELOOKUP_CONFIG;
+extern const char* TYPELOOKUP_USE_SERVER;
+extern const char* TYPELOOKUP_USE_CLIENT;
 extern const char* WRITER_LVESS_PROTOCOL;
 extern const char* DISCOVERY_SETTINGS;
 extern const char* _EDP;

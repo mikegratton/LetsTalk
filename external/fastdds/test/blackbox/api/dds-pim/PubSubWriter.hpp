@@ -645,6 +645,35 @@ public:
         std::cout << "Writer removal finished..." << std::endl;
     }
 
+    bool wait_reader_undiscovery(
+            std::chrono::seconds timeout,
+            unsigned int matched = 0)
+    {
+        bool ret_value = true;
+        std::unique_lock<std::mutex> lock(mutexDiscovery_);
+
+        std::cout << "Writer is waiting removal..." << std::endl;
+
+        if (!cv_.wait_for(lock, timeout, [&]()
+                {
+                    return matched_ <= matched;
+                }))
+        {
+            ret_value = false;
+        }
+
+        if (ret_value)
+        {
+            std::cout << "Writer removal finished successfully..." << std::endl;
+        }
+        else
+        {
+            std::cout << "Writer removal finished unsuccessfully..." << std::endl;
+        }
+
+        return ret_value;
+    }
+
     void wait_liveliness_lost(
             unsigned int times = 1)
     {
@@ -923,6 +952,13 @@ public:
         return *this;
     }
 
+    PubSubWriter& set_wire_protocol_qos(
+            const eprosima::fastdds::dds::WireProtocolConfigQos& qos)
+    {
+        participant_qos_.wire_protocol() = qos;
+        return *this;
+    }
+
     PubSubWriter& add_user_transport_to_pparams(
             std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface> userTransportDescriptor)
     {
@@ -1179,6 +1215,13 @@ public:
         return *this;
     }
 
+    PubSubWriter& avoid_builtin_multicast(
+            bool value)
+    {
+        participant_qos_.wire_protocol().builtin.avoid_builtin_multicast = value;
+        return *this;
+    }
+
     PubSubWriter& property_policy(
             const eprosima::fastrtps::rtps::PropertyPolicy& property_policy)
     {
@@ -1273,6 +1316,13 @@ public:
             uint32_t max_partitions)
     {
         participant_qos_.allocation().data_limits.max_partitions = max_partitions;
+        return *this;
+    }
+
+    PubSubWriter& max_multicast_locators_number(
+            size_t max_multicast_locators)
+    {
+        participant_qos_.allocation().locators.max_multicast_locators = max_multicast_locators;
         return *this;
     }
 

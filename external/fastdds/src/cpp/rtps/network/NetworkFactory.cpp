@@ -34,10 +34,37 @@ namespace rtps {
 
 using SendResourceList = fastdds::rtps::SendResourceList;
 
-NetworkFactory::NetworkFactory()
+NetworkFactory::NetworkFactory(
+        const RTPSParticipantAttributes& PParam)
     : maxMessageSizeBetweenTransports_(std::numeric_limits<uint32_t>::max())
     , minSendBufferSize_(std::numeric_limits<uint32_t>::max())
+    , network_configuration_(0)
 {
+    const std::string* enforce_metatraffic = nullptr;
+    enforce_metatraffic = PropertyPolicyHelper::find_property(PParam.properties, "fastdds.shm.enforce_metatraffic");
+    if (enforce_metatraffic)
+    {
+        if (*enforce_metatraffic == "unicast")
+        {
+            enforce_shm_unicast_metatraffic_ = true;
+            enforce_shm_multicast_metatraffic_ = false;
+        }
+        else if (*enforce_metatraffic == "all")
+        {
+            enforce_shm_unicast_metatraffic_ = true;
+            enforce_shm_multicast_metatraffic_ = true;
+        }
+        else if (*enforce_metatraffic == "none")
+        {
+            enforce_shm_unicast_metatraffic_ = false;
+            enforce_shm_multicast_metatraffic_ = false;
+        }
+        else
+        {
+            EPROSIMA_LOG_WARNING(RTPS_NETWORK, "Unrecognized value '" << *enforce_metatraffic << "'" <<
+                    " for 'fastdds.shm.enforce_metatraffic'. Using default value: 'none'");
+        }
+    }
 }
 
 bool NetworkFactory::build_send_resources(
@@ -100,6 +127,9 @@ bool NetworkFactory::RegisterTransport(
 
     if (transport)
     {
+        int32_t kind = transport->kind();
+        bool is_localhost_allowed = transport->is_localhost_allowed();
+
         if (transport->init(properties))
         {
             minSendBufferSize = transport->get_configuration()->min_send_buffer_size();
@@ -117,6 +147,11 @@ bool NetworkFactory::RegisterTransport(
             if (minSendBufferSize < minSendBufferSize_)
             {
                 minSendBufferSize_ = minSendBufferSize;
+            }
+
+            if (is_localhost_allowed)
+            {
+                network_configuration_ |= kind;
             }
         }
     }
@@ -156,11 +191,27 @@ void NetworkFactory::NormalizeLocators(
 
 bool NetworkFactory::transform_remote_locator(
         const Locator_t& remote_locator,
-        Locator_t& result_locator) const
+        Locator_t& result_locator,
+        const NetworkConfigSet_t& remote_network_config) const
 {
     for (auto& transport : mRegisteredTransports)
     {
-        if (transport->transform_remote_locator(remote_locator, result_locator))
+        if (transport->transform_remote_locator(remote_locator, result_locator,
+                remote_network_config & remote_locator.kind, network_configuration_ & remote_locator.kind))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool NetworkFactory::is_locator_allowed(
+        const Locator_t& locator) const
+{
+    for (auto& transport : mRegisteredTransports)
+    {
+        if (transport->is_locator_allowed(locator))
         {
             return true;
         }
@@ -246,9 +297,9 @@ bool NetworkFactory::getDefaultMetatrafficMulticastLocators(
 
     for (auto& transport : mRegisteredTransports)
     {
-        // For better fault-tolerance reasons, SHM multicast metatraffic is avoided if it is already provided
+        // For better fault-tolerance reasons, SHM metatraffic is avoided if it is already provided
         // by another transport
-        if (transport->kind() != LOCATOR_KIND_SHM)
+        if (enforce_shm_multicast_metatraffic_ || transport->kind() != LOCATOR_KIND_SHM)
         {
             result |= transport->getDefaultMetatrafficMulticastLocators(locators, metatraffic_multicast_port);
         }
@@ -286,10 +337,28 @@ bool NetworkFactory::getDefaultMetatrafficUnicastLocators(
         uint32_t metatraffic_unicast_port) const
 {
     bool result = false;
+
+    TransportInterface* shm_transport = nullptr;
+
     for (auto& transport : mRegisteredTransports)
     {
-        result |= transport->getDefaultMetatrafficUnicastLocators(locators, metatraffic_unicast_port);
+        // For better fault-tolerance reasons, SHM metatraffic is avoided if it is already provided
+        // by another transport
+        if (enforce_shm_unicast_metatraffic_ || transport->kind() != LOCATOR_KIND_SHM)
+        {
+            result |= transport->getDefaultMetatrafficUnicastLocators(locators, metatraffic_unicast_port);
+        }
+        else
+        {
+            shm_transport = transport.get();
+        }
     }
+
+    if (locators.size() == 0 && shm_transport)
+    {
+        result |= shm_transport->getDefaultMetatrafficUnicastLocators(locators, metatraffic_unicast_port);
+    }
+
     return result;
 }
 

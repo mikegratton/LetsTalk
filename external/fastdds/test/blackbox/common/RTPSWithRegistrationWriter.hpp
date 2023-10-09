@@ -109,8 +109,16 @@ public:
 
     RTPSWithRegistrationWriter(
             const std::string& topic_name)
+        : RTPSWithRegistrationWriter(topic_name, nullptr)
+    {
+    }
+
+    RTPSWithRegistrationWriter(
+            const std::string& topic_name,
+            eprosima::fastrtps::rtps::RTPSParticipant* participant)
         : listener_(*this)
-        , participant_(nullptr)
+        , participant_(participant)
+        , destroy_participant_(nullptr == participant)
         , writer_(nullptr)
         , history_(nullptr)
         , initialized_(false)
@@ -135,14 +143,7 @@ public:
 
     virtual ~RTPSWithRegistrationWriter()
     {
-        if (participant_ != nullptr)
-        {
-            eprosima::fastrtps::rtps::RTPSDomain::removeRTPSParticipant(participant_);
-        }
-        if (history_ != nullptr)
-        {
-            delete(history_);
-        }
+        destroy();
     }
 
     void init()
@@ -150,8 +151,11 @@ public:
         matched_ = 0;
 
         //Create participant
-        participant_ = eprosima::fastrtps::rtps::RTPSDomain::createParticipant(
-            (uint32_t)GET_PID() % 230, participant_attr_);
+        if (nullptr == participant_)
+        {
+            participant_ = eprosima::fastrtps::rtps::RTPSDomain::createParticipant(
+                static_cast<uint32_t>(GET_PID()) % 230, participant_attr_);
+        }
         ASSERT_NE(participant_, nullptr);
 
         //Create writerhistory
@@ -192,7 +196,7 @@ public:
 
     void destroy()
     {
-        if (participant_ != nullptr)
+        if (destroy_participant_ && participant_ != nullptr)
         {
             eprosima::fastrtps::rtps::RTPSDomain::removeRTPSParticipant(participant_);
         }
@@ -223,11 +227,13 @@ public:
             eprosima::fastrtps::rtps::CacheChange_t* ch = writer_->new_change(*it, eprosima::fastrtps::rtps::ALIVE);
 
             eprosima::fastcdr::FastBuffer buffer((char*)ch->serializedPayload.data, ch->serializedPayload.max_size);
-            eprosima::fastcdr::Cdr cdr(buffer);
+            eprosima::fastcdr::Cdr cdr(buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+                    eprosima::fastdds::rtps::DEFAULT_XCDR_VERSION);
 
+            cdr.serialize_encapsulation();
             cdr << *it;
 
-            ch->serializedPayload.length = static_cast<uint32_t>(cdr.getSerializedDataLength());
+            ch->serializedPayload.length = static_cast<uint32_t>(cdr.get_serialized_data_length());
             if (ch->serializedPayload.length > 65000u)
             {
                 ch->setFragmentSize(65000u);
@@ -244,11 +250,13 @@ public:
         eprosima::fastrtps::rtps::CacheChange_t* ch = writer_->new_change(msg, eprosima::fastrtps::rtps::ALIVE);
 
         eprosima::fastcdr::FastBuffer buffer((char*)ch->serializedPayload.data, ch->serializedPayload.max_size);
-        eprosima::fastcdr::Cdr cdr(buffer);
+        eprosima::fastcdr::Cdr cdr(buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
+                eprosima::fastdds::rtps::DEFAULT_XCDR_VERSION);
 
+        cdr.serialize_encapsulation();
         cdr << msg;
 
-        ch->serializedPayload.length = static_cast<uint32_t>(cdr.getSerializedDataLength());
+        ch->serializedPayload.length = static_cast<uint32_t>(cdr.get_serialized_data_length());
         if (ch->serializedPayload.length > 65000u)
         {
             ch->setFragmentSize(65000u);
@@ -281,21 +289,32 @@ public:
     void wait_discovery(
             std::chrono::seconds timeout = std::chrono::seconds::zero())
     {
+        bool post_assertion = (matched_ == 0 && timeout == std::chrono::seconds::zero()) ? true : false;
+        wait_discovery(1, timeout);
+        if (post_assertion)
+        {
+            ASSERT_NE(matched_, 0u);
+        }
+    }
+
+    void wait_discovery(
+            size_t matches,
+            std::chrono::seconds timeout = std::chrono::seconds::zero())
+    {
         std::unique_lock<std::mutex> lock(mutex_);
 
-        if (matched_ == 0 && timeout == std::chrono::seconds::zero())
+        if (timeout == std::chrono::seconds::zero())
         {
-            cv_.wait(lock, [this]() -> bool
+            cv_.wait(lock, [&]() -> bool
                     {
-                        return matched_ != 0;
+                        return matched_ >= matches;
                     });
-            ASSERT_NE(matched_, 0u);
         }
         else
         {
             cv_.wait_for(lock, timeout, [&]()
                     {
-                        return matched_ != 0;
+                        return matched_ >= matches;
                     });
         }
     }
@@ -564,11 +583,12 @@ private:
             const RTPSWithRegistrationWriter&) = delete;
 
     eprosima::fastrtps::rtps::RTPSParticipant* participant_;
+    eprosima::fastrtps::rtps::RTPSParticipantAttributes participant_attr_;
+    bool destroy_participant_{false};
     eprosima::fastrtps::rtps::RTPSWriter* writer_;
     eprosima::fastrtps::rtps::WriterAttributes writer_attr_;
     eprosima::fastrtps::WriterQos writer_qos_;
     eprosima::fastrtps::TopicAttributes topic_attr_;
-    eprosima::fastrtps::rtps::RTPSParticipantAttributes participant_attr_;
     eprosima::fastrtps::rtps::WriterHistory* history_;
     eprosima::fastrtps::rtps::HistoryAttributes hattr_;
     bool initialized_;

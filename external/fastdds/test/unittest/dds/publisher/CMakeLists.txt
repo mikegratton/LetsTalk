@@ -259,6 +259,7 @@ set(DATAWRITERTESTS_SOURCE DataWriterTests.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/artifact_providers/Pkcs11Provider.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/authentication/PKIDH.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/accesscontrol/Permissions.cpp
+            ${PROJECT_SOURCE_DIR}/src/cpp/security/accesscontrol/DistinguishedName.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/cryptography/AESGCMGMAC.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/cryptography/AESGCMGMAC_KeyExchange.cpp
             ${PROJECT_SOURCE_DIR}/src/cpp/security/cryptography/AESGCMGMAC_KeyFactory.cpp
@@ -311,7 +312,7 @@ if(ANDROID)
 endif()
 
 add_executable(PublisherTests ${PUBLISHERTESTS_SOURCE})
-target_compile_definitions(PublisherTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(PublisherTests PRIVATE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
@@ -329,7 +330,7 @@ endif()
 add_gtest(PublisherTests SOURCES ${PUBLISHERTESTS_SOURCE})
 
 add_executable(DataWriterTests ${DATAWRITERTESTS_SOURCE})
-target_compile_definitions(DataWriterTests PRIVATE FASTRTPS_NO_LIB
+target_compile_definitions(DataWriterTests PRIVATE
     BOOST_ASIO_STANDALONE
     ASIO_STANDALONE
     ASIO_DISABLE_VISIBILITY

@@ -449,6 +449,19 @@ public:
         return initialized_;
     }
 
+    bool delete_datareader()
+    {
+        ReturnCode_t ret(ReturnCode_t::RETCODE_ERROR);
+
+        if (subscriber_ && datareader_)
+        {
+            ret = subscriber_->delete_datareader(datareader_);
+            datareader_ = nullptr;
+        }
+
+        return (ReturnCode_t::RETCODE_OK == ret);
+    }
+
     virtual void destroy()
     {
         if (participant_ != nullptr)
@@ -554,7 +567,7 @@ public:
     }
 
     size_t block_for_unread_count_of(
-            size_t n_unread)
+            uint64_t n_unread)
     {
         block([this, n_unread]() -> bool
                 {
@@ -951,6 +964,13 @@ public:
         return *this;
     }
 
+    PubSubReader& set_wire_protocol_qos(
+            const eprosima::fastdds::dds::WireProtocolConfigQos& qos)
+    {
+        participant_qos_.wire_protocol() = qos;
+        return *this;
+    }
+
     PubSubReader& add_user_transport_to_pparams(
             std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface> userTransportDescriptor)
     {
@@ -1250,6 +1270,13 @@ public:
         return *this;
     }
 
+    PubSubReader& avoid_builtin_multicast(
+            bool value)
+    {
+        participant_qos_.wire_protocol().builtin.avoid_builtin_multicast = value;
+        return *this;
+    }
+
     PubSubReader& property_policy(
             const eprosima::fastrtps::rtps::PropertyPolicy& property_policy)
     {
@@ -1296,6 +1323,13 @@ public:
             size_t max_partitions)
     {
         participant_qos_.allocation().data_limits.max_partitions = max_partitions;
+        return *this;
+    }
+
+    PubSubReader& max_multicast_locators_number(
+            size_t max_multicast_locators)
+    {
+        participant_qos_.allocation().locators.max_multicast_locators = max_multicast_locators;
         return *this;
     }
 
@@ -1873,7 +1907,7 @@ protected:
     std::map<LastSeqInfo, eprosima::fastrtps::rtps::SequenceNumber_t> last_seq;
     std::atomic<size_t> current_processed_count_;
     std::atomic<size_t> number_samples_expected_;
-    std::atomic<size_t> current_unread_count_;
+    std::atomic<uint64_t> current_unread_count_;
     bool discovery_result_;
 
     std::string xml_file_ = "";

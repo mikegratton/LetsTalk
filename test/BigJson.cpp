@@ -21,12 +21,12 @@ TEST_CASE("BigJson")
     big.two_face().y(data);
     big.enum_thing(modname::Second);
     big.bitset_thing().a(2);
-    std::string text = big.toJson();
+    std::string text = modname::BigToJson(big);
     std::cout << text << "\n";
     CHECK(text.size() == strlen(text.c_str()));
     try {
         modname::Big big2 = modname::BigFromJson(text);
-        std::string text2 = big2.toJson();
+        std::string text2 = modname::BigToJson(big2);
         CHECK(text == text2);
     } catch (std::exception const& e) {
         std::cout << "THREW: " << e.what() << "\n";

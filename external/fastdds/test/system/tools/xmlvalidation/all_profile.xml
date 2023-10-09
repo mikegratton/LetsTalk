@@ -292,6 +292,11 @@
                     <writerPayloadSize>512</writerPayloadSize>
 
                     <mutation_tries>55</mutation_tries>
+
+                    <typelookup_config>
+                        <use_client>true</use_client>
+                        <use_server>true</use_server>
+                    </typelookup_config>
                 </builtin>
 
                 <port>
@@ -644,21 +649,11 @@
                     <kind>EXCLUSIVE</kind>
                 </ownership>
 
-                <ownershipStrength>
-                    <value>50</value>
-                </ownershipStrength>
-
                 <latencyBudget>
                     <duration>
                         <sec>1</sec>
                     </duration>
                 </latencyBudget>
-
-                <disable_heartbeat_piggyback>true</disable_heartbeat_piggyback>
-
-                <publishMode>
-                    <kind>ASYNCHRONOUS</kind>
-                </publishMode>
 
                 <disablePositiveAcks>
                     <enabled>true</enabled>

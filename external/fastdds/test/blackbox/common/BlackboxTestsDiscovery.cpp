@@ -1165,7 +1165,11 @@ TEST(Discovery, TwentyParticipantsSeveralEndpointsMulticast)
 //! Regression for ROS2 #280 and #281, using unicast
 TEST_P(Discovery, TwentyParticipantsSeveralEndpointsUnicast)
 {
+#if defined(__APPLE__)
+    discoverParticipantsSeveralEndpointsTest(true, 10, 10, 10, TEST_TOPIC_NAME);
+#else
     discoverParticipantsSeveralEndpointsTest(true, 20, 20, 20, TEST_TOPIC_NAME);
+#endif
 }
 
 //! Regression test for support case 7552 (CRM #353)
@@ -1810,35 +1814,75 @@ TEST(Discovery, RemoteBuiltinEndpointHonoring)
     auto reader_test_transport = std::make_shared<test_UDPv4TransportDescriptor>();
     auto writer_test_transport = std::make_shared<test_UDPv4TransportDescriptor>();
 
-    uint32_t num_reader_heartbeat = 0;
-    uint32_t num_reader_acknack = 0;
+    uint32_t num_wlp_reader_heartbeat = 0;
+    uint32_t num_wlp_reader_acknack = 0;
 
-    reader_test_transport->drop_heartbeat_messages_filter_ = [&num_reader_heartbeat](CDRMessage_t&)
+    reader_test_transport->drop_heartbeat_messages_filter_ = [&num_wlp_reader_heartbeat](CDRMessage_t& msg)
             {
-                num_reader_heartbeat++;
+                auto old_pos = msg.pos;
+                msg.pos += 4;
+                eprosima::fastrtps::rtps::EntityId_t writer_entity_id;
+                eprosima::fastrtps::rtps::CDRMessage::readEntityId(&msg, &writer_entity_id);
+                msg.pos = old_pos;
+
+                if (eprosima::fastrtps::rtps::c_EntityId_WriterLiveliness == writer_entity_id)
+                {
+                    num_wlp_reader_heartbeat++;
+                }
                 return false;
             };
 
-    reader_test_transport->drop_ack_nack_messages_filter_ = [&num_reader_acknack](CDRMessage_t&)
+    reader_test_transport->drop_ack_nack_messages_filter_ = [&num_wlp_reader_acknack](CDRMessage_t& msg)
             {
-                num_reader_acknack++;
+                auto old_pos = msg.pos;
+                msg.pos += 4;
+                eprosima::fastrtps::rtps::EntityId_t writer_entity_id;
+                eprosima::fastrtps::rtps::CDRMessage::readEntityId(&msg, &writer_entity_id);
+                msg.pos = old_pos;
+
+                if (eprosima::fastrtps::rtps::c_EntityId_WriterLiveliness == writer_entity_id)
+                {
+                    num_wlp_reader_acknack++;
+                }
                 return false;
             };
 
-    uint32_t num_writer_heartbeat = 0;
-    uint32_t num_writer_acknack = 0;
+    reader_test_transport->interfaceWhiteList.push_back("127.0.0.1");
 
-    writer_test_transport->drop_heartbeat_messages_filter_ = [&num_writer_heartbeat](CDRMessage_t&)
+    uint32_t num_wlp_writer_heartbeat = 0;
+    uint32_t num_wlp_writer_acknack = 0;
+
+    writer_test_transport->drop_heartbeat_messages_filter_ = [&num_wlp_writer_heartbeat](CDRMessage_t& msg)
             {
-                num_writer_heartbeat++;
+                auto old_pos = msg.pos;
+                msg.pos += 4;
+                eprosima::fastrtps::rtps::EntityId_t writer_entity_id;
+                eprosima::fastrtps::rtps::CDRMessage::readEntityId(&msg, &writer_entity_id);
+                msg.pos = old_pos;
+
+                if (eprosima::fastrtps::rtps::c_EntityId_WriterLiveliness == writer_entity_id)
+                {
+                    num_wlp_writer_heartbeat++;
+                }
                 return false;
             };
 
-    writer_test_transport->drop_ack_nack_messages_filter_ = [&num_writer_acknack](CDRMessage_t&)
+    writer_test_transport->drop_ack_nack_messages_filter_ = [&num_wlp_writer_acknack](CDRMessage_t& msg)
             {
-                num_writer_acknack++;
+                auto old_pos = msg.pos;
+                msg.pos += 4;
+                eprosima::fastrtps::rtps::EntityId_t writer_entity_id;
+                eprosima::fastrtps::rtps::CDRMessage::readEntityId(&msg, &writer_entity_id);
+                msg.pos = old_pos;
+
+                if (eprosima::fastrtps::rtps::c_EntityId_WriterLiveliness == writer_entity_id)
+                {
+                    num_wlp_writer_acknack++;
+                }
                 return false;
             };
+
+    writer_test_transport->interfaceWhiteList.push_back("127.0.0.1");
 
     reader.disable_builtin_transport().add_user_transport_to_pparams(reader_test_transport).
             use_writer_liveliness_protocol(false);
@@ -1856,8 +1900,94 @@ TEST(Discovery, RemoteBuiltinEndpointHonoring)
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
-    ASSERT_EQ(num_reader_heartbeat, 3u);
-    ASSERT_EQ(num_reader_acknack, 3u);
-    ASSERT_EQ(num_writer_heartbeat, 3u);
-    ASSERT_EQ(num_writer_acknack, 3u);
+    ASSERT_EQ(num_wlp_reader_heartbeat, 0u);
+    ASSERT_EQ(num_wlp_reader_acknack, 0u);
+    ASSERT_EQ(num_wlp_writer_heartbeat, 0u);
+    ASSERT_EQ(num_wlp_writer_acknack, 0u);
+}
+
+//! Regression test for redmine issue 10674
+TEST(Discovery, MulticastInitialPeer)
+{
+    PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
+    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+
+    eprosima::fastdds::rtps::LocatorList peers;
+    eprosima::fastdds::rtps::Locator loc{};
+    loc.kind = LOCATOR_KIND_UDPv4;
+    IPLocator::setIPv4(loc, "239.255.0.1");
+    peers.push_back(loc);
+
+    reader.participant_id(100).initial_peers(peers).init();
+    ASSERT_TRUE(reader.isInitialized());
+
+    writer.participant_id(101).initial_peers(peers).init();
+    ASSERT_TRUE(writer.isInitialized());
+
+    // Wait for discovery (times out before the fix).
+    writer.wait_discovery();
+    reader.wait_discovery();
+}
+
+//! Regression test for redmine issue 17162
+TEST(Discovery, MultipleXMLProfileLoad)
+{
+    // These test may fail because one of the participants disappear before the other has found it.
+    // Thus, use condition variable so threads only finish once the discovery has taken place.
+    std::condition_variable cv;
+    std::mutex cv_mtx;
+    std::atomic<int> n_discoveries(0);
+
+    auto participant_creation_reader = [&]()
+            {
+                PubSubReader<HelloWorldPubSubType> participant(TEST_TOPIC_NAME);
+                participant.init();
+                participant.wait_discovery();
+
+                // Notify discovery has happen
+                {
+                    std::unique_lock<std::mutex> lock(cv_mtx);
+                    n_discoveries++;
+                }
+                cv.notify_all();
+
+                std::unique_lock<std::mutex> lock(cv_mtx);
+                cv.wait(
+                    lock,
+                    [&]()
+                    {
+                        return n_discoveries >= 2;
+                    }
+                    );
+            };
+
+    auto participant_creation_writer = [&]()
+            {
+                PubSubWriter<HelloWorldPubSubType> participant(TEST_TOPIC_NAME);
+                participant.init();
+                participant.wait_discovery();
+
+                // Notify discovery has happen
+                {
+                    std::unique_lock<std::mutex> lock(cv_mtx);
+                    n_discoveries++;
+                }
+                cv.notify_all();
+
+                std::unique_lock<std::mutex> lock(cv_mtx);
+                cv.wait(
+                    lock,
+                    [&]()
+                    {
+                        return n_discoveries >= 2;
+                    }
+                    );
+            };
+
+    // Start thread creating second participant
+    std::thread thr_reader(participant_creation_reader);
+    std::thread thr_writer(participant_creation_writer);
+
+    thr_reader.join();
+    thr_writer.join();
 }
