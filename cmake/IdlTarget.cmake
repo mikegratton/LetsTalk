@@ -43,6 +43,15 @@ find_program(ddsgen fastddsgen
         /usr/local/bin
         /usr/bin
     )
+find_path(stgpath JsonSupportHeader.stg 
+    PATHS
+        ${PROJECT_SOURCE_DIR}/external/fastddsgen
+        ${CompileIdl_location}/../../../share/LetsTalk
+        ${CompileIdl_location}/../../share/LetsTalk
+        ${CompileIdl_location}/../share/LetsTalk
+        /usr/local/share/LetsTalk
+        /usr/share/LetsTalk    
+)
 set(idl_options -cs;-replace)
 
 foreach(idl ${idl_SOURCE})
@@ -53,7 +62,7 @@ foreach(idl ${idl_SOURCE})
     if (idl_JSON)
         set(json_source ${stem}JsonSupport.cxx)
         set(json_header ${stem}JsonSupport.h)
-        set(idl_json_options  -extrastg ${ddsgen_dir}/JsonSupportHeader.stg ${json_header} -extrastg ${ddsgen_dir}/JsonSupportSource.stg ${json_source})        
+        set(idl_json_options  -extrastg ${stgpath}/JsonSupportHeader.stg ${json_header} -extrastg ${stgpath}/JsonSupportSource.stg ${json_source})        
         list(APPEND idl_output ${idl_ABS_PATH}/${json_source})
     endif()
     add_custom_command(OUTPUT ${idl_output}
@@ -82,4 +91,3 @@ target_include_directories(${name}
 endmacro()
 
 set(CompileIdl_location ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")
-mark_as_advanced(CompileIdl_location)

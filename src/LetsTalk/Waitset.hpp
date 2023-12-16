@@ -13,7 +13,7 @@ namespace lt {
  * @brief Wait for any attached Awaitable to have messages.
  *
  * This is an efficient way of having one consumer thread wait
- * on multiple producers coming from subscriptions.
+ * on multiple producers.
  */
 class Waitset {
    public:
@@ -32,10 +32,11 @@ class Waitset {
     }
 
     /// Add an awaitable to watch
-    void attach(AwaitablePtr i_watch)
+    int attach(AwaitablePtr i_watch)
     {
         i_watch->attachToCondition(&m_waitset);
         m_watched.push_back(i_watch);
+        return static_cast<int>(m_watched.size() - 1);
     }
 
     /// Retrieve the type-erased pointer

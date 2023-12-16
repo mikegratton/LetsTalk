@@ -1,4 +1,3 @@
-add_subdirectory(json)
 add_subdirectory(memory)
 add_subdirectory(asio)
 add_subdirectory(tinyxml2)

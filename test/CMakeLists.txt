@@ -13,4 +13,4 @@ file(GLOB source CONFIGURE_DEPENDS "*.cpp")
 
 add_executable(ltTest ${source})
 
-target_link_libraries(ltTest PUBLIC json LetsTalk testIdl)
+target_link_libraries(ltTest PUBLIC LetsTalk testIdl)

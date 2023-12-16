@@ -4,8 +4,7 @@
 #include "doctest.h"
 #include "idl/Big.h"
 #include "idl/BigJsonSupport.h"
-#include "json.hpp"
-using json = nlohmann::json;
+
 TEST_CASE("BigJson")
 {
     modname::Big big;

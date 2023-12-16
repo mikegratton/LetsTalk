@@ -8,7 +8,7 @@ int main(int, char**)
 {
     auto node = lt::Participant::create();
     node->subscribe<HelloWorld>("HelloWorldTopic", [](HelloWorld const& data) {
-        std::string j = data.toJson();
+        std::string j = HelloWorldToJson(data);
         std::cout << j << std::endl;
         auto data2 = HelloWorldFromJson(j);
     });
