@@ -52,7 +52,7 @@ find_path(stgpath JsonSupportHeader.stg
         /usr/local/share/LetsTalk
         /usr/share/LetsTalk    
 )
-set(idl_options -cs;-replace)
+set(idl_options -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR})
 
 foreach(idl ${idl_SOURCE})
     get_filename_component(ddsgen_dir ${ddsgen} DIRECTORY)
