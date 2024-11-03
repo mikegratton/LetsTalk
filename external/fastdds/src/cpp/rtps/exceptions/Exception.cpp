@@ -12,34 +12,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fastdds/rtps/exceptions/Exception.h>
+#include "Exception.h"
 
-using namespace eprosima::fastrtps::rtps;
+namespace eprosima {
+namespace fastdds {
+namespace rtps {
 
-Exception::Exception(const char* const& message) : message_(message), minor_(0)
+Exception::Exception(
+        const char* const& message)
+    : message_(message)
+    , minor_(0)
 {
 }
 
-Exception::Exception(const Exception &ex) : message_(ex.message_), minor_(ex.minor_)
+Exception::Exception(
+        const Exception& ex)
+    : message_(ex.message_)
+    , minor_(ex.minor_)
 {
 }
 
-Exception::Exception(Exception&& ex) : message_(std::move(ex.message_)), minor_(ex.minor_)
+Exception::Exception(
+        Exception&& ex)
+    : message_(std::move(ex.message_))
+    , minor_(ex.minor_)
 {
 }
 
-Exception::Exception(const  char* const& message, const int32_t minor) : message_(message), minor_(minor)
+Exception::Exception(
+        const char* const& message,
+        const int32_t minor)
+    : message_(message)
+    , minor_(minor)
 {
 }
 
-Exception& Exception::operator=(const Exception &ex)
+Exception& Exception::operator =(
+        const Exception& ex)
 {
     message_ = ex.message_;
     minor_ = ex.minor_;
     return *this;
 }
 
-Exception& Exception::operator=(Exception&& ex)
+Exception& Exception::operator =(
+        Exception&& ex)
 {
     message_ = std::move(ex.message_);
     minor_ = ex.minor_;
@@ -55,7 +72,8 @@ const int32_t& Exception::minor() const
     return minor_;
 }
 
-void Exception::minor(const int32_t &minor)
+void Exception::minor(
+        const int32_t& minor)
 {
     minor_ = minor;
 }
@@ -64,3 +82,7 @@ const char* Exception::what() const throw()
 {
     return message_.c_str();
 }
+
+} // namespace rtps
+} // namespace fastdds
+} // namespace eprosima

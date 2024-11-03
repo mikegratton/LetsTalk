@@ -17,14 +17,14 @@
  *
  */
 
-#ifndef _FASTDDS_CONDITION_HPP_
-#define _FASTDDS_CONDITION_HPP_
+#ifndef FASTDDS_DDS_CORE_CONDITION__CONDITION_HPP
+#define FASTDDS_DDS_CORE_CONDITION__CONDITION_HPP
 
 #include <memory>
 #include <vector>
 
 #include <fastdds/dds/log/Log.hpp>
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -46,7 +46,7 @@ public:
      * @brief Retrieves the trigger_value of the Condition
      * @return true if trigger_value is set to 'true', 'false' otherwise
      */
-    RTPS_DllAPI virtual bool get_trigger_value() const
+    FASTDDS_EXPORTED_API virtual bool get_trigger_value() const
     {
         EPROSIMA_LOG_WARNING(CONDITION, "get_trigger_value public member function not implemented");
         return false; // TODO return trigger value
@@ -71,4 +71,4 @@ using ConditionSeq = std::vector<Condition*>;
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_CONDITION_HPP_
+#endif // FASTDDS_DDS_CORE_CONDITION__CONDITION_HPP

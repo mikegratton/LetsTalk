@@ -15,13 +15,12 @@
 /**
  * @file PubSubMain.cpp
  */
-#include "SubscriberModule.hpp"
-#include "PublisherModule.hpp"
+#include <thread>
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastrtps/Domain.h>
 
-#include <thread>
+#include "PublisherModule.hpp"
+#include "SubscriberModule.hpp"
 
 using namespace eprosima::fastdds::dds;
 
@@ -37,20 +36,22 @@ using namespace eprosima::fastdds::dds;
  * --xmlfile <path>
  * --publishers <int>
  * --publisher_loops <int>
+ * --interval <int>
  */
 
 void publisher_run(
         PublisherModule* publisher,
         uint32_t wait,
         uint32_t samples,
-        uint32_t loops)
+        uint32_t loops,
+        uint32_t interval)
 {
     if (wait > 0)
     {
         publisher->wait_discovery(wait);
     }
 
-    publisher->run(samples, loops);
+    publisher->run(samples, 0, loops, interval);
 }
 
 int main(
@@ -66,8 +67,10 @@ int main(
     uint32_t wait = 0;
     uint32_t samples = 4;
     uint32_t publishers = 1;
+    uint32_t timeout = 86400000; // 24 hours in ms
     // The first loop could be easily ignored by the reader
     uint32_t publisher_loops = 2;
+    uint32_t interval = 250;
     char* xml_file = nullptr;
     std::string magic;
 
@@ -118,6 +121,26 @@ int main(
             }
 
             samples = strtol(argv[arg_count], nullptr, 10);
+        }
+        else if (strcmp(argv[arg_count], "--interval") == 0)
+        {
+            if (++arg_count >= argc)
+            {
+                std::cout << "--interval expects a parameter" << std::endl;
+                return -1;
+            }
+
+            interval = strtol(argv[arg_count], nullptr, 10);
+        }
+        else if (strcmp(argv[arg_count], "--timeout") == 0)
+        {
+            if (++arg_count >= argc)
+            {
+                std::cout << "--timeout expects a parameter" << std::endl;
+                return -1;
+            }
+
+            timeout = strtol(argv[arg_count], nullptr, 10);
         }
         else if (strcmp(argv[arg_count], "--magic") == 0)
         {
@@ -173,18 +196,18 @@ int main(
         DomainParticipantFactory::get_instance()->load_XML_profiles_file(xml_file);
     }
 
-    SubscriberModule subscriber(publishers, samples, fixed_type, zero_copy);
+    SubscriberModule subscriber(publishers, samples, fixed_type, zero_copy, false, false);
     PublisherModule publisher(exit_on_lost_liveliness, fixed_type, zero_copy);
 
     uint32_t result = 1;
 
     if (publisher.init(seed, magic))
     {
-        std::thread publisher_thread(publisher_run, &publisher, wait, samples, publisher_loops);
+        std::thread publisher_thread(publisher_run, &publisher, wait, samples, publisher_loops, interval);
 
         if (subscriber.init(seed, magic))
         {
-            result = subscriber.run(notexit) ? 0 : -1;
+            result = subscriber.run(notexit, 0, timeout) ? 0 : -1;
         }
 
         publisher_thread.join();

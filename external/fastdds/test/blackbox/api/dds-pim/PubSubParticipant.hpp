@@ -40,7 +40,8 @@
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
-#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.h>
+#include <fastdds/dds/builtin/topic/ParticipantBuiltinTopicData.hpp>
+#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.hpp>
 
 /**
  * @brief A class with one participant that can have multiple publishers and subscribers
@@ -132,7 +133,7 @@ private:
             type data;
             eprosima::fastdds::dds::SampleInfo info;
 
-            while (ReturnCode_t::RETCODE_OK == reader->take_next_sample(&data, &info))
+            while (eprosima::fastdds::dds::RETCODE_OK == reader->take_next_sample(&data, &info))
             {
                 participant_->data_received();
             }
@@ -162,10 +163,13 @@ private:
 
         void on_participant_discovery(
                 eprosima::fastdds::dds::DomainParticipant*,
-                eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&& info)
+                eprosima::fastdds::rtps::ParticipantDiscoveryStatus status,
+                const eprosima::fastdds::dds::ParticipantBuiltinTopicData& info,
+                bool& should_be_ignored)
         {
+            static_cast<void>(should_be_ignored);
             bool expected = false;
-            if (info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT)
+            if (status == eprosima::fastdds::rtps::ParticipantDiscoveryStatus::DISCOVERED_PARTICIPANT)
             {
                 ++participant_->matched_;
                 if (nullptr !=  participant_->on_discovery_)
@@ -176,14 +180,14 @@ private:
                 participant_->cv_discovery_.notify_one();
             }
             else if (participant_->on_participant_qos_update_ != nullptr &&
-                    info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT)
+                    status == eprosima::fastdds::rtps::ParticipantDiscoveryStatus::CHANGED_QOS_PARTICIPANT)
             {
                 participant_->participant_qos_updated_.compare_exchange_strong(expected,
                         participant_->on_participant_qos_update_(info));
                 participant_->cv_discovery_.notify_one();
             }
-            else if (info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::REMOVED_PARTICIPANT ||
-                    info.status == eprosima::fastrtps::rtps::ParticipantDiscoveryInfo::DROPPED_PARTICIPANT)
+            else if (status == eprosima::fastdds::rtps::ParticipantDiscoveryStatus::REMOVED_PARTICIPANT ||
+                    status == eprosima::fastdds::rtps::ParticipantDiscoveryStatus::DROPPED_PARTICIPANT)
             {
                 --participant_->matched_;
                 participant_->cv_discovery_.notify_one();
@@ -191,6 +195,8 @@ private:
         }
 
     private:
+
+        using eprosima::fastdds::dds::DomainParticipantListener::on_participant_discovery;
 
         ParticipantListener& operator =(
                 const ParticipantListener&) = delete;
@@ -248,14 +254,14 @@ public:
         datawriter_qos_.historyMemoryPolicy = rtps::DYNAMIC_RESERVE_MEMORY_MODE;
 #else
         datawriter_qos_.endpoint().history_memory_policy =
-                eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+                eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 #endif // if defined(PREALLOCATED_WITH_REALLOC_MEMORY_MODE_TEST)
 
         // By default, heartbeat period and nack response delay are 100 milliseconds.
-        datawriter_qos_.reliable_writer_qos().times.heartbeatPeriod.seconds = 0;
-        datawriter_qos_.reliable_writer_qos().times.heartbeatPeriod.nanosec = 100000000;
-        datawriter_qos_.reliable_writer_qos().times.nackResponseDelay.seconds = 0;
-        datawriter_qos_.reliable_writer_qos().times.nackResponseDelay.nanosec = 100000000;
+        datawriter_qos_.reliable_writer_qos().times.heartbeat_period.seconds = 0;
+        datawriter_qos_.reliable_writer_qos().times.heartbeat_period.nanosec = 100000000;
+        datawriter_qos_.reliable_writer_qos().times.nack_response_delay.seconds = 0;
+        datawriter_qos_.reliable_writer_qos().times.nack_response_delay.nanosec = 100000000;
 
         // Increase default max_blocking_time to 1 second, as our CI infrastructure shows some
         // big CPU overhead sometimes
@@ -263,7 +269,7 @@ public:
         datawriter_qos_.reliability().max_blocking_time.nanosec = 0;
 
         // By default, heartbeat period delay is 100 milliseconds.
-        datareader_qos_.reliable_reader_qos().times.heartbeatResponseDelay = 0.1;
+        datareader_qos_.reliable_reader_qos().times.heartbeat_response_delay = 0.1;
     }
 
     ~PubSubParticipant()
@@ -341,7 +347,7 @@ public:
         if (topic == nullptr)
         {
             topic = participant_->create_topic(publisher_topicname_,
-                            type_->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+                            type_->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
         }
         if (topic)
         {
@@ -378,7 +384,7 @@ public:
         if (topic == nullptr)
         {
             topic = participant_->create_topic(subscriber_topicname_,
-                            type_->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+                            type_->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
         }
         if (topic)
         {
@@ -412,7 +418,7 @@ public:
             type& msg,
             unsigned int index = 0)
     {
-        return std::get<2>(publishers_[index])->write((void*)&msg);
+        return (eprosima::fastdds::dds::RETCODE_OK == std::get<2>(publishers_[index])->write((void*)&msg));
     }
 
     void assert_liveliness_participant()
@@ -611,8 +617,24 @@ public:
                 });
     }
 
+    template<class _Rep,
+            class _Period
+            >
+    size_t sub_wait_liveliness_lost_for(
+            unsigned int expected_num_lost,
+            const std::chrono::duration<_Rep, _Period>& max_wait)
+    {
+        std::unique_lock<std::mutex> lock(sub_liveliness_mutex_);
+        sub_liveliness_cv_.wait_for(lock, max_wait, [this, &expected_num_lost]() -> bool
+                {
+                    return sub_times_liveliness_lost_ >= expected_num_lost;
+                });
+
+        return sub_times_liveliness_lost_;
+    }
+
     PubSubParticipant& property_policy(
-            const eprosima::fastrtps::rtps::PropertyPolicy property_policy)
+            const eprosima::fastdds::rtps::PropertyPolicy property_policy)
     {
         participant_qos_.properties() = property_policy;
         return *this;
@@ -632,19 +654,19 @@ public:
     }
 
     PubSubParticipant& user_data(
-            const std::vector<eprosima::fastrtps::rtps::octet>& user_data)
+            const std::vector<eprosima::fastdds::rtps::octet>& user_data)
     {
         participant_qos_.user_data().data_vec(user_data);
         return *this;
     }
 
     bool update_user_data(
-            const std::vector<eprosima::fastrtps::rtps::octet>& user_data)
+            const std::vector<eprosima::fastdds::rtps::octet>& user_data)
     {
         // Update QoS before updating user data as statistics properties might have changed internally
         participant_qos_ = participant_->get_qos();
         participant_qos_.user_data().data_vec(user_data);
-        return ReturnCode_t::RETCODE_OK == participant_->set_qos(participant_qos_);
+        return eprosima::fastdds::dds::RETCODE_OK == participant_->set_qos(participant_qos_);
     }
 
     PubSubParticipant& wire_protocol(
@@ -659,7 +681,7 @@ public:
     {
         eprosima::fastdds::dds::DomainParticipantQos participant_qos = participant_qos_;
         participant_qos.wire_protocol() = wire_protocol;
-        if (ReturnCode_t::RETCODE_OK == participant_->set_qos(participant_qos))
+        if (eprosima::fastdds::dds::RETCODE_OK == participant_->set_qos(participant_qos))
         {
             participant_qos_ = participant_qos;
             return true;
@@ -668,14 +690,14 @@ public:
     }
 
     PubSubParticipant& pub_property_policy(
-            const eprosima::fastrtps::rtps::PropertyPolicy property_policy)
+            const eprosima::fastdds::rtps::PropertyPolicy property_policy)
     {
         datawriter_qos_.properties() = property_policy;
         return *this;
     }
 
     PubSubParticipant& sub_property_policy(
-            const eprosima::fastrtps::rtps::PropertyPolicy property_policy)
+            const eprosima::fastdds::rtps::PropertyPolicy property_policy)
     {
         datareader_qos_.properties() = property_policy;
         return *this;
@@ -775,7 +797,7 @@ public:
         qos = std::get<2>(subscribers_[index])->get_qos();
         qos.deadline().period = deadline_period;
 
-        return ReturnCode_t::RETCODE_OK == std::get<2>(subscribers_[index])->set_qos(qos);
+        return eprosima::fastdds::dds::RETCODE_OK == std::get<2>(subscribers_[index])->set_qos(qos);
     }
 
     void pub_liveliness_lost()
@@ -853,15 +875,32 @@ public:
     }
 
     void set_on_discovery_function(
-            std::function<bool(const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&)> f)
+            std::function<bool(const eprosima::fastdds::dds::ParticipantBuiltinTopicData&)> f)
     {
         on_discovery_ = f;
     }
 
     void set_on_participant_qos_update_function(
-            std::function<bool(const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo&)> f)
+            std::function<bool(const eprosima::fastdds::dds::ParticipantBuiltinTopicData&)> f)
     {
         on_participant_qos_update_ = f;
+    }
+
+    PubSubParticipant& fill_server_qos(
+            eprosima::fastdds::dds::WireProtocolConfigQos& qos,
+            eprosima::fastdds::rtps::Locator_t& locator_server,
+            uint16_t port,
+            uint32_t kind)
+    {
+        qos.builtin.discovery_config.discoveryProtocol = eprosima::fastdds::rtps::DiscoveryProtocol::SERVER;
+        // Generate server's listening locator
+        eprosima::fastdds::rtps::IPLocator::setIPv4(locator_server, 127, 0, 0, 1);
+        eprosima::fastdds::rtps::IPLocator::setPhysicalPort(locator_server, port);
+        locator_server.kind = kind;
+        // Leave logical port as 0 to use TCP DS default logical port
+        qos.builtin.metatrafficUnicastLocatorList.push_back(locator_server);
+
+        return wire_protocol(qos);
     }
 
 private:
@@ -936,8 +975,8 @@ private:
     std::mutex mutex_discovery_;
     std::condition_variable cv_discovery_;
     std::atomic<unsigned int> matched_;
-    std::function<bool(const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo& info)> on_discovery_;
-    std::function<bool(const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo& info)> on_participant_qos_update_;
+    std::function<bool(const eprosima::fastdds::dds::ParticipantBuiltinTopicData& info)> on_discovery_;
+    std::function<bool(const eprosima::fastdds::dds::ParticipantBuiltinTopicData& info)> on_participant_qos_update_;
     std::atomic_bool discovery_result_;
     std::atomic_bool participant_qos_updated_;
 

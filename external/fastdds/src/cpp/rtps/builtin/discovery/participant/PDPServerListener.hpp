@@ -21,7 +21,7 @@
 #define _FASTDDS_RTPS_PDPSERVERLISTENER2_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#include <fastdds/rtps/builtin/discovery/participant/PDPListener.h>
+#include <rtps/builtin/discovery/participant/PDPListener.h>
 
 namespace eprosima {
 namespace fastdds {
@@ -34,7 +34,7 @@ class PDPServer;
  * This class is implemented in order to use the same structure than with any other RTPSReader.
  *@ingroup DISCOVERY_MODULE
  */
-class PDPServerListener : public fastrtps::rtps::PDPListener
+class PDPServerListener : public fastdds::rtps::PDPListener
 {
 public:
 
@@ -55,9 +55,24 @@ public:
      * @param reader
      * @param change
      */
-    void onNewCacheChangeAdded(
-            fastrtps::rtps::RTPSReader* reader,
-            const fastrtps::rtps::CacheChange_t* const change) override;
+    void on_new_cache_change_added(
+            fastdds::rtps::RTPSReader* reader,
+            const fastdds::rtps::CacheChange_t* const change) override;
+
+protected:
+
+    /**
+     * Checks discovery conditions on a discovery server entity.
+     * Essentially, it checks for incoming PIDS of remote proxy datas.
+     * @param [in]  participant_data Remote participant data to check.
+     * @param [out] participant_type_str Type of the remote participant.
+     * @return A pair of booleans.
+     * The first one indicates if the remote participant data is valid.
+     * The second one indicates if the remote participant data is a client.
+     */
+    std::pair<bool, bool> check_server_discovery_conditions(
+            const fastdds::rtps::ParticipantProxyData& participant_data,
+            std::string& participant_type_str);
 };
 
 

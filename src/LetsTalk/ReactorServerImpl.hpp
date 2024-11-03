@@ -241,13 +241,14 @@ void ReactorServer<Req, Rep, ProgressData>::Session::progress(int i_progress, Pr
         std::vector<unsigned char> truePayload;
         if (typeid(ProgressData) != typeid(reactor_void_progress)) {
             void* rawData = &const_cast<ProgressData&>(i_data);
-            auto serSize = detail::PubSubType<ProgressData>{}.getSerializedSizeProvider(rawData)();
+            auto serSize =
+                detail::PubSubType<ProgressData>{}.calculate_serialized_size(rawData, efd::DEFAULT_DATA_REPRESENTATION);
             truePayload.resize(serSize);
             efr::SerializedPayload_t payloadWrapper;
             payloadWrapper.data = truePayload.data();
             payloadWrapper.max_size = truePayload.size();
             detail::PubSubType<ProgressData> ser;
-            ser.serialize(rawData, &payloadWrapper);
+            ser.serialize(rawData, payloadWrapper, efd::DEFAULT_DATA_REPRESENTATION);
             payloadWrapper.data = nullptr;
         }
         m_reactor->progress(m_id, i_progress, truePayload);

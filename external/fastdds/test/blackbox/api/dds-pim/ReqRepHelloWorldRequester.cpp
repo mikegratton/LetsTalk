@@ -18,22 +18,21 @@
  */
 
 #include "ReqRepHelloWorldRequester.hpp"
-#include "../../common/BlackboxTests.hpp"
-
-#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastdds/dds/domain/DomainParticipant.hpp>
-#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
-
-#include <fastdds/dds/topic/Topic.hpp>
-
-#include <fastdds/dds/subscriber/Subscriber.hpp>
-#include <fastdds/dds/subscriber/DataReader.hpp>
-#include <fastdds/dds/subscriber/SampleInfo.hpp>
-
-#include <fastdds/dds/publisher/Publisher.hpp>
-#include <fastdds/dds/publisher/DataWriter.hpp>
 
 #include <gtest/gtest.h>
+
+#include <fastdds/dds/domain/DomainParticipant.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
+#include <fastdds/dds/subscriber/DataReader.hpp>
+#include <fastdds/dds/subscriber/SampleInfo.hpp>
+#include <fastdds/dds/subscriber/Subscriber.hpp>
+#include <fastdds/dds/topic/Topic.hpp>
+#include <fastdds/rtps/common/WriteParams.hpp>
+
+#include "../../common/BlackboxTests.hpp"
 
 ReqRepHelloWorldRequester::ReqRepHelloWorldRequester()
     : reply_listener_(*this)
@@ -47,11 +46,11 @@ ReqRepHelloWorldRequester::ReqRepHelloWorldRequester()
     , matched_(0)
 {
     // By default, memory mode is PREALLOCATED_WITH_REALLOC_MEMORY_MODE
-    datareader_qos_.endpoint().history_memory_policy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
-    datawriter_qos_.endpoint().history_memory_policy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+    datareader_qos_.endpoint().history_memory_policy = eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+    datawriter_qos_.endpoint().history_memory_policy = eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
-    datawriter_qos_.reliable_writer_qos().times.heartbeatPeriod.seconds = 1;
-    datawriter_qos_.reliable_writer_qos().times.heartbeatPeriod.nanosec = 0;
+    datawriter_qos_.reliable_writer_qos().times.heartbeat_period.seconds = 1;
+    datawriter_qos_.reliable_writer_qos().times.heartbeat_period.nanosec = 0;
 }
 
 ReqRepHelloWorldRequester::~ReqRepHelloWorldRequester()
@@ -95,7 +94,7 @@ void ReqRepHelloWorldRequester::init()
 
     // Register type
     type_.reset(new HelloWorldPubSubType());
-    ASSERT_EQ(participant_->register_type(type_), ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(participant_->register_type(type_), eprosima::fastdds::dds::RETCODE_OK);
 
     reply_subscriber_ = participant_->create_subscriber(eprosima::fastdds::dds::SUBSCRIBER_QOS_DEFAULT);
     ASSERT_NE(reply_subscriber_, nullptr);
@@ -107,13 +106,13 @@ void ReqRepHelloWorldRequester::init()
 
     configDatareader("Reply");
     reply_topic_ = participant_->create_topic(datareader_topicname_,
-                    type_->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+                    type_->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
     ASSERT_NE(reply_topic_, nullptr);
     ASSERT_TRUE(reply_topic_->is_enabled());
 
     configDatawriter("Request");
     request_topic_ = participant_->create_topic(datawriter_topicname_,
-                    type_->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+                    type_->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
     ASSERT_NE(request_topic_, nullptr);
     ASSERT_TRUE(request_topic_->is_enabled());
 
@@ -148,8 +147,8 @@ void ReqRepHelloWorldRequester::init()
 }
 
 void ReqRepHelloWorldRequester::init_with_latency(
-        const eprosima::fastrtps::Duration_t& latency_budget_duration_pub,
-        const eprosima::fastrtps::Duration_t& latency_budget_duration_sub)
+        const eprosima::fastdds::dds::Duration_t& latency_budget_duration_pub,
+        const eprosima::fastdds::dds::Duration_t& latency_budget_duration_sub)
 {
     datareader_qos_.latency_budget().duration = latency_budget_duration_sub;
     datawriter_qos_.latency_budget().duration = latency_budget_duration_pub;
@@ -157,7 +156,7 @@ void ReqRepHelloWorldRequester::init_with_latency(
 }
 
 void ReqRepHelloWorldRequester::newNumber(
-        eprosima::fastrtps::rtps::SampleIdentity related_sample_identity,
+        eprosima::fastdds::rtps::SampleIdentity related_sample_identity,
         uint16_t number)
 {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -217,7 +216,7 @@ void ReqRepHelloWorldRequester::ReplyListener::on_data_available(
     HelloWorld hello;
     eprosima::fastdds::dds::SampleInfo info;
 
-    if (ReturnCode_t::RETCODE_OK == datareader->take_next_sample((void*)&hello, &info))
+    if (eprosima::fastdds::dds::RETCODE_OK == datareader->take_next_sample((void*)&hello, &info))
     {
         if (info.valid_data)
         {
@@ -230,7 +229,7 @@ void ReqRepHelloWorldRequester::ReplyListener::on_data_available(
 void ReqRepHelloWorldRequester::send(
         const uint16_t number)
 {
-    eprosima::fastrtps::rtps::WriteParams wparams;
+    eprosima::fastdds::rtps::WriteParams wparams;
     HelloWorld hello;
     hello.index(number);
     hello.message("HelloWorld");
@@ -240,7 +239,7 @@ void ReqRepHelloWorldRequester::send(
         current_number_ = number;
     }
 
-    ASSERT_EQ(request_datawriter_->write((void*)&hello, wparams), true);
+    ASSERT_EQ(request_datawriter_->write((void*)&hello, wparams), eprosima::fastdds::dds::RETCODE_OK);
     related_sample_identity_ = wparams.sample_identity();
-    ASSERT_NE(related_sample_identity_.sequence_number(), eprosima::fastrtps::rtps::SequenceNumber_t());
+    ASSERT_NE(related_sample_identity_.sequence_number(), eprosima::fastdds::rtps::SequenceNumber_t());
 }

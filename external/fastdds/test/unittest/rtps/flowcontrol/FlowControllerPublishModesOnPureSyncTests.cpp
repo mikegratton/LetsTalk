@@ -1,4 +1,22 @@
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "FlowControllerPublishModesTests.hpp"
+
+#include <thread>
+
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
 
 using namespace eprosima::fastdds::rtps;
 using namespace testing;
@@ -7,14 +25,14 @@ TYPED_TEST(FlowControllerPublishModes, pure_sync_publish_mode)
 {
     FlowControllerDescriptor flow_controller_descr;
     FlowControllerImpl<FlowControllerPureSyncPublishMode, TypeParam> pure_sync(nullptr,
-            &flow_controller_descr);
+            &flow_controller_descr, 0, ThreadSettings{});
     pure_sync.init();
 
     // Initialize callback to get info.
     auto send_functor = [&](
-        eprosima::fastrtps::rtps::CacheChange_t*,
-        eprosima::fastrtps::rtps::RTPSMessageGroup&,
-        eprosima::fastrtps::rtps::LocatorSelectorSender&,
+        CacheChange_t*,
+        RTPSMessageGroup&,
+        LocatorSelectorSender&,
         const std::chrono::time_point<std::chrono::steady_clock>&)
             {
                 this->last_thread_delivering_sample = std::this_thread::get_id();
@@ -22,22 +40,22 @@ TYPED_TEST(FlowControllerPublishModes, pure_sync_publish_mode)
 
 
     // Instantiate writers.
-    eprosima::fastrtps::rtps::RTPSWriter writer1;
-    eprosima::fastrtps::rtps::RTPSWriter writer2;
+    BaseWriter writer1;
+    BaseWriter writer2;
 
     // Register writers.
     pure_sync.register_writer(&writer1);
 
-    eprosima::fastrtps::rtps::CacheChange_t change_writer1;
+    CacheChange_t change_writer1;
     INIT_CACHE_CHANGE(change_writer1, writer1, 1);
 
-    eprosima::fastrtps::rtps::CacheChange_t change_writer2;
+    CacheChange_t change_writer2;
     INIT_CACHE_CHANGE(change_writer2, writer2, 1);
 
     // Testing add_new_sample. Writer will be able to deliver it.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.general_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(pure_sync.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -46,7 +64,7 @@ TYPED_TEST(FlowControllerPublishModes, pure_sync_publish_mode)
 
     EXPECT_CALL(writer2,
             deliver_sample_nts(&change_writer2, _, Ref(writer2.general_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer2.getMutex().lock();
     ASSERT_TRUE(pure_sync.add_new_sample(&writer2, &change_writer2,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -56,7 +74,7 @@ TYPED_TEST(FlowControllerPublishModes, pure_sync_publish_mode)
     // Testing add_new_sample. Writer will not be able to deliver it.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.general_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::NOT_DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_FALSE(pure_sync.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -65,7 +83,7 @@ TYPED_TEST(FlowControllerPublishModes, pure_sync_publish_mode)
 
     EXPECT_CALL(writer2,
             deliver_sample_nts(&change_writer2, _, Ref(writer2.general_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::NOT_DELIVERED)));
     writer2.getMutex().lock();
     ASSERT_FALSE(pure_sync.add_new_sample(&writer2, &change_writer2,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));

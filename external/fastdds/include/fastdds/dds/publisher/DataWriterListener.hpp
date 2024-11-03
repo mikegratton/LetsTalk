@@ -16,10 +16,10 @@
  * @file DataWriterListener.hpp
  */
 
-#ifndef _FASTRTPS_DATAWRITERLISTENER_HPP_
-#define _FASTRTPS_DATAWRITERLISTENER_HPP_
+#ifndef FASTDDS_DDS_PUBLISHER__DATAWRITERLISTENER_HPP
+#define FASTDDS_DDS_PUBLISHER__DATAWRITERLISTENER_HPP
 
-#include <fastdds/rtps/common/Types.h>
+#include <fastdds/rtps/common/Types.hpp>
 #include <fastdds/dds/core/status/BaseStatus.hpp>
 #include <fastdds/dds/core/status/PublicationMatchedStatus.hpp>
 #include <fastdds/dds/core/status/IncompatibleQosStatus.hpp>
@@ -35,7 +35,7 @@ class DataWriter;
  * Class DataWriterListener, allows the end user to implement callbacks triggered by certain events.
  * @ingroup FASTDDS_MODULE
  */
-class RTPS_DllAPI DataWriterListener
+class FASTDDS_EXPORTED_API DataWriterListener
 {
 public:
 
@@ -125,8 +125,8 @@ public:
 
 };
 
-} /* namespace dds */
-} /* namespace fastdds */
-} /* namespace eprosima */
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTRTPS_DATAWRITERLISTENER_HPP_ */
+#endif // FASTDDS_DDS_PUBLISHER__DATAWRITERLISTENER_HPP

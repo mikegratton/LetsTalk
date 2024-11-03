@@ -50,18 +50,18 @@ inline size_t alignment_on_state(
 inline uint32_t Cdr::get_long_lc(
         SerializedMemberSizeForNextInt serialized_member_size)
 {
-    uint32_t lc = 0x40000000;
+    uint32_t lc {0x40000000};
 
     switch (serialized_member_size)
     {
         case SERIALIZED_MEMBER_SIZE_8:
-            lc =  0x70000000;
+            lc =  0x70000000u;
             break;
         case SERIALIZED_MEMBER_SIZE_4:
-            lc =  0x60000000;
+            lc =  0x60000000u;
             break;
         case SERIALIZED_MEMBER_SIZE:
-            lc = 0x50000000;
+            lc = 0x50000000u;
             break;
         default:
             break;
@@ -73,17 +73,20 @@ inline uint32_t Cdr::get_long_lc(
 inline uint32_t Cdr::get_short_lc(
         size_t member_serialized_size)
 {
-    uint32_t lc = 0x0;
+    uint32_t lc {0xFFFFFFFFu};
     switch (member_serialized_size)
     {
+        case 1:
+            lc = 0x00000000u;
+            break;
         case 2:
-            lc = 0x10000000;
+            lc = 0x10000000u;
             break;
         case 4:
-            lc = 0x20000000;
+            lc = 0x20000000u;
             break;
         case 8:
-            lc = 0x30000000;
+            lc = 0x30000000u;
             break;
         default:
             break;
@@ -1643,13 +1646,8 @@ Cdr& Cdr::deserialize(
         // Allocate memory.
         string_t = reinterpret_cast<wchar_t*>(calloc(length + 1, sizeof(wchar_t))); // WStrings never serialize terminating zero
 
-        for (size_t idx = 0; idx < length; ++idx)
-        {
-            uint16_t temp;
-            offset_ >> temp;
-            string_t[idx] = static_cast<wchar_t>(temp);
-            offset_ += sizeof(uint16_t);
-        }
+        deserialize_array(string_t, length);
+
         return *this;
     }
 
@@ -2156,6 +2154,44 @@ Cdr& Cdr::deserialize_array(
     throw NotEnoughMemoryException(NotEnoughMemoryException::NOT_ENOUGH_MEMORY_MESSAGE_DEFAULT);
 }
 
+Cdr& Cdr::serialize_bool_array(
+        const std::vector<bool>& vector_t)
+{
+    state state_before_error(*this);
+
+    size_t total_size = vector_t.size() * sizeof(bool);
+
+    if (((end_ - offset_) >= total_size) || resize(total_size))
+    {
+        // Save last datasize.
+        last_data_size_ = sizeof(bool);
+
+        for (size_t count = 0; count < vector_t.size(); ++count)
+        {
+            uint8_t value = 0;
+            std::vector<bool>::const_reference ref = vector_t[count];
+
+            if (ref)
+            {
+                value = 1;
+            }
+            offset_++ << value;
+        }
+    }
+    else
+    {
+        set_state(state_before_error);
+        throw NotEnoughMemoryException(NotEnoughMemoryException::NOT_ENOUGH_MEMORY_MESSAGE_DEFAULT);
+    }
+
+    if (CdrVersion::XCDRv2 == cdr_version_)
+    {
+        serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
+    }
+
+    return *this;
+}
+
 Cdr& Cdr::serialize_bool_sequence(
         const std::vector<bool>& vector_t)
 {
@@ -2191,6 +2227,46 @@ Cdr& Cdr::serialize_bool_sequence(
     if (CdrVersion::XCDRv2 == cdr_version_)
     {
         serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
+    }
+
+    return *this;
+}
+
+Cdr& Cdr::deserialize_bool_array(
+        std::vector<bool>& vector_t)
+{
+    state state_before_error(*this);
+
+    size_t total_size = vector_t.size() * sizeof(bool);
+
+    if ((end_ - offset_) >= total_size)
+    {
+        // Save last datasize.
+        last_data_size_ = sizeof(bool);
+
+        for (uint32_t count = 0; count < vector_t.size(); ++count)
+        {
+            uint8_t value = 0;
+            offset_++ >> value;
+
+            if (value == 1)
+            {
+                vector_t[count] = true;
+            }
+            else if (value == 0)
+            {
+                vector_t[count] = false;
+            }
+            else
+            {
+                throw BadParamException("Unexpected byte value in Cdr::deserialize_bool_sequence, expected 0 or 1");
+            }
+        }
+    }
+    else
+    {
+        set_state(state_before_error);
+        throw NotEnoughMemoryException(NotEnoughMemoryException::NOT_ENOUGH_MEMORY_MESSAGE_DEFAULT);
     }
 
     return *this;
@@ -2374,7 +2450,8 @@ void Cdr::xcdr1_serialize_short_member_header(
 
     make_alignment(alignment(4));
 
-    uint16_t flags_and_member_id = (member_id.must_understand ? 0x4000 : 0x0) | static_cast<uint16_t>(member_id.id);
+    uint16_t flags_and_member_id = static_cast<uint16_t>(member_id.must_understand ? 0x4000 : 0x0) |
+            static_cast<uint16_t>(member_id.id);
     serialize(flags_and_member_id);
     uint16_t size = 0;
     serialize(size);
@@ -2399,7 +2476,8 @@ void Cdr::xcdr1_serialize_long_member_header(
 {
     make_alignment(alignment(4));
 
-    uint16_t flags_and_extended_pid = (member_id.must_understand ? 0x4000 : 0x0) | static_cast<uint16_t>(PID_EXTENDED);
+    uint16_t flags_and_extended_pid = static_cast<uint16_t>(member_id.must_understand ? 0x4000 : 0x0) |
+            static_cast<uint16_t>(PID_EXTENDED);
     serialize(flags_and_extended_pid);
     uint16_t size = PID_EXTENDED_LENGTH;
     serialize(size);
@@ -2426,7 +2504,7 @@ void Cdr::xcdr1_change_to_short_member_header(
     assert(0x3F00 >= member_id.id);
     assert(std::numeric_limits<uint16_t>::max() >= member_serialized_size );
 
-    uint16_t flags_and_member_id = (member_id.must_understand ? 0x4000 : 0x0) |
+    uint16_t flags_and_member_id = static_cast<uint16_t>(member_id.must_understand ? 0x4000 : 0x0) |
             static_cast<uint16_t>(member_id.id);
     serialize(flags_and_member_id);
     uint16_t size = static_cast<uint16_t>(member_serialized_size);
@@ -2446,7 +2524,8 @@ void Cdr::xcdr1_change_to_long_member_header(
     {
         throw NotEnoughMemoryException(NotEnoughMemoryException::NOT_ENOUGH_MEMORY_MESSAGE_DEFAULT);
     }
-    uint16_t flags_and_extended_pid = (member_id.must_understand ? 0x4000 : 0x0) | static_cast<uint16_t>(PID_EXTENDED);
+    uint16_t flags_and_extended_pid = static_cast<uint16_t>(member_id.must_understand ? 0x4000 : 0x0) |
+            static_cast<uint16_t>(PID_EXTENDED);
     serialize(flags_and_extended_pid);
     uint16_t size = PID_EXTENDED_LENGTH;
     serialize(size);
@@ -2910,7 +2989,7 @@ Cdr& Cdr::xcdr2_end_serialize_member(
         {
             const size_t member_serialized_size = last_offset - offset_ -
                     (current_state.header_serialized_ == XCdrHeaderSelection::SHORT_HEADER ? 4 : 8);
-            if (8 < member_serialized_size)
+            if (8 < member_serialized_size || 0xFFFFFFFFu == get_short_lc(member_serialized_size))
             {
                 switch (current_state.header_serialized_)
                 {
@@ -3049,7 +3128,6 @@ Cdr& Cdr::xcdr1_begin_serialize_type(
             EncodingAlgorithmFlag::PL_CDR == current_encoding_);
     assert(EncodingAlgorithmFlag::PLAIN_CDR == type_encoding ||
             EncodingAlgorithmFlag::PL_CDR == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
     current_state.previous_encoding_ = current_encoding_;
     current_encoding_ = type_encoding;
     return *this;
@@ -3084,7 +3162,6 @@ Cdr& Cdr::xcdr2_begin_serialize_type(
     assert(EncodingAlgorithmFlag::PLAIN_CDR2 == type_encoding ||
             EncodingAlgorithmFlag::DELIMIT_CDR2 == type_encoding ||
             EncodingAlgorithmFlag::PL_CDR2 == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
     if (EncodingAlgorithmFlag::PLAIN_CDR2 != type_encoding)
     {
         uint32_t dheader {0};
@@ -3121,10 +3198,10 @@ Cdr& Cdr::xcdr1_deserialize_type(
 {
     assert(EncodingAlgorithmFlag::PLAIN_CDR == type_encoding ||
             EncodingAlgorithmFlag::PL_CDR == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
     Cdr::state current_state(*this);
+    current_encoding_ = type_encoding;
 
-    if (EncodingAlgorithmFlag::PL_CDR == type_encoding)
+    if (EncodingAlgorithmFlag::PL_CDR == current_encoding_)
     {
         while (xcdr1_deserialize_member_header(next_member_id_, current_state))
         {
@@ -3158,9 +3235,10 @@ Cdr& Cdr::xcdr1_deserialize_type(
         {
             ++next_member_id_.id;
         }
-
-        next_member_id_ = current_state.next_member_id_;
     }
+
+    next_member_id_ = current_state.next_member_id_;
+    current_encoding_ = current_state.previous_encoding_;
 
     return *this;
 }
@@ -3172,7 +3250,6 @@ Cdr& Cdr::xcdr2_deserialize_type(
     assert(EncodingAlgorithmFlag::PLAIN_CDR2 == type_encoding ||
             EncodingAlgorithmFlag::DELIMIT_CDR2 == type_encoding ||
             EncodingAlgorithmFlag::PL_CDR2 == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
 
 
     if (EncodingAlgorithmFlag::PLAIN_CDR2 != type_encoding)
@@ -3181,8 +3258,9 @@ Cdr& Cdr::xcdr2_deserialize_type(
         deserialize(dheader);
 
         Cdr::state current_state(*this);
+        current_encoding_ = type_encoding;
 
-        if (EncodingAlgorithmFlag::PL_CDR2 == type_encoding)
+        if (EncodingAlgorithmFlag::PL_CDR2 == current_encoding_)
         {
             while (offset_ - current_state.offset_ != dheader)
             {
@@ -3234,10 +3312,13 @@ Cdr& Cdr::xcdr2_deserialize_type(
 
             next_member_id_ = current_state.next_member_id_;
         }
+
+        current_encoding_ = current_state.previous_encoding_;
     }
     else
     {
         Cdr::state current_state(*this);
+        current_encoding_ = type_encoding;
         next_member_id_ = MemberId(0);
 
         while (offset_ != end_ && functor(*this, next_member_id_))
@@ -3246,6 +3327,7 @@ Cdr& Cdr::xcdr2_deserialize_type(
         }
 
         next_member_id_ = current_state.next_member_id_;
+        current_encoding_ = current_state.previous_encoding_;
     }
 
     return *this;
@@ -3274,7 +3356,6 @@ Cdr& Cdr::cdr_begin_serialize_type(
 {
     static_cast<void>(type_encoding);
     assert(EncodingAlgorithmFlag::PLAIN_CDR == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
     current_state.previous_encoding_ = current_encoding_;
     current_encoding_ = type_encoding;
     return *this;
@@ -3293,7 +3374,6 @@ Cdr& Cdr::cdr_deserialize_type(
 {
     static_cast<void>(type_encoding);
     assert(EncodingAlgorithmFlag::PLAIN_CDR == type_encoding);
-    assert(offset_ == cdr_buffer_.begin() ? current_encoding_ == type_encoding : true);
 
     Cdr::state current_state(*this);
     next_member_id_ = MemberId(0);
@@ -3305,6 +3385,35 @@ Cdr& Cdr::cdr_deserialize_type(
 
     next_member_id_ = current_state.next_member_id_;
     return *this;
+}
+
+Cdr::state Cdr::allocate_xcdrv2_dheader()
+{
+    Cdr::state dheader_state(*this);
+
+    if (CdrVersion::XCDRv2 == cdr_version_)
+    {
+        // Serialize DHEADER
+        uint32_t dheader {0};
+        serialize(dheader);
+    }
+
+    return dheader_state;
+}
+
+void Cdr::set_xcdrv2_dheader(
+        const Cdr::state& dheader_state)
+{
+    if (CdrVersion::XCDRv2 == cdr_version_)
+    {
+        auto offset = offset_;
+        Cdr::state state_after(*this);
+        set_state(dheader_state);
+        size_t dheader = offset - offset_ - (4 + alignment(sizeof(uint32_t)));    /* DHEADER */
+        serialize(static_cast<uint32_t>(dheader));
+        set_state(state_after);
+        serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
+    }
 }
 
 } // namespace fastcdr

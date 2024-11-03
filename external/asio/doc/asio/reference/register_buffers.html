@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="redirect_error_t/token_.html" title="redirect_error_t::token_">
 <link rel="next" href="register_buffers/overload1.html" title="register_buffers (1 of 4 overloads)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -31,7 +32,7 @@
 <span class="identifier">buffer_registration</span><span class="special">&lt;</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&gt;</span> <a class="link" href="register_buffers/overload1.html" title="register_buffers (1 of 4 overloads)">register_buffers</a><span class="special">(</span>
     <span class="keyword">const</span> <span class="identifier">Executor</span> <span class="special">&amp;</span> <span class="identifier">ex</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&amp;</span> <span class="identifier">buffer_sequence</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span><span class="special">||</span><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span><span class="special">||</span><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="register_buffers/overload1.html" title="register_buffers (1 of 4 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -42,7 +43,7 @@
     <span class="keyword">const</span> <span class="identifier">Executor</span> <span class="special">&amp;</span> <span class="identifier">ex</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&amp;</span> <span class="identifier">buffer_sequence</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">Allocator</span> <span class="special">&amp;</span> <span class="identifier">alloc</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span><span class="special">||</span><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span><span class="special">||</span><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span> <span class="identifier">Executor</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="register_buffers/overload2.html" title="register_buffers (2 of 4 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -51,7 +52,7 @@
 <span class="identifier">buffer_registration</span><span class="special">&lt;</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&gt;</span> <a class="link" href="register_buffers/overload3.html" title="register_buffers (3 of 4 overloads)">register_buffers</a><span class="special">(</span>
     <span class="identifier">ExecutionContext</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&amp;</span> <span class="identifier">buffer_sequence</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_convertible</span><span class="special">&lt;</span> <span class="identifier">ExecutionContext</span> <span class="special">&amp;,</span> <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_convertible</span><span class="special">&lt;</span> <span class="identifier">ExecutionContext</span> <span class="special">&amp;,</span> <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="register_buffers/overload3.html" title="register_buffers (3 of 4 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -62,7 +63,7 @@
     <span class="identifier">ExecutionContext</span> <span class="special">&amp;</span> <span class="identifier">ctx</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">MutableBufferSequence</span> <span class="special">&amp;</span> <span class="identifier">buffer_sequence</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">Allocator</span> <span class="special">&amp;</span> <span class="identifier">alloc</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_convertible</span><span class="special">&lt;</span> <span class="identifier">ExecutionContext</span> <span class="special">&amp;,</span> <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_convertible</span><span class="special">&lt;</span> <span class="identifier">ExecutionContext</span> <span class="special">&amp;,</span> <span class="identifier">execution_context</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="register_buffers/overload4.html" title="register_buffers (4 of 4 overloads)">more...</a></em></span>
 </pre>
 <h5>
@@ -76,14 +77,11 @@
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="redirect_error_t/token_.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="register_buffers/overload1.html"><img src="../../next.png" alt="Next"></a>

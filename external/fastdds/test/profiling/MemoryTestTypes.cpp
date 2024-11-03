@@ -19,93 +19,101 @@
 
 #include "MemoryTestTypes.h"
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
-bool MemoryDataType::serialize(void*data,SerializedPayload_t* payload)
+bool MemoryDataType::serialize(
+        const void* const data,
+        SerializedPayload_t& payload,
+        eprosima::fastdds::dds::DataRepresentationId_t)
 {
-    MemoryType* lt = (MemoryType*)data;
+    const MemoryType* lt = static_cast<const MemoryType*>(data);
 
 
-    *(uint32_t*)payload->data = lt->seqnum;
-    *(uint32_t*)(payload->data+4) = (uint32_t)lt->data.size();
+    *(uint32_t*)payload.data = lt->seqnum;
+    *(uint32_t*)(payload.data + 4) = (uint32_t)lt->data.size();
 
-    //std::copy(lt->data.begin(),lt->data.end(),payload->data+8);
-    memcpy(payload->data + 8, lt->data.data(), lt->data.size());
-    payload->length = (uint32_t)(8+lt->data.size());
+    memcpy(payload.data + 8, lt->data.data(), lt->data.size());
+    payload.length = static_cast<uint32_t>(8 + lt->data.size());
     return true;
 }
 
-bool MemoryDataType::deserialize(SerializedPayload_t* payload,void * data)
+bool MemoryDataType::deserialize(
+        SerializedPayload_t& payload,
+        void* data)
 {
-    MemoryType* lt = (MemoryType*)data;
-    lt->seqnum = *(uint32_t*)payload->data;
-    uint32_t siz = *(uint32_t*)(payload->data+4);
-    std::copy(payload->data+8,payload->data+8+siz,lt->data.begin());
+    MemoryType* lt = static_cast<MemoryType*>(data);
+    lt->seqnum = static_cast<uint32_t>(*(payload.data));
+    uint32_t siz = static_cast<uint32_t>(*(payload.data + 4));
+    std::copy(payload.data + 8, payload.data + 8 + siz, lt->data.begin());
     return true;
 }
 
-std::function<uint32_t()> MemoryDataType::getSerializedSizeProvider(void* data)
+uint32_t MemoryDataType::calculate_serialized_size(
+        const void* const data,
+        eprosima::fastdds::dds::DataRepresentationId_t)
 {
-    return [data]() -> uint32_t
-    {
-        MemoryType *tdata = static_cast<MemoryType*>(data);
-        uint32_t size = 0;
+    const MemoryType* tdata = static_cast<const MemoryType*>(data);
+    uint32_t size = 0;
 
-        size = (uint32_t)(sizeof(uint32_t) + sizeof(uint32_t) + tdata->data.size());
+    size = static_cast<uint32_t>(sizeof(uint32_t) + sizeof(uint32_t) + tdata->data.size());
 
-        return size;
-    };
+    return size;
 }
 
-void* MemoryDataType::createData()
+void* MemoryDataType::create_data()
 {
 
-    return (void*)new MemoryType();
-}
-void MemoryDataType::deleteData(void* data)
-{
-
-    delete((MemoryType*)data);
+    return static_cast<void*>(new MemoryType());
 }
 
+void MemoryDataType::delete_data(
+        void* data)
+{
 
-bool TestCommandDataType::serialize(void*data,SerializedPayload_t* payload)
-{
-    TestCommandType* t = (TestCommandType*)data;
-    *(TESTCOMMAND*)payload->data = t->m_command;
-    payload->length = 4;
-    return true;
+    delete(static_cast<MemoryType*>(data));
 }
-bool TestCommandDataType::deserialize(SerializedPayload_t* payload,void * data)
+
+bool TestCommandDataType::serialize(
+        const void* const data,
+        SerializedPayload_t& payload,
+        eprosima::fastdds::dds::DataRepresentationId_t)
 {
-    TestCommandType* t = (TestCommandType*)data;
-    //	cout << "PAYLOAD LENGTH: "<<payload->length << endl;
-    //	cout << "PAYLOAD FIRST BYTE: "<< (int)payload->data[0] << endl;
-    t->m_command = *(TESTCOMMAND*)payload->data;
-    //	cout << "COMMAND: "<<t->m_command<< endl;
+    const TestCommandType* t = static_cast<const TestCommandType*>(data);
+    *(TESTCOMMAND*)payload.data = t->m_command;
+    payload.length = 4;
     return true;
 }
 
-std::function<uint32_t()> TestCommandDataType::getSerializedSizeProvider(void*)
+bool TestCommandDataType::deserialize(
+        SerializedPayload_t& payload,
+        void* data)
 {
-    return []() -> uint32_t
-    {
-        uint32_t size = 0;
-
-        size = (uint32_t)sizeof(uint32_t);
-
-        return size;
-    };
+    TestCommandType* t = static_cast<TestCommandType*>(data);
+    t->m_command = static_cast<TESTCOMMAND>(*(payload.data));
+    return true;
 }
 
-void* TestCommandDataType::createData()
+uint32_t TestCommandDataType::calculate_serialized_size(
+        const void* const,
+        eprosima::fastdds::dds::DataRepresentationId_t)
 {
+    uint32_t size = 0;
 
-    return (void*)new TestCommandType();
+    size = static_cast<uint32_t>(sizeof(uint32_t));
+
+    return size;
 }
-void TestCommandDataType::deleteData(void* data)
+
+void* TestCommandDataType::create_data()
 {
 
-    delete((TestCommandType*)data);
+    return static_cast<void*>(new TestCommandType());
+}
+
+void TestCommandDataType::delete_data(
+        void* data)
+{
+
+    delete(static_cast<TestCommandType*>(data));
 }

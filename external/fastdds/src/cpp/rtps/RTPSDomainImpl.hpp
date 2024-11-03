@@ -13,28 +13,31 @@
 // limitations under the License.
 
 
-#ifndef _RTPS_RTPSDOMAINIMPL_HPP_
-#define _RTPS_RTPSDOMAINIMPL_HPP_
+#ifndef FASTDDS_RTPS__RTPSDOMAINIMPL_HPP
+#define FASTDDS_RTPS__RTPSDOMAINIMPL_HPP
 
 #include <chrono>
 #include <memory>
-#include <thread>
 #include <unordered_map>
 
 #if defined(_WIN32) || defined(__unix__)
 #include <FileWatch.hpp>
 #endif // defined(_WIN32) || defined(__unix__)
 
-#include <fastrtps/rtps/reader/RTPSReader.h>
-#include <fastrtps/rtps/RTPSDomain.h>
-#include <fastrtps/rtps/writer/RTPSWriter.h>
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
 
+#include <rtps/reader/BaseReader.hpp>
+#include <rtps/writer/BaseWriter.hpp>
+#include <utils/shared_memory/BoostAtExitRegistry.hpp>
 #include <utils/SystemInfo.hpp>
 
-#include <utils/shared_memory/BoostAtExitRegistry.hpp>
+#include <fastdds/xtypes/type_representation/TypeObjectRegistry.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 /**
@@ -43,6 +46,7 @@ namespace rtps {
  */
 class RTPSDomainImpl
 {
+
 public:
 
     typedef std::pair<RTPSParticipant*, RTPSParticipantImpl*> t_p_RTPSParticipant;
@@ -99,7 +103,7 @@ public:
 
     /**
      * Remove a RTPSParticipant and delete all its associated Writers, Readers, resources, etc.
-     * @param[in] p Pointer to the RTPSParticipant;
+     * @param [in] p Pointer to the RTPSParticipant;
      * @return True if correct.
      */
     static bool removeRTPSParticipant(
@@ -139,10 +143,8 @@ public:
             RTPSParticipant* p,
             const EntityId_t& entity_id,
             WriterAttributes& watt,
-            const std::shared_ptr<IPayloadPool>& payload_pool,
-            const std::shared_ptr<IChangePool>& change_pool,
             WriterHistory* hist,
-            WriterListener* listen = nullptr);
+            WriterListener* listen);
 
     /**
      * Creates the guid of a participant given its identifier.
@@ -173,7 +175,7 @@ public:
      *
      * @returns A pointer to a local reader given its endpoint guid, or nullptr if not found.
      */
-    static RTPSReader* find_local_reader(
+    static BaseReader* find_local_reader(
             const GUID_t& reader_guid);
 
     /**
@@ -183,7 +185,7 @@ public:
      *
      * @returns A pointer to a local writer given its endpoint guid, or nullptr if not found.
      */
-    static RTPSWriter* find_local_writer(
+    static BaseWriter* find_local_writer(
             const GUID_t& writer_guid);
 
     /**
@@ -202,6 +204,51 @@ public:
      * Callback run when the monitored environment file is modified
      */
     static void file_watch_callback();
+
+    /**
+     * Method to set the configuration of the threads created by the file watcher for the environment file.
+     * In order for these settings to take effect, this method must be called before the first call
+     * to @ref createParticipant.
+     *
+     * @param watch_thread     Settings for the thread watching the environment file.
+     * @param callback_thread  Settings for the thread executing the callback when the environment file changed.
+     */
+    static void set_filewatch_thread_config(
+            const fastdds::rtps::ThreadSettings& watch_thread,
+            const fastdds::rtps::ThreadSettings& callback_thread);
+
+    /**
+     * @brief Get the library settings.
+     *
+     * @param library_settings LibrarySettings reference where the settings are returned.
+     * @return True.
+     */
+    static bool get_library_settings(
+            fastdds::LibrarySettings& library_settings);
+
+    /**
+     * @brief Set the library settings.
+     *
+     * @param library_settings LibrarySettings to be set.
+     * @return False if there is any RTPSParticipant already created.
+     *         True if correctly set.
+     */
+    static bool set_library_settings(
+            const fastdds::LibrarySettings& library_settings);
+
+    /**
+     * @brief Return the ITypeObjectRegistry member to access the interface for the public API.
+     *
+     * @return const xtypes::ITypeObjectRegistry reference.
+     */
+    static fastdds::dds::xtypes::ITypeObjectRegistry& type_object_registry();
+
+    /**
+     * @brief Return the TypeObjectRegistry member to access the  API.
+     *
+     * @return const xtypes::TypeObjectRegistry reference.
+     */
+    static fastdds::dds::xtypes::TypeObjectRegistry& type_object_registry_observer();
 
 private:
 
@@ -252,10 +299,15 @@ private:
     std::unordered_map<uint32_t, ParticipantIDState> m_RTPSParticipantIDs;
 
     FileWatchHandle file_watch_handle_;
+    fastdds::rtps::ThreadSettings watch_thread_config_;
+    fastdds::rtps::ThreadSettings callback_thread_config_;
+
+    eprosima::fastdds::dds::xtypes::TypeObjectRegistry type_object_registry_;
+
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
-#endif  // _RTPS_RTPSDOMAINIMPL_HPP_
+#endif  // FASTDDS_RTPS__RTPSDOMAINIMPL_HPP

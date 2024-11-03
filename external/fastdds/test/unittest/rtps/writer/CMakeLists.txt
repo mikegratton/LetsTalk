@@ -14,16 +14,21 @@
 
 # ReaderProxy
 set(WRITERPROXYTESTS_SOURCE ReaderProxyTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/ReaderProxy.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/subscriber/qos/ReaderQos.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/LocatorSelectorSender.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/flowcontrol/FlowControllerConsts.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/flowcontrol/ThroughputControllerDescriptor.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/LocatorSelectorSender.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/ReaderProxy.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 if(WIN32)
@@ -34,6 +39,7 @@ add_executable(ReaderProxyTests ${WRITERPROXYTESTS_SOURCE})
 target_compile_definitions(ReaderProxyTests PRIVATE
     BOOST_ASIO_STANDALONE
     ASIO_STANDALONE
+    $<$<BOOL:${MSVC}>:NOMINMAX> # avoid conflict with std::min & std::max in visual studio
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
@@ -57,22 +63,28 @@ target_include_directories(ReaderProxyTests PRIVATE
     )
 target_link_libraries(ReaderProxyTests
     fastcdr
+    fastdds::log
     foonathan_memory
     GTest::gmock
     ${CMAKE_DL_LIBS}
     ${THIRDPARTY_BOOST_LINK_LIBS})
-add_gtest(ReaderProxyTests SOURCES ${WRITERPROXYTESTS_SOURCE})
+gtest_discover_tests(ReaderProxyTests)
 
 set(LIVELINESSMANAGERTESTS_SOURCE LivelinessManagerTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/LivelinessManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/ResourceEvent.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEvent.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEventImpl.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/writer/LivelinessManager.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/TimedConditionVariable.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
@@ -90,8 +102,11 @@ target_include_directories(LivelinessManagerTests PRIVATE
     ${PROJECT_SOURCE_DIR}/src/cpp
     )
 target_link_libraries(LivelinessManagerTests PRIVATE
-    GTest::gmock)
-add_gtest(LivelinessManagerTests SOURCES ${LIVELINESSMANAGERTESTS_SOURCE})
+    fastcdr
+    fastdds::log
+    GTest::gmock
+    )
+gtest_discover_tests(LivelinessManagerTests)
 
 if(NOT QNX)
     set(RTPSWRITERTESTS_SOURCE RTPSWriterTests.cpp)
@@ -105,14 +120,8 @@ if(NOT QNX)
         )
     target_include_directories(RTPSWriterTests PRIVATE
         ${Asio_INCLUDE_DIR})
-    target_link_libraries(RTPSWriterTests fastcdr fastrtps foonathan_memory
+    target_link_libraries(RTPSWriterTests fastcdr fastdds foonathan_memory
         GTest::gmock
         ${CMAKE_DL_LIBS})
-    add_gtest(RTPSWriterTests SOURCES ${RTPSWRITERTESTS_SOURCE})
-endif()
-
-if(ANDROID)
-    set_property(TARGET ReaderProxyTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LivelinessManagerTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET RTPSWriterTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
+    gtest_discover_tests(RTPSWriterTests)
 endif()

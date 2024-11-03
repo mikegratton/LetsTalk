@@ -29,16 +29,20 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <time.h>
 
 #include <nlohmann/json.hpp>
-#include <fastrtps/types/TypesBase.h>
+
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/utils/IPFinder.hpp>
+#include <utils/threading.hpp>
 
 namespace eprosima {
 
-using ReturnCode_t = fastrtps::types::ReturnCode_t;
+using IPFinder = fastdds::rtps::IPFinder;
 
 SystemInfo::SystemInfo()
 {
@@ -51,21 +55,23 @@ SystemInfo::SystemInfo()
     tzset();
 #endif // if (_POSIX_C_SOURCE >= 1) || defined(_XOPEN_SOURCE) || defined(_BSD_SOURCE) || defined(_SVID_SOURCE) ||
        // defined(_POSIX_SOURCE) || defined(__unix__)
+
+    update_interfaces();
 }
 
-ReturnCode_t SystemInfo::get_env(
+fastdds::dds::ReturnCode_t SystemInfo::get_env(
         const std::string& env_name,
         std::string& env_value)
 {
     if (env_name.empty())
     {
-        return ReturnCode_t::RETCODE_BAD_PARAMETER;
+        return fastdds::dds::RETCODE_BAD_PARAMETER;
     }
 
     // Try to read environment variable from file
-    if (!environment_file_.empty() && ReturnCode_t::RETCODE_OK == get_env(environment_file_, env_name, env_value))
+    if (!environment_file_.empty() && fastdds::dds::RETCODE_OK == get_env(environment_file_, env_name, env_value))
     {
-        return ReturnCode_t::RETCODE_OK;
+        return fastdds::dds::RETCODE_OK;
     }
 
     char* data;
@@ -77,13 +83,13 @@ ReturnCode_t SystemInfo::get_env(
     }
     else
     {
-        return ReturnCode_t::RETCODE_NO_DATA;
+        return fastdds::dds::RETCODE_NO_DATA;
     }
 
-    return ReturnCode_t::RETCODE_OK;
+    return fastdds::dds::RETCODE_OK;
 }
 
-ReturnCode_t SystemInfo::get_env(
+fastdds::dds::ReturnCode_t SystemInfo::get_env(
         const std::string& filename,
         const std::string& env_name,
         std::string& env_value)
@@ -91,7 +97,7 @@ ReturnCode_t SystemInfo::get_env(
     // Check that the file exists
     if (!SystemInfo::file_exists(filename))
     {
-        return ReturnCode_t::RETCODE_BAD_PARAMETER;
+        return fastdds::dds::RETCODE_BAD_PARAMETER;
     }
 
     // Read json file
@@ -104,7 +110,7 @@ ReturnCode_t SystemInfo::get_env(
     }
     catch (const nlohmann::json::exception&)
     {
-        return ReturnCode_t::RETCODE_ERROR;
+        return fastdds::dds::RETCODE_ERROR;
     }
 
     try
@@ -113,12 +119,12 @@ ReturnCode_t SystemInfo::get_env(
     }
     catch (const nlohmann::json::exception&)
     {
-        return ReturnCode_t::RETCODE_NO_DATA;
+        return fastdds::dds::RETCODE_NO_DATA;
     }
-    return ReturnCode_t::RETCODE_OK;
+    return fastdds::dds::RETCODE_OK;
 }
 
-ReturnCode_t SystemInfo::get_username(
+fastdds::dds::ReturnCode_t SystemInfo::get_username(
         std::string& username)
 {
 #ifdef _WIN32
@@ -127,10 +133,10 @@ ReturnCode_t SystemInfo::get_username(
     DWORD bufCharCount = INFO_BUFFER_SIZE;
     if (!GetUserNameA(user, &bufCharCount))
     {
-        return ReturnCode_t::RETCODE_ERROR;
+        return fastdds::dds::RETCODE_ERROR;
     }
     username = user;
-    return ReturnCode_t::RETCODE_OK;
+    return fastdds::dds::RETCODE_OK;
 #else
     uid_t user_id = geteuid();
     struct passwd* pwd = getpwuid(user_id);
@@ -139,10 +145,10 @@ ReturnCode_t SystemInfo::get_username(
         username = pwd->pw_name;
         if (!username.empty())
         {
-            return ReturnCode_t::RETCODE_OK;
+            return fastdds::dds::RETCODE_OK;
         }
     }
-    return ReturnCode_t::RETCODE_ERROR;
+    return fastdds::dds::RETCODE_ERROR;
 #endif // _WIN32
 }
 
@@ -158,7 +164,7 @@ bool SystemInfo::wait_for_file_closure(
         const std::string& filename,
         const std::chrono::seconds timeout)
 {
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
 #ifdef _MSC_VER
     std::ofstream os;
@@ -168,7 +174,7 @@ bool SystemInfo::wait_for_file_closure(
         os.open(filename, std::ios::out | std::ios::app, _SH_DENYWR);
         if (!os.is_open()
                 // If the file is lock-opened in an external editor do not hang
-                && (std::chrono::system_clock::now() - start) < timeout )
+                && (std::chrono::steady_clock::now() - start) < timeout )
         {
             std::this_thread::yield();
         }
@@ -183,7 +189,7 @@ bool SystemInfo::wait_for_file_closure(
 
     while (flock(fd, LOCK_EX | LOCK_NB)
             // If the file is lock-opened in an external editor do not hang
-            && (std::chrono::system_clock::now() - start) < timeout )
+            && (std::chrono::steady_clock::now() - start) < timeout )
     {
         std::this_thread::yield();
     }
@@ -198,10 +204,10 @@ bool SystemInfo::wait_for_file_closure(
     (void)filename;
 #endif // ifdef _MSC_VER
 
-    return std::chrono::system_clock::now() - start < timeout;
+    return std::chrono::steady_clock::now() - start < timeout;
 }
 
-ReturnCode_t SystemInfo::set_environment_file()
+fastdds::dds::ReturnCode_t SystemInfo::set_environment_file()
 {
     return SystemInfo::get_env(FASTDDS_ENVIRONMENT_FILE_ENV_VAR, SystemInfo::environment_file_);
 }
@@ -213,7 +219,9 @@ const std::string& SystemInfo::get_environment_file()
 
 FileWatchHandle SystemInfo::watch_file(
         std::string filename,
-        std::function<void()> callback)
+        std::function<void()> callback,
+        const fastdds::rtps::ThreadSettings& watch_thread_config,
+        const fastdds::rtps::ThreadSettings& callback_thread_config)
 {
 #if defined(_WIN32) || defined(__unix__)
     return FileWatchHandle (new filewatch::FileWatch<std::string>(filename,
@@ -228,10 +236,12 @@ FileWatchHandle SystemInfo::watch_file(
                                // No-op
                                break;
                        }
-                   }));
+                   }, watch_thread_config, callback_thread_config));
 #else // defined(_WIN32) || defined(__unix__)
     static_cast<void>(filename);
     static_cast<void>(callback);
+    static_cast<void>(watch_thread_config);
+    static_cast<void>(callback_thread_config);
     return FileWatchHandle();
 #endif // defined(_WIN32) || defined(__unix__)
 }
@@ -272,6 +282,69 @@ std::string SystemInfo::get_timestamp(
     return stream.str();
 }
 
+bool SystemInfo::update_interfaces()
+{
+    std::vector<IPFinder::info_IP> ifaces;
+    auto ret = IPFinder::getIPs(&ifaces, true);
+    if (ret)
+    {
+        std::lock_guard<std::mutex> lock(interfaces_mtx_);
+        // Copy fetched interfaces to attribute
+        interfaces_ = ifaces;
+        // Set to true when successful, but not to false if lookup failed (may have been successfully cached before)
+        cached_interfaces_ = true;
+    }
+    return ret;
+}
+
+bool SystemInfo::get_ips(
+        std::vector<IPFinder::info_IP>& vec_name,
+        bool return_loopback,
+        bool force_lookup)
+{
+    if (force_lookup)
+    {
+        return IPFinder::getIPs(&vec_name, return_loopback);
+    }
+    else
+    {
+        {
+            std::lock_guard<std::mutex> lock(interfaces_mtx_);
+            if (cached_interfaces_)
+            {
+                for (const auto& iface : interfaces_)
+                {
+                    if (return_loopback || (iface.type != IPFinder::IPTYPE::IP4_LOCAL &&
+                            iface.type != IPFinder::IPTYPE::IP6_LOCAL))
+                    {
+                        vec_name.push_back(iface);
+                    }
+                }
+                return true;
+            }
+        }
+        // Interfaces not cached, perform lookup
+        return IPFinder::getIPs(&vec_name, return_loopback);
+    }
+}
+
 std::string SystemInfo::environment_file_;
+bool SystemInfo::cached_interfaces_;
+std::vector<IPFinder::info_IP> SystemInfo::interfaces_;
+std::mutex SystemInfo::interfaces_mtx_;
 
 } // eprosima
+
+// threading.hpp implementations
+#ifdef _WIN32
+#include "threading/threading_win32.ipp"
+#include "thread_impl/thread_impl_win32.ipp"
+#elif defined(__APPLE__)
+#include "threading/threading_osx.ipp"
+#include "thread_impl/thread_impl_pthread.ipp"
+#elif defined(_POSIX_SOURCE) || defined(__QNXNTO__) || defined(__ANDROID__)
+#include "threading/threading_pthread.ipp"
+#include "thread_impl/thread_impl_pthread.ipp"
+#else
+#include "threading/threading_empty.ipp"
+#endif // Platform selection

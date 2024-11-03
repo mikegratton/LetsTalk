@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-
 #if HAVE_SQLITE3
 
 #include <cstring>
 #include <thread>
 
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <gtest/gtest.h>
+
+#include "BlackboxTests.hpp"
 #include "RTPSAsSocketReader.hpp"
 #include "RTPSAsSocketWriter.hpp"
 #include "RTPSWithRegistrationReader.hpp"
 #include "RTPSWithRegistrationWriter.hpp"
-#include <fastrtps/xmlparser/XMLProfileManager.h>
 
-#include <gtest/gtest.h>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -115,12 +115,12 @@ protected:
 
     virtual void SetUp()
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::rtps::RTPSDomain::set_library_settings(att);
                 break;
             case TRANSPORT:
             default:
@@ -163,12 +163,12 @@ protected:
     virtual void TearDown()
     {
         std::remove(db_file_name_.c_str());
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::rtps::RTPSDomain::set_library_settings(att);
                 break;
             case TRANSPORT:
             default:
@@ -184,11 +184,11 @@ TEST_P(Persistence, RTPSAsNonReliableWithPersistence)
     RTPSWithRegistrationWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
     std::string ip("239.255.1.4");
 
-    reader.make_persistent(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).init();
+    reader.make_transient(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
-    writer.make_persistent(db_file_name(), guid_prefix()).reliability(ReliabilityKind_t::BEST_EFFORT).init();
+    writer.make_transient(db_file_name(), guid_prefix()).reliability(ReliabilityKind_t::BEST_EFFORT).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
@@ -215,11 +215,11 @@ TEST_P(Persistence, AsyncRTPSAsNonReliableWithPersistence)
     RTPSWithRegistrationWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
     std::string ip("239.255.1.4");
 
-    reader.make_persistent(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).init();
+    reader.make_transient(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
-    writer.make_persistent(db_file_name(), guid_prefix()).reliability(ReliabilityKind_t::BEST_EFFORT).
+    writer.make_transient(db_file_name(), guid_prefix()).reliability(ReliabilityKind_t::BEST_EFFORT).
             asynchronously(RTPSWriterPublishMode::ASYNCHRONOUS_WRITER).init();
 
     ASSERT_TRUE(writer.isInitialized());
@@ -247,12 +247,12 @@ TEST_P(Persistence, RTPSAsReliableWithPersistence)
     RTPSWithRegistrationWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
     std::string ip("239.255.1.4");
 
-    reader.make_persistent(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).
+    reader.make_transient(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).
             reliability(ReliabilityKind_t::RELIABLE).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
-    writer.make_persistent(db_file_name(), guid_prefix()).init();
+    writer.make_transient(db_file_name(), guid_prefix()).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
@@ -279,12 +279,12 @@ TEST_P(Persistence, AsyncRTPSAsReliableWithPersistence)
     RTPSWithRegistrationWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
     std::string ip("239.255.1.4");
 
-    reader.make_persistent(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).
+    reader.make_transient(db_file_name(), guid_prefix()).add_to_multicast_locator_list(ip, global_port).
             reliability(ReliabilityKind_t::RELIABLE).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
-    writer.make_persistent(db_file_name(), guid_prefix()).history_depth(10).
+    writer.make_transient(db_file_name(), guid_prefix()).history_depth(10).
             asynchronously(RTPSWriterPublishMode::ASYNCHRONOUS_WRITER).init();
 
     ASSERT_TRUE(writer.isInitialized());

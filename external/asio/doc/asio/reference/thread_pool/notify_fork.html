@@ -6,14 +6,15 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../../../index.html" title="Asio">
 <link rel="up" href="../thread_pool.html" title="thread_pool">
-<link rel="prev" href="make_service.html" title="thread_pool::make_service">
-<link rel="next" href="scheduler.html" title="thread_pool::scheduler">
+<link rel="prev" href="join.html" title="thread_pool::join">
+<link rel="next" href="shutdown.html" title="thread_pool::shutdown">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="make_service.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../thread_pool.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="scheduler.html"><img src="../../../next.png" alt="Next"></a>
+<a accesskey="p" href="join.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../thread_pool.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="shutdown.html"><img src="../../../next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -39,8 +40,8 @@ Notify the
         </p>
 <p>
           This function must not be called while any other <a class="link" href="../execution_context.html" title="execution_context"><code class="computeroutput"><span class="identifier">execution_context</span></code></a> function, or
-          any function associated with the execution_context's derived class, is
-          being called in another thread. It is, however, safe to call this function
+          any function associated with the <a class="link" href="../execution_context.html" title="execution_context"><code class="computeroutput"><span class="identifier">execution_context</span></code></a>'s derived class,
+          is being called in another thread. It is, however, safe to call this function
           from within a completion handler, provided no other thread is accessing
           the <a class="link" href="../execution_context.html" title="execution_context"><code class="computeroutput"><span class="identifier">execution_context</span></code></a>
           or its derived class.
@@ -104,17 +105,14 @@ Notify the
           are visited in order of the beginning of service object lifetime.
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="make_service.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../thread_pool.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="scheduler.html"><img src="../../../next.png" alt="Next"></a>
+<a accesskey="p" href="join.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../thread_pool.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="shutdown.html"><img src="../../../next.png" alt="Next"></a>
 </div>
 </body>
 </html>

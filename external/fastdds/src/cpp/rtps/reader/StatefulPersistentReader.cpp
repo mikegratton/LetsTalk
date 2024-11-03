@@ -17,14 +17,15 @@
  *
  */
 
-#include <fastdds/rtps/reader/StatefulPersistentReader.h>
-#include <fastdds/rtps/history/ReaderHistory.h>
+#include <rtps/reader/StatefulPersistentReader.hpp>
+
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+
 #include <rtps/persistence/PersistenceService.h>
-#include <fastrtps_deprecated/participant/ParticipantImpl.h>
 #include <rtps/reader/ReaderHistoryState.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 StatefulPersistentReader::StatefulPersistentReader(
@@ -89,7 +90,7 @@ StatefulPersistentReader::~StatefulPersistentReader()
     delete persistence_;
 }
 
-void StatefulPersistentReader::set_last_notified(
+void StatefulPersistentReader::persist_last_notified_nts(
         const GUID_t& writer_guid,
         const SequenceNumber_t& seq)
 {
@@ -104,5 +105,5 @@ bool StatefulPersistentReader::may_remove_history_record(
 }
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */

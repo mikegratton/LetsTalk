@@ -13,7 +13,6 @@
 // limitations under the License.
 
 
-
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/qos/DomainParticipantFactoryQos.hpp>
@@ -42,60 +41,74 @@ namespace eprosima {
 namespace fastdds {
 namespace dds {
 
-using ReturnCode_t = eprosima::fastrtps::types::ReturnCode_t;
-
 class DDSFindTopicTest : public testing::Test
 {
     /**
      * A dummy type support class.
      */
-    struct TestType : public TopicDataType
+    class TestType : public TopicDataType
     {
+    public:
+
         TestType()
             : TopicDataType()
         {
-            m_isGetKeyDefined = false;
-            m_typeSize = 16;
+            is_compute_key_provided = false;
+            max_serialized_type_size = 16;
         }
 
         bool serialize(
-                void*,
-                fastrtps::rtps::SerializedPayload_t*) override
+                const void* const,
+                fastdds::rtps::SerializedPayload_t&,
+                fastdds::dds::DataRepresentationId_t) override
         {
             return true;
         }
 
         bool deserialize(
-                fastrtps::rtps::SerializedPayload_t*,
+                fastdds::rtps::SerializedPayload_t&,
                 void*) override
         {
             return true;
         }
 
-        std::function<uint32_t()> getSerializedSizeProvider(
-                void*) override
+        uint32_t calculate_serialized_size(
+                const void* const,
+                fastdds::dds::DataRepresentationId_t) override
         {
-            return {};
+            return 0u;
         }
 
-        void* createData() override
+        void* create_data() override
         {
             return nullptr;
         }
 
-        void deleteData(
+        void delete_data(
                 void*) override
         {
         }
 
-        bool getKey(
-                void*,
-                fastrtps::rtps::InstanceHandle_t*,
+        bool compute_key(
+                fastdds::rtps::SerializedPayload_t&,
+                fastdds::rtps::InstanceHandle_t&,
+                bool) override
+        {
+            return true;
+        }
+
+        bool compute_key(
+                const void* const,
+                fastdds::rtps::InstanceHandle_t&,
                 bool) override
         {
             return false;
         }
 
+    private:
+
+        using TopicDataType::calculate_serialized_size;
+        using TopicDataType::serialize;
     };
 
 public:
@@ -109,7 +122,7 @@ public:
         ASSERT_NE(nullptr, participant_);
 
         type_.reset(new TestType);
-        type_->setName(c_type_name);
+        type_->set_name(c_type_name);
         participant_->register_type(type_);
     }
 
@@ -167,7 +180,7 @@ TEST_F(DDSFindTopicTest, find_topic_timeout)
 
     // Procedure:
     // 1. Call DomainParticipant::find_topic with a valid topic name and certain, non-infinite, timeout.
-    eprosima::fastrtps::Duration_t timeout{ 0, 50 * 1000 * 1000 };
+    eprosima::fastdds::dds::Duration_t timeout{ 0, 50 * 1000 * 1000 };
     auto max_tp = std::chrono::steady_clock::now() + std::chrono::milliseconds(50);
     auto topic = participant_->find_topic(TEST_TOPIC_NAME, timeout);
 
@@ -193,7 +206,7 @@ TEST_F(DDSFindTopicTest, find_topic_no_timeout)
 
     // Procedure:
     // 1. Call DomainParticipant::find_topic with the same topic name as the input Topic, and infinite timeout.
-    auto topic = participant_->find_topic(TEST_TOPIC_NAME, fastrtps::c_TimeInfinite);
+    auto topic = participant_->find_topic(TEST_TOPIC_NAME, fastdds::dds::c_TimeInfinite);
 
     // Output:
     // - The call returns something different from nullptr.
@@ -220,7 +233,7 @@ TEST_F(DDSFindTopicTest, find_topic_unblock)
     //    and infinite timeout.
     auto exec_fn = [this]()
             {
-                return participant_->find_topic(TEST_TOPIC_NAME, fastrtps::c_TimeInfinite);
+                return participant_->find_topic(TEST_TOPIC_NAME, fastdds::dds::c_TimeInfinite);
             };
     std::vector<std::future<Topic*>> threads;
     for (size_t i = 0; i < num_threads; ++i)
@@ -274,7 +287,7 @@ TEST_F(DDSFindTopicTest, find_topic_is_proxy)
     // - A Topic object topic_2 obtained by calling DomainParticipant::find_topic with the same topic name.
     Topic* topic_1 = create_test_topic();
     ASSERT_NE(nullptr, topic_1);
-    Topic* topic_2 = participant_->find_topic(TEST_TOPIC_NAME, fastrtps::c_TimeInfinite);
+    Topic* topic_2 = participant_->find_topic(TEST_TOPIC_NAME, fastdds::dds::c_TimeInfinite);
     ASSERT_NE(nullptr, topic_2);
     check_topics(topic_1, topic_2);
 
@@ -331,9 +344,9 @@ TEST_F(DDSFindTopicTest, find_topic_delete_topic)
     // - A DataReader created on topic_2.
     Topic* topic_1 = create_test_topic();
     ASSERT_NE(nullptr, topic_1);
-    Topic* topic_2 = participant_->find_topic(TEST_TOPIC_NAME, fastrtps::c_TimeInfinite);
+    Topic* topic_2 = participant_->find_topic(TEST_TOPIC_NAME, fastdds::dds::c_TimeInfinite);
     ASSERT_NE(nullptr, topic_2);
-    Topic* topic_3 = participant_->find_topic(TEST_TOPIC_NAME, fastrtps::c_TimeInfinite);
+    Topic* topic_3 = participant_->find_topic(TEST_TOPIC_NAME, fastdds::dds::c_TimeInfinite);
     ASSERT_NE(nullptr, topic_3);
     auto publisher = participant_->create_publisher(PUBLISHER_QOS_DEFAULT);
     auto data_writer = publisher->create_datawriter(topic_1, DATAWRITER_QOS_DEFAULT);
@@ -363,27 +376,27 @@ TEST_F(DDSFindTopicTest, find_topic_delete_topic)
 
     // Steps 1-4.
     {
-        EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant_->delete_topic(topic_3));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_2));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_1));
+        EXPECT_EQ(RETCODE_OK, participant_->delete_topic(topic_3));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_2));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_1));
         EXPECT_EQ(nullptr, create_test_topic());
     }
 
     // Steps 5-9.
     {
-        EXPECT_EQ(ReturnCode_t::RETCODE_OK, publisher->delete_datawriter(data_writer));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_3));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_2));
-        EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant_->delete_topic(topic_1));
+        EXPECT_EQ(RETCODE_OK, publisher->delete_datawriter(data_writer));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_3));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_2));
+        EXPECT_EQ(RETCODE_OK, participant_->delete_topic(topic_1));
         EXPECT_EQ(nullptr, create_test_topic());
     }
 
     // Steps 10-14.
     {
-        EXPECT_EQ(ReturnCode_t::RETCODE_OK, subscriber->delete_datareader(data_reader));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_3));
-        EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant_->delete_topic(topic_2));
-        EXPECT_EQ(ReturnCode_t::RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_1));
+        EXPECT_EQ(RETCODE_OK, subscriber->delete_datareader(data_reader));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_3));
+        EXPECT_EQ(RETCODE_OK, participant_->delete_topic(topic_2));
+        EXPECT_EQ(RETCODE_PRECONDITION_NOT_MET, participant_->delete_topic(topic_1));
         EXPECT_NE(nullptr, create_test_topic());
     }
 }

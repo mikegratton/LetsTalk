@@ -27,12 +27,6 @@ class RequesterImplBase {
     virtual ~RequesterImplBase() = default;
 };
 using RequesterImplPtr = std::shared_ptr<RequesterImplBase>;
-}  // namespace detail
-//////////////////////////////////////////////////
-
-//////////////////////////////////////////////////
-// Logging
-namespace detail {
 
 // Check if remote connections allowed
 extern const bool s_IGNORE_NONLOCAL;

@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-
-#include "PubSubReader.hpp"
-#include "PubSubWriter.hpp"
-#include "PubSubWriterReader.hpp"
-#include <fastrtps/xmlparser/XMLProfileManager.h>
+#include <thread>
 
 #include <gtest/gtest.h>
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+#include "BlackboxTests.hpp"
+#include "PubSubReader.hpp"
+#include "PubSubWriter.hpp"
+#include "PubSubWriterReader.hpp"
+
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 class PubSubFlowControllers : public testing::TestWithParam<eprosima::fastdds::rtps::FlowControllerSchedulerPolicy>
 {
@@ -48,16 +48,16 @@ TEST_P(PubSubFlowControllers, AsyncPubSubAsReliableData64kbWithParticipantFlowCo
     PubSubWriter<Data64kbPubSubType> writer(TEST_TOPIC_NAME);
 
     reader.history_depth(3).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).init();
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
     uint32_t bytesPerPeriod = 68000;
     uint32_t periodInMs = 500;
-    writer.add_throughput_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs);
+    writer.add_flow_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs);
 
     writer.history_depth(3).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).init();
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
@@ -84,20 +84,20 @@ TEST_P(PubSubFlowControllers, AsyncPubSubAsReliableData64kbWithParticipantFlowCo
     PubSubWriter<Data64kbPubSubType> writer(TEST_TOPIC_NAME);
 
     reader.history_depth(3).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).init();
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
     uint32_t bytesPerPeriod = 65000;
     uint32_t periodInMs = 500;
-    writer.add_throughput_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs);
+    writer.add_flow_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs);
 
     auto testTransport = std::make_shared<UDPv4TransportDescriptor>();
     writer.disable_builtin_transport();
     writer.add_user_transport_to_pparams(testTransport);
 
     writer.history_depth(3).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).init();
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
@@ -124,15 +124,15 @@ TEST_P(PubSubFlowControllers, AsyncPubSubWithFlowController64kb)
     PubSubWriter<Data64kbPubSubType> slowWriter(TEST_TOPIC_NAME);
 
     reader.history_depth(2).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).init();
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
     ASSERT_TRUE(reader.isInitialized());
 
     uint32_t sizeToClear = 68000; //68kb
     uint32_t periodInMs = 1000; //1sec
 
     slowWriter.history_depth(2).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(scheduler_policy_, sizeToClear, periodInMs).init();
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(scheduler_policy_, sizeToClear, periodInMs).init();
     ASSERT_TRUE(slowWriter.isInitialized());
 
     slowWriter.wait_discovery();
@@ -153,7 +153,7 @@ TEST_P(PubSubFlowControllers, FlowControllerIfNotAsync)
 
     uint32_t size = 10000;
     uint32_t periodInMs = 1000;
-    writer.add_throughput_controller_descriptor_to_pparams(scheduler_policy_, size, periodInMs).init();
+    writer.add_flow_controller_descriptor_to_pparams(scheduler_policy_, size, periodInMs).init();
     ASSERT_FALSE(writer.isInitialized());
 }
 
@@ -163,17 +163,17 @@ TEST_P(PubSubFlowControllers, AsyncMultipleWritersFlowController64kb)
 
     // Readers configuration
     entities.sub_history_depth(3).
-            sub_durability_kind(eprosima::fastrtps::TRANSIENT_LOCAL_DURABILITY_QOS).
-            sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS);
+            sub_durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS).
+            sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
 
     // Writers configuration.
     uint32_t bytesPerPeriod = 68000;
     uint32_t periodInMs = 500;
-    entities.add_throughput_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs).
+    entities.add_flow_controller_descriptor_to_pparams(scheduler_policy_, bytesPerPeriod, periodInMs).
             pub_history_depth(3).
-            pub_durability_kind(eprosima::fastrtps::TRANSIENT_LOCAL_DURABILITY_QOS).
-            pub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE);
+            pub_durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS).
+            pub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE);
 
     // Creation.
     entities.init();
@@ -181,18 +181,18 @@ TEST_P(PubSubFlowControllers, AsyncMultipleWritersFlowController64kb)
     ASSERT_TRUE(entities.isInitialized());
 
     // Create second writer.
-    eprosima::fastrtps::rtps::PropertySeq writers2_properties;
-    eprosima::fastrtps::rtps::Property priority;
+    eprosima::fastdds::rtps::PropertySeq writers2_properties;
+    eprosima::fastdds::rtps::Property priority;
     priority.name("fastdds.sfc.priority");
     priority.value("-1");
     writers2_properties.push_back(priority);
-    eprosima::fastrtps::rtps::Property bandwidth_limit;
+    eprosima::fastdds::rtps::Property bandwidth_limit;
     bandwidth_limit.name("fastdds.sfc.bandwidth_reservation");
     bandwidth_limit.value("10");
     writers2_properties.push_back(bandwidth_limit);
     ASSERT_TRUE(entities.create_additional_topics(1, "/", writers2_properties));
 
-    eprosima::fastrtps::rtps::PropertySeq writers3_properties;
+    eprosima::fastdds::rtps::PropertySeq writers3_properties;
     priority.name("fastdds.sfc.priority");
     priority.value("1");
     writers3_properties.push_back(priority);
@@ -201,7 +201,7 @@ TEST_P(PubSubFlowControllers, AsyncMultipleWritersFlowController64kb)
     writers3_properties.push_back(bandwidth_limit);
     ASSERT_TRUE(entities.create_additional_topics(1, "/", writers3_properties));
 
-    eprosima::fastrtps::rtps::PropertySeq writers4_properties;
+    eprosima::fastdds::rtps::PropertySeq writers4_properties;
     priority.name("fastdds.sfc.priority");
     priority.value("4");
     writers4_properties.push_back(priority);

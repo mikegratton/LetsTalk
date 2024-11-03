@@ -16,16 +16,15 @@
  * @file IContentFilter.hpp
  */
 
-#ifndef _FASTDDS_DDS_TOPIC_ICONTENTFILTERFACTORY_HPP_
-#define _FASTDDS_DDS_TOPIC_ICONTENTFILTERFACTORY_HPP_
+#ifndef FASTDDS_DDS_TOPIC__ICONTENTFILTERFACTORY_HPP
+#define FASTDDS_DDS_TOPIC__ICONTENTFILTERFACTORY_HPP
 
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
 #include <fastdds/dds/core/LoanableTypedCollection.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/topic/IContentFilter.hpp>
 #include <fastdds/dds/topic/TopicDataType.hpp>
-
-#include <fastrtps/types/TypesBase.h>
 
 namespace eprosima {
 namespace fastdds {
@@ -36,9 +35,7 @@ namespace dds {
  */
 struct IContentFilterFactory
 {
-    using ReturnCode_t = eprosima::fastrtps::types::ReturnCode_t;
     using ParameterSeq = LoanableTypedCollection<const char*>;
-    using TypeDescriptor = eprosima::fastrtps::types::TypeDescriptor;
 
     /**
      * Create or update an IContentFilter instance.
@@ -93,4 +90,4 @@ struct IContentFilterFactory
 } // namespace fastdds
 } // namespace eprosima
 
-#endif  // _FASTDDS_DDS_TOPIC_ICONTENTFILTERFACTORY_HPP_
+#endif  // FASTDDS_DDS_TOPIC__ICONTENTFILTERFACTORY_HPP

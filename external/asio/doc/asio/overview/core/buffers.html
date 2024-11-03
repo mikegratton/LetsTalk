@@ -8,6 +8,7 @@
 <link rel="up" href="../core.html" title="Core Concepts and Functionality">
 <link rel="prev" href="strands.html" title="Strands: Use Threads Without Explicit Locking">
 <link rel="next" href="streams.html" title="Streams, Short Reads and Short Writes">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
@@ -155,6 +156,32 @@
 </pre>
 <h6>
 <a name="asio.overview.core.buffers.h2"></a>
+          <span><a name="asio.overview.core.buffers.buffer_literals"></a></span><a class="link" href="buffers.html#asio.overview.core.buffers.buffer_literals">Buffer
+          Literals</a>
+        </h6>
+<p>
+          The <code class="computeroutput"><span class="identifier">_buf</span></code> literal suffix,
+          defined in namespace <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer_literals</span></code>,
+          may be used to create <code class="computeroutput"><span class="identifier">const_buffer</span></code>
+          objects from string, binary integer, and hexadecimal integer literals.
+          These buffer literals may be arbitrarily long. For example:
+        </p>
+<pre class="programlisting">using namespace asio::buffer_literals;
+
+asio::const_buffer b1 = "hello"_buf;
+asio::const_buffer b2 = 0xdeadbeef_buf;
+asio::const_buffer b3 = 0x01234567'89abcdef'01234567'89abcdef_buf;
+asio::const_buffer b4 = 0b1010101011001100_buf;
+</pre>
+<p>
+          The memory associated with a buffer literal is valid for the lifetime of
+          the program. This means that the buffer can be safely used with asynchronous
+          operations:
+        </p>
+<pre class="programlisting"><span class="identifier">async_write</span><span class="special">(</span><span class="identifier">my_socket</span><span class="special">,</span> <span class="string">"hello"</span><span class="identifier">_buf</span><span class="special">,</span> <span class="identifier">my_handler</span><span class="special">);</span>
+</pre>
+<h6>
+<a name="asio.overview.core.buffers.h3"></a>
           <span><a name="asio.overview.core.buffers.buffer_debugging"></a></span><a class="link" href="buffers.html#asio.overview.core.buffers.buffer_debugging">Buffer
           Debugging</a>
         </h6>
@@ -204,7 +231,7 @@
           It can also be explicitly disabled by defining <code class="computeroutput"><span class="identifier">ASIO_DISABLE_BUFFER_DEBUGGING</span></code>.
         </p>
 <h6>
-<a name="asio.overview.core.buffers.h3"></a>
+<a name="asio.overview.core.buffers.h4"></a>
           <span><a name="asio.overview.core.buffers.see_also"></a></span><a class="link" href="buffers.html#asio.overview.core.buffers.see_also">See
           Also</a>
         </h6>
@@ -214,18 +241,14 @@
           <a class="link" href="../../reference/const_buffer.html" title="const_buffer">const_buffer</a>, <a class="link" href="../../reference/const_buffers_1.html" title="const_buffers_1">const_buffers_1</a>, <a class="link" href="../../reference/mutable_buffer.html" title="mutable_buffer">mutable_buffer</a>, <a class="link" href="../../reference/mutable_buffers_1.html" title="mutable_buffers_1">mutable_buffers_1</a>,
           <a class="link" href="../../reference/streambuf.html" title="streambuf">streambuf</a>, <a class="link" href="../../reference/ConstBufferSequence.html" title="Constant buffer sequence requirements">ConstBufferSequence</a>,
           <a class="link" href="../../reference/MutableBufferSequence.html" title="Mutable buffer sequence requirements">MutableBufferSequence</a>,
-          <a class="link" href="../../examples/cpp03_examples.html#asio.examples.cpp03_examples.buffers">buffers example (C++03)</a>,
           <a class="link" href="../../examples/cpp11_examples.html#asio.examples.cpp11_examples.buffers">buffers example (c++11)</a>.
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="strands.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../core.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="streams.html"><img src="../../../next.png" alt="Next"></a>

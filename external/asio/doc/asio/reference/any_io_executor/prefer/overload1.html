@@ -8,6 +8,7 @@
 <link rel="up" href="../prefer.html" title="any_io_executor::prefer">
 <link rel="prev" href="../prefer.html" title="any_io_executor::prefer">
 <link rel="next" href="overload2.html" title="any_io_executor::prefer (2 of 7 overloads)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../../asio.png"></td></tr></table>
@@ -27,7 +28,7 @@
     <span class="keyword">typename</span> <span class="identifier">Property</span><span class="special">&gt;</span>
 <span class="identifier">any_io_executor</span> <span class="identifier">prefer</span><span class="special">(</span>
     <span class="keyword">const</span> <span class="identifier">Property</span> <span class="special">&amp;</span> <span class="identifier">p</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">traits</span><span class="special">::</span><span class="identifier">prefer_member</span><span class="special">&lt;</span> <span class="keyword">const</span> <span class="identifier">base_type</span> <span class="special">&amp;,</span> <span class="keyword">const</span> <span class="identifier">Property</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">is_valid</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">traits</span><span class="special">::</span><span class="identifier">prefer_member</span><span class="special">&lt;</span> <span class="keyword">const</span> <span class="identifier">base_type</span> <span class="special">&amp;,</span> <span class="keyword">const</span> <span class="identifier">Property</span> <span class="special">&amp;</span> <span class="special">&gt;::</span><span class="identifier">is_valid</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 </pre>
 <p>
             Do not call this function directly. It is intended for use with the
@@ -41,14 +42,11 @@
 <span class="keyword">auto</span> <span class="identifier">ex2</span> <span class="special">=</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">prefer</span><span class="special">(</span><span class="identifier">ex</span><span class="special">,</span> <span class="identifier">execution</span><span class="special">::</span><span class="identifier">blocking</span><span class="special">.</span><span class="identifier">possibly</span><span class="special">);</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../prefer.html"><img src="../../../../prev.png" alt="Prev"></a><a accesskey="u" href="../prefer.html"><img src="../../../../up.png" alt="Up"></a><a accesskey="h" href="../../../../index.html"><img src="../../../../home.png" alt="Home"></a><a accesskey="n" href="overload2.html"><img src="../../../../next.png" alt="Next"></a>

@@ -15,7 +15,7 @@
 #include "MockTCPChannelResource.h"
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 MockTCPChannelResource::MockTCPChannelResource(
@@ -55,6 +55,16 @@ size_t MockTCPChannelResource::send(
     return 0;
 }
 
+size_t MockTCPChannelResource::send(
+        const octet*,
+        size_t,
+        const std::vector<NetworkBuffer>&,
+        uint32_t,
+        asio::error_code&)
+{
+    return 0;
+}
+
 asio::ip::tcp::endpoint MockTCPChannelResource::remote_endpoint() const
 {
     asio::ip::tcp::endpoint ep;
@@ -63,6 +73,22 @@ asio::ip::tcp::endpoint MockTCPChannelResource::remote_endpoint() const
 
 asio::ip::tcp::endpoint MockTCPChannelResource::local_endpoint() const
 {
+    asio::ip::tcp::endpoint ep;
+    return ep;
+}
+
+asio::ip::tcp::endpoint MockTCPChannelResource::remote_endpoint(
+        asio::error_code& ec) const
+{
+    ec = asio::error_code();  // Indicate no error
+    asio::ip::tcp::endpoint ep;
+    return ep;
+}
+
+asio::ip::tcp::endpoint MockTCPChannelResource::local_endpoint(
+        asio::error_code& ec) const
+{
+    ec = asio::error_code();  // Indicate no error
     asio::ip::tcp::endpoint ep;
     return ep;
 }
@@ -86,5 +112,5 @@ void MockTCPChannelResource::shutdown(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

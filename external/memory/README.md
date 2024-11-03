@@ -7,11 +7,6 @@
 The C++ STL allocator model has various flaws. For example, they are fixed to a certain type, because they are almost necessarily required to be templates. So you can't easily share a single allocator for multiple types. In addition, you can only get a copy from the containers and not the original allocator object. At least with C++11 they are allowed to be stateful and so can be made object not instance based. But still, the model has many flaws.
 Over the course of the years many solutions have been proposed, for example [EASTL]. This library is another. But instead of trying to change the STL, it works with the current implementation.
 
-> |[![](https://www.jonathanmueller.dev/embarcadero-logo.png)](https://www.embarcadero.com/de/products/cbuilder/starter) | Sponsored by [Embarcadero C++Builder](https://www.embarcadero.com/de/products/cbuilder/starter). |
-> |-------------------------------------|----------------|
->
-> If you like this project, consider [supporting me](https://jonathanmueller.dev/support-me/).
-
 ## Features
 
 New allocator concepts:
@@ -181,6 +176,18 @@ To use an installed library:
 5. Call `target_link_libraries(your_target PUBLIC foonathan_memory)` to link to the library and setup all required options.
 
 See https://memory.foonathan.net/md_doc_installation.html for a detailed guide.
+
+## Building foonathan-memory - Using vcpkg
+
+You can download and install foonathan-memory using the [vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    ./vcpkg install foonathan-memory
+
+The foonathan-memory port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please [create an issue or pull request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
 
 ## Documentation
 

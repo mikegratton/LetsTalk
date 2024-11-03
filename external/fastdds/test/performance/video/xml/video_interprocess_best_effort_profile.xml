@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com">
     <profiles>
         <!-- PARTICIPANTS -->
         <participant profile_name="pub_participant_profile">
@@ -39,10 +39,10 @@
                 </publishMode>
             </qos>
             <times>
-                <heartbeatPeriod>
+                <heartbeat_period>
                     <sec>0</sec>
                     <nanosec>100000000</nanosec>
-                </heartbeatPeriod>
+                </heartbeat_period>
             </times>
             <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
         </data_writer>

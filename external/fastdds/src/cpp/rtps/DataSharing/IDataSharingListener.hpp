@@ -22,14 +22,14 @@
 #include <fastdds/dds/log/Log.hpp>
 #include <rtps/DataSharing/DataSharingNotification.hpp>
 #include <rtps/DataSharing/ReaderPool.hpp>
-#include <fastrtps/utils/collections/ResourceLimitedVector.hpp>
+#include <fastdds/utils/collections/ResourceLimitedVector.hpp>
 
 #include <memory>
 #include <atomic>
 #include <map>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 struct GUID_t;
@@ -111,7 +111,7 @@ public:
 };
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
 #endif  // RTPS_DATASHARING_IDATASHARINGLISTENER_HPP

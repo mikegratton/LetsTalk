@@ -15,21 +15,24 @@
 /**
  * @file PublisherModule.cpp
  */
-#include <asio.hpp>
 
 #include "PublisherModule.hpp"
 
-#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastdds/dds/publisher/qos/PublisherQos.hpp>
-#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
-#include <fastdds/dds/publisher/Publisher.hpp>
-#include <fastdds/dds/publisher/DataWriter.hpp>
-
+#include <chrono>
 #include <fstream>
 #include <string>
+#include <thread>
+
+#include <asio.hpp>
+
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
+#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
+#include <fastdds/dds/publisher/qos/PublisherQos.hpp>
 
 using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds::rtps;
 
 PublisherModule::~PublisherModule()
 {
@@ -58,14 +61,14 @@ bool PublisherModule::init(
         uint32_t seed,
         const std::string& magic)
 {
-    std::cout << "Initializing Publisher" << std::endl;
+    std::cout <<  "Initializing Publisher" << std::endl;
 
     participant_ =
             DomainParticipantFactory::get_instance()->create_participant(seed % 230, PARTICIPANT_QOS_DEFAULT, this);
 
     if (participant_ == nullptr)
     {
-        std::cout << "Error creating publisher participant" << std::endl;
+        EPROSIMA_LOG_ERROR(PUBLISHER_MODULE, "Error creating publisher participant");
         return false;
     }
 
@@ -89,14 +92,14 @@ bool PublisherModule::init(
     publisher_ = participant_->create_publisher(PUBLISHER_QOS_DEFAULT, this);
     if (publisher_ == nullptr)
     {
-        std::cout << "Error creating publisher" << std::endl;
+        EPROSIMA_LOG_ERROR(PUBLISHER_MODULE, "Error creating publisher");
         return false;
     }
 
     topic_ = participant_->create_topic(topic_name.str(), type_.get_type_name(), TOPIC_QOS_DEFAULT);
     if (topic_ == nullptr)
     {
-        std::cout << "Error creating publisher topic" << std::endl;
+        EPROSIMA_LOG_ERROR(PUBLISHER_MODULE, "Error creating publisher topic");
         return false;
     }
 
@@ -108,7 +111,7 @@ bool PublisherModule::init(
     writer_ = publisher_->create_datawriter(topic_, wqos, this);
     if (writer_ == nullptr)
     {
-        std::cout << "Error creating publisher datawriter" << std::endl;
+        EPROSIMA_LOG_ERROR(PUBLISHER_MODULE, "Error creating publisher datawriter");
         return false;
     }
     std::cout << "Writer created correctly in topic " << topic_->get_name()
@@ -131,17 +134,35 @@ void PublisherModule::wait_discovery(
 
 void PublisherModule::run(
         uint32_t samples,
-        const uint32_t loops)
+        const uint32_t rescan_interval,
+        const uint32_t loops,
+        uint32_t interval)
 {
     uint32_t current_loop = 0;
     uint16_t index = 1;
     void* sample = nullptr;
 
+    std::thread net_rescan_thread([this, rescan_interval]()
+            {
+                if (rescan_interval > 0)
+                {
+                    auto interval = std::chrono::seconds(rescan_interval);
+                    while (run_)
+                    {
+                        std::this_thread::sleep_for(interval);
+                        if (run_)
+                        {
+                            participant_->set_qos(participant_->get_qos());
+                        }
+                    }
+                }
+            });
+
     while (run_ && (loops == 0 || loops > current_loop))
     {
         if (zero_copy_)
         {
-            if (ReturnCode_t::RETCODE_OK == writer_->loan_sample(sample))
+            if (RETCODE_OK == writer_->loan_sample(sample))
             {
                 FixedSized* data = static_cast<FixedSized*>(sample);
                 data->index(index);
@@ -163,7 +184,7 @@ void PublisherModule::run(
                 data->message("HelloWorld");
             }
         }
-        std::cout << "Publisher writting index " << index << std::endl;
+        EPROSIMA_LOG_INFO(PUBLISHER_MODULE, "Publisher writting index " << index);
         writer_->write(sample);
 
         if (index == samples)
@@ -181,8 +202,11 @@ void PublisherModule::run(
             type_.delete_data(sample);
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        std::this_thread::sleep_for(std::chrono::milliseconds(interval));
     }
+
+    run_ = false;
+    net_rescan_thread.join();
 }
 
 void PublisherModule::on_publication_matched(
@@ -210,27 +234,29 @@ void PublisherModule::on_publication_matched(
 
 void PublisherModule::on_participant_discovery(
         DomainParticipant* /*participant*/,
-        ParticipantDiscoveryInfo&& info)
+        ParticipantDiscoveryStatus status,
+        const ParticipantBuiltinTopicData& info,
+        bool& /*should_be_ignored*/)
 {
-    if (info.status == ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT)
+    if (status == ParticipantDiscoveryStatus::DISCOVERED_PARTICIPANT)
     {
         std::cout << "Publisher participant " << //participant->getGuid() <<
-            " discovered participant " << info.info.m_guid << std::endl;
+            " discovered participant " << info.guid << std::endl;
     }
-    else if (info.status == ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT)
+    else if (status == ParticipantDiscoveryStatus::CHANGED_QOS_PARTICIPANT)
     {
         std::cout << "Publisher participant " << //participant->getGuid() <<
-            " detected changes on participant " << info.info.m_guid << std::endl;
+            " detected changes on participant " << info.guid << std::endl;
     }
-    else if (info.status == ParticipantDiscoveryInfo::REMOVED_PARTICIPANT)
+    else if (status == ParticipantDiscoveryStatus::REMOVED_PARTICIPANT)
     {
         std::cout << "Publisher participant " << // participant->getGuid() <<
-            " removed participant " << info.info.m_guid << std::endl;
+            " removed participant " << info.guid << std::endl;
     }
-    else if (info.status == ParticipantDiscoveryInfo::DROPPED_PARTICIPANT)
+    else if (status == ParticipantDiscoveryStatus::DROPPED_PARTICIPANT)
     {
         std::cout << "Publisher participant " << //participant->getGuid() <<
-            " dropped participant " << info.info.m_guid << std::endl;
+            " dropped participant " << info.guid << std::endl;
         if (exit_on_lost_liveliness_)
         {
             run_ = false;

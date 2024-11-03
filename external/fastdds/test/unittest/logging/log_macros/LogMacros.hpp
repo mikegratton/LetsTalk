@@ -15,12 +15,16 @@
 #ifndef LOG_MACROS_HPP
 #define LOG_MACROS_HPP
 
+#include <thread>
+
+#include <gtest/gtest.h>
+
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/log/OStreamConsumer.hpp>
 #include <fastdds/dds/log/StdoutConsumer.hpp>
 #include <fastdds/dds/log/StdoutErrConsumer.hpp>
+
 #include "../mock/MockConsumer.h"
-#include <gtest/gtest.h>
 
 using namespace eprosima::fastdds::dds;
 using namespace std;
@@ -55,13 +59,12 @@ public:
     std::vector<Log::Entry> HELPER_WaitForEntries(
             uint32_t amount)
     {
-        size_t entries = 0;
         for (uint32_t i = 0; i != AsyncTries; i++)
         {
-            entries = mockConsumer->ConsumedEntries().size();
-            if (entries == amount)
+            auto entries = mockConsumer->ConsumedEntries();
+            if (entries.size() == amount)
             {
-                break;
+                return entries;
             }
             this_thread::sleep_for(chrono::milliseconds(AsyncWaitMs));
         }

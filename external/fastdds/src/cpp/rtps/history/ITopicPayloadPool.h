@@ -19,11 +19,11 @@
 #ifndef RTPS_HISTORY_ITOPICPAYLOADPOOL_HPP
 #define RTPS_HISTORY_ITOPICPAYLOADPOOL_HPP
 
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 #include <rtps/history/PoolConfig.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class ITopicPayloadPool : public IPayloadPool
@@ -89,7 +89,7 @@ public:
 };
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
 

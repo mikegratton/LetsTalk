@@ -6,14 +6,15 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../../index.html" title="Asio">
 <link rel="up" href="../reference.html" title="Reference">
-<link rel="prev" href="completion_signature_of/type.html" title="completion_signature_of::type">
+<link rel="prev" href="completion_signature_of_t.html" title="completion_signature_of_t">
 <link rel="next" href="connect/overload1.html" title="connect (1 of 12 overloads)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="completion_signature_of/type.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="connect/overload1.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="completion_signature_of_t.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="connect/overload1.html"><img src="../../next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -37,7 +38,7 @@
 <span class="identifier">Protocol</span><span class="special">::</span><span class="identifier">endpoint</span> <a class="link" href="connect/overload1.html" title="connect (1 of 12 overloads)">connect</a><span class="special">(</span>
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">EndpointSequence</span> <span class="special">&amp;</span> <span class="identifier">endpoints</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload1.html" title="connect (1 of 12 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -48,7 +49,7 @@
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">EndpointSequence</span> <span class="special">&amp;</span> <span class="identifier">endpoints</span><span class="special">,</span>
     <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="special">&amp;</span> <span class="identifier">ec</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload2.html" title="connect (2 of 12 overloads)">more...</a></em></span>
 </pre>
 <p>
@@ -62,7 +63,7 @@
 <span class="identifier">Iterator</span> <a class="link" href="connect/overload3.html" title="connect (3 of 12 overloads)">connect</a><span class="special">(</span>
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="identifier">Iterator</span> <span class="identifier">begin</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload3.html" title="connect (3 of 12 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -73,7 +74,7 @@
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="identifier">Iterator</span> <span class="identifier">begin</span><span class="special">,</span>
     <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="special">&amp;</span> <span class="identifier">ec</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload4.html" title="connect (4 of 12 overloads)">more...</a></em></span>
 </pre>
 <p>
@@ -109,7 +110,7 @@
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="keyword">const</span> <span class="identifier">EndpointSequence</span> <span class="special">&amp;</span> <span class="identifier">endpoints</span><span class="special">,</span>
     <span class="identifier">ConnectCondition</span> <span class="identifier">connect_condition</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload7.html" title="connect (7 of 12 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -122,7 +123,7 @@
     <span class="keyword">const</span> <span class="identifier">EndpointSequence</span> <span class="special">&amp;</span> <span class="identifier">endpoints</span><span class="special">,</span>
     <span class="identifier">ConnectCondition</span> <span class="identifier">connect_condition</span><span class="special">,</span>
     <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="special">&amp;</span> <span class="identifier">ec</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;</span> <span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">EndpointSequence</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload8.html" title="connect (8 of 12 overloads)">more...</a></em></span>
 </pre>
 <p>
@@ -138,7 +139,7 @@
     <span class="identifier">basic_socket</span><span class="special">&lt;</span> <span class="identifier">Protocol</span><span class="special">,</span> <span class="identifier">Executor</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">s</span><span class="special">,</span>
     <span class="identifier">Iterator</span> <span class="identifier">begin</span><span class="special">,</span>
     <span class="identifier">ConnectCondition</span> <span class="identifier">connect_condition</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload9.html" title="connect (9 of 12 overloads)">more...</a></em></span>
 
 <span class="keyword">template</span><span class="special">&lt;</span>
@@ -151,7 +152,7 @@
     <span class="identifier">Iterator</span> <span class="identifier">begin</span><span class="special">,</span>
     <span class="identifier">ConnectCondition</span> <span class="identifier">connect_condition</span><span class="special">,</span>
     <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="special">&amp;</span> <span class="identifier">ec</span><span class="special">,</span>
-    <span class="keyword">typename</span> <span class="identifier">constraint</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;::</span><span class="identifier">type</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
+    <span class="identifier">constraint_t</span><span class="special">&lt;!</span><span class="identifier">is_endpoint_sequence</span><span class="special">&lt;</span> <span class="identifier">Iterator</span> <span class="special">&gt;::</span><span class="identifier">value</span> <span class="special">&gt;</span>  <span class="special">=</span> <span class="number">0</span><span class="special">);</span>
   <span class="emphasis"><em>» <a class="link" href="connect/overload10.html" title="connect (10 of 12 overloads)">more...</a></em></span>
 </pre>
 <p>
@@ -187,23 +188,20 @@
         <span><a name="asio.reference.connect.requirements"></a></span><a class="link" href="connect.html#asio.reference.connect.requirements">Requirements</a>
       </h5>
 <p>
-        <span class="emphasis"><em>Header: </em></span><code class="literal">asio/connect.hpp</code>
+        <span class="emphasis"><em>Header: </em></span><code class="literal">asio/impl/connect.hpp</code>
       </p>
 <p>
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="completion_signature_of/type.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="connect/overload1.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="completion_signature_of_t.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="connect/overload1.html"><img src="../../next.png" alt="Next"></a>
 </div>
 </body>
 </html>

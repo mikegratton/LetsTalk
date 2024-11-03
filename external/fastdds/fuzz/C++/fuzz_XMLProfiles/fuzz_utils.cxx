@@ -1,4 +1,18 @@
-#include "fuzz_utils.h"
+// Copyright 2024 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include "fuzz_utils.hpp"
 
 #include <err.h>
 #include <errno.h>
@@ -31,65 +45,4 @@ extern "C" int ignore_stdout(
     }
 
     return ret;
-}
-
-extern "C" int delete_file(
-        const char* pathname)
-{
-    int ret = unlink(pathname);
-    if (ret == -1)
-    {
-        warn("failed to delete \"%s\"", pathname);
-    }
-
-    free((void*)pathname);
-
-    return ret;
-}
-
-extern "C" char* buf_to_file(
-        const uint8_t* buf,
-        size_t size)
-{
-    char* pathname = strdup("/dev/shm/fuzz-XXXXXX");
-    if (pathname == NULL)
-    {
-        return NULL;
-    }
-
-    int fd = mkstemp(pathname);
-    if (fd == -1)
-    {
-        warn("mkstemp(\"%s\")", pathname);
-        free(pathname);
-        return NULL;
-    }
-
-    size_t pos = 0;
-    while (pos < size)
-    {
-        int nbytes = write(fd, &buf[pos], size - pos);
-        if (nbytes <= 0)
-        {
-            if (nbytes == -1 && errno == EINTR)
-            {
-                continue;
-            }
-            warn("write");
-            goto err;
-        }
-        pos += nbytes;
-    }
-
-    if (close(fd) == -1)
-    {
-        warn("close");
-        goto err;
-    }
-
-    return pathname;
-
-err:
-    delete_file(pathname);
-    return NULL;
 }

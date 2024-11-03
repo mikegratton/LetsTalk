@@ -14,9 +14,9 @@
 
 #include <gtest/gtest.h>
 
-#include <fastdds/rtps/common/Guid.h>
+#include <fastdds/rtps/common/Guid.hpp>
 
-using Guid = eprosima::fastrtps::rtps::GUID_t;
+using Guid = eprosima::fastdds::rtps::GUID_t;
 
 namespace test {
 

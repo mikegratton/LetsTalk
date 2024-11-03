@@ -25,8 +25,6 @@
 
 #include <gtest/gtest.h>
 
-#define EXPECT_LONG_DOUBLE_EQ(val1, val2) (val1 == val2)
-
 using namespace eprosima::fastcdr;
 using namespace ::exception;
 
@@ -192,6 +190,13 @@ static void EXPECT_ARRAY_DOUBLE_EQ(
     {
         EXPECT_DOUBLE_EQ(array1[count], array2[count]);
     }
+}
+
+static void EXPECT_LONG_DOUBLE_EQ(
+        const long double val1,
+        const long double val2)
+{
+    EXPECT_TRUE(val1 == val2);
 }
 
 static void EXPECT_ARRAY_LONG_DOUBLE_EQ(
@@ -1900,6 +1905,32 @@ TEST(CDRTests, CWString)
 
     free(c_string_value);
 
+    // Check the big endianness case
+    char buffer_bigendi[BUFFER_LENGTH];
+
+    // Serialization.
+    FastBuffer cdrbuffer_bigendi(buffer_bigendi, BUFFER_LENGTH);
+    Cdr cdr_ser_bigendi(cdrbuffer_bigendi, eprosima::fastcdr::Cdr::Endianness::BIG_ENDIANNESS);
+
+    EXPECT_NO_THROW(
+    {
+        cdr_ser_bigendi.serialize(c_wstring_t);
+    });
+
+    // Deserialization.
+    Cdr cdr_des_bigendi(cdrbuffer_bigendi, eprosima::fastcdr::Cdr::Endianness::BIG_ENDIANNESS);
+
+    wchar_t* c_wstring_bigendi {nullptr};
+
+    EXPECT_NO_THROW(
+    {
+        cdr_des_bigendi.deserialize(c_wstring_bigendi);
+    });
+
+    EXPECT_EQ(wcscmp(c_wstring_bigendi, c_wstring_t), 0);
+
+    free(c_wstring_bigendi);
+
     // Check bad case without space
     char buffer_bad[1];
 
@@ -2218,6 +2249,35 @@ TEST(CDRTests, Complete)
     free(ldouble_seq_value);
     free(c_string_value);
     free(c_wstring_value);
+}
+
+// Regression test for Fast DDS issue #5136
+// A non-empty map should be cleared before deserializing in XCDRv1
+TEST(CDRTests, DeserializeIntoANonEmptyMapInXCDRv1)
+{
+    char buffer[14] =
+    {
+        0x00, 0x00, 0x00, 0x01,  // Map length
+        0x00, 0x02,              // Key
+        0x00, 0x00,              // Alignment
+        0x00, 0x00, 0x00, 0x01,  // Length
+        65,  0x00                // 'A'
+    };
+
+    std::map<uint16_t, std::string> initialized_map{
+        {1, "a"}
+    };
+
+    FastBuffer cdr_buffer(buffer, 14);
+    Cdr cdr_ser_map(
+        cdr_buffer,
+        eprosima::fastcdr::Cdr::Endianness::BIG_ENDIANNESS,
+        XCDRv1);
+
+    // Deserialization in a non-empty map
+    cdr_ser_map >> initialized_map;
+    ASSERT_EQ(initialized_map.size(), 1u);
+    ASSERT_EQ(initialized_map.at(2), "A");
 }
 
 TEST(FastCDRTests, Octet)

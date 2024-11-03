@@ -15,10 +15,10 @@
 /**
  * @file SubscriberMain.cpp
  */
-#include "SubscriberModule.hpp"
 
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastrtps/Domain.h>
+
+#include "SubscriberModule.hpp"
 
 using namespace eprosima::fastdds::dds;
 
@@ -26,11 +26,15 @@ using namespace eprosima::fastdds::dds;
  * --notexit
  * --fixed_type
  * --zero_copy
+ * --succeed_on_timeout
  * --seed <int>
  * --samples <int>
  * --magic <str>
+ * --timeout <int>
  * --xmlfile <path>
  * --publishers <int>
+ * --die_on_data_received
+ * --rescan <int>
  */
 
 int main(
@@ -41,9 +45,13 @@ int main(
     bool notexit = false;
     bool fixed_type = false;
     bool zero_copy = false;
+    bool die_on_data_received = false;
+    bool succeed_on_timeout = false;
     uint32_t seed = 7800;
     uint32_t samples = 4;
     uint32_t publishers = 1;
+    uint32_t timeout = 86400000; // 24 h in ms
+    uint32_t rescan_interval_seconds = 0;
     char* xml_file = nullptr;
     std::string magic;
 
@@ -60,6 +68,10 @@ int main(
         else if (strcmp(argv[arg_count], "--zero_copy") == 0)
         {
             zero_copy = true;
+        }
+        else if (strcmp(argv[arg_count], "--succeed_on_timeout") == 0)
+        {
+            succeed_on_timeout = true;
         }
         else if (strcmp(argv[arg_count], "--seed") == 0)
         {
@@ -91,6 +103,16 @@ int main(
 
             magic = argv[arg_count];
         }
+        else if (strcmp(argv[arg_count], "--timeout") == 0)
+        {
+            if (++arg_count >= argc)
+            {
+                std::cout << "--run-for expects a parameter" << std::endl;
+                return -1;
+            }
+
+            timeout = strtol(argv[arg_count], nullptr, 10);
+        }
         else if (strcmp(argv[arg_count], "--xmlfile") == 0)
         {
             if (++arg_count >= argc)
@@ -111,6 +133,20 @@ int main(
 
             publishers = strtol(argv[arg_count], nullptr, 10);
         }
+        else if (strcmp(argv[arg_count], "--die_on_data_received") == 0)
+        {
+            die_on_data_received = true;
+        }
+        else if (strcmp(argv[arg_count], "--rescan") == 0)
+        {
+            if (++arg_count >= argc)
+            {
+                std::cout << "--rescan expects a parameter" << std::endl;
+                return -1;
+            }
+
+            rescan_interval_seconds = strtol(argv[arg_count], nullptr, 10);
+        }
         else
         {
             std::cout << "Wrong argument " << argv[arg_count] << std::endl;
@@ -125,11 +161,11 @@ int main(
         DomainParticipantFactory::get_instance()->load_XML_profiles_file(xml_file);
     }
 
-    SubscriberModule subscriber(publishers, samples, fixed_type, zero_copy);
+    SubscriberModule subscriber(publishers, samples, fixed_type, zero_copy, succeed_on_timeout, die_on_data_received);
 
     if (subscriber.init(seed, magic))
     {
-        return subscriber.run(notexit) ? 0 : -1;
+        return subscriber.run(notexit, rescan_interval_seconds, timeout) ? 0 : -1;
     }
 
     return -1;

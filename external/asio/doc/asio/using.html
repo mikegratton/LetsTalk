@@ -8,6 +8,7 @@
 <link rel="up" href="../index.html" title="Asio">
 <link rel="prev" href="overview/implementation.html" title="Platform-Specific Implementation Notes">
 <link rel="next" href="tutorial.html" title="Tutorial">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../asio.png"></td></tr></table>
@@ -142,6 +143,14 @@
     </p>
 <h4>
 <a name="asio.using.h3"></a>
+      <span><a name="asio.using.debugger_support"></a></span><a class="link" href="using.html#asio.using.debugger_support">Debugger
+      support</a>
+    </h4>
+<p>
+      Some debugger extensions for use with Asio may be found at <a href="https://github.com/chriskohlhoff/asio-debugger-extensions" target="_top">https://github.com/chriskohlhoff/asio-debugger-extensions</a>.
+    </p>
+<h4>
+<a name="asio.using.h4"></a>
       <span><a name="asio.using.building_the_tests_and_examples_on_linux_or_unix"></a></span><a class="link" href="using.html#asio.using.building_the_tests_and_examples_on_linux_or_unix">Building
       the tests and examples on Linux or UNIX</a>
     </h4>
@@ -174,7 +183,7 @@
       <span class="identifier">check</span></code>.
     </p>
 <h4>
-<a name="asio.using.h4"></a>
+<a name="asio.using.h5"></a>
       <span><a name="asio.using.building_the_tests_and_examples_with_msvc"></a></span><a class="link" href="using.html#asio.using.building_the_tests_and_examples_with_msvc">Building
       the tests and examples with MSVC</a>
     </h4>
@@ -203,7 +212,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.using.h5"></a>
+<a name="asio.using.h6"></a>
       <span><a name="asio.using.building_the_tests_and_examples_with_mingw"></a></span><a class="link" href="using.html#asio.using.building_the_tests_and_examples_with_mingw">Building
       the tests and examples with MinGW</a>
     </h4>
@@ -244,7 +253,7 @@
       </p></td></tr>
 </table></div>
 <h4>
-<a name="asio.using.h6"></a>
+<a name="asio.using.h7"></a>
       <span><a name="asio.using.macros"></a></span><a class="link" href="using.html#asio.using.macros">Macros</a>
     </h4>
 <p>
@@ -711,7 +720,7 @@
 </tbody>
 </table></div>
 <h4>
-<a name="asio.using.h7"></a>
+<a name="asio.using.h8"></a>
       <span><a name="asio.using.compiler_platform_feature_detection_macros"></a></span><a class="link" href="using.html#asio.using.compiler_platform_feature_detection_macros">Compiler/platform
       feature detection macros</a>
     </h4>
@@ -765,13 +774,10 @@
             </td>
 <td>
               <p>
-                Support alias templates on compilers known to allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_ALIAS_TEMPLATES</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -782,13 +788,10 @@
             </td>
 <td>
               <p>
-                Support for the alignof operator.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_ALIGNOF</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1097,13 +1100,10 @@
             </td>
 <td>
               <p>
-                Support constexpr on compilers known to allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_CONSTEXPR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1131,13 +1131,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the cstdint header.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_CSTDINT</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1148,13 +1145,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the C++11 allocator additions.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_CXX11_ALLOCATORS</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1165,13 +1159,10 @@
             </td>
 <td>
               <p>
-                Support automatic type deduction on compilers known to support it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_DECLTYPE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1182,14 +1173,10 @@
             </td>
 <td>
               <p>
-                Support default function template arguments on compilers known to
-                allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_DEFAULT_FUNCTION_TEMPLATE_ARGUMENTS</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1217,13 +1204,10 @@
             </td>
 <td>
               <p>
-                Support enum classes on compilers known to allow them.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_ENUM_CLASS</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1234,7 +1218,7 @@
             </td>
 <td>
               <p>
-                Linux: epoll, eventfd and timerfd.
+                Linux: epoll, eventfd, timerfd and io_uring.
               </p>
             </td>
 <td>
@@ -1251,7 +1235,7 @@
             </td>
 <td>
               <p>
-                Linux: epoll, eventfd and timerfd.
+                Linux: epoll, eventfd, timerfd and io_uring.
               </p>
             </td>
 <td>
@@ -1384,14 +1368,10 @@
             </td>
 <td>
               <p>
-                Support move construction and assignment on compilers known to allow
-                it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_MOVE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1416,13 +1396,10 @@
             </td>
 <td>
               <p>
-                Support noexcept on compilers known to allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_NOEXCEPT</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1450,13 +1427,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the nullptr_t type.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_NULLPTR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1515,13 +1489,10 @@
             </td>
 <td>
               <p>
-                Support ref-qualified functions on compilers known to allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_REF_QUALIFIED_FUNCTIONS</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1629,6 +1600,23 @@
 <tr>
 <td>
               <p>
+                <code class="computeroutput"><span class="identifier">ASIO_HAS_SNPRINTF</span></code>
+              </p>
+            </td>
+<td>
+              <p>
+                Standard library support for snprintf.
+              </p>
+            </td>
+<td>
+              <p>
+                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_SNPRINTF</span></code>
+              </p>
+            </td>
+</tr>
+<tr>
+<td>
+              <p>
                 <code class="computeroutput"><span class="identifier">ASIO_HAS_SOURCE_LOCATION</span></code>
               </p>
             </td>
@@ -1668,13 +1656,24 @@
             </td>
 <td>
               <p>
-                Standard library support for addressof.
+                Always enabled. Retained for backwards compatibility in user code.
+              </p>
+            </td>
+<td>
+            </td>
+</tr>
+<tr>
+<td>
+              <p>
+                <code class="computeroutput"><span class="identifier">ASIO_HAS_STD_ALIGN</span></code>
               </p>
             </td>
 <td>
               <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_ADDRESSOF</span></code>
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
+            </td>
+<td>
             </td>
 </tr>
 <tr>
@@ -1702,13 +1701,10 @@
             </td>
 <td>
               <p>
-                Standard library support for allocator_arg_t.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_ALLOCATOR_ARG</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1736,13 +1732,10 @@
             </td>
 <td>
               <p>
-                Standard library support for arrays.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_ARRAY</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1753,13 +1746,10 @@
             </td>
 <td>
               <p>
-                Standard library support for atomic operations.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_ATOMIC</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1770,13 +1760,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the call_once function.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_CALL_ONCE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1787,30 +1774,7 @@
             </td>
 <td>
               <p>
-                Standard library support for chrono. Some standard libraries (such
-                as the libstdc++ shipped with gcc 4.6) provide monotonic_clock as
-                per early C++0x drafts, rather than the eventually standardised name
-                of steady_clock.
-              </p>
-            </td>
-<td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_CHRONO</span></code>
-              </p>
-            </td>
-</tr>
-<tr>
-<td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_HAS_STD_CHRONO_MONOTONIC_CLOCK</span></code>
-              </p>
-            </td>
-<td>
-              <p>
-                Standard library support for chrono. Some standard libraries (such
-                as the libstdc++ shipped with gcc 4.6) provide monotonic_clock as
-                per early C++0x drafts, rather than the eventually standardised name
-                of steady_clock.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
@@ -1858,13 +1822,10 @@
             </td>
 <td>
               <p>
-                Standard library support for std::exception_ptr and std::current_exception.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_EXCEPTION_PTR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1909,13 +1870,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the function class.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_FUNCTION</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1926,13 +1884,10 @@
             </td>
 <td>
               <p>
-                Standard library support for futures.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_FUTURE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1943,13 +1898,10 @@
             </td>
 <td>
               <p>
-                Standard library support for std::hash.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_HASH</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -1994,13 +1946,10 @@
             </td>
 <td>
               <p>
-                Standard library support for iostream move construction and assignment.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_IOSTREAM_MOVE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2011,13 +1960,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the mutex and condition variable classes.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_MUTEX_AND_CONDVAR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2028,13 +1974,10 @@
             </td>
 <td>
               <p>
-                Standard library support for std::nested_exception.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_NESTED_EXCEPTION</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2045,13 +1988,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the reference_wrapper class.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_REFERENCE_WRAPPER</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2062,13 +2002,10 @@
             </td>
 <td>
               <p>
-                Standard library support for shared_ptr and weak_ptr.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_SHARED_PTR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2096,13 +2033,10 @@
             </td>
 <td>
               <p>
-                Standard library support for system errors.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_SYSTEM_ERROR</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2113,13 +2047,10 @@
             </td>
 <td>
               <p>
-                Standard library support for the thread class.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_THREAD</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2147,13 +2078,10 @@
             </td>
 <td>
               <p>
-                Standard library support for std::tuple.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_TUPLE</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2164,12 +2092,26 @@
             </td>
 <td>
               <p>
-                Standard library support for type traits.
+                Always enabled. Retained for backwards compatibility in user code.
+              </p>
+            </td>
+<td>
+            </td>
+</tr>
+<tr>
+<td>
+              <p>
+                <code class="computeroutput"><span class="identifier">ASIO_HAS_STD_VARIANT</span></code>
               </p>
             </td>
 <td>
               <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_TYPE_TRAITS</span></code>
+                Standard library support for std::variant.
+              </p>
+            </td>
+<td>
+              <p>
+                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_STD_VARIANT</span></code>
               </p>
             </td>
 </tr>
@@ -2215,7 +2157,7 @@
             </td>
 <td>
               <p>
-                Support for the __thread keyword extension.
+                Support for the __thread keyword extension, or equivalent.
               </p>
             </td>
 <td>
@@ -2232,7 +2174,7 @@
             </td>
 <td>
               <p>
-                Linux: epoll, eventfd and timerfd.
+                Linux: epoll, eventfd, timerfd and io_uring.
               </p>
             </td>
 <td>
@@ -2249,6 +2191,20 @@
                 On POSIX (and POSIX-like) platforms we need to include unistd.h in
                 order to get access to the various platform feature macros, e.g.
                 to be able to test for threads support.
+              </p>
+            </td>
+<td>
+            </td>
+</tr>
+<tr>
+<td>
+              <p>
+                <code class="computeroutput"><span class="identifier">ASIO_HAS_USER_DEFINED_LITERALS</span></code>
+              </p>
+            </td>
+<td>
+              <p>
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
@@ -2296,13 +2252,10 @@
             </td>
 <td>
               <p>
-                Support variadic templates on compilers known to allow it.
+                Always enabled. Retained for backwards compatibility in user code.
               </p>
             </td>
 <td>
-              <p>
-                <code class="computeroutput"><span class="identifier">ASIO_DISABLE_VARIADIC_TEMPLATES</span></code>
-              </p>
             </td>
 </tr>
 <tr>
@@ -2393,7 +2346,7 @@
 </tbody>
 </table></div>
 <h4>
-<a name="asio.using.h8"></a>
+<a name="asio.using.h9"></a>
       <span><a name="asio.using.mailing_list"></a></span><a class="link" href="using.html#asio.using.mailing_list">Mailing
       List</a>
     </h4>
@@ -2402,14 +2355,11 @@
       Newsgroup access is provided via <a href="http://dir.gmane.org/gmane.comp.lib.boost.asio.user" target="_top">Gmane</a>.
     </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="overview/implementation.html"><img src="../prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../home.png" alt="Home"></a><a accesskey="n" href="tutorial.html"><img src="../next.png" alt="Next"></a>

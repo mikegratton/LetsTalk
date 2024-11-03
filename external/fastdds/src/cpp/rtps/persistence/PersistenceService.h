@@ -19,11 +19,11 @@
 #ifndef PERSISTENCESERVICE_H_
 #define PERSISTENCESERVICE_H_
 
-#include <fastdds/rtps/common/Guid.h>
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
-#include <fastdds/rtps/history/IChangePool.h>
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/common/Guid.hpp>
+#include <fastdds/rtps/common/CacheChange.hpp>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <fastdds/rtps/history/IChangePool.hpp>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 
 #include <foonathan/memory/container.hpp>
 #include <foonathan/memory/memory_pool.hpp>
@@ -31,7 +31,7 @@
 #include <map>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class WriterHistory;
@@ -51,20 +51,18 @@ public:
 
     /**
      * Get all data stored for a writer.
-     * @param persistence_guid   GUID of the writer used to store samples.
-     * @param writer_guid        GUID of the writer to load.
-     * @param changes            History of the writer to load.
-     * @param change_pool        Pool where new changes should be obtained from.
-     * @param payload_pool       Pool where payloads should be obtained from.
-     * @param next_sequence      Sequence that should be applied to the next created sample.
+     *
+     * @param [in]     persistence_guid   GUID of the writer used to store samples.
+     * @param [in]     writer_guid        GUID of the writer to load.
+     * @param [in,out] history            History of the writer to load.
+     * @param [out]    next_sequence      Sequence that should be applied to the next created sample.
+     *
      * @return True if operation was successful.
      */
     virtual bool load_writer_from_storage(
             const std::string& persistence_guid,
             const GUID_t& writer_guid,
             WriterHistory* history,
-            const std::shared_ptr<IChangePool>& change_pool,
-            const std::shared_ptr<IPayloadPool>& payload_pool,
             SequenceNumber_t& next_sequence) = 0;
 
     /**
@@ -137,7 +135,7 @@ public:
 
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */
 
 #endif /* PERSISTENCESERVICE_H_ */

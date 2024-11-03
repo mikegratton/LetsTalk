@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fastdds/rtps/transport/ChainingTransport.h>
+#include <fastdds/rtps/transport/ChainingTransport.hpp>
 #include "ChainingSenderResource.hpp"
 #include "ChainingReceiverResource.hpp"
 
@@ -27,7 +27,7 @@ void ChainingReceiverResourceDeleter::operator ()(
 }
 
 bool ChainingTransport::OpenInputChannel(
-        const fastrtps::rtps::Locator_t& loc,
+        const Locator_t& loc,
         TransportReceiverInterface* receiver_interface,
         uint32_t max_message_size)
 {
@@ -45,7 +45,7 @@ bool ChainingTransport::OpenInputChannel(
 
 bool ChainingTransport::OpenOutputChannel(
         SendResourceList& sender_resource_list,
-        const fastrtps::rtps::Locator_t& loc)
+        const Locator_t& loc)
 {
     size_t original_size = sender_resource_list.size();
     bool returned_value = low_level_transport_->OpenOutputChannel(sender_resource_list, loc);

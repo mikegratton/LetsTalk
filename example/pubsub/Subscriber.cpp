@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "HelloWorld.h"
+#include "HelloWorld.hpp"
 #include "HelloWorldJsonSupport.h"
 #include "LetsTalk/LetsTalk.hpp"
 

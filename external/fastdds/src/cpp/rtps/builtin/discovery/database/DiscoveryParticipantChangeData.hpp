@@ -41,16 +41,29 @@ class DiscoveryParticipantChangeData
 public:
 
     DiscoveryParticipantChangeData()
-        : metatraffic_locators_(fastrtps::rtps::RemoteLocatorList(0, 0))
+        : metatraffic_locators_(RemoteLocatorList(0, 0))
     {
     }
 
     DiscoveryParticipantChangeData(
-            fastrtps::rtps::RemoteLocatorList metatraffic_locators,
+            RemoteLocatorList metatraffic_locators,
             bool is_client,
             bool is_local)
         : metatraffic_locators_(metatraffic_locators)
         , is_client_(is_client)
+        , is_superclient_(false)
+        , is_local_(is_local)
+    {
+    }
+
+    DiscoveryParticipantChangeData(
+            RemoteLocatorList metatraffic_locators,
+            bool is_client,
+            bool is_local,
+            bool is_superclient)
+        : metatraffic_locators_(metatraffic_locators)
+        , is_client_(is_client)
+        , is_superclient_(is_superclient)
         , is_local_(is_local)
     {
     }
@@ -60,12 +73,17 @@ public:
         return is_client_;
     }
 
+    bool is_superclient() const
+    {
+        return is_superclient_;
+    }
+
     bool is_local() const
     {
         return is_local_;
     }
 
-    fastrtps::rtps::RemoteLocatorList metatraffic_locators() const
+    RemoteLocatorList metatraffic_locators() const
     {
         return metatraffic_locators_;
     }
@@ -74,6 +92,7 @@ public:
             nlohmann::json& j) const
     {
         j["is_client"] = is_client_;
+        j["is_superclient"] = is_superclient_;
         j["is_local"] = is_local_;
         j["metatraffic_locators"] = object_to_string(metatraffic_locators_);
     }
@@ -81,11 +100,14 @@ public:
 private:
 
     // The metatraffic locators of from the serialized payload
-    fastrtps::rtps::RemoteLocatorList metatraffic_locators_;
+    RemoteLocatorList metatraffic_locators_;
     // Whether this participant is a CLIENT or a SERVER/BACKUP/SUPER_CLIENT
     // This variable affects the discovery filter to applied to each entity:
     // false => send all data ; true => send only data that is required to match endpoints
     bool is_client_ = false;
+    // Wether this participant is a SUPER_CLIENT and needs special treatment
+    // when matching remote endpoints
+    bool is_superclient_ = false;
     // Whether this participant (CLIENT OR SERVER) is a client of this server
     bool is_local_ = false;
 };

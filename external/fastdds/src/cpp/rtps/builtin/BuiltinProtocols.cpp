@@ -17,33 +17,27 @@
  *
  */
 
-#include <fastdds/rtps/builtin/BuiltinProtocols.h>
-#include <fastdds/rtps/common/Locator.h>
-
-#include <fastdds/rtps/builtin/discovery/participant/PDPSimple.h>
-#include <fastdds/rtps/builtin/discovery/endpoint/EDP.h>
-#include <fastdds/rtps/builtin/discovery/endpoint/EDPStatic.h>
-
-#include <rtps/builtin/discovery/participant/PDPServer.hpp>
-#include <rtps/builtin/discovery/participant/PDPClient.h>
-
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
-
-#include <fastdds/rtps/builtin/liveliness/WLP.h>
-
-#include <fastdds/dds/builtin/typelookup/TypeLookupManager.hpp>
-
-#include <rtps/participant/RTPSParticipantImpl.h>
-
-#include <fastdds/dds/log/Log.hpp>
-#include <fastrtps/utils/IPFinder.h>
+#include <rtps/builtin/BuiltinProtocols.h>
 
 #include <algorithm>
 
-using namespace eprosima::fastrtps;
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
+#include <fastdds/utils/IPFinder.hpp>
+
+#include <fastdds/builtin/type_lookup_service/TypeLookupManager.hpp>
+#include <fastdds/utils/TypePropagation.hpp>
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/builtin/discovery/endpoint/EDP.h>
+#include <rtps/builtin/discovery/endpoint/EDPStatic.h>
+#include <rtps/builtin/discovery/participant/PDPClient.h>
+#include <rtps/builtin/discovery/participant/PDPServer.hpp>
+#include <rtps/builtin/discovery/participant/PDPSimple.h>
+#include <rtps/builtin/liveliness/WLP.hpp>
+#include <rtps/participant/RTPSParticipantImpl.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 
@@ -51,23 +45,28 @@ BuiltinProtocols::BuiltinProtocols()
     : mp_participantImpl(nullptr)
     , mp_PDP(nullptr)
     , mp_WLP(nullptr)
-    , tlm_(nullptr)
+    , typelookup_manager_(nullptr)
 {
 }
 
 BuiltinProtocols::~BuiltinProtocols()
 {
-    // Send participant is disposed
-    if (mp_PDP != nullptr)
+    if (nullptr != mp_PDP)
     {
+        // Send participant is disposed
         mp_PDP->announceParticipantState(true, true);
+        // Consider all discovered participants as disposed
+        mp_PDP->disable();
     }
 
-    // TODO Auto-generated destructor stub
-    delete mp_WLP;
-    delete tlm_;
-    delete mp_PDP;
+    // The type lookup manager should be deleted first, since it will access the PDP database
+    if (nullptr != typelookup_manager_)
+    {
+        delete typelookup_manager_;
+    }
 
+    delete mp_WLP;
+    delete mp_PDP;
 }
 
 bool BuiltinProtocols::initBuiltinProtocols(
@@ -87,43 +86,44 @@ bool BuiltinProtocols::initBuiltinProtocols(
 
     filter_server_remote_locators(p_part->network_factory());
 
-    const RTPSParticipantAllocationAttributes& allocation = p_part->getRTPSParticipantAttributes().allocation;
+    const RTPSParticipantAllocationAttributes& allocation = p_part->get_attributes().allocation;
 
     // PDP
     switch (m_att.discovery_config.discoveryProtocol)
     {
-        case DiscoveryProtocol_t::NONE:
+        case DiscoveryProtocol::NONE:
             EPROSIMA_LOG_WARNING(RTPS_PDP, "No participant discovery protocol specified");
             return true;
 
-        case DiscoveryProtocol_t::SIMPLE:
+        case DiscoveryProtocol::SIMPLE:
             mp_PDP = new PDPSimple(this, allocation);
             break;
 
-        case DiscoveryProtocol_t::EXTERNAL:
+        case DiscoveryProtocol::EXTERNAL:
             EPROSIMA_LOG_ERROR(RTPS_PDP, "Flag only present for debugging purposes");
             return false;
 
-        case DiscoveryProtocol_t::CLIENT:
+        case DiscoveryProtocol::CLIENT:
             mp_PDP = new fastdds::rtps::PDPClient(this, allocation);
             break;
 
-        case DiscoveryProtocol_t::SERVER:
+        case DiscoveryProtocol::SERVER:
             mp_PDP = new fastdds::rtps::PDPServer(this, allocation, DurabilityKind_t::TRANSIENT_LOCAL);
             break;
 
 #if HAVE_SQLITE3
-        case DiscoveryProtocol_t::BACKUP:
+        case DiscoveryProtocol::BACKUP:
+            EPROSIMA_LOG_WARNING(RTPS_PDP, "BACKUP discovery protocol is not yet supported with XTypes.");
             mp_PDP = new fastdds::rtps::PDPServer(this, allocation, DurabilityKind_t::TRANSIENT);
             break;
 #endif // if HAVE_SQLITE3
 
-        case DiscoveryProtocol_t::SUPER_CLIENT:
+        case DiscoveryProtocol::SUPER_CLIENT:
             mp_PDP = new fastdds::rtps::PDPClient(this, allocation, true);
             break;
 
         default:
-            EPROSIMA_LOG_ERROR(RTPS_PDP, "Unknown DiscoveryProtocol_t specified.");
+            EPROSIMA_LOG_ERROR(RTPS_PDP, "Unknown DiscoveryProtocol specified.");
             return false;
     }
 
@@ -143,10 +143,15 @@ bool BuiltinProtocols::initBuiltinProtocols(
     }
 
     // TypeLookupManager
-    if (m_att.typelookup_config.use_client || m_att.typelookup_config.use_server)
+    auto type_propagation = p_part->type_propagation();
+    bool should_create_typelookup =
+            (dds::utils::TypePropagation::TYPEPROPAGATION_ENABLED == type_propagation) ||
+            (dds::utils::TypePropagation::TYPEPROPAGATION_MINIMAL_BANDWIDTH == type_propagation);
+
+    if (should_create_typelookup)
     {
-        tlm_ = new fastdds::dds::builtin::TypeLookupManager(this);
-        tlm_->init_typelookup_service(mp_participantImpl);
+        typelookup_manager_ = new fastdds::dds::builtin::TypeLookupManager();
+        typelookup_manager_->init(this);
     }
 
     return true;
@@ -174,34 +179,32 @@ void BuiltinProtocols::filter_server_remote_locators(
 {
     eprosima::shared_lock<eprosima::shared_mutex> disc_lock(getDiscoveryMutex());
 
-    for (eprosima::fastdds::rtps::RemoteServerAttributes& rs : m_DiscoveryServers)
+    LocatorList_t allowed_locators;
+
+    for (auto loc : m_DiscoveryServers)
     {
-        LocatorList_t allowed_locators;
-        for (Locator_t& loc : rs.metatrafficUnicastLocatorList)
+        if (nf.is_locator_remote_or_allowed(loc))
         {
-            if (nf.is_locator_allowed(loc))
-            {
-                allowed_locators.push_back(loc);
-            }
-            else
-            {
-                EPROSIMA_LOG_WARNING(RTPS_PDP, "Ignoring remote server locator " << loc << " : not allowed.");
-            }
+            allowed_locators.push_back(loc);
         }
-        rs.metatrafficUnicastLocatorList.swap(allowed_locators);
+        else
+        {
+            EPROSIMA_LOG_WARNING(RTPS_PDP, "Ignoring remote server locator " << loc << " : not allowed.");
+        }
     }
+    m_DiscoveryServers.swap(allowed_locators);
 }
 
-bool BuiltinProtocols::addLocalWriter(
-        RTPSWriter* w,
-        const fastrtps::TopicAttributes& topicAtt,
-        const fastrtps::WriterQos& wqos)
+bool BuiltinProtocols::add_writer(
+        RTPSWriter* rtps_writer,
+        const TopicDescription& topic,
+        const fastdds::dds::WriterQos& qos)
 {
     bool ok = true;
 
-    if (mp_PDP != nullptr)
+    if (nullptr != mp_PDP)
     {
-        ok = mp_PDP->getEDP()->newLocalWriterProxyData(w, topicAtt, wqos);
+        ok = mp_PDP->get_edp()->new_writer_proxy_data(rtps_writer, topic, qos);
 
         if (!ok)
         {
@@ -214,9 +217,9 @@ bool BuiltinProtocols::addLocalWriter(
         EPROSIMA_LOG_WARNING(RTPS_EDP, "EDP is not used in this Participant, register a Writer is impossible");
     }
 
-    if (mp_WLP != nullptr)
+    if (nullptr != mp_WLP)
     {
-        ok &= mp_WLP->add_local_writer(w, wqos);
+        ok &= mp_WLP->add_local_writer(rtps_writer, qos.m_liveliness);
     }
     else
     {
@@ -226,17 +229,17 @@ bool BuiltinProtocols::addLocalWriter(
     return ok;
 }
 
-bool BuiltinProtocols::addLocalReader(
-        RTPSReader* R,
-        const fastrtps::TopicAttributes& topicAtt,
-        const fastrtps::ReaderQos& rqos,
+bool BuiltinProtocols::add_reader(
+        RTPSReader* rtps_reader,
+        const TopicDescription& topic,
+        const fastdds::dds::ReaderQos& qos,
         const fastdds::rtps::ContentFilterProperty* content_filter)
 {
     bool ok = true;
 
-    if (mp_PDP != nullptr)
+    if (nullptr != mp_PDP)
     {
-        ok = mp_PDP->getEDP()->newLocalReaderProxyData(R, topicAtt, rqos, content_filter);
+        ok = mp_PDP->get_edp()->new_reader_proxy_data(rtps_reader, topic, qos, content_filter);
 
         if (!ok)
         {
@@ -249,67 +252,65 @@ bool BuiltinProtocols::addLocalReader(
         EPROSIMA_LOG_WARNING(RTPS_EDP, "EDP is not used in this Participant, register a Reader is impossible");
     }
 
-    if (mp_WLP != nullptr)
+    if (nullptr != mp_WLP)
     {
-        ok &= mp_WLP->add_local_reader(R, rqos);
+        ok &= mp_WLP->add_local_reader(rtps_reader, qos.m_liveliness);
     }
 
     return ok;
 }
 
-bool BuiltinProtocols::updateLocalWriter(
-        RTPSWriter* W,
-        const TopicAttributes& topicAtt,
-        const WriterQos& wqos)
+bool BuiltinProtocols::update_writer(
+        RTPSWriter* rtps_writer,
+        const fastdds::dds::WriterQos& wqos)
 {
     bool ok = false;
-    if (mp_PDP != nullptr && mp_PDP->getEDP() != nullptr)
+    if ((nullptr != mp_PDP) && (nullptr != mp_PDP->get_edp()))
     {
-        ok = mp_PDP->getEDP()->updatedLocalWriter(W, topicAtt, wqos);
+        ok = mp_PDP->get_edp()->update_writer(rtps_writer, wqos);
     }
     return ok;
 }
 
-bool BuiltinProtocols::updateLocalReader(
-        RTPSReader* R,
-        const TopicAttributes& topicAtt,
-        const ReaderQos& rqos,
+bool BuiltinProtocols::update_reader(
+        RTPSReader* rtps_reader,
+        const fastdds::dds::ReaderQos& rqos,
         const fastdds::rtps::ContentFilterProperty* content_filter)
 {
     bool ok = false;
-    if (mp_PDP != nullptr && mp_PDP->getEDP() != nullptr)
+    if ((nullptr != mp_PDP) && (nullptr != mp_PDP->get_edp()))
     {
-        ok = mp_PDP->getEDP()->updatedLocalReader(R, topicAtt, rqos, content_filter);
+        ok = mp_PDP->get_edp()->update_reader(rtps_reader, rqos, content_filter);
     }
     return ok;
 }
 
-bool BuiltinProtocols::removeLocalWriter(
-        RTPSWriter* W)
+bool BuiltinProtocols::remove_writer(
+        RTPSWriter* rtps_writer)
 {
     bool ok = false;
-    if (mp_WLP != nullptr)
+    if (nullptr != mp_WLP)
     {
-        ok |= mp_WLP->remove_local_writer(W);
+        ok |= mp_WLP->remove_local_writer(rtps_writer);
     }
-    if (mp_PDP != nullptr && mp_PDP->getEDP() != nullptr)
+    if ((nullptr != mp_PDP) && (nullptr != mp_PDP->get_edp()))
     {
-        ok |= mp_PDP->getEDP()->removeLocalWriter(W);
+        ok |= mp_PDP->get_edp()->remove_writer(rtps_writer);
     }
     return ok;
 }
 
-bool BuiltinProtocols::removeLocalReader(
-        RTPSReader* R)
+bool BuiltinProtocols::remove_reader(
+        RTPSReader* rtps_reader)
 {
     bool ok = false;
-    if (mp_WLP != nullptr)
+    if (nullptr != mp_WLP)
     {
-        ok |= mp_WLP->remove_local_reader(R);
+        ok |= mp_WLP->remove_local_reader(rtps_reader);
     }
-    if (mp_PDP != nullptr && mp_PDP->getEDP() != nullptr)
+    if ((nullptr != mp_PDP) && (nullptr != mp_PDP->get_edp()))
     {
-        ok |= mp_PDP->getEDP()->removeLocalReader(R);
+        ok |= mp_PDP->get_edp()->remove_reader(rtps_reader);
     }
     return ok;
 }
@@ -322,7 +323,7 @@ void BuiltinProtocols::announceRTPSParticipantState()
     {
         mp_PDP->announceParticipantState(false);
     }
-    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol_t::NONE)
+    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol::NONE)
     {
         EPROSIMA_LOG_ERROR(RTPS_EDP, "Trying to use BuiltinProtocols interfaces before initBuiltinProtocols call");
     }
@@ -337,7 +338,7 @@ void BuiltinProtocols::stopRTPSParticipantAnnouncement()
     {
         mp_PDP->stopParticipantAnnouncement();
     }
-    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol_t::NONE)
+    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol::NONE)
     {
         EPROSIMA_LOG_ERROR(RTPS_EDP, "Trying to use BuiltinProtocols interfaces before initBuiltinProtocols call");
     }
@@ -351,7 +352,7 @@ void BuiltinProtocols::resetRTPSParticipantAnnouncement()
     {
         mp_PDP->resetParticipantAnnouncement();
     }
-    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol_t::NONE)
+    else if (m_att.discovery_config.discoveryProtocol != DiscoveryProtocol::NONE)
     {
         EPROSIMA_LOG_ERROR(RTPS_EDP, "Trying to use BuiltinProtocols interfaces before initBuiltinProtocols call");
     }

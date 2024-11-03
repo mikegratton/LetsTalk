@@ -24,7 +24,7 @@ using the Let's Talk API. The subscriber application:
 ```c++
 #include "LetsTalk.hpp"
 #include <iostream>
-#include "HelloWorld.h"
+#include "HelloWorld.hpp"
 
 int main(int, char**)
 {
@@ -41,7 +41,7 @@ and the publisher application:
 ```c++
 #include "LetsTalk.hpp"
 #include <iostream>
-#include "HelloWorld.h"
+#include "HelloWorld.hpp"
 
 int main(int argc, char** argv)
 {

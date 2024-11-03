@@ -12,29 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-#include "mock/BlackboxMockConsumer.h"
-
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <thread>
 
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.hpp>
+#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.hpp>
 #include <gtest/gtest.h>
 
-#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
-#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.h>
-#include <fastrtps/log/Log.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
+#include "BlackboxTests.hpp"
+#include "mock/BlackboxMockConsumer.h"
+#include "PubSubReader.hpp"
+#include "PubSubWriter.hpp"
 
-#include "../api/dds-pim/PubSubReader.hpp"
-#include "../api/dds-pim/PubSubWriter.hpp"
-#include <rtps/transport/test_UDPv4Transport.h>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
-using test_UDPv4Transport = eprosima::fastdds::rtps::test_UDPv4Transport;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -49,12 +46,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -67,12 +64,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -90,10 +87,12 @@ void run_parametrized_test(
         bool reliable_reader)
 {
     // Set test parameters
-    ReliabilityQosPolicyKind writer_reliability =
-            reliable_writer ? RELIABLE_RELIABILITY_QOS : BEST_EFFORT_RELIABILITY_QOS;
-    ReliabilityQosPolicyKind reader_reliability =
-            reliable_reader ? RELIABLE_RELIABILITY_QOS : BEST_EFFORT_RELIABILITY_QOS;
+    eprosima::fastdds::dds::ReliabilityQosPolicyKind writer_reliability =
+            reliable_writer ? eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS : eprosima::fastdds::dds::
+                    BEST_EFFORT_RELIABILITY_QOS;
+    eprosima::fastdds::dds::ReliabilityQosPolicyKind reader_reliability =
+            reliable_reader ? eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS : eprosima::fastdds::dds::
+                    BEST_EFFORT_RELIABILITY_QOS;
 
     // Set up
     PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
@@ -108,8 +107,8 @@ void run_parametrized_test(
             .add_user_transport_to_pparams(sub_shm_descriptor)
             .add_user_transport_to_pparams(sub_udp_descriptor)
             .reliability(reader_reliability)
-            .durability_kind(VOLATILE_DURABILITY_QOS)
-            .history_kind(KEEP_ALL_HISTORY_QOS)
+            .durability_kind(eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS)
+            .history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
             .init();
     ASSERT_TRUE(reader.isInitialized());
 
@@ -132,9 +131,9 @@ void run_parametrized_test(
             .add_user_transport_to_pparams(pub_shm_descriptor)
             .add_user_transport_to_pparams(pub_udp_descriptor)
             .reliability(writer_reliability)
-            .durability_kind(VOLATILE_DURABILITY_QOS)
-            .history_kind(KEEP_ALL_HISTORY_QOS)
-            .asynchronously(SYNCHRONOUS_PUBLISH_MODE)
+            .durability_kind(eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS)
+            .history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
+            .asynchronously(eprosima::fastdds::dds::SYNCHRONOUS_PUBLISH_MODE)
             .init();
     ASSERT_TRUE(writer.isInitialized());
 
@@ -191,12 +190,12 @@ static bool has_shm_locators(
 }
 
 static void check_shm_locators(
-        const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo& info,
+        const eprosima::fastdds::rtps::ParticipantBuiltinTopicData& info,
         bool unicast,
         bool multicast)
 {
-    EXPECT_EQ(multicast, has_shm_locators(info.info.metatraffic_locators.multicast));
-    EXPECT_EQ(unicast, has_shm_locators(info.info.metatraffic_locators.unicast));
+    EXPECT_EQ(multicast, has_shm_locators(info.metatraffic_locators.multicast));
+    EXPECT_EQ(unicast, has_shm_locators(info.metatraffic_locators.unicast));
 }
 
 static void shm_metatraffic_test(
@@ -208,7 +207,9 @@ static void shm_metatraffic_test(
     PubSubWriter<HelloWorldPubSubType> writer(topic_name + "/" + value);
     PubSubReader<HelloWorldPubSubType> reader(topic_name + "/" + value);
 
-    auto discovery_checker = [unicast, multicast](const eprosima::fastrtps::rtps::ParticipantDiscoveryInfo& info)
+    auto discovery_checker =
+            [unicast, multicast](const eprosima::fastdds::rtps::ParticipantBuiltinTopicData& info,
+                    eprosima::fastdds::rtps::ParticipantDiscoveryStatus /*status*/)
             {
                 check_shm_locators(info, unicast, multicast);
                 return true;
@@ -244,22 +245,22 @@ TEST(SHMUDP, SHM_metatraffic_wrong_config)
 
     /* Set up log */
     BlackboxMockConsumer* helper_consumer = new BlackboxMockConsumer();
-    Log::ClearConsumers();  // Remove default consumers
-    Log::RegisterConsumer(std::unique_ptr<LogConsumer>(helper_consumer)); // Registering a consumer transfer ownership
+    eprosima::fastdds::dds::Log::ClearConsumers();  // Remove default consumers
+    eprosima::fastdds::dds::Log::RegisterConsumer(std::unique_ptr<eprosima::fastdds::dds::LogConsumer>(helper_consumer)); // Registering a consumer transfer ownership
     // Filter specific message
-    Log::SetVerbosity(Log::Kind::Warning);
-    Log::SetCategoryFilter(std::regex("RTPS_NETWORK"));
-    Log::SetErrorStringFilter(std::regex(".*__WRONG_VALUE__.*"));
+    eprosima::fastdds::dds::Log::SetVerbosity(eprosima::fastdds::dds::Log::Kind::Warning);
+    eprosima::fastdds::dds::Log::SetCategoryFilter(std::regex("RTPS_NETWORK"));
+    eprosima::fastdds::dds::Log::SetErrorStringFilter(std::regex(".*__WRONG_VALUE__.*"));
 
     // Perform test
     shm_metatraffic_test(TEST_TOPIC_NAME, "__WRONG_VALUE__", false, false);
 
     /* Check logs */
-    Log::Flush();
+    eprosima::fastdds::dds::Log::Flush();
     EXPECT_EQ(helper_consumer->ConsumedEntries().size(), 1u);
 
     /* Clean-up */
-    Log::Reset();  // This calls to ClearConsumers, which deletes the registered consumer
+    eprosima::fastdds::dds::Log::Reset();  // This calls to ClearConsumers, which deletes the registered consumer
 }
 
 #ifdef INSTANTIATE_TEST_SUITE_P

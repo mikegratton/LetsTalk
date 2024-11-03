@@ -14,22 +14,24 @@
 
 #include "BlackboxTests.hpp"
 
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
+
 #include <gtest/gtest.h>
 
-#include <fastrtps/rtps/RTPSDomain.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/log/Log.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
 
-#include <thread>
-#include <memory>
-#include <cstdlib>
-#include <string>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 //#define cout "Use Log instead!"
 
+const char* certs_path = nullptr;
 uint16_t global_port = 0;
 bool enable_datasharing;
 bool use_pull_mode;
@@ -63,9 +65,9 @@ public:
         // conditions related to network packets being lost should not use intraprocess
         // nor datasharing. Setting it off here ensures that intraprocess and
         // datasharing are only tested when required.
-        LibrarySettingsAttributes att;
-        att.intraprocess_delivery = INTRAPROCESS_OFF;
-        eprosima::fastrtps::xmlparser::XMLProfileManager::library_settings(att);
+        eprosima::fastdds::LibrarySettings att;
+        att.intraprocess_delivery = eprosima::fastdds::INTRAPROCESS_OFF;
+        eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(att);
         enable_datasharing = false;
         use_pull_mode = false;
         use_udpv4 = true;
@@ -91,12 +93,15 @@ int main(
     testing::InitGoogleTest(&argc, argv);
     testing::AddGlobalTestEnvironment(new BlackboxEnvironment);
 
+    if (!::testing::GTEST_FLAG(list_tests))
+    {
 #if HAVE_SECURITY
-    blackbox_security_init();
+        blackbox_security_init();
 #endif // if HAVE_SECURITY
 #if TLS_FOUND
-    tls_init();
+        tls_init();
 #endif // if TLS_FOUND
+    }
 
     return RUN_ALL_TESTS();
 }

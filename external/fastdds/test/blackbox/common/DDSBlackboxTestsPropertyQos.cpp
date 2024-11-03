@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <fastdds/dds/builtin/topic/ParticipantBuiltinTopicData.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/common/Types.hpp>
 #include <gtest/gtest.h>
 
 #include "BlackboxTests.hpp"
-
 #include "PubSubParticipant.hpp"
-
-#include <fastdds/rtps/common/Types.h>
-#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.h>
-#include <fastrtps/attributes/LibrarySettingsAttributes.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
 
 namespace test {
 const std::string EXTERNAL_PROPERTY_NAME  = "CustomExternalProperty";
@@ -31,7 +29,7 @@ const std::string INTERNAL_PROPERTY_VALUE = "Other Value";
 } // namespace test
 
 
-using namespace eprosima::fastrtps;
+using namespace eprosima::fastdds;
 
 enum communication_type
 {
@@ -46,12 +44,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -64,12 +62,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -90,11 +88,11 @@ public:
 TEST_P(PropertyQos, send_property_qos)
 {
     // Set Properties that will be sent and those that wont
-    eprosima::fastrtps::rtps::PropertyPolicy source_property_policy;
+    eprosima::fastdds::rtps::PropertyPolicy source_property_policy;
 
     // Add external property
     {
-        eprosima::fastrtps::rtps::Property property;
+        eprosima::fastdds::rtps::Property property;
         property.name(test::EXTERNAL_PROPERTY_NAME);
         property.value(test::EXTERNAL_PROPERTY_VALUE);
         property.propagate(true);
@@ -102,7 +100,7 @@ TEST_P(PropertyQos, send_property_qos)
     }
     // Add internal property
     {
-        eprosima::fastrtps::rtps::Property property;
+        eprosima::fastdds::rtps::Property property;
         property.name(test::INTERNAL_PROPERTY_NAME);
         property.value(test::INTERNAL_PROPERTY_VALUE);
         property.propagate(false);
@@ -115,13 +113,13 @@ TEST_P(PropertyQos, send_property_qos)
 
     PubSubParticipant<HelloWorldPubSubType> participant_2(0u, 0u, 0u, 0u);
 
-    participant_2.set_on_discovery_function([&](const rtps::ParticipantDiscoveryInfo& info) -> bool
+    participant_2.set_on_discovery_function([&](const eprosima::fastdds::dds::ParticipantBuiltinTopicData& info) -> bool
             {
                 std::cout << "Received Property Qos: ";
 
                 // Check the external has arrived and the internal does not
                 bool property_received = false;
-                for (auto i : info.info.m_properties)
+                for (auto i : info.properties)
                 {
                     std::cout << i.first() << " :{ " << i.second() << " } ; ";
 

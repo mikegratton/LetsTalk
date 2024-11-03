@@ -16,11 +16,11 @@
  * @file PublisherListener.hpp
  */
 
-#ifndef _FASTDDS_PUBLISHERLISTENER_HPP_
-#define _FASTDDS_PUBLISHERLISTENER_HPP_
+#ifndef FASTDDS_DDS_PUBLISHER__PUBLISHERLISTENER_HPP
+#define FASTDDS_DDS_PUBLISHER__PUBLISHERLISTENER_HPP
 
-#include <fastrtps/qos/DeadlineMissedStatus.h>
 #include <fastdds/dds/core/status/BaseStatus.hpp>
+#include <fastdds/dds/core/status/DeadlineMissedStatus.hpp>
 #include <fastdds/dds/core/status/PublicationMatchedStatus.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 
@@ -42,21 +42,21 @@ public:
     /**
      * @brief Constructor
      */
-    RTPS_DllAPI PublisherListener()
+    FASTDDS_EXPORTED_API PublisherListener()
     {
     }
 
     /**
      * @brief Destructor
      */
-    RTPS_DllAPI virtual ~PublisherListener()
+    FASTDDS_EXPORTED_API virtual ~PublisherListener()
     {
     }
 
 };
 
-} /* namespace dds */
-} /* namespace fastdds */
-} /* namespace eprosima */
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTDDS_PUBLISHERLISTENER_HPP_ */
+#endif // FASTDDS_DDS_PUBLISHER__PUBLISHERLISTENER_HPP

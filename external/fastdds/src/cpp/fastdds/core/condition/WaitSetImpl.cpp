@@ -21,13 +21,11 @@
 #include <condition_variable>
 #include <mutex>
 
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/core/condition/Condition.hpp>
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/rtps/common/Time_t.hpp>
 
 #include <fastdds/core/condition/ConditionNotifier.hpp>
-
-using eprosima::fastrtps::types::ReturnCode_t;
 
 namespace eprosima {
 namespace fastdds {
@@ -81,7 +79,7 @@ ReturnCode_t WaitSetImpl::attach_condition(
         }
     }
 
-    return ReturnCode_t::RETCODE_OK;
+    return RETCODE_OK;
 }
 
 ReturnCode_t WaitSetImpl::detach_condition(
@@ -99,22 +97,22 @@ ReturnCode_t WaitSetImpl::detach_condition(
     {
         // Inform the notifier we are not interested anymore.
         condition.get_notifier()->detach_from(this);
-        return ReturnCode_t::RETCODE_OK;
+        return RETCODE_OK;
     }
 
     // Condition not found
-    return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
+    return RETCODE_PRECONDITION_NOT_MET;
 }
 
 ReturnCode_t WaitSetImpl::wait(
         ConditionSeq& active_conditions,
-        const fastrtps::Duration_t& timeout)
+        const fastdds::dds::Duration_t& timeout)
 {
     std::unique_lock<std::mutex> lock(mutex_);
 
     if (is_waiting_)
     {
-        return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
+        return RETCODE_PRECONDITION_NOT_MET;
     }
 
     auto fill_active_conditions = [&]()
@@ -134,7 +132,7 @@ ReturnCode_t WaitSetImpl::wait(
 
     bool condition_value = false;
     is_waiting_ = true;
-    if (fastrtps::c_TimeInfinite == timeout)
+    if (fastdds::dds::c_TimeInfinite == timeout)
     {
         cond_.wait(lock, fill_active_conditions);
         condition_value = true;
@@ -146,7 +144,7 @@ ReturnCode_t WaitSetImpl::wait(
     }
     is_waiting_ = false;
 
-    return condition_value ? ReturnCode_t::RETCODE_OK : ReturnCode_t::RETCODE_TIMEOUT;
+    return condition_value ? RETCODE_OK : RETCODE_TIMEOUT;
 }
 
 ReturnCode_t WaitSetImpl::get_conditions(
@@ -159,7 +157,7 @@ ReturnCode_t WaitSetImpl::get_conditions(
     {
         attached_conditions.push_back(const_cast<Condition*>(c));
     }
-    return ReturnCode_t::RETCODE_OK;
+    return RETCODE_OK;
 }
 
 void WaitSetImpl::wake_up()

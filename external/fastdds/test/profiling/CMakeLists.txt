@@ -42,20 +42,28 @@ set(MEMORYTEST_SOURCE MemoryTestPublisher.cpp
     )
 add_executable(MemoryTest ${MEMORYTEST_SOURCE})
 target_include_directories(MemoryTest PRIVATE ${Asio_INCLUDE_DIR})
-target_link_libraries(MemoryTest fastrtps foonathan_memory fastdds::optionparser ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+target_link_libraries(MemoryTest fastdds foonathan_memory fastdds::optionparser ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
 configure_file("cycles_tests.py" "cycles_tests.py")
 configure_file("memory_tests.py" "memory_tests.py")
 configure_file("memory_analysis.py" "memory_analysis.py")
 
-find_package(PythonInterp 3 REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-if(PYTHONINTERP_FOUND)
+if(Python3_Interpreter_FOUND)
     ###############################################################################
     # MemoryTest
     ###############################################################################
+    find_program(VALGRIND_PROGRAM NAMES valgrind)
+
+    # If valgrind is not found, set it to "valgrind" so that the test can be run with
+    # the appropriate environment set at runtime.
+    if (${VALGRIND_PROGRAM} STREQUAL "valgrind-NOTFOUND")
+        set(VALGRIND_PROGRAM "valgrind")
+    endif()
+
     add_test(NAME MemoryTest
-        COMMAND ${PYTHON_EXECUTABLE} memory_tests.py)
+        COMMAND ${Python3_EXECUTABLE} memory_tests.py)
 
     # Set test with label NoMemoryCheck
     set_property(TEST MemoryTest PROPERTY LABELS "NoMemoryCheck")
@@ -67,7 +75,7 @@ if(PYTHONINTERP_FOUND)
     set_property(TEST MemoryTest APPEND PROPERTY ENVIRONMENT
         "PROFILING_BINS=$<TARGET_FILE:MemoryTest>")
     set_property(TEST MemoryTest APPEND PROPERTY ENVIRONMENT
-        "VALGRIND_BIN=${CTEST_MEMORYCHECK_COMMAND}")
+        "VALGRIND_BIN=${VALGRIND_PROGRAM}")
     if(SECURITY)
         set_property(TEST MemoryTest APPEND PROPERTY ENVIRONMENT
             "CERTS_PATH=${PROJECT_SOURCE_DIR}/test/certs")
@@ -77,7 +85,7 @@ if(PYTHONINTERP_FOUND)
     # CyclesTest
     ###############################################################################
     add_test(NAME CyclesTest
-        COMMAND ${PYTHON_EXECUTABLE} cycles_tests.py)
+        COMMAND ${Python3_EXECUTABLE} cycles_tests.py)
 
     # Set test with label NoMemoryCheck
     set_property(TEST CyclesTest PROPERTY LABELS "NoMemoryCheck")
@@ -89,7 +97,7 @@ if(PYTHONINTERP_FOUND)
     set_property(TEST CyclesTest APPEND PROPERTY ENVIRONMENT
         "PROFILING_BINS=$<TARGET_FILE:MemoryTest>")
     set_property(TEST CyclesTest APPEND PROPERTY ENVIRONMENT
-        "VALGRIND_BIN=valgrind")
+        "VALGRIND_BIN=${VALGRIND_PROGRAM}")
     if(SECURITY)
         set_property(TEST CyclesTest APPEND PROPERTY ENVIRONMENT
             "CERTS_PATH=${PROJECT_SOURCE_DIR}/test/certs")

@@ -16,13 +16,14 @@
  * @file LocatorList.hpp
  */
 
-#ifndef _FASTDDS_RTPS_COMMON_LOCATORLIST_HPP_
-#define _FASTDDS_RTPS_COMMON_LOCATORLIST_HPP_
+#ifndef FASTDDS_RTPS_COMMON__LOCATORLIST_HPP
+#define FASTDDS_RTPS_COMMON__LOCATORLIST_HPP
 
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
-#include <fastdds/rtps/common/Locator.h>
+#include <fastdds/rtps/common/Locator.hpp>
 #include <fastdds/rtps/common/LocatorsIterator.hpp>
+#include <fastdds/utils/collections/ResourceLimitedVector.hpp>
 
 #include <vector>
 #include <cstdint>
@@ -99,31 +100,31 @@ public:
     using value_type = typename std::vector<Locator>::value_type;
 
     /// Constructor
-    RTPS_DllAPI LocatorList()
+    FASTDDS_EXPORTED_API LocatorList()
     {
     }
 
     /// Destructor
-    RTPS_DllAPI ~LocatorList()
+    FASTDDS_EXPORTED_API ~LocatorList()
     {
     }
 
     /// Copy constructor
-    RTPS_DllAPI LocatorList(
+    FASTDDS_EXPORTED_API LocatorList(
             const LocatorList& list)
         : m_locators(list.m_locators)
     {
     }
 
     /// Move constructor
-    RTPS_DllAPI LocatorList(
+    FASTDDS_EXPORTED_API LocatorList(
             LocatorList&& list)
         : m_locators(std::move(list.m_locators))
     {
     }
 
     /// Copy assignment
-    RTPS_DllAPI LocatorList& operator =(
+    FASTDDS_EXPORTED_API LocatorList& operator =(
             const LocatorList& list)
     {
         m_locators = list.m_locators;
@@ -131,7 +132,7 @@ public:
     }
 
     /// Move assignment
-    RTPS_DllAPI LocatorList& operator =(
+    FASTDDS_EXPORTED_API LocatorList& operator =(
             LocatorList&& list)
     {
         m_locators = std::move(list.m_locators);
@@ -139,7 +140,7 @@ public:
     }
 
     /// Equal to operator
-    RTPS_DllAPI bool operator ==(
+    FASTDDS_EXPORTED_API bool operator ==(
             const LocatorList& locator_list) const
     {
         if (locator_list.m_locators.size() == m_locators.size())
@@ -166,12 +167,19 @@ public:
         return false;
     }
 
+    /// Not equal to operator
+    FASTDDS_EXPORTED_API bool operator !=(
+            const LocatorList& locator_list) const
+    {
+        return !(*this == locator_list);
+    }
+
     /**
      * @brief Return an iterator to the beginning.
      *
      * @return LocatorListIterator iterator to the first locator.
      */
-    RTPS_DllAPI LocatorListIterator begin()
+    FASTDDS_EXPORTED_API LocatorListIterator begin()
     {
         return m_locators.begin();
     }
@@ -181,7 +189,7 @@ public:
      *
      * @return LocatorListIterator iterator to the element following the last element.
      */
-    RTPS_DllAPI LocatorListIterator end()
+    FASTDDS_EXPORTED_API LocatorListIterator end()
     {
         return m_locators.end();
     }
@@ -191,7 +199,7 @@ public:
      *
      * @return LocatorListConstIterator iterator to the first locator.
      */
-    RTPS_DllAPI LocatorListConstIterator begin() const
+    FASTDDS_EXPORTED_API LocatorListConstIterator begin() const
     {
         return m_locators.begin();
     }
@@ -201,7 +209,7 @@ public:
      *
      * @return LocatorListConstIterator iterator to the element following the last element.
      */
-    RTPS_DllAPI LocatorListConstIterator end() const
+    FASTDDS_EXPORTED_API LocatorListConstIterator end() const
     {
         return m_locators.end();
     }
@@ -211,7 +219,7 @@ public:
      *
      * @return size_t The number of locators in the container.
      */
-    RTPS_DllAPI size_t size() const
+    FASTDDS_EXPORTED_API size_t size() const
     {
         return m_locators.size();
     }
@@ -222,7 +230,7 @@ public:
      * @param list New content to be saved into the container.
      * @return LocatorList& reference to the container with the replaced content.
      */
-    RTPS_DllAPI LocatorList& assign(
+    FASTDDS_EXPORTED_API LocatorList& assign(
             const LocatorList& list)
     {
         if (!(*this == list))
@@ -235,7 +243,7 @@ public:
     /**
      * @brief Erase all locators from the container.
      */
-    RTPS_DllAPI void clear()
+    FASTDDS_EXPORTED_API void clear()
     {
         return m_locators.clear();
     }
@@ -245,7 +253,7 @@ public:
      *
      * @param num new capacity of the vector, in number of elements.
      */
-    RTPS_DllAPI void reserve(
+    FASTDDS_EXPORTED_API void reserve(
             size_t num)
     {
         return m_locators.reserve(num);
@@ -258,7 +266,7 @@ public:
      *
      * @param num new size of the container.
      */
-    RTPS_DllAPI void resize(
+    FASTDDS_EXPORTED_API void resize(
             size_t num)
     {
         return m_locators.resize(num);
@@ -269,7 +277,7 @@ public:
      *
      * @param loc locator to be appended.
      */
-    RTPS_DllAPI void push_back(
+    FASTDDS_EXPORTED_API void push_back(
             const Locator& loc)
     {
         bool already = false;
@@ -292,7 +300,7 @@ public:
      *
      * @param locList LocatorList with the locators to be appended.
      */
-    RTPS_DllAPI void push_back(
+    FASTDDS_EXPORTED_API void push_back(
             const LocatorList& locList)
     {
         for (auto it = locList.m_locators.begin(); it != locList.m_locators.end(); ++it)
@@ -306,7 +314,7 @@ public:
      *
      * @return true if the container is empty. False otherwise.
      */
-    RTPS_DllAPI bool empty() const
+    FASTDDS_EXPORTED_API bool empty() const
     {
         return m_locators.empty();
     }
@@ -316,7 +324,7 @@ public:
      *
      * @param loc Locator to be removed.
      */
-    RTPS_DllAPI void erase(
+    FASTDDS_EXPORTED_API void erase(
             const Locator& loc)
     {
         auto it = std::find(m_locators.begin(), m_locators.end(), loc);
@@ -326,38 +334,12 @@ public:
         }
     }
 
-    FASTDDS_DEPRECATED_UNTIL(3, "eprosima::fastrtps::rtps::LocatorList::contains(const Locator&)",
-            "Unused method.")
-    RTPS_DllAPI bool contains(
-            const Locator& loc)
-    {
-        for (LocatorListIterator it = this->begin(); it != this->end(); ++it)
-        {
-            if (IsAddressDefined(*it))
-            {
-                if (loc == *it)
-                {
-                    return true;
-                }
-            }
-            else
-            {
-                if (loc.kind == (*it).kind && loc.port == (*it).port)
-                {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @brief Check that every locator contained in the list is not LOCATOR_KIND_INVALID.
      *
      * @return true if all locators are valid. False otherwise.
      */
-    RTPS_DllAPI bool isValid() const
+    FASTDDS_EXPORTED_API bool isValid() const
     {
         for (LocatorListConstIterator it = this->begin(); it != this->end(); ++it)
         {
@@ -374,7 +356,7 @@ public:
      *
      * @param locatorList container to exchange the contents with.
      */
-    RTPS_DllAPI void swap(
+    FASTDDS_EXPORTED_API void swap(
             LocatorList& locatorList)
     {
         this->m_locators.swap(locatorList.m_locators);
@@ -393,6 +375,16 @@ public:
         }
 
         return false;
+    }
+
+    // Copy the inner locator list to a ResourceLimitedVector locator list.
+    FASTDDS_EXPORTED_API void copy_to(
+            eprosima::fastdds::ResourceLimitedVector<Locator>& locator_list) const
+    {
+        for (auto& locator : m_locators)
+        {
+            locator_list.emplace_back(locator);
+        }
     }
 
 private:
@@ -482,8 +474,11 @@ inline std::istream& operator >>(
     return input;
 }
 
+using Locators = eprosima::fastdds::rtps::Locators;
+using LocatorList_t = eprosima::fastdds::rtps::LocatorList;
+
 } // namespace rtps
 } // namespace fastdds
 } // namespace eprosima
 
-#endif /* _FASTDDS_RTPS_COMMON_LOCATORLIST_HPP_ */
+#endif // FASTDDS_RTPS_COMMON__LOCATORLIST_HPP

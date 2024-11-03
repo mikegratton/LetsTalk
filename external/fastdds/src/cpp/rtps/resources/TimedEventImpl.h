@@ -22,14 +22,14 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastdds/rtps/resources/TimedEvent.h>
+#include <fastdds/rtps/common/Time_t.hpp>
+#include <rtps/resources/TimedEvent.h>
 
 #include <atomic>
 #include <functional>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 /*!
@@ -68,7 +68,7 @@ public:
      * @return true on success
      */
     bool update_interval(
-            const Duration_t& interval);
+            const dds::Duration_t& interval);
 
     /*!
      * @brief Updates the expiration time of the event.
@@ -159,7 +159,7 @@ private:
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 #endif //DOXYGEN_SHOULD_SKIP_THIS_PUBLIC

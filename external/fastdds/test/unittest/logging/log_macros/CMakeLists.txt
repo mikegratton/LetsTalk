@@ -17,10 +17,16 @@ if(WIN32)
 endif()
 
 set(LOG_COMMON_SOURCE
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
     )
 
@@ -33,16 +39,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosAllActiveTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosAllActiveTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosAllActiveTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosAllActiveTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosAllActiveTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosAllActiveTests SOURCES ${LOGMACROS_ALL_TEST_SOURCE})
+gtest_discover_tests(LogMacrosAllActiveTests)
 
 
 # MACROS LOG TEST NO INFO
@@ -54,16 +67,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosNoInfoTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosNoInfoTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosNoInfoTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosNoInfoTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosNoInfoTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosNoInfoTests SOURCES ${LOGMACROS_NOINFO_TEST_SOURCE})
+gtest_discover_tests(LogMacrosNoInfoTests)
 
 
 # MACROS LOG TEST NO WARNING
@@ -75,16 +95,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosNoWarningTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosNoWarningTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosNoWarningTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosNoWarningTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosNoWarningTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosNoWarningTests SOURCES ${LOGMACROS_NOWARNING_TEST_SOURCE})
+gtest_discover_tests(LogMacrosNoWarningTests)
 
 
 # MACROS LOG TEST NO ERROR
@@ -96,16 +123,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosNoErrorTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosNoErrorTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosNoErrorTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosNoErrorTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosNoErrorTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosNoErrorTests SOURCES ${LOGMACROS_NOERROR_TEST_SOURCE})
+gtest_discover_tests(LogMacrosNoErrorTests)
 
 
 # MACROS LOG TEST NO DEFAULT
@@ -117,16 +151,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosDefaultTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosDefaultTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosDefaultTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosDefaultTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosDefaultTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosDefaultTests SOURCES ${LOGMACROS_DEFAULT_TEST_SOURCE})
+gtest_discover_tests(LogMacrosDefaultTests)
 
 
 # MACROS LOG TEST INTERNALDEBUG
@@ -140,16 +181,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(LogMacrosInternalDebugOffTests ${LOGMACROS_SOURCE})
 target_compile_definitions(LogMacrosInternalDebugOffTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(LogMacrosInternalDebugOffTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(LogMacrosInternalDebugOffTests GTest::gtest ${MOCKS}
+target_link_libraries(LogMacrosInternalDebugOffTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(LogMacrosInternalDebugOffTests SOURCES ${LOGMACROS_INTERNALDEBUG_TEST_SOURCE})
+gtest_discover_tests(LogMacrosInternalDebugOffTests)
 
 # MACROS OLD LOG TEST ALL
 set(LOGMACROS_ALL_TEST_SOURCE OldLogMacrosTests.cpp)
@@ -160,16 +208,23 @@ set(LOGMACROS_SOURCE
 
 add_executable(OldLogMacrosTests ${LOGMACROS_SOURCE})
 target_compile_definitions(OldLogMacrosTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(OldLogMacrosTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(OldLogMacrosTests GTest::gtest ${MOCKS}
+target_link_libraries(OldLogMacrosTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(OldLogMacrosTests SOURCES ${LOGMACROS_ALL_TEST_SOURCE})
+gtest_discover_tests(OldLogMacrosTests)
 
 
 # MACROS OLD DISABLE LOG TEST ALL
@@ -181,25 +236,20 @@ set(LOGMACROS_SOURCE
 
 add_executable(OldLogMacrosDisableTests ${LOGMACROS_SOURCE})
 target_compile_definitions(OldLogMacrosDisableTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(OldLogMacrosDisableTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(OldLogMacrosDisableTests GTest::gtest ${MOCKS}
+target_link_libraries(OldLogMacrosDisableTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${MOCKS}
     $<$<BOOL:${WIN32}>:iphlpapi$<SEMICOLON>Shlwapi>
     )
-add_gtest(OldLogMacrosDisableTests SOURCES ${LOGMACROS_ALL_TEST_SOURCE})
-
-# SET PROPERTIES TO TESTS
-if(ANDROID)
-    set_property(TARGET LogMacrosAllActiveTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LogMacrosDefaultTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LogMacrosInternalDebugOffTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LogMacrosNoErrorTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LogMacrosNoInfoTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET LogMacrosNoWarningTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET OldLogMacrosTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET OldLogMacrosDisableTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+gtest_discover_tests(OldLogMacrosDisableTests)

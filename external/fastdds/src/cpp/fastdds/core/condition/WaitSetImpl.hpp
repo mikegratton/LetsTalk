@@ -23,11 +23,9 @@
 #include <mutex>
 
 #include <fastdds/dds/core/condition/Condition.hpp>
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/rtps/common/Time_t.hpp>
 #include <utils/collections/unordered_vector.hpp>
-
-using eprosima::fastrtps::types::ReturnCode_t;
 
 namespace eprosima {
 namespace fastdds {
@@ -85,7 +83,7 @@ struct WaitSetImpl
      */
     ReturnCode_t wait(
             ConditionSeq& active_conditions,
-            const fastrtps::Duration_t& timeout);
+            const fastdds::dds::Duration_t& timeout);
 
     /**
      * @brief Retrieve the list of attached conditions

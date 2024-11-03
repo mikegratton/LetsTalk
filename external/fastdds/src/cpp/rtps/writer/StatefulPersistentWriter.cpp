@@ -17,13 +17,14 @@
  *
  */
 
-#include <fastdds/rtps/writer/StatefulPersistentWriter.h>
-#include <fastdds/rtps/history/WriterHistory.h>
+#include "StatefulPersistentWriter.hpp"
+
+#include <fastdds/rtps/history/WriterHistory.hpp>
+
 #include <rtps/persistence/PersistenceService.h>
-#include <fastrtps_deprecated/participant/ParticipantImpl.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 
@@ -36,38 +37,9 @@ StatefulPersistentWriter::StatefulPersistentWriter(
         WriterListener* listen,
         IPersistenceService* persistence)
     : StatefulWriter(pimpl, guid, att, flow_controller, hist, listen)
-    , PersistentWriter(guid, att, payload_pool_, change_pool_, hist, persistence)
+    , PersistentWriter(guid, att, hist, persistence)
 {
     rebuild_status_after_load();
-}
-
-StatefulPersistentWriter::StatefulPersistentWriter(
-        RTPSParticipantImpl* pimpl,
-        const GUID_t& guid,
-        const WriterAttributes& att,
-        const std::shared_ptr<IPayloadPool>& payload_pool,
-        fastdds::rtps::FlowController* flow_controller,
-        WriterHistory* hist,
-        WriterListener* listen,
-        IPersistenceService* persistence)
-    : StatefulWriter(pimpl, guid, att, payload_pool, flow_controller, hist, listen)
-    , PersistentWriter(guid, att, payload_pool_, change_pool_, hist, persistence)
-{
-}
-
-StatefulPersistentWriter::StatefulPersistentWriter(
-        RTPSParticipantImpl* pimpl,
-        const GUID_t& guid,
-        const WriterAttributes& att,
-        const std::shared_ptr<IPayloadPool>& payload_pool,
-        const std::shared_ptr<IChangePool>& change_pool,
-        fastdds::rtps::FlowController* flow_controller,
-        WriterHistory* hist,
-        WriterListener* listen,
-        IPersistenceService* persistence)
-    : StatefulWriter(pimpl, guid, att, payload_pool, change_pool, flow_controller, hist, listen)
-    , PersistentWriter(guid, att, payload_pool_, change_pool_, hist, persistence)
-{
 }
 
 StatefulPersistentWriter::~StatefulPersistentWriter()
@@ -113,5 +85,5 @@ void StatefulPersistentWriter::print_inconsistent_acknack(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

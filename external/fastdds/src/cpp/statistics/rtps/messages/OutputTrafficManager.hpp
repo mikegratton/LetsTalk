@@ -24,9 +24,8 @@
 #include <list>
 #include <utility>
 
-#include <fastdds/rtps/common/Locator.h>
-
-#include <fastrtps/config.h>
+#include <fastdds/config.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
 
 #include <statistics/rtps/messages/RTPSStatisticsMessages.hpp>
 
@@ -49,7 +48,7 @@ public:
      * @param locator The locator for which sequencing information should be kept.
      */
     inline void add_entry(
-            const eprosima::fastrtps::rtps::Locator_t& locator)
+            const eprosima::fastdds::rtps::Locator_t& locator)
     {
         static_cast<void>(locator);
 
@@ -70,13 +69,13 @@ public:
      *
      */
     inline void set_statistics_message_data(
-            const eprosima::fastrtps::rtps::Locator_t& locator,
-            const eprosima::fastrtps::rtps::octet* send_buffer,
-            uint32_t send_buffer_size)
+            const eprosima::fastdds::rtps::Locator_t& locator,
+            const eprosima::fastdds::rtps::NetworkBuffer& send_buffer,
+            const uint32_t& total_bytes)
     {
         static_cast<void>(locator);
         static_cast<void>(send_buffer);
-        static_cast<void>(send_buffer_size);
+        static_cast<void>(total_bytes);
 
 #ifdef FASTDDS_STATISTICS
         auto search = [locator](const entry_type& entry) -> bool
@@ -85,7 +84,7 @@ public:
                 };
         auto it = std::find_if(collection_.begin(), collection_.end(), search);
         assert(it != collection_.end());
-        set_statistics_submessage_from_transport(locator, send_buffer, send_buffer_size, it->second);
+        set_statistics_submessage_from_transport(locator, send_buffer, total_bytes, it->second);
 #endif // FASTDDS_STATISTICS
     }
 
@@ -93,7 +92,7 @@ public:
 
 private:
 
-    using key_type = eprosima::fastrtps::rtps::Locator_t;
+    using key_type = eprosima::fastdds::rtps::Locator_t;
     using value_type = StatisticsSubmessageData::Sequence;
     using entry_type = std::pair<key_type, value_type>;
 

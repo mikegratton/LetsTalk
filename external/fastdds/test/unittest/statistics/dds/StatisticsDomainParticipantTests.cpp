@@ -26,13 +26,12 @@
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/topic/TopicDataType.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/common/InstanceHandle.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
+#include <fastdds/rtps/common/InstanceHandle.hpp>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
 #include <fastdds/statistics/dds/domain/DomainParticipant.hpp>
 #include <fastdds/statistics/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/statistics/topic_names.hpp>
-#include <fastrtps/types/TypesBase.h>
-#include <statistics/types/typesPubSubTypes.h>
+#include <statistics/types/typesPubSubTypes.hpp>
 
 #include "../../logging/mock/MockConsumer.h"
 
@@ -40,8 +39,6 @@ namespace eprosima {
 namespace fastdds {
 namespace statistics {
 namespace dds {
-
-using ReturnCode_t = eprosima::fastrtps::types::ReturnCode_t;
 
 class FooType
 {
@@ -85,51 +82,62 @@ public:
     TopicDataTypeMock()
         : eprosima::fastdds::dds::TopicDataType()
     {
-        m_typeSize = 4u;
-        setName("footype");
+        max_serialized_type_size = 4u;
+        set_name("footype");
     }
 
     bool serialize(
-            void* /*data*/,
-            fastrtps::rtps::SerializedPayload_t* /*payload*/) override
+            const void* const /*data*/,
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
+            fastdds::dds::DataRepresentationId_t /*data_representation*/) override
     {
         return true;
     }
 
     bool deserialize(
-            fastrtps::rtps::SerializedPayload_t* /*payload*/,
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
             void* /*data*/) override
     {
         return true;
     }
 
-    std::function<uint32_t()> getSerializedSizeProvider(
-            void* /*data*/) override
+    uint32_t calculate_serialized_size(
+            const void* const /*data*/,
+            fastdds::dds::DataRepresentationId_t /*data_representation*/) override
     {
-        return []()->uint32_t
-               {
-                   return 0;
-               };
+        return 0;
     }
 
-    void* createData() override
+    void* create_data() override
     {
         return nullptr;
     }
 
-    void deleteData(
+    void delete_data(
             void* /*data*/) override
     {
     }
 
-    bool getKey(
-            void* /*data*/,
-            fastrtps::rtps::InstanceHandle_t* /*ihandle*/,
+    bool compute_key(
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
+            fastdds::rtps::InstanceHandle_t& /*ihandle*/,
             bool /*force_md5*/) override
     {
         return true;
     }
 
+    bool compute_key(
+            const void* const /*data*/,
+            fastdds::rtps::InstanceHandle_t& /*ihandle*/,
+            bool /*force_md5*/) override
+    {
+        return true;
+    }
+
+private:
+
+    using eprosima::fastdds::dds::TopicDataType::calculate_serialized_size;
+    using eprosima::fastdds::dds::TopicDataType::serialize;
 };
 
 class StatisticsDomainParticipantTests : public ::testing::Test
@@ -187,31 +195,31 @@ TEST_F(StatisticsDomainParticipantTests, NarrowDomainParticipantTest)
 
     // 4. Delete DDS entities
     ASSERT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant),
-            eprosima::fastrtps::types::ReturnCode_t::RETCODE_OK);
+            fastdds::dds::RETCODE_OK);
 }
 
 /*
  * This test checks both eprosima::fastdds::statistics::dds::DomainParticipant enable_statistics_datawriter() and
  * disable_statistics_datawriter() methods.
- * 1. If the FASTDDS_STATISTICS compilation flag is not set, check that the methods return RETCODE_UNSUPPORTED.
+ * 1. If the FASTDDS_STATISTICS compilation flag is not set, check that the methods return fastdds::dds::RETCODE_UNSUPPORTED.
  * Check that this error takes precedence over other possible errors.
  * 2. Narrow DomainParticipant to the children class.
  * 3. Create TypeSupports.
  * 4. Check that the types are not registered yet.
  * 5. Check that the topics do not exist yet.
  * 6. Enable each statistics DataWriter checking that topics are created and types are registered.
- * 7. Enable an already enabled statistics DataWriter and check that it returns RETCODE_OK.
- * 8. Call enable_statistics_datawriter method with an invalid topic name and check that returns RETCODE_BAD_PARAMETER.
+ * 7. Enable an already enabled statistics DataWriter and check that it returns fastdds::dds::RETCODE_OK.
+ * 8. Call enable_statistics_datawriter method with an invalid topic name and check that returns fastdds::dds::RETCODE_BAD_PARAMETER.
  * 9. Disable one statistics DataWriter and check that it is successful.
  * 10. Enable the previous statistics DataWriter with an inconsistent QoS and check that it returns
- * RETCODE_INCONSISTENT_POLICY.
- * 11. Check error code precedence: RETCODE_BAD_PARAMETER takes precedence over RETCODE_INCONSISTENT_POLICY.
- * The case where the create_datawriter fails returning RETCODE_ERROR is not checked because it only passes the error
+ * fastdds::dds::RETCODE_INCONSISTENT_POLICY.
+ * 11. Check error code precedence: fastdds::dds::RETCODE_BAD_PARAMETER takes precedence over fastdds::dds::RETCODE_INCONSISTENT_POLICY.
+ * The case where the create_datawriter fails returning fastdds::dds::RETCODE_ERROR is not checked because it only passes the error
  * upstream.
- * 12. Try to disable an already disabled statistics DataWriter and check that returns RETCODE_ERROR.
+ * 12. Try to disable an already disabled statistics DataWriter and check that returns fastdds::dds::RETCODE_ERROR.
  * 13. Check that if an invalid topic name is provided to the disable_statistics_datawriter method, it returns
- * RETCODE_BAD_PARAMETER.
- * The case where the delete_datawriter fails returning RETCODE_ERROR is not checked because it only passes the error
+ * fastdds::dds::RETCODE_BAD_PARAMETER.
+ * The case where the delete_datawriter fails returning fastdds::dds::RETCODE_ERROR is not checked because it only passes the error
  * upstream.
  * 14. Delete DDS entities.
  */
@@ -231,13 +239,13 @@ TEST_F(StatisticsDomainParticipantTests, EnableDisableStatisticsDataWriterTest)
     DomainParticipant* statistics_participant = static_cast<DomainParticipant*>(participant);
     ASSERT_NE(statistics_participant, nullptr);
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, statistics_participant->enable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, statistics_participant->enable_statistics_datawriter(
                 HISTORY_LATENCY_TOPIC, STATISTICS_DATAWRITER_QOS));
-    EXPECT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
+    EXPECT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
             inconsistent_qos));
-    EXPECT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, statistics_participant->disable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, statistics_participant->disable_statistics_datawriter(
                 HISTORY_LATENCY_TOPIC));
-    EXPECT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, statistics_participant->disable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, statistics_participant->disable_statistics_datawriter(
                 "INVALID_TOPIC"));
 #else
     // 2. Narrow DomainParticipant to eprosima::fastdds::statistics::dds::DomainParticipant
@@ -246,13 +254,21 @@ TEST_F(StatisticsDomainParticipantTests, EnableDisableStatisticsDataWriterTest)
 
     // 3. Create TypeSupports for the different DataTypes
     eprosima::fastdds::dds::TypeSupport history_latency_type(new WriterReaderDataPubSubType);
+    history_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport network_latency_type(new Locator2LocatorDataPubSubType);
+    network_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport throughput_type(new EntityDataPubSubType);
+    throughput_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport rtps_traffic_type(new Entity2LocatorTrafficPubSubType);
+    rtps_traffic_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport count_type(new EntityCountPubSubType);
+    count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport discovery_type(new DiscoveryTimePubSubType);
+    discovery_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport sample_identity_count_type(new SampleIdentityCountPubSubType);
+    sample_identity_count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport physical_data_type(new PhysicalDataPubSubType);
+    physical_data_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport null_type(nullptr);
 
     // 4. Check that the types are not registered yet
@@ -285,202 +301,202 @@ TEST_F(StatisticsDomainParticipantTests, EnableDisableStatisticsDataWriterTest)
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
 
     // 6. Enable each statistics DataWriter checking that topics are created and types are registered.
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HISTORY_LATENCY_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HISTORY_LATENCY_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(HISTORY_LATENCY_TOPIC));
     EXPECT_TRUE(history_latency_type == statistics_participant->find_type(history_latency_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(NETWORK_LATENCY_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(NETWORK_LATENCY_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(NETWORK_LATENCY_TOPIC));
     EXPECT_TRUE(network_latency_type == statistics_participant->find_type(network_latency_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(
                 PUBLICATION_THROUGHPUT_TOPIC, STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(PUBLICATION_THROUGHPUT_TOPIC));
     EXPECT_TRUE(throughput_type == statistics_participant->find_type(throughput_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(
                 SUBSCRIPTION_THROUGHPUT_TOPIC, STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(SUBSCRIPTION_THROUGHPUT_TOPIC));
     EXPECT_TRUE(throughput_type == statistics_participant->find_type(throughput_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RTPS_SENT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RTPS_SENT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(RTPS_SENT_TOPIC));
     EXPECT_TRUE(rtps_traffic_type == statistics_participant->find_type(rtps_traffic_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RTPS_LOST_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RTPS_LOST_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(RTPS_LOST_TOPIC));
     EXPECT_TRUE(rtps_traffic_type == statistics_participant->find_type(rtps_traffic_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RESENT_DATAS_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(RESENT_DATAS_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(RESENT_DATAS_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(HEARTBEAT_COUNT_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(ACKNACK_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(ACKNACK_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(ACKNACK_COUNT_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(NACKFRAG_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(NACKFRAG_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(NACKFRAG_COUNT_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(GAP_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(GAP_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(GAP_COUNT_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(DATA_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(DATA_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(DATA_COUNT_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PDP_PACKETS_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PDP_PACKETS_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(PDP_PACKETS_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(EDP_PACKETS_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(EDP_PACKETS_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(EDP_PACKETS_TOPIC));
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(DISCOVERY_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(DISCOVERY_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(DISCOVERY_TOPIC));
     EXPECT_TRUE(discovery_type == statistics_participant->find_type(discovery_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(SAMPLE_DATAS_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(SAMPLE_DATAS_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(SAMPLE_DATAS_TOPIC));
     EXPECT_TRUE(sample_identity_count_type == statistics_participant->find_type(
                 sample_identity_count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
     EXPECT_TRUE(physical_data_type == statistics_participant->find_type(physical_data_type.get_type_name()));
 
     // 7. Enable an already enabled statistics DataWriter
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(SAMPLE_DATAS_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(SAMPLE_DATAS_TOPIC,
             STATISTICS_DATAWRITER_QOS));
 
     // 8. Invalid topic name
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
+    EXPECT_EQ(fastdds::dds::RETCODE_BAD_PARAMETER, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
             STATISTICS_DATAWRITER_QOS));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription("INVALID_TOPIC"));
 
     // 9. Disable statistics DataWriter
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HISTORY_LATENCY_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HISTORY_LATENCY_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(HISTORY_LATENCY_TOPIC));
     EXPECT_NE(nullptr, statistics_participant->lookup_topicdescription(PDP_PACKETS_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(history_latency_type.get_type_name()));
 
     // 10. Enable previous statistics DataWriter with an inconsistent QoS
-    EXPECT_EQ(ReturnCode_t::RETCODE_INCONSISTENT_POLICY, statistics_participant->enable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_INCONSISTENT_POLICY, statistics_participant->enable_statistics_datawriter(
                 HISTORY_LATENCY_TOPIC, inconsistent_qos));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(HISTORY_LATENCY_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(history_latency_type.get_type_name()));
 
-    // 11. RETCODE_BAD_PARAMETER error has precedence over RETCODE_INCONSISTENT_POLICY
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
+    // 11. fastdds::dds::RETCODE_BAD_PARAMETER error has precedence over fastdds::dds::RETCODE_INCONSISTENT_POLICY
+    EXPECT_EQ(fastdds::dds::RETCODE_BAD_PARAMETER, statistics_participant->enable_statistics_datawriter("INVALID_TOPIC",
             inconsistent_qos));
 
     // 12. Disable already disabled DataWriter
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HISTORY_LATENCY_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HISTORY_LATENCY_TOPIC));
 
     // 13. Disable invalid topic name
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, statistics_participant->disable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_BAD_PARAMETER, statistics_participant->disable_statistics_datawriter(
                 "INVALID_TOPIC"));
 
     // 14. Remove DDS entities
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(NETWORK_LATENCY_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(NETWORK_LATENCY_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(NETWORK_LATENCY_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(network_latency_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(
                 PUBLICATION_THROUGHPUT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(PUBLICATION_THROUGHPUT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(throughput_type == statistics_participant->find_type(throughput_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(
                 SUBSCRIPTION_THROUGHPUT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(SUBSCRIPTION_THROUGHPUT_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(throughput_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RTPS_SENT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RTPS_SENT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(RTPS_SENT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(rtps_traffic_type == statistics_participant->find_type(rtps_traffic_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RTPS_LOST_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RTPS_LOST_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(RTPS_LOST_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(rtps_traffic_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RESENT_DATAS_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(RESENT_DATAS_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(RESENT_DATAS_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(HEARTBEAT_COUNT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(ACKNACK_COUNT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(ACKNACK_COUNT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(ACKNACK_COUNT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(NACKFRAG_COUNT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(NACKFRAG_COUNT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(NACKFRAG_COUNT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(GAP_COUNT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(GAP_COUNT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(GAP_COUNT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(DATA_COUNT_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(DATA_COUNT_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(DATA_COUNT_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(PDP_PACKETS_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(PDP_PACKETS_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(PDP_PACKETS_TOPIC));
     // The type is being used by another topic yet
     EXPECT_TRUE(count_type == statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(EDP_PACKETS_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(EDP_PACKETS_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(EDP_PACKETS_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(DISCOVERY_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(DISCOVERY_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(DISCOVERY_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(discovery_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(SAMPLE_DATAS_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(SAMPLE_DATAS_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(SAMPLE_DATAS_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(sample_identity_count_type.get_type_name()));
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->disable_statistics_datawriter(PHYSICAL_DATA_TOPIC));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->disable_statistics_datawriter(PHYSICAL_DATA_TOPIC));
     EXPECT_EQ(nullptr, statistics_participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
     EXPECT_EQ(null_type, statistics_participant->find_type(physical_data_type.get_type_name()));
 #endif // FASTDDS_STATISTICS
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
                     delete_participant(statistics_participant));
 }
 
@@ -513,13 +529,21 @@ TEST_F(StatisticsDomainParticipantTests, CreateParticipantWithInvalidTopicName)
     // 2. Check topics/types
     // Create TypeSupports
     eprosima::fastdds::dds::TypeSupport history_latency_type(new WriterReaderDataPubSubType);
+    history_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport network_latency_type(new Locator2LocatorDataPubSubType);
+    network_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport throughput_type(new EntityDataPubSubType);
+    throughput_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport rtps_traffic_type(new Entity2LocatorTrafficPubSubType);
+    rtps_traffic_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport count_type(new EntityCountPubSubType);
+    count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport discovery_type(new DiscoveryTimePubSubType);
+    discovery_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport sample_identity_count_type(new SampleIdentityCountPubSubType);
+    sample_identity_count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport physical_data_type(new PhysicalDataPubSubType);
+    physical_data_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport null_type(nullptr);
 
     EXPECT_EQ(null_type, participant->find_type(history_latency_type.get_type_name()));
@@ -555,12 +579,12 @@ TEST_F(StatisticsDomainParticipantTests, CreateParticipantWithInvalidTopicName)
     EXPECT_EQ(consumed_entries.size(), 2u);
 
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant),
-            ReturnCode_t::RETCODE_OK);
+            fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 
 /**
- * This test checks that enable_statistics_datawriter fails returning RETCODE_ERROR when there is already a TypeSupport
+ * This test checks that enable_statistics_datawriter fails returning fastdds::dds::RETCODE_ERROR when there is already a TypeSupport
  * using a statistics reserved name registered in the participant.
  * 1. Create a participant and register a TypeSupport using one of the statistics reserved type names.
  * 2. Call enable_statistics_datawriter and check that it fails.
@@ -591,7 +615,7 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
     eprosima::fastdds::dds::TypeSupport count_type(new EntityCountPubSubType);
     eprosima::fastdds::dds::TypeSupport null_type(nullptr);
     eprosima::fastdds::dds::TypeSupport invalid_type(new TopicDataTypeMock);
-    invalid_type->setName(reserved_statistics_type_name);
+    invalid_type->set_name(reserved_statistics_type_name);
     participant->register_type(invalid_type);
     participant->register_type(physical_data_type);
 
@@ -599,7 +623,7 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
     DomainParticipant* statistics_participant = DomainParticipant::narrow(participant);
     ASSERT_NE(statistics_participant, nullptr);
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_ERROR, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_ERROR, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     eprosima::fastdds::dds::TypeSupport type = participant->find_type(count_type.get_type_name());
     EXPECT_FALSE(count_type == type);
@@ -610,7 +634,7 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
 
     // 4. Call enable_statistics_datawriter with an already correctly registered type.
     EXPECT_EQ(nullptr, participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_TRUE(physical_data_type == participant->find_type(physical_data_type.get_type_name()));
     EXPECT_NE(nullptr, participant->lookup_topicdescription(PHYSICAL_DATA_TOPIC));
@@ -622,12 +646,12 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
 
     // delete_participant removes all builtin statistics entities
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
-                    delete_participant(statistics_participant), ReturnCode_t::RETCODE_OK);
+                    delete_participant(statistics_participant), fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 
 /**
- * This test checks that enable_statistics_datawriter fails returning RETCODE_ERROR when there is already a statistics
+ * This test checks that enable_statistics_datawriter fails returning fastdds::dds::RETCODE_ERROR when there is already a statistics
  * Topic created with another type different from the one expected.
  * 1. Create a participant and register a Topic using one of the statistics reserved topic names and with another type
  * different from the one expected. Register another Topic correctly.
@@ -665,28 +689,28 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
 
     // Create topic
     eprosima::fastdds::dds::Topic* invalid_topic = participant->create_topic(HISTORY_LATENCY_TOPIC,
-                    count_type->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
-    participant->create_topic(HEARTBEAT_COUNT_TOPIC, count_type->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
-    participant->create_topic(PHYSICAL_DATA_TOPIC, physical_data_type->getName(),
+                    count_type->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+    participant->create_topic(HEARTBEAT_COUNT_TOPIC, count_type->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+    participant->create_topic(PHYSICAL_DATA_TOPIC, physical_data_type->get_name(),
             eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
 
     // 2. Check call to enable_statistics_datawriter
     DomainParticipant* statistics_participant = DomainParticipant::narrow(participant);
     ASSERT_NE(statistics_participant, nullptr);
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_ERROR, statistics_participant->enable_statistics_datawriter(HISTORY_LATENCY_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_ERROR, statistics_participant->enable_statistics_datawriter(HISTORY_LATENCY_TOPIC,
             STATISTICS_DATAWRITER_QOS));
 
     // 3. Check type registration
     EXPECT_EQ(null_type, participant->find_type(history_latency_type.get_type_name()));
 
     // 4. Call enable_statistics_datawriter with correctly created topic
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
     EXPECT_TRUE(count_type == participant->find_type(count_type.get_type_name()));
 
     // 5. Call enable_statistics_datawriter and check it is successful
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(PHYSICAL_DATA_TOPIC,
             STATISTICS_DATAWRITER_QOS));
 
     // 6. Check log error entry
@@ -695,9 +719,9 @@ TEST_F(StatisticsDomainParticipantTests, EnableStatisticsDataWriterFailureIncomp
     EXPECT_EQ(consumed_entries.size(), 1u);
 
     // delete_participant removes all builtin statistics entities but not others
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant->delete_topic(invalid_topic));
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, participant->delete_topic(invalid_topic));
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
-                    delete_participant(statistics_participant), ReturnCode_t::RETCODE_OK);
+                    delete_participant(statistics_participant), fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 
@@ -727,20 +751,20 @@ TEST_F(StatisticsDomainParticipantTests, DeleteParticipantAfterDeleteContainedEn
 
     // 2. Create a sample topic
     participant->create_topic(HEARTBEAT_COUNT_TOPIC,
-            count_type->getName(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
+            count_type->get_name(), eprosima::fastdds::dds::TOPIC_QOS_DEFAULT);
 
     DomainParticipant* statistics_participant = DomainParticipant::narrow(participant);
     ASSERT_NE(statistics_participant, nullptr);
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
+    EXPECT_EQ(fastdds::dds::RETCODE_OK, statistics_participant->enable_statistics_datawriter(HEARTBEAT_COUNT_TOPIC,
             STATISTICS_DATAWRITER_QOS));
 
     // 3. Perform a delete_contained_entities() in the statistics participant
-    EXPECT_EQ(participant->delete_contained_entities(), ReturnCode_t::RETCODE_OK);
+    EXPECT_EQ(participant->delete_contained_entities(), fastdds::dds::RETCODE_OK);
 
     // 4. Delete the participant
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->
-                    delete_participant(participant), ReturnCode_t::RETCODE_OK);
+                    delete_participant(participant), fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 

@@ -18,13 +18,13 @@
 
 #include <statistics/rtps/StatisticsBase.hpp>
 
-#include <cmath>
-
 #include <algorithm>
+#include <cmath>
 #include <string>
 
+#include <fastdds/dds/core/policy/ParameterTypes.hpp>
 #include <fastdds/dds/log/Log.hpp>
-#include <fastrtps/qos/ParameterTypes.h>
+
 #include <rtps/participant/RTPSParticipantImpl.h>
 
 namespace eprosima {
@@ -70,19 +70,31 @@ static void sub_bytes(
 }
 
 detail::Locator_s to_statistics_type(
-        fastrtps::rtps::Locator_t locator)
+        fastdds::rtps::Locator_t locator)
 {
     return *reinterpret_cast<detail::Locator_s*>(&locator);
 }
 
+fastdds::rtps::Locator_t to_fastdds_type(
+        detail::Locator_s locator)
+{
+    return *reinterpret_cast<fastdds::rtps::Locator_t*>(&locator);
+}
+
 detail::GUID_s to_statistics_type(
-        fastrtps::rtps::GUID_t guid)
+        fastdds::rtps::GUID_t guid)
 {
     return *reinterpret_cast<detail::GUID_s*>(&guid);
 }
 
+fastdds::rtps::GUID_t to_fastdds_type(
+        detail::GUID_s guid)
+{
+    return *reinterpret_cast<fastdds::rtps::GUID_t*>(&guid);
+}
+
 detail::SampleIdentity_s to_statistics_type(
-        fastrtps::rtps::SampleIdentity sample_id)
+        fastdds::rtps::SampleIdentity sample_id)
 {
     return *reinterpret_cast<detail::SampleIdentity_s*>(&sample_id);
 }
@@ -101,7 +113,7 @@ bool StatisticsListenersImpl::add_statistics_listener_impl(
         return false;
     }
 
-    std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
 
     // add the new listener
     return members_->listeners.insert(listener).second;
@@ -110,7 +122,7 @@ bool StatisticsListenersImpl::add_statistics_listener_impl(
 bool StatisticsListenersImpl::remove_statistics_listener_impl(
         std::shared_ptr<fastdds::statistics::IListener> listener)
 {
-    std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
 
     if (!listener)
     {
@@ -124,7 +136,7 @@ bool StatisticsListenersImpl::remove_statistics_listener_impl(
 void StatisticsListenersImpl::set_enabled_statistics_writers_mask_impl(
         uint32_t enabled_writers)
 {
-    std::unique_lock<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    std::unique_lock<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
     if (members_)
     {
         members_->enabled_writers_mask.store(enabled_writers);
@@ -135,7 +147,7 @@ bool StatisticsListenersImpl::are_statistics_writers_enabled(
         uint32_t checked_enabled_writers)
 {
     // Check if the corresponding writer is enabled
-    std::unique_lock<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    std::unique_lock<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
     if (members_)
     {
         // Casting a number other than 1 to bool is not guaranteed to yield true
@@ -144,9 +156,9 @@ bool StatisticsListenersImpl::are_statistics_writers_enabled(
     return false;
 }
 
-const eprosima::fastrtps::rtps::GUID_t& StatisticsParticipantImpl::get_guid() const
+const eprosima::fastdds::rtps::GUID_t& StatisticsParticipantImpl::get_guid() const
 {
-    using eprosima::fastrtps::rtps::RTPSParticipantImpl;
+    using eprosima::fastdds::rtps::RTPSParticipantImpl;
 
     static_assert(
         std::is_base_of<StatisticsParticipantImpl, RTPSParticipantImpl>::value,
@@ -196,14 +208,12 @@ void StatisticsParticipantImpl::ListenerProxy::mask(
 bool StatisticsParticipantImpl::are_writers_involved(
         const uint32_t mask) const
 {
-    using namespace fastdds::statistics;
-
-    constexpr uint32_t writers_maks = PUBLICATION_THROUGHPUT \
-            | RESENT_DATAS \
-            | HEARTBEAT_COUNT \
-            | GAP_COUNT \
-            | DATA_COUNT \
-            | SAMPLE_DATAS;
+    constexpr uint32_t writers_maks = EventKind::PUBLICATION_THROUGHPUT \
+            | EventKind::RESENT_DATAS \
+            | EventKind::HEARTBEAT_COUNT \
+            | EventKind::GAP_COUNT \
+            | EventKind::DATA_COUNT \
+            | EventKind::SAMPLE_DATAS;
 
     return writers_maks & mask;
 }
@@ -211,12 +221,10 @@ bool StatisticsParticipantImpl::are_writers_involved(
 bool StatisticsParticipantImpl::are_readers_involved(
         const uint32_t mask) const
 {
-    using namespace fastdds::statistics;
-
-    constexpr uint32_t readers_maks = HISTORY2HISTORY_LATENCY \
-            | SUBSCRIPTION_THROUGHPUT \
-            | ACKNACK_COUNT \
-            | NACKFRAG_COUNT;
+    constexpr uint32_t readers_maks = EventKind::HISTORY2HISTORY_LATENCY \
+            | EventKind::SUBSCRIPTION_THROUGHPUT \
+            | EventKind::ACKNACK_COUNT \
+            | EventKind::NACKFRAG_COUNT;
 
     return readers_maks & mask;
 }
@@ -363,9 +371,9 @@ uint32_t StatisticsParticipantImpl::get_enabled_statistics_writers_mask()
 }
 
 void StatisticsParticipantImpl::on_network_statistics(
-        const fastrtps::rtps::GuidPrefix_t& source_participant,
-        const fastrtps::rtps::Locator_t& source_locator,
-        const fastrtps::rtps::Locator_t& reception_locator,
+        const fastdds::rtps::GuidPrefix_t& source_participant,
+        const fastdds::rtps::Locator_t& source_locator,
+        const fastdds::rtps::Locator_t& reception_locator,
         const rtps::StatisticsSubmessageData& data,
         uint64_t datagram_size)
 {
@@ -376,20 +384,20 @@ void StatisticsParticipantImpl::on_network_statistics(
 }
 
 void StatisticsParticipantImpl::process_network_timestamp(
-        const fastrtps::rtps::GuidPrefix_t& source_participant,
-        const fastrtps::rtps::Locator_t& reception_locator,
+        const fastdds::rtps::GuidPrefix_t& source_participant,
+        const fastdds::rtps::Locator_t& reception_locator,
         const rtps::StatisticsSubmessageData::TimeStamp& ts)
 {
-    using namespace eprosima::fastrtps::rtps;
+    using namespace eprosima::fastdds::rtps;
 
-    if (!are_statistics_writers_enabled(EventKindBits::NETWORK_LATENCY))
+    if (!are_statistics_writers_enabled(EventKind::NETWORK_LATENCY))
     {
         return;
     }
 
-    Time_t source_ts(ts.seconds, ts.fraction);
-    Time_t current_ts;
-    Time_t::now(current_ts);
+    eprosima::fastdds::rtps::Time_t source_ts(ts.seconds, ts.fraction);
+    eprosima::fastdds::rtps::Time_t current_ts;
+    eprosima::fastdds::rtps::Time_t::now(current_ts);
     auto latency = static_cast<float>((current_ts - source_ts).to_ns());
 
     Locator2LocatorData notification;
@@ -415,12 +423,12 @@ void StatisticsParticipantImpl::process_network_timestamp(
 }
 
 void StatisticsParticipantImpl::process_network_sequence(
-        const fastrtps::rtps::GuidPrefix_t& source_participant,
-        const fastrtps::rtps::Locator_t& reception_locator,
+        const fastdds::rtps::GuidPrefix_t& source_participant,
+        const fastdds::rtps::Locator_t& reception_locator,
         const rtps::StatisticsSubmessageData::Sequence& seq,
         uint64_t datagram_size)
 {
-    if (!are_statistics_writers_enabled(EventKindBits::RTPS_LOST))
+    if (!are_statistics_writers_enabled(EventKind::RTPS_LOST))
     {
         return;
     }
@@ -478,7 +486,7 @@ void StatisticsParticipantImpl::process_network_sequence(
         Data data;
         // note that the setter sets RTPS_SENT by default
         data.entity2locator_traffic(notification);
-        data._d(EventKindBits::RTPS_LOST);
+        data._d(EventKind::RTPS_LOST);
 
         for_each_listener([&data](const Key& listener)
                 {
@@ -488,13 +496,13 @@ void StatisticsParticipantImpl::process_network_sequence(
 }
 
 void StatisticsParticipantImpl::on_rtps_sent(
-        const fastrtps::rtps::Locator_t& loc,
+        const fastdds::rtps::Locator_t& loc,
         unsigned long payload_size)
 {
     using namespace std;
-    using eprosima::fastrtps::rtps::RTPSParticipantImpl;
+    using eprosima::fastdds::rtps::RTPSParticipantImpl;
 
-    if (!are_statistics_writers_enabled(EventKindBits::RTPS_SENT))
+    if (!are_statistics_writers_enabled(EventKind::RTPS_SENT))
     {
         return;
     }
@@ -525,12 +533,12 @@ void StatisticsParticipantImpl::on_rtps_sent(
 }
 
 void StatisticsParticipantImpl::on_entity_discovery(
-        const fastrtps::rtps::GUID_t& id,
+        const fastdds::rtps::GUID_t& id,
         const fastdds::dds::ParameterPropertyList_t& properties)
 {
-    using namespace fastrtps;
+    using namespace fastdds;
 
-    if (!are_statistics_writers_enabled(EventKindBits::DISCOVERED_ENTITY))
+    if (!are_statistics_writers_enabled(EventKind::DISCOVERED_ENTITY))
     {
         return;
     }
@@ -571,8 +579,8 @@ void StatisticsParticipantImpl::on_entity_discovery(
 
     {
         // generate callback timestamp
-        Time_t t;
-        Time_t::now(t);
+        eprosima::fastdds::rtps::Time_t t;
+        eprosima::fastdds::rtps::Time_t::now(t);
         notification.time(t.to_ns());
     }
 
@@ -589,7 +597,7 @@ void StatisticsParticipantImpl::on_entity_discovery(
 void StatisticsParticipantImpl::on_pdp_packet(
         const uint32_t packages)
 {
-    if (!are_statistics_writers_enabled(EventKindBits::PDP_PACKETS))
+    if (!are_statistics_writers_enabled(EventKind::PDP_PACKETS))
     {
         return;
     }
@@ -607,7 +615,7 @@ void StatisticsParticipantImpl::on_pdp_packet(
     Data data;
     // note that the setter sets RESENT_DATAS by default
     data.entity_count(notification);
-    data._d(EventKindBits::PDP_PACKETS);
+    data._d(EventKind::PDP_PACKETS);
 
     for_each_listener([&data](const std::shared_ptr<IListener>& listener)
             {
@@ -618,7 +626,7 @@ void StatisticsParticipantImpl::on_pdp_packet(
 void StatisticsParticipantImpl::on_edp_packet(
         const uint32_t packages)
 {
-    if (!are_statistics_writers_enabled(EventKindBits::EDP_PACKETS))
+    if (!are_statistics_writers_enabled(EventKind::EDP_PACKETS))
     {
         return;
     }
@@ -636,7 +644,7 @@ void StatisticsParticipantImpl::on_edp_packet(
     Data data;
     // note that the setter sets RESENT_DATAS by default
     data.entity_count(notification);
-    data._d(EventKindBits::EDP_PACKETS);
+    data._d(EventKind::EDP_PACKETS);
 
     for_each_listener([&data](const std::shared_ptr<IListener>& listener)
             {

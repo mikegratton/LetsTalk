@@ -16,9 +16,9 @@
 # Create tests                                                            #
 ###########################################################################
 
-find_package(PythonInterp 3 REQUIRED)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
-if(PYTHONINTERP_FOUND)
+if(Python3_Interpreter_FOUND)
 
     set(TESTS
         test_fast_discovery_closure
@@ -69,7 +69,7 @@ if(PYTHONINTERP_FOUND)
 
     # Calculate environment
     set(TEST_ENVIRONMENT
-        "PATH=$ENV{PATH};$<TARGET_FILE_DIR:fastcdr>;$<TARGET_FILE_DIR:fastrtps>")
+        "PATH=$ENV{PATH};$<TARGET_FILE_DIR:fastcdr>;$<TARGET_FILE_DIR:fastdds>")
 
     if(WIN32)
 
@@ -97,7 +97,7 @@ if(PYTHONINTERP_FOUND)
            add_test(
                     NAME system.tools.fastdds.${TEST}
                     COMMAND powershell "-File" ${PWS_LAUNCHER}
-                            ${PYTHON_EXECUTABLE}
+                            ${Python3_EXECUTABLE}
                             ${CMAKE_CURRENT_SOURCE_DIR}/tests.py
                             $<TARGET_FILE:fast-discovery-server>
                             ${TEST}
@@ -105,7 +105,7 @@ if(PYTHONINTERP_FOUND)
         else()
             add_test(
                     NAME system.tools.fastdds.${TEST}
-                    COMMAND ${PYTHON_EXECUTABLE}
+                    COMMAND ${Python3_EXECUTABLE}
                             ${CMAKE_CURRENT_SOURCE_DIR}/tests.py
                             $<TARGET_FILE:fast-discovery-server>
                             ${TEST}

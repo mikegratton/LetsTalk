@@ -22,13 +22,13 @@
 #include <memory>
 
 #include <fastdds/rtps/builtin/data/BuiltinEndpoints.hpp>
-#include <fastdds/rtps/reader/StatefulReader.h>
-#include <fastdds/rtps/writer/StatefulWriter.h>
 
 #include <rtps/builtin/BuiltinReader.hpp>
 #include <rtps/builtin/BuiltinWriter.hpp>
 #include <rtps/builtin/discovery/participant/PDPEndpoints.hpp>
 #include <rtps/history/ITopicPayloadPool.h>
+#include <rtps/reader/StatefulReader.hpp>
+#include <rtps/writer/StatefulWriter.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -41,47 +41,52 @@ struct DiscoveryServerPDPEndpoints : public PDPEndpoints
 {
     ~DiscoveryServerPDPEndpoints() override = default;
 
-    fastrtps::rtps::BuiltinEndpointSet_t builtin_endpoints() const override
+    BuiltinEndpointSet_t builtin_endpoints() const override
     {
         return DISC_BUILTIN_ENDPOINT_PARTICIPANT_ANNOUNCER | DISC_BUILTIN_ENDPOINT_PARTICIPANT_DETECTOR;
     }
 
+    const std::unique_ptr<ReaderListener>& main_listener() const override
+    {
+        return reader.listener_;
+    }
+
     bool enable_pdp_readers(
-            fastrtps::rtps::RTPSParticipantImpl* participant) override
+            RTPSParticipantImpl* participant) override
     {
         return participant->enableReader(reader.reader_);
     }
 
     void disable_pdp_readers(
-            fastrtps::rtps::RTPSParticipantImpl* participant) override
+            RTPSParticipantImpl* participant) override
     {
         participant->disableReader(reader.reader_);
     }
 
     void delete_pdp_endpoints(
-            fastrtps::rtps::RTPSParticipantImpl* participant) override
+            RTPSParticipantImpl* participant) override
     {
         participant->deleteUserEndpoint(writer.writer_->getGuid());
         participant->deleteUserEndpoint(reader.reader_->getGuid());
     }
 
     void remove_from_pdp_reader_history(
-            const fastrtps::rtps::InstanceHandle_t& remote_participant) override
+            const InstanceHandle_t& remote_participant) override
     {
         reader.remove_from_history(remote_participant);
     }
 
     void remove_from_pdp_reader_history(
-            fastrtps::rtps::CacheChange_t* change) override
+            CacheChange_t* change) override
     {
         reader.history_->remove_change(change);
     }
 
     //! Builtin Simple PDP reader
-    BuiltinReader<fastrtps::rtps::StatefulReader> reader;
+    BuiltinReader<StatefulReader> reader;
 
     //! Builtin Simple PDP writer
-    BuiltinWriter<fastrtps::rtps::StatefulWriter> writer;
+    BuiltinWriter<StatefulWriter> writer;
 };
 
 } // namespace rtps

@@ -12,26 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
+#include <cstdlib>
+#include <memory>
+#include <string>
+#include <thread>
 
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <gtest/gtest.h>
+
+#include "BlackboxTests.hpp"
 #include "RTPSAsSocketReader.hpp"
 #include "RTPSAsSocketWriter.hpp"
 #include "RTPSWithRegistrationReader.hpp"
 #include "RTPSWithRegistrationWriter.hpp"
 
-#include <gtest/gtest.h>
-
-#include <fastrtps/rtps/RTPSDomain.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-#include <fastdds/dds/log/Log.hpp>
-
-#include <thread>
-#include <memory>
-#include <cstdlib>
-#include <string>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 //#define cout "Use Log instead!"
 
@@ -65,9 +63,9 @@ public:
         // conditions related to network packets being lost should not use intraprocessr
         // nor datasharing. Setting it off here ensures that intraprocess and
         // datasharing are only tested when required.
-        LibrarySettingsAttributes att;
-        att.intraprocess_delivery = INTRAPROCESS_OFF;
-        eprosima::fastrtps::xmlparser::XMLProfileManager::library_settings(att);
+        eprosima::fastdds::LibrarySettings att;
+        att.intraprocess_delivery = eprosima::fastdds::INTRAPROCESS_OFF;
+        eprosima::fastdds::rtps::RTPSDomain::set_library_settings(att);
         //enable_datasharing = false;
 
         //Log::SetVerbosity(eprosima::fastdds::dds::Log::Info);
@@ -78,7 +76,7 @@ public:
     {
         //Log::Reset();
         eprosima::fastdds::dds::Log::KillThread();
-        eprosima::fastrtps::rtps::RTPSDomain::stopAll();
+        eprosima::fastdds::rtps::RTPSDomain::stopAll();
     }
 
 };

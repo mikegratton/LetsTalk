@@ -15,16 +15,16 @@
 /*!
  * @file SecurityPluginFactory.h
  */
-#ifndef _RTPS_SECURITY_SECURITYMANAGER_H_
-#define _RTPS_SECURITY_SECURITYMANAGER_H_
-
-#include <fastrtps/rtps/builtin/data/ReaderProxyData.h>
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
+#ifndef FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H
+#define FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H
 
 #include <gmock/gmock.h>
 
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -54,12 +54,33 @@ public:
                 const GUID_t& reader_guid,
                 const GUID_t& remote_participant,
                 const GUID_t& remote_writer_guid));
+
+    MOCK_METHOD2(check_guid_comes_from, bool(
+                const GUID_t& reader_guid,
+                const GUID_t& remote_participant));
+
+    MOCK_CONST_METHOD1(get_identity_token, bool(
+                IdentityToken** identity_token));
+
+    MOCK_CONST_METHOD1(return_identity_token, bool(
+                IdentityToken* identity_token));
+
+    MOCK_CONST_METHOD1(get_permissions_token, bool(
+                PermissionsToken** permissions_token));
+
+    MOCK_CONST_METHOD1(return_permissions_token, bool(
+                PermissionsToken* permissions_token));
+
+    MOCK_METHOD1(remove_participant, void(const ParticipantProxyData& participant_data));
+
+    MOCK_CONST_METHOD0(builtin_endpoints, fastdds::rtps::BuiltinEndpointSet_t());
+
     // *INDENT-ON*
 };
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
-#endif // _RTPS_SECURITY_SECURITYMANAGER_H_
+#endif // FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H

@@ -19,15 +19,15 @@
 #ifndef _RTPS_COMMON_CHANGECOMPARISON_HPP
 #define _RTPS_COMMON_CHANGECOMPARISON_HPP
 
-#include <fastdds/rtps/common/CacheChange.h>
+#include <fastdds/rtps/common/CacheChange.hpp>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
 inline bool history_order_cmp(
-        const eprosima::fastrtps::rtps::CacheChange_t* lhs,
-        const eprosima::fastrtps::rtps::CacheChange_t* rhs)
+        const CacheChange_t* lhs,
+        const CacheChange_t* rhs)
 {
     return lhs->writerGUID == rhs->writerGUID ?
            lhs->sequenceNumber < rhs->sequenceNumber :

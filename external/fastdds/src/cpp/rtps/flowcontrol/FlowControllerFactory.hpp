@@ -2,7 +2,7 @@
 #define _RTPS_FLOWCONTROL_FLOWCONTROLLERFACTORY_HPP_
 
 #include <fastdds/rtps/flowcontrol/FlowControllerDescriptor.hpp>
-#include <fastdds/rtps/attributes/WriterAttributes.h>
+#include <fastdds/rtps/attributes/WriterAttributes.hpp>
 #include "FlowController.hpp"
 
 #include <string>
@@ -10,16 +10,17 @@
 
 namespace eprosima {
 
-namespace fastrtps {
-namespace rtps {
-class RTPSParticipantImpl;
-} // namespace rtps
-} // namespace fastrtps
-
 namespace fastdds {
 namespace rtps {
-
+class RTPSParticipantImpl;
 class FlowController;
+
+const char* const pure_sync_flow_controller_name = "PureSyncFlowController";
+const char* const sync_flow_controller_name = "SyncFlowController";
+const char* const async_flow_controller_name = "AsyncFlowController";
+#ifdef FASTDDS_STATISTICS
+const char* const async_statistics_flow_controller_name = "AsyncStatisticsFlowController";
+#endif // ifndef FASTDDS_STATISTICS
 
 /*!
  * Factory of flow controllers.
@@ -38,7 +39,7 @@ public:
      * @param participant Pointer to the participant owner of this object.
      */
     void init(
-            fastrtps::rtps::RTPSParticipantImpl* participant);
+            fastdds::rtps::RTPSParticipantImpl* participant);
 
     /*!
      * Registers a new flow controller.
@@ -57,14 +58,17 @@ public:
      */
     FlowController* retrieve_flow_controller(
             const std::string& flow_controller_name,
-            const fastrtps::rtps::WriterAttributes& writer_attributes);
+            const fastdds::rtps::WriterAttributes& writer_attributes);
 
 private:
 
-    fastrtps::rtps::RTPSParticipantImpl* participant_ = nullptr;
+    fastdds::rtps::RTPSParticipantImpl* participant_ = nullptr;
 
     //! Stores the created flow controllers.
     std::map<std::string, std::unique_ptr<FlowController>> flow_controllers_;
+
+    //! Counter used for thread identification
+    uint32_t async_controller_index_ = 0;
 
 };
 

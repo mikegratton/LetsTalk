@@ -14,3 +14,5 @@ file(GLOB source CONFIGURE_DEPENDS "*.cpp")
 add_executable(ltTest ${source})
 
 target_link_libraries(ltTest PUBLIC LetsTalk testIdl)
+
+add_test( NAME LetsTalkUnitTest COMMAND $<TARGET_FILE:ltTest> )

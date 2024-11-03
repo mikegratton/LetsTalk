@@ -25,6 +25,7 @@ namespace fastdds {
 namespace dds {
 
 const DataReaderQos DATAREADER_QOS_DEFAULT;
+const DataReaderQos DATAREADER_QOS_USE_TOPIC_QOS;
 
 ReaderQos DataReaderQos::get_readerqos(
         const SubscriberQos& sqos) const
@@ -45,9 +46,9 @@ ReaderQos DataReaderQos::get_readerqos(
     qos.m_lifespan = lifespan();
     //qos.m_topicData --> TODO: Fill with TopicQos info
     qos.m_durabilityService = durability_service();
-    qos.m_disablePositiveACKs = reliable_reader_qos().disable_positive_ACKs;
-    qos.type_consistency = type_consistency().type_consistency;
-    qos.representation = type_consistency().representation;
+    qos.m_disablePositiveACKs = reliable_reader_qos().disable_positive_acks;
+    qos.type_consistency = type_consistency();
+    qos.representation = representation();
     qos.data_sharing = data_sharing();
 
     if (qos.data_sharing.kind() != OFF &&

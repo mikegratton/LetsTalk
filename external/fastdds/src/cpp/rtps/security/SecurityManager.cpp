@@ -20,33 +20,34 @@
 
 #include <cassert>
 #include <chrono>
-#include <thread>
 #include <mutex>
+#include <thread>
 
 #include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/attributes/HistoryAttributes.h>
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
-#include <fastdds/rtps/builtin/discovery/endpoint/EDP.h>
-#include <fastdds/rtps/builtin/discovery/participant/PDP.h>
-#include <fastdds/rtps/history/ReaderHistory.h>
-#include <fastdds/rtps/history/WriterHistory.h>
-#include <fastdds/rtps/messages/CDRMessage.h>
-#include <fastdds/rtps/participant/RTPSParticipantListener.h>
-#include <fastdds/rtps/reader/StatefulReader.h>
-#include <fastdds/rtps/reader/StatelessReader.h>
-#include <fastdds/rtps/security/accesscontrol/AccessControl.h>
-#include <fastdds/rtps/security/accesscontrol/EndpointSecurityAttributes.h>
-#include <fastdds/rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
-#include <fastdds/rtps/security/accesscontrol/SecurityMaskUtilities.h>
-#include <fastdds/rtps/security/authentication/Authentication.h>
-#include <fastdds/rtps/writer/StatefulWriter.h>
-#include <fastdds/rtps/writer/StatelessWriter.h>
+#include <fastdds/rtps/attributes/EndpointSecurityAttributes.hpp>
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
+#include <fastdds/rtps/participant/RTPSParticipantListener.hpp>
 
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/builtin/discovery/endpoint/EDP.h>
+#include <rtps/builtin/discovery/participant/PDP.h>
+#include <rtps/messages/CDRMessage.hpp>
 #include <rtps/history/TopicPayloadPoolRegistry.hpp>
-#include <rtps/network/NetworkFactory.h>
+#include <rtps/network/NetworkFactory.hpp>
 #include <rtps/participant/RTPSParticipantImpl.h>
+#include <rtps/reader/StatefulReader.hpp>
+#include <rtps/reader/StatelessReader.hpp>
+#include <rtps/security/accesscontrol/AccessControl.h>
+#include <rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
+#include <rtps/security/accesscontrol/SecurityMaskUtilities.h>
+#include <rtps/security/authentication/Authentication.h>
+#include <rtps/security/exceptions/SecurityException.h>
+#include <rtps/writer/StatefulWriter.hpp>
+#include <rtps/writer/StatelessWriter.hpp>
 #include <security/OpenSSLInit.hpp>
 
 #define BUILTIN_ENDPOINT_PARTICIPANT_MESSAGE_SECURE_WRITER (1 << 20)
@@ -63,9 +64,11 @@
 
 // TODO(Ricardo) Add event because stateless messages can be not received.
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps::rtps::security;
+namespace eprosima {
+namespace fastdds {
+namespace rtps {
+
+using namespace security;
 
 inline bool usleep_bool()
 {
@@ -73,37 +76,34 @@ inline bool usleep_bool()
     return true;
 }
 
+static CacheChange_t* create_change_for_message(
+        const ParticipantGenericMessage& message,
+        WriterHistory* history)
+{
+    uint32_t cdr_size = static_cast<uint32_t>(ParticipantGenericMessageHelper::serialized_size(message));
+    cdr_size += 4; // Encapsulation
+    return history->create_change(cdr_size, ALIVE, c_InstanceHandle_Unknown);
+}
+
 SecurityManager::SecurityManager(
-        RTPSParticipantImpl* participant)
+        RTPSParticipantImpl* participant,
+        ISecurityPluginFactory& plugin_factory)
     : participant_stateless_message_listener_(*this)
     , participant_volatile_message_secure_listener_(*this)
     , participant_(participant)
-    , participant_stateless_message_writer_(nullptr)
-    , participant_stateless_message_writer_history_(nullptr)
-    , participant_stateless_message_reader_(nullptr)
-    , participant_stateless_message_reader_history_(nullptr)
-    , participant_volatile_message_secure_writer_(nullptr)
-    , participant_volatile_message_secure_writer_history_(nullptr)
-    , participant_volatile_message_secure_reader_(nullptr)
-    , participant_volatile_message_secure_reader_history_(nullptr)
-    , logging_plugin_(nullptr)
-    , authentication_plugin_(nullptr)
-    , access_plugin_(nullptr)
-    , crypto_plugin_(nullptr)
+    , factory_(plugin_factory)
     , domain_id_(0)
-    , local_identity_handle_(nullptr)
-    , local_permissions_handle_(nullptr)
     , auth_last_sequence_number_(1)
     , crypto_last_sequence_number_(1)
     , temp_reader_proxies_({
-    participant->getRTPSParticipantAttributes().allocation.locators.max_unicast_locators,
-    participant->getRTPSParticipantAttributes().allocation.locators.max_multicast_locators,
-    participant->getRTPSParticipantAttributes().allocation.data_limits,
-    participant->getRTPSParticipantAttributes().allocation.content_filter})
+                participant->get_attributes().allocation.locators.max_unicast_locators,
+                participant->get_attributes().allocation.locators.max_multicast_locators,
+                participant->get_attributes().allocation.data_limits,
+                participant->get_attributes().allocation.content_filter})
     , temp_writer_proxies_({
-    participant->getRTPSParticipantAttributes().allocation.locators.max_unicast_locators,
-    participant->getRTPSParticipantAttributes().allocation.locators.max_multicast_locators,
-    participant->getRTPSParticipantAttributes().allocation.data_limits})
+                participant->get_attributes().allocation.locators.max_unicast_locators,
+                participant->get_attributes().allocation.locators.max_multicast_locators,
+                participant->get_attributes().allocation.data_limits})
 {
     assert(participant != nullptr);
     static OpenSSLInit openssl_init;
@@ -122,8 +122,9 @@ bool SecurityManager::init(
     {
         SecurityException exception;
         domain_id_ = participant_->get_domain_id();
+        auto part_attributes = participant_->get_attributes();
         const PropertyPolicy log_properties = PropertyPolicyHelper::get_properties_with_prefix(
-            participant_->getRTPSParticipantAttributes().properties,
+            part_attributes.properties,
             "dds.sec.log.builtin.DDS_LogTopic.");
 
         // length(log_properties) == 0 considered as logging disable.
@@ -210,6 +211,17 @@ bool SecurityManager::init(
 
         if (authentication_plugin_ != nullptr)
         {
+            // retrieve authentication properties, if any
+            const PropertyPolicy auth_handshake_properties = PropertyPolicyHelper::get_properties_with_prefix(
+                part_attributes.properties,
+                "dds.sec.auth.builtin.PKI-DH.");
+
+            // if auth_handshake_properties is empty, the default values are used
+            if (PropertyPolicyHelper::length(auth_handshake_properties) > 0)
+            {
+                auth_handshake_props_.parse_from_property_policy(auth_handshake_properties);
+            }
+
             authentication_plugin_->set_logger(logging_plugin_, exception);
 
             // Validate local participant
@@ -221,7 +233,7 @@ bool SecurityManager::init(
                 ret = authentication_plugin_->validate_local_identity(&local_identity_handle_,
                                 adjusted_participant_key,
                                 domain_id_,
-                                participant_->getRTPSParticipantAttributes(),
+                                part_attributes,
                                 participant_->getGuid(),
                                 exception);
             } while (ret == VALIDATION_PENDING_RETRY && usleep_bool());
@@ -243,7 +255,7 @@ bool SecurityManager::init(
                     local_permissions_handle_ = access_plugin_->validate_local_permissions(
                         *authentication_plugin_, *local_identity_handle_,
                         domain_id_,
-                        participant_->getRTPSParticipantAttributes(),
+                        part_attributes,
                         exception);
 
                     if (local_permissions_handle_ != nullptr)
@@ -252,7 +264,7 @@ bool SecurityManager::init(
                         {
                             if (access_plugin_->check_create_participant(*local_permissions_handle_,
                                     domain_id_,
-                                    participant_->getRTPSParticipantAttributes(), exception))
+                                    part_attributes, exception))
                             {
                                 // Set credentials.
                                 PermissionsCredentialToken* token = nullptr;
@@ -601,6 +613,8 @@ bool SecurityManager::discovered_participant(
     // Create or find information
     bool undiscovered = false;
     DiscoveredParticipantInfo::AuthUniquePtr remote_participant_info;
+    // Use the information from the collection
+    const ParticipantProxyData* remote_participant_data = nullptr;
     {
         std::lock_guard<shared_mutex> _(mutex_);
 
@@ -614,28 +628,29 @@ bool SecurityManager::discovered_participant(
 
         undiscovered = map_ret.second;
         remote_participant_info = map_ret.first->second->get_auth();
+        remote_participant_data = &map_ret.first->second->participant_data();
     }
 
     bool notify_part_authorized = false;
-    if (undiscovered && remote_participant_info)
+    if (undiscovered && remote_participant_info && remote_participant_data != nullptr)
     {
         // Configure the timed event but do not start it
-        const GUID_t guid = participant_data.m_guid;
+        const GUID_t guid = remote_participant_data->m_guid;
         remote_participant_info->event_.reset(new TimedEvent(participant_->getEventResource(),
                 [&, guid]() -> bool
                 {
                     resend_handshake_message_token(guid);
                     return true;
                 },
-                DiscoveredParticipantInfo::INITIAL_RESEND_HANDSHAKE_MILLISECS)); // TODO (Ricardo) Configurable
+                static_cast<double>(auth_handshake_props_.initial_handshake_resend_period_ms_)));
 
         IdentityHandle* remote_identity_handle = nullptr;
 
         // Validate remote participant.
         ValidationResult_t validation_ret = authentication_plugin_->validate_remote_identity(&remote_identity_handle,
                         *local_identity_handle_,
-                        participant_data.identity_token_,
-                        participant_data.m_guid, exception);
+                        remote_participant_data->identity_token_,
+                        remote_participant_data->m_guid, exception);
 
         switch (validation_ret)
         {
@@ -655,21 +670,21 @@ bool SecurityManager::discovered_participant(
             // TODO(Ricardo) Send event.
             default:
 
-                on_validation_failed(participant_data, exception);
+                on_validation_failed(*remote_participant_data, exception);
 
                 std::lock_guard<shared_mutex> _(mutex_);
 
                 // Remove created element, because authentication failed.
-                discovered_participants_.erase(participant_data.m_guid);
+                discovered_participants_.erase(remote_participant_data->m_guid);
 
                 //TODO(Ricardo) cryptograhy registration in AUTHENTICAITON_OK
                 return false;
         }
 
-        EPROSIMA_LOG_INFO(SECURITY, "Discovered participant " << participant_data.m_guid);
+        EPROSIMA_LOG_INFO(SECURITY, "Discovered participant " << remote_participant_data->m_guid);
 
         // Match entities
-        match_builtin_endpoints(participant_data);
+        match_builtin_endpoints(*remote_participant_data);
 
         // Store new remote handle.
         remote_participant_info->auth_status_ = auth_status;
@@ -681,7 +696,7 @@ bool SecurityManager::discovered_participant(
         {
             //TODO(Ricardo) Shared secret on this case?
             std::shared_ptr<SecretHandle> ss;
-            notify_part_authorized = participant_authorized(participant_data, remote_participant_info, ss);
+            notify_part_authorized = participant_authorized(*remote_participant_data, remote_participant_info, ss);
         }
     }
     else
@@ -692,6 +707,11 @@ bool SecurityManager::discovered_participant(
         {
             return false;
         }
+
+        if (remote_participant_info->auth_status_ == AUTHENTICATION_FAILED)
+        {
+            remote_participant_info->auth_status_ = AUTHENTICATION_REQUEST_NOT_SEND;
+        }
     }
 
     bool returnedValue = true;
@@ -699,15 +719,15 @@ bool SecurityManager::discovered_participant(
     if (remote_participant_info->auth_status_ == AUTHENTICATION_REQUEST_NOT_SEND)
     {
         // Maybe send request.
-        returnedValue = on_process_handshake(participant_data, remote_participant_info,
+        returnedValue = on_process_handshake(*remote_participant_data, remote_participant_info,
                         MessageIdentity(), HandshakeMessageToken(), notify_part_authorized);
     }
 
-    restore_discovered_participant_info(participant_data.m_guid, remote_participant_info);
+    restore_discovered_participant_info(remote_participant_data->m_guid, remote_participant_info);
 
     if (notify_part_authorized)
     {
-        notify_participant_authorized(participant_data);
+        notify_participant_authorized(*remote_participant_data);
     }
 
     return returnedValue;
@@ -858,6 +878,7 @@ bool SecurityManager::on_process_handshake(
 
     if (ret == VALIDATION_FAILED)
     {
+        remote_participant_info->auth_status_ = AUTHENTICATION_FAILED;
         on_validation_failed(participant_data, exception);
         return false;
     }
@@ -888,12 +909,9 @@ bool SecurityManager::on_process_handshake(
         ParticipantGenericMessage message = generate_authentication_message(std::move(message_identity),
                         participant_data.m_guid, *handshake_message);
 
-        CacheChange_t* change = participant_stateless_message_writer_->new_change([&message]() -> uint32_t
-                        {
-                            return static_cast<uint32_t>(ParticipantGenericMessageHelper::serialized_size(message)
-                            + 4 /*encapsulation*/);
-                        }
-                        , ALIVE, c_InstanceHandle_Unknown);
+        CacheChange_t* change = create_change_for_message(
+            message,
+            participant_stateless_message_writer_history_);
 
         if (change != nullptr)
         {
@@ -923,16 +941,18 @@ bool SecurityManager::on_process_handshake(
                     handshake_message_send = true;
                     expected_sequence_number = message.message_identity().sequence_number();
                     remote_participant_info->change_sequence_number_ = change->sequenceNumber;
+                    remote_participant_info->handshake_requests_sent_++;
                 }
                 else
                 {
                     EPROSIMA_LOG_ERROR(SECURITY, "WriterHistory cannot add the CacheChange_t");
+                    participant_stateless_message_writer_history_->release_change(change);
                 }
             }
             else
             {
-                //TODO (Ricardo) Return change.
                 EPROSIMA_LOG_ERROR(SECURITY, "Cannot serialize ParticipantGenericMessage");
+                participant_stateless_message_writer_history_->release_change(change);
             }
         }
         else
@@ -987,7 +1007,8 @@ bool SecurityManager::on_process_handshake(
                     remote_participant_info->expected_sequence_number_ = expected_sequence_number;
                     // Avoid DoS attack by exponentially increasing event interval
                     auto time_ms = remote_participant_info->event_->getIntervalMilliSec();
-                    remote_participant_info->event_->update_interval_millisec(time_ms * 2);
+                    remote_participant_info->event_->update_interval_millisec(
+                        time_ms * auth_handshake_props_.handshake_resend_period_gain_);
                     remote_participant_info->event_->restart_timer();
                 }
 
@@ -1083,9 +1104,11 @@ void SecurityManager::delete_participant_stateless_message_pool()
 
 bool SecurityManager::create_participant_stateless_message_writer()
 {
-    participant_stateless_message_writer_history_ = new WriterHistory(participant_stateless_message_writer_hattr_);
+    participant_stateless_message_writer_history_ = new WriterHistory(
+        participant_stateless_message_writer_hattr_,
+        participant_stateless_message_pool_);
 
-    const RTPSParticipantAttributes& pattr = participant_->getRTPSParticipantAttributes();
+    const RTPSParticipantAttributes& pattr = participant_->get_attributes();
 
     WriterAttributes watt;
     watt.endpoint.external_unicast_locators = pattr.builtin.metatraffic_external_unicast_locators;
@@ -1094,15 +1117,15 @@ bool SecurityManager::create_participant_stateless_message_writer()
     watt.endpoint.reliabilityKind = BEST_EFFORT;
     watt.endpoint.topicKind = NO_KEY;
     watt.matched_readers_allocation = pattr.allocation.participants;
+    watt.separate_sending = true;
 
     RTPSWriter* wout = nullptr;
-    if (participant_->createWriter(&wout, watt, participant_stateless_message_pool_,
+    if (participant_->createWriter(&wout, watt,
             participant_stateless_message_writer_history_, nullptr,
             participant_stateless_message_writer_entity_id, true))
     {
         participant_->set_endpoint_rtps_protection_supports(wout, false);
         participant_stateless_message_writer_ = dynamic_cast<StatelessWriter*>(wout);
-        participant_stateless_message_writer_->set_separate_sending(true);
         auth_source_guid = participant_stateless_message_writer_->getGuid();
 
         return true;
@@ -1134,7 +1157,7 @@ bool SecurityManager::create_participant_stateless_message_reader()
 {
     participant_stateless_message_reader_history_ = new ReaderHistory(participant_stateless_message_reader_hattr_);
 
-    const RTPSParticipantAttributes& pattr = participant_->getRTPSParticipantAttributes();
+    const RTPSParticipantAttributes& pattr = participant_->get_attributes();
 
     ReaderAttributes ratt;
     ratt.endpoint.topicKind = NO_KEY;
@@ -1232,9 +1255,9 @@ void SecurityManager::delete_participant_volatile_message_secure_pool()
 bool SecurityManager::create_participant_volatile_message_secure_writer()
 {
     participant_volatile_message_secure_writer_history_ =
-            new WriterHistory(participant_volatile_message_secure_hattr_);
+            new WriterHistory(participant_volatile_message_secure_hattr_, participant_volatile_message_secure_pool_);
 
-    const RTPSParticipantAttributes& pattr = participant_->getRTPSParticipantAttributes();
+    const RTPSParticipantAttributes& pattr = participant_->get_attributes();
 
     WriterAttributes watt;
     watt.endpoint.endpointKind = WRITER;
@@ -1249,15 +1272,15 @@ bool SecurityManager::create_participant_volatile_message_secure_writer()
     watt.endpoint.security_attributes().plugin_endpoint_attributes =
             PLUGIN_ENDPOINT_SECURITY_ATTRIBUTES_FLAG_IS_SUBMESSAGE_ENCRYPTED;
     watt.matched_readers_allocation = pattr.allocation.participants;
+    watt.separate_sending = true;
 
     RTPSWriter* wout = nullptr;
-    if (participant_->createWriter(&wout, watt, participant_volatile_message_secure_pool_,
+    if (participant_->createWriter(&wout, watt,
             participant_volatile_message_secure_writer_history_,
-            nullptr, participant_volatile_message_secure_writer_entity_id, true))
+            this, participant_volatile_message_secure_writer_entity_id, true))
     {
         participant_->set_endpoint_rtps_protection_supports(wout, false);
         participant_volatile_message_secure_writer_ = dynamic_cast<StatefulWriter*>(wout);
-        participant_volatile_message_secure_writer_->set_separate_sending(true);
         return true;
     }
 
@@ -1288,7 +1311,7 @@ bool SecurityManager::create_participant_volatile_message_secure_reader()
     participant_volatile_message_secure_reader_history_ =
             new ReaderHistory(participant_volatile_message_secure_hattr_);
 
-    const RTPSParticipantAttributes& pattr = participant_->getRTPSParticipantAttributes();
+    const RTPSParticipantAttributes& pattr = participant_->get_attributes();
 
     ReaderAttributes ratt;
     ratt.endpoint.topicKind = NO_KEY;
@@ -1529,6 +1552,7 @@ void SecurityManager::process_participant_stateless_message(
                             if (participant_stateless_message_writer_history_->add_change(p_change))
                             {
                                 remote_participant_info->change_sequence_number_ = p_change->sequenceNumber;
+                                remote_participant_info->handshake_requests_sent_++;
                             }
                             //TODO (Ricardo) What to do if not added?
                         }
@@ -1601,6 +1625,7 @@ void SecurityManager::process_participant_stateless_message(
                         if (participant_stateless_message_writer_history_->add_change(p_change))
                         {
                             remote_participant_info->change_sequence_number_ = p_change->sequenceNumber;
+                            remote_participant_info->handshake_requests_sent_++;
                         }
                         //TODO (Ricardo) What to do if not added?
                     }
@@ -1907,24 +1932,24 @@ void SecurityManager::process_participant_volatile_message_secure(
     }
 }
 
-void SecurityManager::ParticipantStatelessMessageListener::onNewCacheChangeAdded(
+void SecurityManager::ParticipantStatelessMessageListener::on_new_cache_change_added(
         RTPSReader* reader,
         const CacheChange_t* const change)
 {
     manager_.process_participant_stateless_message(change);
 
-    ReaderHistory* history = reader->getHistory();
+    ReaderHistory* history = reader->get_history();
     assert(history);
     history->remove_change(const_cast<CacheChange_t*>(change));
 }
 
-void SecurityManager::ParticipantVolatileMessageListener::onNewCacheChangeAdded(
+void SecurityManager::ParticipantVolatileMessageListener::on_new_cache_change_added(
         RTPSReader* reader,
         const CacheChange_t* const change)
 {
     manager_.process_participant_volatile_message_secure(change);
 
-    ReaderHistory* history = reader->getHistory();
+    ReaderHistory* history = reader->get_history();
     assert(history);
     history->remove_change(const_cast<CacheChange_t*>(change));
 }
@@ -2084,9 +2109,10 @@ void SecurityManager::match_builtin_endpoints(
         temp_stateless_writer_proxy_data_->persistence_guid(temp_stateless_writer_proxy_data_->guid());
         temp_stateless_writer_proxy_data_->set_remote_locators(participant_data.metatraffic_locators, network, false);
         temp_stateless_writer_proxy_data_->topicKind(NO_KEY);
-        temp_stateless_writer_proxy_data_->m_qos.m_reliability.kind = BEST_EFFORT_RELIABILITY_QOS;
-        temp_stateless_writer_proxy_data_->m_qos.m_durability.kind = VOLATILE_DURABILITY_QOS;
-        participant_stateless_message_reader_->matched_writer_add(*temp_stateless_writer_proxy_data_);
+        temp_stateless_writer_proxy_data_->m_qos.m_reliability.kind =
+                eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS;
+        temp_stateless_writer_proxy_data_->m_qos.m_durability.kind = eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS;
+        participant_stateless_message_reader_->matched_writer_add_edp(*temp_stateless_writer_proxy_data_);
     }
 
     if (participant_stateless_message_writer_ != nullptr &&
@@ -2100,9 +2126,10 @@ void SecurityManager::match_builtin_endpoints(
         temp_stateless_reader_proxy_data_->guid().entityId = participant_stateless_message_reader_entity_id;
         temp_stateless_reader_proxy_data_->set_remote_locators(participant_data.metatraffic_locators, network, false);
         temp_stateless_reader_proxy_data_->topicKind(NO_KEY);
-        temp_stateless_reader_proxy_data_->m_qos.m_reliability.kind = BEST_EFFORT_RELIABILITY_QOS;
-        temp_stateless_reader_proxy_data_->m_qos.m_durability.kind = VOLATILE_DURABILITY_QOS;
-        participant_stateless_message_writer_->matched_reader_add(*temp_stateless_reader_proxy_data_);
+        temp_stateless_reader_proxy_data_->m_qos.m_reliability.kind =
+                eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS;
+        temp_stateless_reader_proxy_data_->m_qos.m_durability.kind = eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS;
+        participant_stateless_message_writer_->matched_reader_add_edp(*temp_stateless_reader_proxy_data_);
     }
 }
 
@@ -2123,9 +2150,9 @@ void SecurityManager::match_builtin_key_exchange_endpoints(
         temp_volatile_writer_proxy_data_->persistence_guid(temp_volatile_writer_proxy_data_->guid());
         temp_volatile_writer_proxy_data_->set_remote_locators(participant_data.metatraffic_locators, network, false);
         temp_volatile_writer_proxy_data_->topicKind(NO_KEY);
-        temp_volatile_writer_proxy_data_->m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
-        temp_volatile_writer_proxy_data_->m_qos.m_durability.kind = VOLATILE_DURABILITY_QOS;
-        participant_volatile_message_secure_reader_->matched_writer_add(*temp_volatile_writer_proxy_data_);
+        temp_volatile_writer_proxy_data_->m_qos.m_reliability.kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+        temp_volatile_writer_proxy_data_->m_qos.m_durability.kind = eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS;
+        participant_volatile_message_secure_reader_->matched_writer_add_edp(*temp_volatile_writer_proxy_data_);
     }
 
     if (participant_volatile_message_secure_writer_ != nullptr &&
@@ -2139,9 +2166,9 @@ void SecurityManager::match_builtin_key_exchange_endpoints(
         temp_volatile_reader_proxy_data_->guid().entityId = participant_volatile_message_secure_reader_entity_id;
         temp_volatile_reader_proxy_data_->set_remote_locators(participant_data.metatraffic_locators, network, false);
         temp_volatile_reader_proxy_data_->topicKind(NO_KEY);
-        temp_volatile_reader_proxy_data_->m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
-        temp_volatile_reader_proxy_data_->m_qos.m_durability.kind = VOLATILE_DURABILITY_QOS;
-        participant_volatile_message_secure_writer_->matched_reader_add(*temp_volatile_reader_proxy_data_);
+        temp_volatile_reader_proxy_data_->m_qos.m_reliability.kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+        temp_volatile_reader_proxy_data_->m_qos.m_durability.kind = eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS;
+        participant_volatile_message_secure_writer_->matched_reader_add_edp(*temp_volatile_reader_proxy_data_);
     }
 }
 
@@ -2195,13 +2222,9 @@ void SecurityManager::exchange_participant_crypto(
         ParticipantGenericMessage message = generate_participant_crypto_token_message(remote_participant_guid,
                         local_participant_crypto_tokens);
 
-        CacheChange_t* change = participant_volatile_message_secure_writer_->new_change(
-            [&message]() -> uint32_t
-            {
-                return static_cast<uint32_t>(ParticipantGenericMessageHelper::serialized_size(message)
-                + 4 /*encapsulation*/);
-            }
-            , ALIVE, c_InstanceHandle_Unknown);
+        CacheChange_t* change = create_change_for_message(
+            message,
+            participant_volatile_message_secure_writer_history_);
 
         if (change != nullptr)
         {
@@ -2226,13 +2249,13 @@ void SecurityManager::exchange_participant_crypto(
                 // Send
                 if (!participant_volatile_message_secure_writer_history_->add_change(change))
                 {
-                    participant_volatile_message_secure_writer_->release_change(change);
+                    participant_volatile_message_secure_writer_history_->release_change(change);
                     EPROSIMA_LOG_ERROR(SECURITY, "WriterHistory cannot add the CacheChange_t");
                 }
             }
             else
             {
-                participant_volatile_message_secure_writer_->release_change(change);
+                participant_volatile_message_secure_writer_history_->release_change(change);
                 EPROSIMA_LOG_ERROR(SECURITY, "Cannot serialize ParticipantGenericMessage");
             }
         }
@@ -3014,14 +3037,9 @@ bool SecurityManager::discovered_reader(
                                         std::make_tuple(remote_reader_data, remote_reader_handle));
                                 lock.unlock();
 
-                                CacheChange_t* change = participant_volatile_message_secure_writer_->new_change(
-                                    [&message]() -> uint32_t
-                                    {
-                                        return static_cast<uint32_t>(
-                                            ParticipantGenericMessageHelper::serialized_size(message)
-                                            + 4 /*encapsulation*/);
-                                    }
-                                    , ALIVE, c_InstanceHandle_Unknown);
+                                CacheChange_t* change = create_change_for_message(
+                                    message,
+                                    participant_volatile_message_secure_writer_history_);
 
                                 if (change != nullptr)
                                 {
@@ -3052,13 +3070,13 @@ bool SecurityManager::discovered_reader(
                                         }
                                         else
                                         {
-                                            participant_volatile_message_secure_writer_->release_change(change);
+                                            participant_volatile_message_secure_writer_history_->release_change(change);
                                             EPROSIMA_LOG_ERROR(SECURITY, "WriterHistory cannot add the CacheChange_t");
                                         }
                                     }
                                     else
                                     {
-                                        participant_volatile_message_secure_writer_->release_change(change);
+                                        participant_volatile_message_secure_writer_history_->release_change(change);
                                         EPROSIMA_LOG_ERROR(SECURITY, "Cannot serialize ParticipantGenericMessage");
                                     }
                                 }
@@ -3378,14 +3396,9 @@ bool SecurityManager::discovered_writer(
                                         std::make_tuple(remote_writer_data, remote_writer_handle));
                                 lock.unlock();
 
-                                CacheChange_t* change = participant_volatile_message_secure_writer_->new_change(
-                                    [&message]() -> uint32_t
-                                    {
-                                        return static_cast<uint32_t>(
-                                            ParticipantGenericMessageHelper::serialized_size(message)
-                                            + 4 /*encapsulation*/);
-                                    }
-                                    , ALIVE, c_InstanceHandle_Unknown);
+                                CacheChange_t* change = create_change_for_message(
+                                    message,
+                                    participant_volatile_message_secure_writer_history_);
 
                                 if (change != nullptr)
                                 {
@@ -3416,13 +3429,13 @@ bool SecurityManager::discovered_writer(
                                         }
                                         else
                                         {
-                                            participant_volatile_message_secure_writer_->release_change(change);
+                                            participant_volatile_message_secure_writer_history_->release_change(change);
                                             EPROSIMA_LOG_ERROR(SECURITY, "WriterHistory cannot add the CacheChange_t");
                                         }
                                     }
                                     else
                                     {
-                                        participant_volatile_message_secure_writer_->release_change(change);
+                                        participant_volatile_message_secure_writer_history_->release_change(change);
                                         EPROSIMA_LOG_ERROR(SECURITY, "Cannot serialize ParticipantGenericMessage");
                                     }
                                 }
@@ -3693,7 +3706,7 @@ int SecurityManager::decode_rtps_submessage(
     auto sentry = is_security_manager_initialized();
     if (!sentry)
     {
-        return false;
+        return -1;
     }
 
     if (message.buffer[message.pos] != SEC_PREFIX)
@@ -3703,7 +3716,7 @@ int SecurityManager::decode_rtps_submessage(
 
     if (crypto_plugin_ == nullptr)
     {
-        return 0;
+        return -1;
     }
 
     CDRMessage::initCDRMsg(&out_message);
@@ -4056,13 +4069,13 @@ bool SecurityManager::participant_authorized(
 
         for (auto& remote_reader : temp_readers)
         {
-            participant_->pdp()->getEDP()->pairing_reader_proxy_with_local_writer(remote_reader.second,
+            participant_->pdp()->get_edp()->pairing_reader_proxy_with_local_writer(remote_reader.second,
                     participant_data.m_guid, remote_reader.first);
         }
 
         for (auto& remote_writer : temp_writers)
         {
-            participant_->pdp()->getEDP()->pairing_writer_proxy_with_local_reader(remote_writer.second,
+            participant_->pdp()->get_edp()->pairing_writer_proxy_with_local_reader(remote_writer.second,
                     participant_data.m_guid, remote_writer.first);
         }
 
@@ -4190,11 +4203,15 @@ void SecurityManager::resend_handshake_message_token(
 
         if (remote_participant_info)
         {
-            if (remote_participant_info->handshake_requests_sent_ >= DiscoveredParticipantInfo::MAX_HANDSHAKE_REQUESTS)
+            if (remote_participant_info->handshake_requests_sent_ >= auth_handshake_props_.max_handshake_requests_)
             {
-                SecurityException exception;
-                remote_participant_info->event_->cancel_timer();
-                on_validation_failed(dp_it->second->participant_data(), exception);
+                if (remote_participant_info->auth_status_ != AUTHENTICATION_FAILED)
+                {
+                    SecurityException exception;
+                    remote_participant_info->event_->cancel_timer();
+                    remote_participant_info->auth_status_ = AUTHENTICATION_FAILED;
+                    on_validation_failed(dp_it->second->participant_data(), exception);
+                }
             }
             else
             {
@@ -4221,7 +4238,8 @@ void SecurityManager::resend_handshake_message_token(
                 {
                     // Avoid DoS attack by exponentially increasing event interval
                     auto time_ms = remote_participant_info->event_->getIntervalMilliSec();
-                    remote_participant_info->event_->update_interval_millisec(time_ms * 2);
+                    remote_participant_info->event_->update_interval_millisec(
+                        time_ms * auth_handshake_props_.handshake_resend_period_gain_);
                     remote_participant_info->event_->restart_timer();
                 }
             }
@@ -4259,6 +4277,54 @@ void SecurityManager::on_validation_failed(
     }
 }
 
+SecurityManager::AuthenticationHandshakeProperties::AuthenticationHandshakeProperties()
+    : max_handshake_requests_(10)
+    , initial_handshake_resend_period_ms_(125)
+    , handshake_resend_period_gain_(1.5)
+{
+
+}
+
+void SecurityManager::AuthenticationHandshakeProperties::parse_from_property_policy(
+        const PropertyPolicy& auth_handshake_properties)
+{
+    const Property* const max_handshake_requests =
+            PropertyPolicyHelper::get_property(auth_handshake_properties, "max_handshake_requests");
+
+    if (max_handshake_requests != nullptr)
+    {
+        max_handshake_requests_ = (int32_t)PropertyParser::as_int(
+            *max_handshake_requests,
+            false, 0,
+            true, 1,
+            SecurityException("Error parsing max_handshake_requests property value."));
+    }
+
+    const Property* const initial_handshake_resend_period =
+            PropertyPolicyHelper::get_property(auth_handshake_properties, "initial_handshake_resend_period");
+
+    if (initial_handshake_resend_period != nullptr)
+    {
+        initial_handshake_resend_period_ms_ = (int32_t)PropertyParser::as_int(
+            *initial_handshake_resend_period,
+            false, 0,
+            true, 1,
+            SecurityException("Error parsing initial_handshake_resend_period property value."));
+    }
+
+    const Property* const handshake_resend_period_gain =
+            PropertyPolicyHelper::get_property(auth_handshake_properties, "handshake_resend_period_gain");
+
+    if (handshake_resend_period_gain != nullptr)
+    {
+        handshake_resend_period_gain_ = PropertyParser::as_double(
+            *handshake_resend_period_gain,
+            false, 0.0,
+            true, 1.0,
+            SecurityException("Error parsing handshake_resend_period_gain property value."));
+    }
+}
+
 bool SecurityManager::DiscoveredParticipantInfo::check_guid_comes_from(
         Authentication* const auth_plugin,
         const GUID_t& adjusted,
@@ -4276,3 +4342,20 @@ bool SecurityManager::DiscoveredParticipantInfo::check_guid_comes_from(
     }
     return ret;
 }
+
+void SecurityManager::on_writer_change_received_by_all(
+        RTPSWriter* writer,
+        CacheChange_t* change)
+{
+    static_cast<void>(writer);
+    assert(writer == participant_volatile_message_secure_writer_);
+
+    if (nullptr != participant_volatile_message_secure_writer_history_)
+    {
+        participant_volatile_message_secure_writer_history_->remove_change(change);
+    }
+}
+
+} // namespace rtps
+} // namespace fastdds
+} // namespace eprosima

@@ -11,7 +11,11 @@ endif()
 
 add_subdirectory(external)
 add_subdirectory(src)
-add_subdirectory(test)
+
+enable_testing()
+if (BUILD_TESTING)
+    add_subdirectory(test)
+endif()
 
 install(
     FILES
@@ -35,4 +39,10 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
     DESTINATION lib/cmake/${PROJECT_NAME}
+)
+
+install(FILES   
+    ${PROJECT_SOURCE_DIR}/resources/JsonSupportHeader.stg
+    ${PROJECT_SOURCE_DIR}/resources/JsonSupportSource.stg
+    DESTINATION share/${PROJECT_NAME}
 )

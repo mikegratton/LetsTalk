@@ -12,26 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fastrtps/utils/Semaphore.h>
-#include <fastrtps/utils/IPLocator.h>
-#include <fastrtps/log/Log.h>
-#include <MockReceiverResource.h>
-#include <SharedMemGlobalMock.hpp>
-#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemSenderResource.hpp"
-#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemManager.hpp"
-#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemGlobal.hpp"
-#include "../../../src/cpp/rtps/transport/shared_mem/MultiProducerConsumerRingBuffer.hpp"
-
-#include <string>
 #include <fstream>
+#include <memory>
 #include <sstream>
 #include <streambuf>
-#include <memory>
-#include <gtest/gtest.h>
+#include <string>
 #include <thread>
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+#include <gtest/gtest.h>
+
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/utils/IPLocator.hpp>
+
+#include <utils/Semaphore.hpp>
+
+#include "../../../src/cpp/rtps/transport/shared_mem/MultiProducerConsumerRingBuffer.hpp"
+#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemGlobal.hpp"
+#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemManager.hpp"
+#include "../../../src/cpp/rtps/transport/shared_mem/SharedMemSenderResource.hpp"
+
+#include <MockReceiverResource.h>
+#include <SharedMemGlobalMock.hpp>
+
 using namespace eprosima::fastdds;
 using namespace eprosima::fastdds::rtps;
 
@@ -178,13 +180,6 @@ protected:
         ring_buffer_.reset();
         cells_.reset();
     }
-
-};
-
-class SHMRingBufferMultiThread
-    :   public SHMRingBuffer,
-    public testing::WithParamInterface<std::tuple<uint32_t, uint32_t, uint32_t>>
-{
 
 };
 
@@ -364,110 +359,6 @@ TEST_F(SHMRingBuffer, listeners_register_unregister)
     listener2->pop();
 }
 
-TEST_P(SHMRingBufferMultiThread, multiple_writers_listeners)
-{
-    const uint32_t elements_to_push = buffer_size_ * std::get<1>(GetParam());
-    std::vector<std::thread> threads;
-    std::atomic<uint32_t> ready_listeners;
-    ready_listeners.store(0);
-
-    uint32_t num_listeners_writters = std::get<0>(GetParam());
-    uint32_t num_register_unregister = std::get<2>(GetParam());
-
-    for (uint32_t i = 0; i < num_listeners_writters; i++)
-    {
-        // Listeners
-        threads.emplace_back(
-            std::thread(
-                [&]()
-                {
-                    std::vector<uint32_t> read_counters(num_listeners_writters, (std::numeric_limits<uint32_t>::max)());
-                    MultiProducerConsumerRingBuffer<MyData>::Cell* cell;
-
-                    auto listener = ring_buffer_->register_listener();
-                    ready_listeners.fetch_add(1);
-
-                    do
-                    {
-                        // poll until there's data
-                        while (nullptr == (cell = listener->head()))
-                        {
-                        }
-
-                        ASSERT_EQ(++read_counters[cell->data().thread_number], cell->data().counter);
-
-                        listener->pop();
-
-                    } while (cell->data().counter != elements_to_push - 1);
-
-                }));
-    }
-
-    // Wait until all listeners ready
-    while (ready_listeners.load(std::memory_order_relaxed) != num_listeners_writters)
-    {
-        std::this_thread::yield();
-    }
-
-    for (uint32_t i = 0; i < num_listeners_writters; i++)
-    {
-        // Writers
-        threads.emplace_back(
-            std::thread(
-                [&](uint32_t thread_number)
-                {
-                    for (uint32_t c = 0; c < elements_to_push; c++)
-                    {
-                        bool success = false;
-                        while (!success)
-                        {
-                            try
-                            {
-                                ring_buffer_->push({thread_number, c});
-                                success = true;
-                            }
-                            catch (const std::exception&)
-                            {
-                            }
-                        }
-                    }
-                }, i));
-    }
-
-    for (uint32_t i = 0; i < num_register_unregister; i++)
-    {
-        // Register-Unregister
-        threads.emplace_back(
-            std::thread(
-                [&]()
-                {
-                    auto listener = ring_buffer_->register_listener();
-
-                    // Reads two times the size values
-                    for (uint32_t i = 0; i < buffer_size_ * 2; i++)
-                    {
-                        // poll until there's data
-                        while (!listener->head())
-                        {
-                        }
-                        listener->pop();
-                    }
-
-                    // Unregister
-                    listener.reset();
-
-                }));
-    }
-
-    for (auto& thread : threads)
-    {
-        if (thread.joinable())
-        {
-            thread.join();
-        }
-    }
-}
-
 TEST_F(SHMCondition, wait_notify)
 {
     SharedMemSegment::condition_variable cv;
@@ -497,7 +388,7 @@ TEST_F(SHMCondition, wait_notify)
 
 // POSIX glibc 2.25 conditions are not robust when used with interprocess shared memory:
 // https://sourceware.org/bugzilla/show_bug.cgi?id=21422
-// FastRTPS > v1.10.0 SHM has implemented robust conditions to solve issue #1144
+// Fast DDS > v1.10.0 SHM has implemented robust conditions to solve issue #1144
 // This is the correspoding regresion test
 #ifndef _MSC_VER
 TEST_F(SHMCondition, robust_condition_fix_glibc_deadlock)
@@ -844,11 +735,16 @@ TEST_F(SHMTransportTests, send_and_receive_between_ports)
     MockReceiverResource receiver(transportUnderTest, unicastLocator);
     MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
-    eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+    eprosima::fastdds::rtps::SendResourceList send_resource_list;
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator));
     ASSERT_FALSE(send_resource_list.empty());
     ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(unicastLocator));
     octet message[5] = { 'H', 'e', 'l', 'l', 'o' };
+    std::vector<NetworkBuffer> buffer_list;
+    for (size_t i = 0; i < 5; ++i)
+    {
+        buffer_list.emplace_back(&message[i], 1);
+    }
 
     std::function<void()> recCallback = [&]()
             {
@@ -865,7 +761,7 @@ TEST_F(SHMTransportTests, send_and_receive_between_ports)
                 Locators locators_begin(locator_list.begin());
                 Locators locators_end(locator_list.end());
 
-                EXPECT_TRUE(send_resource_list.at(0)->send(message, 5, &locators_begin, &locators_end,
+                EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list, 5, &locators_begin, &locators_end,
                         (std::chrono::steady_clock::now() + std::chrono::microseconds(100))));
             };
 
@@ -907,10 +803,15 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
     outputChannelLocator.kind = LOCATOR_KIND_SHM;
     outputChannelLocator.port = g_default_port + 1;
 
-    eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+    eprosima::fastdds::rtps::SendResourceList send_resource_list;
     ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator));
     ASSERT_FALSE(send_resource_list.empty());
     octet message[4] = { 'H', 'e', 'l', 'l'};
+    std::vector<NetworkBuffer> buffer_list;
+    for (size_t i = 0; i < 4; ++i)
+    {
+        buffer_list.emplace_back(&message[i], 1);
+    }
 
     LocatorList locator_list;
     locator_list.push_back(unicastLocator);
@@ -921,8 +822,10 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
         // Internally the segment is bigger than "my_descriptor.segment_size" so a bigger buffer is tried
         // to cause segment overflow
         octet message_big[4096] = { 'H', 'e', 'l', 'l'};
+        std::vector<NetworkBuffer> buffer_list_big;
+        buffer_list_big.emplace_back(message_big, 4096);
 
-        EXPECT_TRUE(send_resource_list.at(0)->send(message_big, sizeof(message_big), &locators_begin, &locators_end,
+        EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list_big, sizeof(message_big), &locators_begin, &locators_end,
                 (std::chrono::steady_clock::now() + std::chrono::microseconds(100))));
     }
 
@@ -933,7 +836,7 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
         Locators locators_end(locator_list.end());
 
         // At least 4 msgs of 4 bytes are allowed
-        EXPECT_TRUE(send_resource_list.at(0)->send(message, sizeof(message), &locators_begin, &locators_end,
+        EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list, sizeof(message), &locators_begin, &locators_end,
                 (std::chrono::steady_clock::now() + std::chrono::microseconds(100))));
     }
 
@@ -951,7 +854,7 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
         Locators locators_begin(locator_list.begin());
         Locators locators_end(locator_list.end());
 
-        EXPECT_TRUE(send_resource_list.at(0)->send(message, sizeof(message), &locators_begin, &locators_end,
+        EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list, sizeof(message), &locators_begin, &locators_end,
                 (std::chrono::steady_clock::now() + std::chrono::microseconds(100))));
     }
 
@@ -960,7 +863,7 @@ TEST_F(SHMTransportTests, port_and_segment_overflow_discard)
         Locators locators_begin(locator_list.begin());
         Locators locators_end(locator_list.end());
 
-        EXPECT_TRUE(send_resource_list.at(0)->send(message, sizeof(message), &locators_begin, &locators_end,
+        EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list, sizeof(message), &locators_begin, &locators_end,
                 (std::chrono::steady_clock::now() + std::chrono::microseconds(100))));
     }
 
@@ -1015,6 +918,36 @@ TEST_F(SHMTransportTests, port_lock_read_exclusive)
 
     port.reset();
     port = shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive);
+}
+
+// Regression test for redmine issue #20701
+TEST_F(SHMTransportTests, port_lock_read_shared_then_exclusive)
+{
+    auto shared_mem_manager = SharedMemManager::create(domain_name);
+
+    shared_mem_manager->remove_port(0);
+
+    auto port = shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadShared);
+    ASSERT_THROW(shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive),
+            std::exception);
+
+    port.reset();
+    port = shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive);
+}
+
+// Regression test for redmine issue #20701
+TEST_F(SHMTransportTests, port_lock_read_exclusive_then_shared)
+{
+    auto shared_mem_manager = SharedMemManager::create(domain_name);
+
+    shared_mem_manager->remove_port(0);
+
+    auto port = shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive);
+    ASSERT_THROW(shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadShared),
+            std::exception);
+
+    port.reset();
+    port = shared_mem_manager->open_port(0, 1, 1000, SharedMemGlobal::Port::OpenMode::ReadShared);
 }
 
 TEST_F(SHMTransportTests, robust_exclusive_lock)
@@ -1486,25 +1419,23 @@ TEST_F(SHMTransportTests, port_not_ok_listener_recover)
     thread_listener.join();
 }
 
+//! This test has been updated to avoid flakiness #20993
 TEST_F(SHMTransportTests, buffer_recover)
 {
     auto shared_mem_manager = SharedMemManager::create(domain_name);
-
     auto segment = shared_mem_manager->create_segment(3, 3);
 
     shared_mem_manager->remove_port(1);
     auto pub_sub1_write = shared_mem_manager->open_port(1, 8, 1000, SharedMemGlobal::Port::OpenMode::Write);
-
     shared_mem_manager->remove_port(2);
     auto pub_sub2_write = shared_mem_manager->open_port(2, 8, 1000, SharedMemGlobal::Port::OpenMode::Write);
 
     auto sub1_read = shared_mem_manager->open_port(1, 8, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive);
-
     auto sub2_read = shared_mem_manager->open_port(2, 8, 1000, SharedMemGlobal::Port::OpenMode::ReadExclusive);
 
     bool exit_listeners = false;
 
-    uint32_t listener1_sleep_ms = 400u;
+    uint32_t listener1_sleep_ms = 150u;
     uint32_t listener2_sleep_ms = 100u;
 
     auto listener1 = sub1_read->create_listener();
@@ -1516,7 +1447,7 @@ TEST_F(SHMTransportTests, buffer_recover)
                         {
                             auto buffer = listener1->pop();
 
-                            if (buffer)
+                            if (nullptr != buffer)
                             {
                                 listener1_recv_count.fetch_add(1);
                                 // This is a slow listener
@@ -1536,12 +1467,9 @@ TEST_F(SHMTransportTests, buffer_recover)
                         {
                             auto buffer = listener2->pop();
 
-                            if (buffer)
+                            if (nullptr != buffer)
                             {
-                                {
-                                    std::lock_guard<SharedMemSegment::mutex> lock(received_mutex);
-                                    listener2_recv_count.fetch_add(1);
-                                }
+                                listener2_recv_count.fetch_add(1);
                                 std::this_thread::sleep_for(std::chrono::milliseconds(listener2_sleep_ms));
                                 buffer.reset();
                                 received_cv.notify_one();
@@ -1554,7 +1482,7 @@ TEST_F(SHMTransportTests, buffer_recover)
 
     bool is_port_ok = false;
 
-    while (listener1_recv_count.load() < 16u)
+    while (listener2_recv_count.load() < 32u)
     {
         {
             // The segment should never overflow
@@ -1583,14 +1511,13 @@ TEST_F(SHMTransportTests, buffer_recover)
         }
     }
 
-    // The slow listener is 4 times slower than the fast one
-    ASSERT_LT(listener1_recv_count.load() * 3, listener2_recv_count.load());
-    ASSERT_GT(listener1_recv_count.load(), listener2_recv_count.load() / 5);
     std::cout << "Test1:"
               << " Listener1_recv_count " << listener1_recv_count.load()
               << " Listener2_recv_count " << listener2_recv_count.load()
               << std::endl;
-
+    // The slow listener is almost 2 times slower than the fast one
+    EXPECT_LT(listener1_recv_count.load(), listener2_recv_count.load());
+    EXPECT_GE(listener1_recv_count.load() * 2, listener2_recv_count.load());
     // Test 2 (with port overflow)
     listener2_sleep_ms = 0u;
     send_counter = 0u;
@@ -1641,17 +1568,48 @@ TEST_F(SHMTransportTests, buffer_recover)
 
     exit_listeners = true;
 
+    // This third part of the test just tries to cleanly
+    // exit the threads.
+
+    // At this point, listeners are blocked
+    // in the pop() method, and the ring buffers
+    // may (or not) be full.
+
+    //  In order to make the listeners exit the pop() method
+    //  we have to options:
+    //  - Waiting for the port_timeout_ms
+    //  - try pushing another buffer, so that cv could be
+    //   notified.
+
+    // Sleeping the thread waiting for the port timeout
+    // is more risky as the healthy timeout port watchdog
+    // can be triggered, so we choose the second option.
+
     {
         auto buf = segment->alloc_buffer(1u, std::chrono::steady_clock::time_point());
+        bool buffer_pushed = false;
         {
             is_port_ok = false;
-            ASSERT_TRUE(pub_sub1_write->try_push(buf, is_port_ok));
-            ASSERT_TRUE(is_port_ok);
+            while (!buffer_pushed)
+            {
+                buffer_pushed = pub_sub1_write->try_push(buf, is_port_ok);
+                //! In any case port should not be ok
+                ASSERT_TRUE(is_port_ok);
+                std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            }
         }
+
+        buffer_pushed = false;
+
         {
             is_port_ok = false;
-            ASSERT_TRUE(pub_sub2_write->try_push(buf, is_port_ok));
-            ASSERT_TRUE(is_port_ok);
+            while (!buffer_pushed)
+            {
+                buffer_pushed = pub_sub2_write->try_push(buf, is_port_ok);
+                //! In any case port should not be ok
+                ASSERT_TRUE(is_port_ok);
+                std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            }
         }
     }
 
@@ -1862,7 +1820,7 @@ TEST_F(SHMTransportTests, remote_segments_free)
             LocatorList send_locators_list;
             send_locators_list.push_back(pub_locator);
 
-            eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+            eprosima::fastdds::rtps::SendResourceList send_resource_list;
             ASSERT_TRUE(transport.OpenOutputChannel(send_resource_list, pub_locator));
 
             std::function<void()> sub_callback = [&]()
@@ -1898,7 +1856,7 @@ TEST_F(SHMTransportTests, remote_segments_free)
             LocatorList send_locators_list;
             send_locators_list.push_back(sub_locator);
 
-            eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+            eprosima::fastdds::rtps::SendResourceList send_resource_list;
             ASSERT_TRUE(transport.OpenOutputChannel(send_resource_list, sub_locator));
 
             std::chrono::high_resolution_clock::rep total_times = 0;
@@ -2001,7 +1959,7 @@ TEST_F(SHMTransportTests, remote_segments_free)
     LocatorList send_locators_list;
     send_locators_list.push_back(sub_locator);
 
-    eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+    eprosima::fastdds::rtps::SendResourceList send_resource_list;
     ASSERT_TRUE(pub_transport.OpenOutputChannel(send_resource_list, sub_locator));
 
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -2086,7 +2044,7 @@ TEST_F(SHMTransportTests, remote_segments_free)
         LocatorList send_locators_list;
         send_locators_list.push_back(sub_locator);
 
-        SendResourceList send_resource_list;
+        eprosima::fastdds::rtps::SendResourceList send_resource_list;
         ASSERT_TRUE(pub_transport.OpenOutputChannel(send_resource_list, sub_locator));
 
         auto t0 = std::chrono::high_resolution_clock::now();
@@ -2107,28 +2065,6 @@ TEST_F(SHMTransportTests, remote_segments_free)
             , std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count() / (num_samples_per_batch*1000.0));
     }
    }*/
-
-/*
- #ifdef INSTANTIATE_TEST_SUITE_P
- #define GTEST_INSTANTIATE_TEST_MACRO(x, y, z) INSTANTIATE_TEST_SUITE_P(x, y, z)
- #else
- #define GTEST_INSTANTIATE_TEST_MACRO(x, y, z) INSTANTIATE_TEST_CASE_P(x, y, z, )
- #endif // ifdef INSTANTIATE_TEST_SUITE_P
-
-   GTEST_INSTANTIATE_TEST_MACRO(
-    SHMTransportTests,
-    SHMRingBufferMultiThread,
-    testing::Values(
-        std::make_tuple(
-            (std::max)((unsigned int)1, std::thread::hardware_concurrency()/2), 100000, 0),
-        std::make_tuple(
-            (std::max)((unsigned int)1, std::thread::hardware_concurrency())*2, 100,0),
-        std::make_tuple(
-            (std::max)((unsigned int)1, std::thread::hardware_concurrency()/2), 100000, std::thread::hardware_concurrency()/2),
-        std::make_tuple(
-            (std::max)((unsigned int)1, std::thread::hardware_concurrency())*2, 100,std::thread::hardware_concurrency())
-    )
-   );*/
 
 TEST_F(SHMTransportTests, dump_file)
 {
@@ -2155,11 +2091,16 @@ TEST_F(SHMTransportTests, dump_file)
         MockReceiverResource receiver(transportUnderTest, unicastLocator);
         MockMessageReceiver* msg_recv = dynamic_cast<MockMessageReceiver*>(receiver.CreateMessageReceiver());
 
-        eprosima::fastrtps::rtps::SendResourceList send_resource_list;
+        eprosima::fastdds::rtps::SendResourceList send_resource_list;
         ASSERT_TRUE(transportUnderTest.OpenOutputChannel(send_resource_list, outputChannelLocator));
         ASSERT_FALSE(send_resource_list.empty());
         ASSERT_TRUE(transportUnderTest.IsInputChannelOpen(unicastLocator));
         octet message[5] = { 'H', 'e', 'l', 'l', 'o' };
+        std::vector<NetworkBuffer> buffer_list;
+        for (size_t i = 0; i < 5; ++i)
+        {
+            buffer_list.emplace_back(&message[i], 1);
+        }
 
         std::function<void()> recCallback = [&]()
                 {
@@ -2176,7 +2117,7 @@ TEST_F(SHMTransportTests, dump_file)
                     Locators locators_begin(locator_list.begin());
                     Locators locators_end(locator_list.end());
 
-                    EXPECT_TRUE(send_resource_list.at(0)->send(message, 5, &locators_begin, &locators_end,
+                    EXPECT_TRUE(send_resource_list.at(0)->send(buffer_list, 5, &locators_begin, &locators_end,
                             (std::chrono::steady_clock::now() + std::chrono::microseconds(1000))));
                 };
 

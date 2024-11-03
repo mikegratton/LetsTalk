@@ -16,8 +16,8 @@
  * @file ReadCondition.hpp
  */
 
-#ifndef _FASTDDS_DDS_SUBSCRIBER_READCONDITION_HPP_
-#define _FASTDDS_DDS_SUBSCRIBER_READCONDITION_HPP_
+#ifndef FASTDDS_DDS_SUBSCRIBER__READCONDITION_HPP
+#define FASTDDS_DDS_SUBSCRIBER__READCONDITION_HPP
 
 #include <cassert>
 
@@ -25,7 +25,7 @@
 #include <fastdds/dds/subscriber/InstanceState.hpp>
 #include <fastdds/dds/subscriber/SampleState.hpp>
 #include <fastdds/dds/subscriber/ViewState.hpp>
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -74,7 +74,7 @@ public:
      * @brief Retrieves the trigger_value of the Condition
      * @return true if trigger_value is set to 'true', 'false' otherwise
      */
-    RTPS_DllAPI bool get_trigger_value() const noexcept override;
+    FASTDDS_EXPORTED_API bool get_trigger_value() const noexcept override;
 
     /**
      * @brief Retrieves the DataReader associated with the ReadCondition.
@@ -83,28 +83,28 @@ public:
      *
      * @return pointer to the DataReader associated with this ReadCondition.
      */
-    RTPS_DllAPI DataReader* get_datareader() const noexcept;
+    FASTDDS_EXPORTED_API DataReader* get_datareader() const noexcept;
 
     /**
      * @brief Retrieves the set of sample_states taken into account to determine the trigger_value of this condition.
      *
      * @return the sample_states specified when the ReadCondition was created.
      */
-    RTPS_DllAPI SampleStateMask get_sample_state_mask() const noexcept;
+    FASTDDS_EXPORTED_API SampleStateMask get_sample_state_mask() const noexcept;
 
     /**
      * @brief Retrieves the set of view_states taken into account to determine the trigger_value of this condition.
      *
      * @return the view_states specified when the ReadCondition was created.
      */
-    RTPS_DllAPI ViewStateMask get_view_state_mask() const noexcept;
+    FASTDDS_EXPORTED_API ViewStateMask get_view_state_mask() const noexcept;
 
     /**
      * @brief Retrieves the set of instance_states taken into account to determine the trigger_value of this condition.
      *
      * @return the instance_states specified when the ReadCondition was created.
      */
-    RTPS_DllAPI InstanceStateMask get_instance_state_mask() const noexcept;
+    FASTDDS_EXPORTED_API InstanceStateMask get_instance_state_mask() const noexcept;
 
     detail::ReadConditionImpl* get_impl() const noexcept
     {
@@ -123,4 +123,4 @@ protected:
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_DDS_SUBSCRIBER_READCONDITION_HPP_
+#endif // FASTDDS_DDS_SUBSCRIBER__READCONDITION_HPP

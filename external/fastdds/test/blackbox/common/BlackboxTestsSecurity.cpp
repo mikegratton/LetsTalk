@@ -16,28 +16,29 @@
 
 #if HAVE_SECURITY
 
+#include <algorithm>
+#include <atomic>
+#include <fstream>
+#include <map>
+
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/common/EntityId_t.hpp>
+#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.hpp>
+#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.hpp>
+#include <fastdds/utils/IPFinder.hpp>
+#include <gtest/gtest.h>
+
+#include "../utils/filter_helpers.hpp"
+#include "PubSubParticipant.hpp"
 #include "PubSubReader.hpp"
 #include "PubSubWriter.hpp"
 #include "PubSubWriterReader.hpp"
-#include "PubSubParticipant.hpp"
+#include "UDPMessageSender.hpp"
 
-#include <gtest/gtest.h>
-#include <fstream>
-#include <map>
-#include <algorithm>
-
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-#include <fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h>
-#include <rtps/transport/test_UDPv4Transport.h>
-
-#include <fastdds/dds/log/Log.hpp>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
-using test_UDPv4Transport = eprosima::fastdds::rtps::test_UDPv4Transport;
-using test_UDPv4TransportDescriptor = eprosima::fastdds::rtps::test_UDPv4TransportDescriptor;
-
-static const char* certs_path = nullptr;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -52,12 +53,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -70,12 +71,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -87,7 +88,6 @@ public:
     }
 
 };
-
 
 class SecurityPkcs : public ::testing::Test
 {
@@ -250,7 +250,7 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_validation_ok)
             "file://" + std::string(certs_path) + "/mainsubkey.pem"));
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -305,7 +305,7 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_validation_ok_same_participan
     property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.private_key",
             "file://" + std::string(certs_path) + "/mainpubkey.pem"));
 
-    wreader.sub_history_depth(10).sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS);
+    wreader.sub_history_depth(10).sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
     wreader.pub_history_depth(10);
     wreader.property_policy(property_policy).init();
 
@@ -335,7 +335,7 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_validation_fail)
         PropertyPolicy pub_property_policy;
 
         reader.history_depth(10).
-                reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).init();
+                reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
 
         ASSERT_TRUE(reader.isInitialized());
 
@@ -372,7 +372,7 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_validation_fail)
                 "file://" + std::string(certs_path) + "/mainsubkey.pem"));
 
         reader.history_depth(10).
-                reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+                reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
                 property_policy(sub_property_policy).init();
 
         ASSERT_TRUE(reader.isInitialized());
@@ -403,7 +403,7 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_lossy_conditions)
             "file://" + std::string(certs_path) + "/mainsubkey.pem"));
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     // To simulate lossy conditions, we are going to remove the default
@@ -441,9 +441,145 @@ TEST_P(Security, BuiltinAuthenticationPlugin_PKIDH_lossy_conditions)
 }
 
 // Regresion test for Refs #13295, github #2362
-TEST_P(Security, BuiltinAuthenticationPlugin_second_participant_creation_loop)
+TEST(Security, BuiltinAuthenticationPlugin_second_participant_creation_loop)
 {
     constexpr size_t n_loops = 101;
+
+    using Log = eprosima::fastdds::dds::Log;
+    using LogConsumer = eprosima::fastdds::dds::LogConsumer;
+
+    // A LogConsumer that just counts the number of entries consumed
+    struct TestConsumer : public LogConsumer
+    {
+        TestConsumer(
+                std::atomic_size_t& n_logs_ref)
+            : n_logs_(n_logs_ref)
+        {
+        }
+
+        void Consume(
+                const Log::Entry&) override
+        {
+            ++n_logs_;
+        }
+
+    private:
+
+        std::atomic_size_t& n_logs_;
+    };
+
+    // Counter for log entries
+    std::atomic<size_t>n_logs{};
+
+    // Prepare Log module to check that no SECURITY errors are produced
+    Log::SetCategoryFilter(std::regex("SECURITY"));
+    Log::SetVerbosity(Log::Kind::Error);
+    Log::ClearConsumers();
+    Log::RegisterConsumer(std::unique_ptr<LogConsumer>(new TestConsumer(n_logs)));
+
+    // Class to allow waiting for the authentication message to be sent
+    class AuthMessageSendStatus
+    {
+        bool message_sent_ = false;
+        std::mutex mutex_;
+        std::condition_variable cv_;
+
+    public:
+
+        void reset()
+        {
+            std::lock_guard < std::mutex> guard(mutex_);
+            message_sent_ = false;
+        }
+
+        void notify()
+        {
+            std::lock_guard<std::mutex> guard(mutex_);
+            message_sent_ = true;
+            cv_.notify_one();
+        }
+
+        void wait()
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            cv_.wait(lock, [this]() -> bool
+                    {
+                        return message_sent_;
+                    });
+        }
+
+    };
+
+    // Prepare transport to check that the authentication message is sent
+    auto transport = std::make_shared<test_UDPv4TransportDescriptor>();
+    AuthMessageSendStatus auth_message_send_status;
+    transport->drop_data_messages_filter_ = [&auth_message_send_status](eprosima::fastdds::rtps::CDRMessage_t& msg)
+            -> bool
+            {
+                auto old_pos = msg.pos;
+
+                // Jump to writer entity id
+                msg.pos += 2 + 2 + 4;
+
+                // Read writer entity id
+                eprosima::fastdds::rtps::GUID_t writer_guid;
+                writer_guid.entityId = eprosima::fastdds::helpers::cdr_parse_entity_id(
+                    (char*)&msg.buffer[msg.pos]);
+                msg.pos = old_pos;
+
+                if (writer_guid.entityId == eprosima::fastdds::rtps::participant_stateless_message_writer_entity_id)
+                {
+                    auth_message_send_status.notify();
+                }
+
+                return false;
+            };
+
+    // Prepare participant properties
+    PropertyPolicy property_policy;
+    property_policy.properties().emplace_back(Property("dds.sec.auth.plugin", "builtin.PKI-DH"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
+            "file://" + std::string(certs_path) + "/maincacert.pem"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+            "file://" + std::string(certs_path) + "/mainpubcert.pem"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.private_key",
+            "file://" + std::string(certs_path) + "/mainpubkey.pem"));
+
+    // Create the participant being checked
+    PubSubReader<HelloWorldPubSubType> main_participant("HelloWorldTopic");
+    main_participant.disable_builtin_transport().add_user_transport_to_pparams(transport);
+    main_participant.property_policy(property_policy).init();
+    EXPECT_TRUE(main_participant.isInitialized());
+
+    // Perform a loop in which we create another participant, and destroy it just after it has been discovered.
+    // This is the best reproducer of the issue, as authentication messages should be sent when a remote participant
+    // is discovered.
+    for (size_t n = 1; n <= n_loops; ++n)
+    {
+        std::cout << "Iteration " << n << std::endl;
+
+        // Wait for undiscovery so we can wait for discovery below
+        EXPECT_TRUE(main_participant.wait_participant_undiscovery());
+        auth_message_send_status.reset();
+
+        // Create another participant with authentication enabled
+        PubSubParticipant<HelloWorldPubSubType> other_participant(0, 0, 0, 0);
+        EXPECT_TRUE(other_participant.property_policy(property_policy).init_participant());
+
+        // Wait for the main participant to send an authentication message to the other participant
+        auth_message_send_status.wait();
+
+        // The created participant gets out of scope here, and is destroyed
+    }
+
+    // No SECURITY error logs should have been produced
+    Log::Flush();
+    EXPECT_EQ(0u, n_logs);
+}
+
+TEST_P(Security, BuiltinAuthenticationPlugin_ensure_same_guid_reconnection)
+{
+    constexpr size_t n_loops = 10;
 
     using Log = eprosima::fastdds::dds::Log;
     using LogConsumer = eprosima::fastdds::dds::LogConsumer;
@@ -488,9 +624,12 @@ TEST_P(Security, BuiltinAuthenticationPlugin_second_participant_creation_loop)
             "file://" + std::string(certs_path) + "/mainpubkey.pem"));
 
     // Create the participant being checked
-    PubSubReader<HelloWorldPubSubType> main_participant("HelloWorldTopic");
+    PubSubWriter<HelloWorldPubSubType> main_participant("HelloWorldTopic");
     main_participant.property_policy(property_policy).init();
     EXPECT_TRUE(main_participant.isInitialized());
+
+    eprosima::fastdds::rtps::GuidPrefix_t guid_prefix;
+    memset(guid_prefix.value, 0xBB, sizeof(guid_prefix.value));
 
     // Perform a loop in which we create another participant, and destroy it just after it has been discovered.
     // This is the best reproducer of the issue, as authentication messages should be sent when a remote participant
@@ -502,12 +641,14 @@ TEST_P(Security, BuiltinAuthenticationPlugin_second_participant_creation_loop)
         // Wait for undiscovery so we can wait for discovery below
         EXPECT_TRUE(main_participant.wait_participant_undiscovery());
 
-        // Create another participant with authentication enabled
-        PubSubParticipant<HelloWorldPubSubType> other_participant(0, 0, 0, 0);
-        EXPECT_TRUE(other_participant.property_policy(property_policy).init_participant());
+        // Create another participant with authentication enabled and custom GUID
+        PubSubReader<HelloWorldPubSubType> other_participant("HelloWorldTopic");
+        other_participant.property_policy(property_policy).guid_prefix(guid_prefix).init();
+        EXPECT_TRUE(other_participant.isInitialized());
 
-        // Wait for the new participant to be discovered by the main one
-        EXPECT_TRUE(main_participant.wait_participant_discovery());
+        // Wait for mutual discovery and authentication
+        main_participant.wait_discovery();
+        other_participant.wait_discovery();
 
         // The created participant gets out of scope here, and is destroyed
     }
@@ -554,7 +695,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_rtps_ok)
     pub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
@@ -626,7 +767,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_shm_transport_ok)
     pub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
@@ -700,7 +841,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_shm_udp_transport_ok)
     pub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
@@ -745,7 +886,7 @@ TEST(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_rtps_ok)
     sub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -807,7 +948,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_rtps_ok_same_participant)
             "builtin.AES-GCM-GMAC"));
     property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
-    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .sub_durability_kind(eprosima::fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS);
     wreader.property_policy(property_policy).init();
 
@@ -865,7 +1006,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_large_string)
     pub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
@@ -910,7 +1051,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_rtps_large_string
     sub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -994,9 +1135,9 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_rtps_data300kb)
     uint32_t periodInMs = 500;
 
     writer.history_depth(5).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_property_policy).init();
 
@@ -1042,7 +1183,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_rtps_data300kb)
     sub_property_policy.properties().emplace_back("rtps.participant.rtps_protection_kind", "ENCRYPT");
 
     reader.history_depth(5).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -1065,8 +1206,8 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_rtps_data300kb)
     uint32_t periodInMs = 50;
 
     writer.history_depth(5).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_property_policy).init();
 
@@ -1131,7 +1272,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_submessage_ok)
     pub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -1178,7 +1319,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_submessage_ok)
     sub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -1243,7 +1384,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_submessage_ok_same_partici
     pub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
     sub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
-    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .sub_durability_kind(eprosima::fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS);
     wreader.property_policy(property_policy).
             pub_property_policy(pub_property_policy).
@@ -1305,7 +1446,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_submessage_larg
     pub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -1352,7 +1493,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_submessage_large_
     sub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -1440,9 +1581,9 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_submessage_data
     uint32_t periodInMs = 500;
 
     writer.history_depth(5).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -1490,7 +1631,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_submessage_data30
     sub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
 
     reader.history_depth(5).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -1514,8 +1655,8 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_submessage_data30
     uint32_t periodInMs = 50;
 
     writer.history_depth(5).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -1581,7 +1722,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_payload_ok)
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -1628,7 +1769,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_payload_ok)
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -1693,7 +1834,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_payload_ok_same_participan
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
-    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .sub_durability_kind(eprosima::fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS);
     wreader.property_policy(property_policy).
             pub_property_policy(pub_property_policy).
@@ -1734,7 +1875,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_payload_ok_same_participan
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
-    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    wreader.pub_history_depth(10).sub_history_depth(10).sub_reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .sub_durability_kind(eprosima::fastdds::dds::DurabilityQosPolicyKind::TRANSIENT_LOCAL_DURABILITY_QOS);
     wreader.property_policy(property_policy).
             pub_property_policy(pub_property_policy).
@@ -1796,7 +1937,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_payload_large_s
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -1843,7 +1984,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_payload_large_str
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -1931,9 +2072,9 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_payload_data300
     uint32_t periodInMs = 500;
 
     writer.history_depth(5).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -1981,7 +2122,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_payload_data300kb
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(5).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2005,8 +2146,8 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_payload_data300kb
     uint32_t periodInMs = 50;
 
     writer.history_depth(5).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -2076,7 +2217,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_all_ok)
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -2125,7 +2266,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_ok)
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2214,7 +2355,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_all_large_strin
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -2263,7 +2404,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_large_string)
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2357,9 +2498,9 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_besteffort_all_data300kb)
     uint32_t periodInMs = 1000;
 
     writer.history_depth(5).
-            reliability(eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            reliability(eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -2409,7 +2550,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_data300kb)
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(5).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2435,8 +2576,8 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_data300kb)
     uint32_t periodInMs = 50;
 
     writer.history_depth(5).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
-            add_throughput_controller_descriptor_to_pparams(
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
+            add_flow_controller_descriptor_to_pparams(
         eprosima::fastdds::rtps::FlowControllerSchedulerPolicy::FIFO, bytesPerPeriod, periodInMs).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
@@ -2487,7 +2628,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_data300kb_mix
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     reader.history_depth(5).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2508,7 +2649,7 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_reliable_all_data300kb_mix
     pub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
     writer.history_depth(2).resource_limits_max_samples(2).resource_limits_allocated_samples(2).
-            asynchronously(eprosima::fastrtps::ASYNCHRONOUS_PUBLISH_MODE).
+            asynchronously(eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE).
             property_policy(pub_part_property_policy).
             entity_property_policy(pub_property_policy).init();
 
@@ -2584,23 +2725,24 @@ TEST_P(Security, BuiltinAuthenticationAndCryptoPlugin_user_data)
     sub_property_policy.properties().emplace_back("rtps.endpoint.submessage_protection_kind", "ENCRYPT");
     sub_property_policy.properties().emplace_back("rtps.endpoint.payload_protection_kind", "ENCRYPT");
 
-    reader.setOnDiscoveryFunction([&writer](const ParticipantDiscoveryInfo& info) -> bool
+    reader.setOnDiscoveryFunction([&writer](const ParticipantBuiltinTopicData& info,
+            ParticipantDiscoveryStatus /*status*/) -> bool
             {
-                if (info.info.m_guid == writer.participant_guid())
+                if (info.guid == writer.participant_guid())
                 {
                     std::cout << "Received USER_DATA from the writer: ";
-                    for (auto i : info.info.m_userData)
+                    for (auto i : info.user_data)
                     {
                         std::cout << i << ' ';
                     }
-                    return info.info.m_userData == std::vector<octet>({ 'a', 'b', 'c', 'd', 'e' });
+                    return info.user_data == std::vector<octet>({ 'a', 'b', 'c', 'd', 'e' });
                 }
 
                 return false;
             });
 
     reader.history_depth(100).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_part_property_policy).
             entity_property_policy(sub_property_policy).init();
 
@@ -2650,7 +2792,7 @@ TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_governance_rule_o
                 "file://" + std::string(certs_path) + "/permissions.smime"));
 
         reader.history_depth(10).
-                reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+                reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
                 property_policy(sub_property_policy).init();
 
         ASSERT_TRUE(reader.isInitialized());
@@ -2931,7 +3073,7 @@ TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_valid
                 "file://" + std::string(certs_path) + "/permissions_helloworld.smime"));
 
         reader.history_depth(10).
-                reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+                reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
                 property_policy(sub_property_policy).init();
 
         ASSERT_TRUE(reader.isInitialized());
@@ -3072,7 +3214,7 @@ TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_valid
                 "file://" + std::string(certs_path) + "/permissions_helloworld_partitions.smime"));
 
         reader.history_depth(10).
-                reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+                reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
                 property_policy(sub_property_policy).
                 partition("Partition1").init();
 
@@ -3125,6 +3267,119 @@ TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_valid
     }
 }
 
+// Regression test of Refs #20658, Github #4553.
+TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation_toggle_partition)
+{
+    PubSubWriter<HelloWorldPubSubType> writer("HelloWorldTopic");
+    PubSubReader<HelloWorldPubSubType> reader_p_1("HelloWorldTopic");
+    PubSubReader<HelloWorldPubSubType> reader_p_2("HelloWorldTopic");
+
+    std::string governance_file("governance_helloworld_all_enable.smime");
+
+    // Prepare subscriptions security properties
+    PropertyPolicy sub_property_policy;
+    sub_property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
+            "builtin.PKI-DH"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
+            "file://" + std::string(certs_path) + "/maincacert.pem"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+            "file://" + std::string(certs_path) + "/mainsubcert.pem"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.private_key",
+            "file://" + std::string(certs_path) + "/mainsubkey.pem"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.crypto.plugin",
+            "builtin.AES-GCM-GMAC"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
+            "builtin.Access-Permissions"));
+    sub_property_policy.properties().emplace_back(Property(
+                "dds.sec.access.builtin.Access-Permissions.permissions_ca",
+                "file://" + std::string(certs_path) + "/maincacert.pem"));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
+            "file://" + std::string(certs_path) + "/" + governance_file));
+    sub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
+            "file://" + std::string(certs_path) + "/permissions_helloworld_partitions.smime"));
+
+    // Initialize one reader on each partition
+    reader_p_1.partition("Partition1").
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
+            property_policy(sub_property_policy).
+            init();
+    ASSERT_TRUE(reader_p_1.isInitialized());
+
+    reader_p_2.partition("Partition2").
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
+            property_policy(sub_property_policy).
+            init();
+    ASSERT_TRUE(reader_p_2.isInitialized());
+
+    // Prepare publication security properties
+    PropertyPolicy pub_property_policy;
+    pub_property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
+            "builtin.PKI-DH"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
+            "file://" + std::string(certs_path) + "/maincacert.pem"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+            "file://" + std::string(certs_path) + "/mainpubcert.pem"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.private_key",
+            "file://" + std::string(certs_path) + "/mainpubkey.pem"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.crypto.plugin",
+            "builtin.AES-GCM-GMAC"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.access.plugin",
+            "builtin.Access-Permissions"));
+    pub_property_policy.properties().emplace_back(Property(
+                "dds.sec.access.builtin.Access-Permissions.permissions_ca",
+                "file://" + std::string(certs_path) + "/maincacert.pem"));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
+            "file://" + std::string(certs_path) + "/" + governance_file));
+    pub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
+            "file://" + std::string(certs_path) + "/permissions_helloworld_partitions.smime"));
+
+    // Initialize a writer on both partitions
+    writer.partition("Partition1").partition("Partition2").
+            property_policy(pub_property_policy).
+            init();
+    ASSERT_TRUE(writer.isInitialized());
+
+    // Wait for all entities to discover each other
+    reader_p_1.wait_discovery();
+    reader_p_2.wait_discovery();
+    writer.wait_discovery(2u);
+
+    constexpr size_t num_samples = 100;
+    auto data = default_helloworld_data_generator(num_samples);
+    reader_p_1.startReception(data);
+    reader_p_2.startReception(data);
+
+    for (size_t i = 0; i < num_samples; ++i)
+    {
+        // Switch to third partition and wait for all entities to unmatch
+        writer.update_partition("Partition3");
+        reader_p_1.wait_writer_undiscovery();
+        reader_p_2.wait_writer_undiscovery();
+        writer.wait_discovery(0u);
+
+        // Switch partition and wait for the corresponding reader to discover the writer
+        if (0 == i % 2)
+        {
+            writer.update_partition("Partition1");
+            reader_p_1.wait_discovery();
+        }
+        else
+        {
+            writer.update_partition("Partition2");
+            reader_p_2.wait_discovery();
+        }
+
+        // Ensure the writer matches the reader before sending the sample
+        writer.wait_discovery(1u);
+        writer.send_sample(data.front());
+        data.pop_front();
+        writer.waitForAllAcked(std::chrono::milliseconds(100));
+    }
+
+    EXPECT_EQ(num_samples / 2u, reader_p_1.getReceivedCount());
+    EXPECT_EQ(num_samples / 2u, reader_p_2.getReceivedCount());
+}
+
 template <typename DataType>
 void prepare_pkcs11_nodes(
         PubSubReader<DataType>& reader,
@@ -3159,7 +3414,7 @@ void prepare_pkcs11_nodes(
             "file://" + std::string(certs_path) + "/permissions_helloworld.smime"));
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     pub_property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
@@ -3273,13 +3528,13 @@ TEST_F(SecurityPkcs, BuiltinAuthenticationAndAccessAndCryptoPlugin_pkcs11_key)
     }
 }
 
-static void BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation_ok_common(
+static void CommonPermissionsConfigure(
         PubSubReader<HelloWorldPubSubType>& reader,
         PubSubWriter<HelloWorldPubSubType>& writer,
-        const std::string& governance_file)
+        const std::string& governance_file,
+        const std::string& permissions_file)
 {
-    PropertyPolicy pub_property_policy, sub_property_policy;
-
+    PropertyPolicy sub_property_policy;
     sub_property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
             "builtin.PKI-DH"));
     sub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
@@ -3297,14 +3552,10 @@ static void BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation
     sub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
             "file://" + std::string(certs_path) + "/" + governance_file));
     sub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
-            "file://" + std::string(certs_path) + "/permissions.smime"));
+            "file://" + std::string(certs_path) + "/" + permissions_file));
+    reader.property_policy(sub_property_policy);
 
-    reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
-            property_policy(sub_property_policy).init();
-
-    ASSERT_TRUE(reader.isInitialized());
-
+    PropertyPolicy pub_property_policy;
     pub_property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
             "builtin.PKI-DH"));
     pub_property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
@@ -3322,11 +3573,21 @@ static void BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation
     pub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.governance",
             "file://" + std::string(certs_path) + "/" + governance_file));
     pub_property_policy.properties().emplace_back(Property("dds.sec.access.builtin.Access-Permissions.permissions",
-            "file://" + std::string(certs_path) + "/permissions.smime"));
+            "file://" + std::string(certs_path) + "/" + permissions_file));
+    writer.property_policy(pub_property_policy);
+}
 
-    writer.history_depth(10).
-            property_policy(pub_property_policy).init();
+static void BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation_ok_common(
+        PubSubReader<HelloWorldPubSubType>& reader,
+        PubSubWriter<HelloWorldPubSubType>& writer,
+        const std::string& governance_file)
+{
+    CommonPermissionsConfigure(reader, writer, governance_file, "permissions.smime");
 
+    reader.history_depth(10).reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
+    ASSERT_TRUE(reader.isInitialized());
+
+    writer.history_depth(10).init();
     ASSERT_TRUE(writer.isInitialized());
 
     // Wait for authorization
@@ -3358,10 +3619,10 @@ TEST_P(Security, RemoveParticipantProxyDataonSecurityManagerLeaseExpired_validat
     //!Lambda for configuring publisher participant qos and security properties
     auto secure_participant_pub_configurator = [&governance_file,
                     &permissions_file](const std::shared_ptr<PubSubWriter<HelloWorldPubSubType>>& part,
-                    const std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>& interface)
+                    const std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>& transport_interface)
             {
                 part->lease_duration(3, 1);
-                part->disable_builtin_transport().add_user_transport_to_pparams(interface);
+                part->disable_builtin_transport().add_user_transport_to_pparams(transport_interface);
 
                 PropertyPolicy property_policy;
 
@@ -3395,10 +3656,10 @@ TEST_P(Security, RemoveParticipantProxyDataonSecurityManagerLeaseExpired_validat
     //!Lambda for configuring subscriber participant qos and security properties
     auto secure_participant_sub_configurator = [&governance_file,
                     &permissions_file](const std::shared_ptr<PubSubReader<HelloWorldPubSubType>>& part,
-                    const std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>& interface)
+                    const std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>& transport_interface)
             {
                 part->lease_duration(3, 1);
-                part->disable_builtin_transport().add_user_transport_to_pparams(interface);
+                part->disable_builtin_transport().add_user_transport_to_pparams(transport_interface);
 
                 PropertyPolicy property_policy;
 
@@ -3473,7 +3734,7 @@ TEST_P(Security, RemoveParticipantProxyDataonSecurityManagerLeaseExpired_validat
     std::cout << "Reader received at least two samples, shutting down publisher " << std::endl;
 
     //! 7.Simulate a force-quit (cntrl+c) on the publisher by dropping connection
-    test_UDPv4Transport::test_UDPv4Transport_ShutdownAllNetwork = true;
+    test_udptransport->test_transport_options->test_UDPv4Transport_ShutdownAllNetwork = true;
 
     bool pubsub_writer_undiscovered;
 
@@ -3551,7 +3812,7 @@ TEST(Security, AllowUnauthenticatedParticipants_TwoSecureParticipantsWithDiffere
             "file://" + std::string(certs_path) + "/permissions_helloworld_securehelloworld_other_ca.smime"));
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -3576,16 +3837,19 @@ TEST(Security, AllowUnauthenticatedParticipants_TwoSecureParticipantsWithDiffere
             "file://" + std::string(certs_path) + "/permissions_helloworld_securehelloworld.smime"));
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
-    //! Wait enough time for the PKI requests to time out and give validation_failed (~15secs)
-    writer.wait_discovery(std::chrono::seconds(20));
+    //! Wait for the authorization to fail (~15secs)
+    writer.waitUnauthorized();
+
+    //! Wait for the discovery
+    writer.wait_discovery();
 
     //! check that the writer matches the reader because of having allow_unauthenticated_participants enabled
-    ASSERT_TRUE(writer.get_matched());
+    ASSERT_TRUE(writer.is_matched());
 
     //! Data is correctly sent and received
     auto data = default_helloworld_data_generator();
@@ -3631,7 +3895,7 @@ TEST(Security, AllowUnauthenticatedParticipants_TwoParticipantsDifferentCertific
             "file://" + std::string(certs_path) + "/permissions_helloworld_securehelloworld_other_ca.smime"));
 
     reader.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(sub_property_policy).init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -3656,18 +3920,71 @@ TEST(Security, AllowUnauthenticatedParticipants_TwoParticipantsDifferentCertific
             "file://" + std::string(certs_path) + "/permissions_helloworld_securehelloworld.smime"));
 
     writer.history_depth(10).
-            reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
             property_policy(pub_property_policy).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
-    //! Wait enough time for the PKI requests to time out and give validation_failed (~15secs)
-    writer.wait_discovery(std::chrono::seconds(20));
+    //! Wait for the authorization to fail (~15secs)
+    writer.waitUnauthorized();
+
+    //! Wait some time afterwards (this will time out)
+    writer.wait_discovery(std::chrono::seconds(1));
 
     //! check that the writer does not match the reader because of
     //! having read and write protection enabled
     //! despite allow_unauthenticated_participants is enabled
-    ASSERT_FALSE(writer.get_matched());
+    ASSERT_FALSE(writer.is_matched());
+}
+
+// Regresion test for redmine issue 20166
+TEST(Security, InANonSecureParticipantWithTwoSecureParticipantScenario_TheTwoSecureParticipantsCorrectlyCommunicate)
+{
+    // Create
+    PubSubReader<HelloWorldPubSubType> non_secure_reader("HelloWorldTopic");
+    PubSubReader<HelloWorldPubSubType> secure_reader("HelloWorldTopic");
+    PubSubWriter<HelloWorldPubSubType> secure_writer("HelloWorldTopic");
+
+    // Configure security
+    const std::string governance_file("governance_helloworld_all_enable.smime");
+    const std::string permissions_file("permissions_helloworld.smime");
+    CommonPermissionsConfigure(secure_reader, secure_writer, governance_file, permissions_file);
+
+    secure_writer.history_depth(10).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
+
+    ASSERT_TRUE(secure_writer.isInitialized());
+
+    non_secure_reader.history_depth(10).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
+
+    ASSERT_TRUE(non_secure_reader.isInitialized());
+
+    secure_reader.history_depth(10).
+            reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
+
+    ASSERT_TRUE(secure_reader.isInitialized());
+
+    // Wait for the authorization
+    secure_reader.waitAuthorized();
+    secure_writer.waitAuthorized();
+
+    // Wait for discovery
+    secure_writer.wait_discovery(std::chrono::seconds(5));
+    secure_reader.wait_discovery(std::chrono::seconds(5));
+
+    // Data is correctly sent and received
+    auto data = default_helloworld_data_generator();
+
+    secure_reader.startReception(data);
+
+    secure_writer.send(data);
+
+    // In this test all data should be sent.
+    ASSERT_TRUE(data.empty());
+
+    secure_reader.block_for_all();
+    EXPECT_EQ(non_secure_reader.getReceivedCount(), 0u);
 }
 
 // *INDENT-OFF*
@@ -4375,6 +4692,402 @@ TEST_P(Security, BuiltinAuthenticationAndAccessAndCryptoPlugin_PermissionsEnable
 
     BuiltinAuthenticationAndAccessAndCryptoPlugin_Permissions_validation_ok_common(reader, writer, governance_file);
 }
+
+TEST(Security, MaliciousHeartbeatIgnore)
+{
+    PubSubWriter<HelloWorldPubSubType> writer("HelloWorldTopic_MaliciousHeartbeatIgnore");
+    PubSubReader<HelloWorldPubSubType> reader("HelloWorldTopic_MaliciousHeartbeatIgnore");
+
+    struct MaliciousHeartbeat
+    {
+        std::array<char, 4> rtps_id{{'R', 'T', 'P', 'S'}};
+        std::array<uint8_t, 2> protocol_version{{2, 3}};
+        std::array<uint8_t, 2> vendor_id{{0x01, 0x0F}};
+        GuidPrefix_t sender_prefix;
+
+        uint8_t submessage_id = 0x07;
+#if FASTDDS_IS_BIG_ENDIAN_TARGET
+        uint8_t flags = 0;
+#else
+        uint8_t flags = 0x01;
+#endif  // FASTDDS_IS_BIG_ENDIAN_TARGET
+        uint16_t submessage_length = 4 + 4 + 8 + 8 + 4;
+        EntityId_t reader_id{};
+        EntityId_t writer_id{};
+        SequenceNumber_t first_sn{};
+        SequenceNumber_t last_sn{};
+        int32_t count = 0;
+    };
+
+    // Set custom transport on both participants
+    auto transport = std::make_shared<test_UDPv4TransportDescriptor>();
+    std::atomic<bool> avoid_sec_submessages{false};
+    transport->sub_messages_filter_ = [&avoid_sec_submessages](CDRMessage_t& msg) -> bool
+            {
+                return avoid_sec_submessages.load() && (0x30 == (msg.buffer[msg.pos] & 0xF0));
+            };
+
+    UDPMessageSender fake_msg_sender;
+
+    writer.disable_builtin_transport().add_user_transport_to_pparams(transport);
+    reader.disable_builtin_transport().add_user_transport_to_pparams(transport);
+
+    // Set custom reader locator so we can send malicious data to a known location
+    Locator_t reader_locator;
+    ASSERT_TRUE(IPLocator::setIPv4(reader_locator, "127.0.0.1"));
+    reader_locator.port = 7000;
+    reader.add_to_unicast_locator_list("127.0.0.1", 7000);
+
+    // Set common QoS
+    reader.history_depth(10).reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
+    writer.history_depth(10).reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
+
+    // Configure security
+    const std::string governance_file("governance_helloworld_all_enable.smime");
+    const std::string permissions_file("permissions_helloworld.smime");
+    CommonPermissionsConfigure(reader, writer, governance_file, permissions_file);
+
+    // Initialize and wait for discovery
+    reader.init();
+    ASSERT_TRUE(reader.isInitialized());
+    writer.init();
+    ASSERT_TRUE(writer.isInitialized());
+    reader.wait_discovery();
+    writer.wait_discovery();
+
+    // Disable secure submessages and send data
+    avoid_sec_submessages.store(true);
+    auto data = default_helloworld_data_generator();
+    reader.startReception(data);
+    writer.send(data);
+    ASSERT_TRUE(data.empty());
+
+    // Send malicious heartbeat
+    {
+        auto writer_guid = writer.datawriter_guid();
+
+        MaliciousHeartbeat hb{};
+        hb.sender_prefix = writer_guid.guidPrefix;
+        hb.writer_id = writer_guid.entityId;
+        hb.reader_id = EntityId_t::unknown();
+        hb.first_sn.low = 100;
+        hb.last_sn.low = 100;
+        hb.count = 100;
+
+        CDRMessage_t msg(0);
+        uint32_t msg_len = static_cast<uint32_t>(sizeof(hb));
+        msg.init(reinterpret_cast<octet*>(&hb), msg_len);
+        msg.length = msg_len;
+        msg.pos = msg_len;
+        fake_msg_sender.send(msg, reader_locator);
+    }
+
+    // Enable secure submessages
+    avoid_sec_submessages.store(false);
+    // Block reader until reception finished or timeout.
+    reader.block_for_all();
+}
+
+TEST_P(Security, MaliciousParticipantRemovalIgnore)
+{
+    PubSubWriter<HelloWorldPubSubType> writer("HelloWorldTopic_MaliciousParticipantRemovalIgnore");
+    PubSubReader<HelloWorldPubSubType> reader("HelloWorldTopic_MaliciousParticipantRemovalIgnore");
+
+    struct MaliciousParticipantRemoval
+    {
+        std::array<char, 4> rtps_id{ {'R', 'T', 'P', 'S'} };
+        std::array<uint8_t, 2> protocol_version{ {2, 3} };
+        std::array<uint8_t, 2> vendor_id{ {0x01, 0x0F} };
+        GuidPrefix_t sender_prefix{};
+
+        struct DataSubMsg
+        {
+            struct Header
+            {
+                uint8_t submessage_id = 0x15;
+#if FASTDDS_IS_BIG_ENDIAN_TARGET
+                uint8_t flags = 0x02;
+#else
+                uint8_t flags = 0x03;
+#endif  // FASTDDS_IS_BIG_ENDIAN_TARGET
+                uint16_t submessage_length = 2 + 2 + 4 + 4 + 8;
+                uint16_t extra_flags = 0;
+                uint16_t octets_to_inline_qos = 4 + 4 + 8;
+                EntityId_t reader_id{};
+                EntityId_t writer_id{};
+                SequenceNumber_t sn{};
+            };
+
+            struct InlineQos
+            {
+                struct KeyHash
+                {
+                    uint16_t pid = 0x0070;  // PID_KEY_HASH
+                    uint16_t plen = 16;
+                    GUID_t guid{};
+                };
+
+                struct StatusInfo
+                {
+                    uint16_t pid = 0x0071;  // PID_STATUS_INFO
+                    uint16_t plen = 4;
+                    uint8_t flags[4] = { 0x00, 0x00, 0x00, 0x03 };
+                };
+
+                struct Sentinel
+                {
+                    uint16_t pid = 0x0001;  // PID_SENTINEL
+                    uint16_t plen = 0;
+                };
+
+                KeyHash hash;
+                StatusInfo status;
+                Sentinel sentinel;
+            };
+
+            Header header;
+            InlineQos inline_qos;
+        }
+        data;
+    };
+
+    // Set common QoS
+    reader.history_depth(10).reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
+    writer.history_depth(10).reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
+
+    // Configure security
+    const std::string governance_file("governance_helloworld_all_enable.smime");
+    const std::string permissions_file("permissions_helloworld.smime");
+    CommonPermissionsConfigure(reader, writer, governance_file, permissions_file);
+
+    // Initialize and wait for authorization and discovery
+    reader.init();
+    ASSERT_TRUE(reader.isInitialized());
+    writer.init();
+    ASSERT_TRUE(writer.isInitialized());
+    reader.waitAuthorized();
+    writer.waitAuthorized();
+    reader.wait_discovery();
+    writer.wait_discovery();
+
+    // Send fake DATA(p[UD])
+    UDPMessageSender fake_msg_sender;
+    {
+        auto writer_guid = writer.datawriter_guid();
+        auto participant_guid = writer.participant_guid();
+        auto domain_id = static_cast<uint32_t>(GET_PID() % 230);
+
+        MaliciousParticipantRemoval packet{};
+        packet.sender_prefix = writer_guid.guidPrefix;
+        packet.data.header.submessage_length += sizeof(packet.data.inline_qos);
+        packet.data.header.writer_id = c_EntityId_SPDPWriter;
+        packet.data.header.reader_id = c_EntityId_SPDPReader;
+        packet.data.header.sn.low = 100;
+        packet.data.inline_qos.hash.guid = participant_guid;
+
+        Locator_t mcast_locator;
+        ASSERT_TRUE(IPLocator::setIPv4(mcast_locator, "239.255.0.1"));
+        mcast_locator.port = 7400 + 250 * domain_id;
+
+        CDRMessage_t msg(0);
+        uint32_t msg_len = static_cast<uint32_t>(sizeof(packet));
+        msg.init(reinterpret_cast<octet*>(&packet), msg_len);
+        msg.length = msg_len;
+        msg.pos = msg_len;
+        fake_msg_sender.send(msg, mcast_locator);
+    }
+
+    EXPECT_FALSE(reader.wait_participant_undiscovery(std::chrono::seconds(1)));
+
+    auto data = default_helloworld_data_generator();
+    reader.startReception(data);
+    writer.send(data);
+    ASSERT_TRUE(data.empty());
+    reader.block_for_all();
+}
+
+TEST(Security, ValidateAuthenticationHandshakePropertiesParsing)
+{
+    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+
+    PropertyPolicy property_policy;
+
+    property_policy.properties().emplace_back(Property("dds.sec.auth.plugin",
+            "builtin.PKI-DH"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_ca",
+            "file://" + std::string(certs_path) + "/maincacert.pem"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.identity_certificate",
+            "file://" + std::string(certs_path) + "/mainsubcert.pem"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.private_key",
+            "file://" + std::string(certs_path) + "/mainsubkey.pem"));
+    property_policy.properties().emplace_back(Property("dds.sec.crypto.plugin",
+            "builtin.AES-GCM-GMAC"));
+
+    // max_handshake_requests out of bounds
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.max_handshake_requests",
+            "0"));
+
+    writer.property_policy(property_policy).init();
+
+    // Writer creation should fail
+    ASSERT_FALSE(writer.isInitialized());
+
+    writer.destroy();
+
+    property_policy.properties().pop_back();
+
+    // initial_handshake_resend_period out of bounds
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.initial_handshake_resend_period",
+            "-200"));
+
+    writer.property_policy(property_policy).init();
+
+    // Writer creation should fail
+    ASSERT_FALSE(writer.isInitialized());
+
+    writer.destroy();
+
+    property_policy.properties().pop_back();
+
+    // handshake_resend_period_gain out of bounds
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.handshake_resend_period_gain",
+            "0.5"));
+
+    writer.property_policy(property_policy).init();
+
+    // Writer creation should fail
+    ASSERT_FALSE(writer.isInitialized());
+
+    writer.destroy();
+
+    property_policy.properties().pop_back();
+
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.max_handshake_requests",
+            "5"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.initial_handshake_resend_period",
+            "200"));
+    property_policy.properties().emplace_back(Property("dds.sec.auth.builtin.PKI-DH.handshake_resend_period_gain",
+            "1.75"));
+
+    writer.property_policy(property_policy).init();
+
+    // Writer should correctly initialize
+    ASSERT_TRUE(writer.isInitialized());
+}
+
+TEST(Security, ValidateAuthenticationHandshakeProperties)
+{
+    // Create
+    PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
+    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+
+    PropertyPolicy property_policy;
+    std::string xml_file = "auth_handshake_props_profile.xml";
+    std::string profile_name = "auth_handshake_props";
+
+    // Set a configuration that makes participant authentication
+    // to be performed quickly so that we receive handshake
+    // in 0.15 secs approx
+    writer.set_xml_filename(xml_file);
+    writer.set_participant_profile(profile_name);
+
+    reader.set_xml_filename(xml_file);
+    reader.set_participant_profile(profile_name);
+
+    reader.init();
+    ASSERT_TRUE(reader.isInitialized());
+
+    writer.init();
+    ASSERT_TRUE(writer.isInitialized());
+
+    // If the settings were correctly applied
+    // we expect to be authorized in less than 0.5 seconds
+    // In reality, this time could be 0.2 perfectly,
+    // but some padding is left because of the ci
+    // or slower platforms
+    std::chrono::duration<double, std::milli> max_time(500);
+    auto t0 = std::chrono::steady_clock::now();
+    reader.waitAuthorized();
+    auto auth_elapsed_time = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - t0);
+
+    // Both should be authorized
+    writer.waitAuthorized();
+
+    ASSERT_TRUE(auth_elapsed_time < max_time);
+}
+
+// Regression test for Redmine issue #20181
+// Two simple secure participants with tcp transport and initial peers must match.
+// It basically tests that the PDPSecurityInitiatorListener
+// in PDPSimple answers back with the proxy data.
+TEST(Security, security_with_initial_peers_over_tcpv4_correctly_behaves)
+{
+    // Create
+    PubSubWriter<HelloWorldPubSubType> tcp_client("HelloWorldTopic_TCP");
+    PubSubReader<HelloWorldPubSubType> tcp_server("HelloWorldTopic_TCP");
+
+    // Search for a valid WAN address
+    LocatorList_t all_locators;
+    Locator_t wan_locator;
+    IPFinder::getIP4Address(&all_locators);
+
+    for (auto& locator : all_locators)
+    {
+        if (!IPLocator::isLocal(locator))
+        {
+            wan_locator = locator;
+            break;
+        }
+    }
+
+    uint16_t server_listening_port = 11810;
+    wan_locator.port = server_listening_port;
+    wan_locator.kind = LOCATOR_KIND_TCPv4;
+
+    auto tcp_client_transport_descriptor = std::make_shared<eprosima::fastdds::rtps::TCPv4TransportDescriptor>();
+    LocatorList_t initial_peers;
+    initial_peers.push_back(wan_locator);
+    tcp_client.disable_builtin_transport()
+            .add_user_transport_to_pparams(tcp_client_transport_descriptor)
+            .initial_peers(initial_peers);
+
+    auto tcp_server_transport_descriptor = std::make_shared<eprosima::fastdds::rtps::TCPv4TransportDescriptor>();
+    tcp_server_transport_descriptor->listening_ports.push_back(server_listening_port);
+    IPLocator::copyIPv4(wan_locator, tcp_server_transport_descriptor->wan_addr);
+
+    std::cout << "SETTING WAN address to " <<  wan_locator << std::endl;
+
+    tcp_server.disable_builtin_transport()
+            .add_user_transport_to_pparams(tcp_server_transport_descriptor);
+
+    // Configure security
+    const std::string governance_file("governance_helloworld_all_enable.smime");
+    const std::string permissions_file("permissions_helloworld.smime");
+    CommonPermissionsConfigure(tcp_server, tcp_client, governance_file, permissions_file);
+
+    tcp_server.init();
+    tcp_client.init();
+
+    ASSERT_TRUE(tcp_server.isInitialized());
+    ASSERT_TRUE(tcp_client.isInitialized());
+
+    tcp_server.waitAuthorized();
+    tcp_client.waitAuthorized();
+
+    tcp_server.wait_discovery();
+    tcp_client.wait_discovery();
+
+    ASSERT_TRUE(tcp_server.is_matched());
+    ASSERT_TRUE(tcp_client.is_matched());
+
+    auto data = default_helloworld_data_generator();
+    tcp_server.startReception(data);
+    tcp_client.send(data);
+    ASSERT_TRUE(data.empty());
+    tcp_server.block_for_all(std::chrono::seconds(10));
+}
+
 
 void blackbox_security_init()
 {

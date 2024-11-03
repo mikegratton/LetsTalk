@@ -20,7 +20,7 @@
 #ifndef _TEST_BLACKBOX_REQREPHELLOWORLDREQUESTER_HPP_
 #define _TEST_BLACKBOX_REQREPHELLOWORLDREQUESTER_HPP_
 
-#include "../../types/HelloWorldPubSubTypes.h"
+#include "../../types/HelloWorldPubSubTypes.hpp"
 
 #include <fastdds/dds/subscriber/DataReader.hpp>
 #include <fastdds/dds/subscriber/DataReaderListener.hpp>
@@ -133,15 +133,15 @@ public:
     virtual ~ReqRepHelloWorldRequester();
     void init();
     void init_with_latency(
-            const eprosima::fastrtps::Duration_t& latency_budget_duration_pub,
-            const eprosima::fastrtps::Duration_t& latency_budget_duration_sub);
+            const eprosima::fastdds::dds::Duration_t& latency_budget_duration_pub,
+            const eprosima::fastdds::dds::Duration_t& latency_budget_duration_sub);
     bool isInitialized() const
     {
         return initialized_;
     }
 
     void newNumber(
-            eprosima::fastrtps::rtps::SampleIdentity related_sample_identity,
+            eprosima::fastdds::rtps::SampleIdentity related_sample_identity,
             uint16_t number);
     void block(
             const std::chrono::seconds& seconds);
@@ -149,12 +149,12 @@ public:
     void matched();
     void send(
             const uint16_t number);
-    const eprosima::fastrtps::Duration_t datawriter_latency_budget_duration() const
+    const eprosima::fastdds::dds::Duration_t datawriter_latency_budget_duration() const
     {
         return request_datawriter_->get_qos().latency_budget().duration;
     }
 
-    const eprosima::fastrtps::Duration_t datareader_latency_budget_duration() const
+    const eprosima::fastdds::dds::Duration_t datareader_latency_budget_duration() const
     {
         return reply_datareader_->get_qos().latency_budget().duration;
     }
@@ -208,8 +208,8 @@ private:
     std::condition_variable cvDiscovery_;
     unsigned int matched_;
     eprosima::fastdds::dds::TypeSupport type_;
-    eprosima::fastrtps::rtps::SampleIdentity related_sample_identity_;
-    eprosima::fastrtps::rtps::SampleIdentity received_sample_identity_;
+    eprosima::fastdds::rtps::SampleIdentity related_sample_identity_;
+    eprosima::fastdds::rtps::SampleIdentity received_sample_identity_;
 };
 
 #endif // _TEST_BLACKBOX_REQREPHELLOWORLDREQUESTER_HPP_

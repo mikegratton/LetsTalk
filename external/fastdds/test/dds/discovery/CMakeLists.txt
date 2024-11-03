@@ -13,7 +13,7 @@
 # limitations under the License.
 
 if(NOT ((MSVC OR MSVC_IDE) AND EPROSIMA_INSTALLER) AND fastcdr_FOUND)
-    find_package(PythonInterp 3)
+    find_package(Python3 COMPONENTS Interpreter)
 
     ###########################################################################
     # Binaries
@@ -30,7 +30,7 @@ if(NOT ((MSVC OR MSVC_IDE) AND EPROSIMA_INSTALLER) AND fastcdr_FOUND)
         )
     target_link_libraries(DDSParticipantDiscovery
         fastcdr
-        fastrtps
+        fastdds
         ${CMAKE_DL_LIBS}
         )
 
@@ -46,9 +46,9 @@ if(NOT ((MSVC OR MSVC_IDE) AND EPROSIMA_INSTALLER) AND fastcdr_FOUND)
         math(EXPR W_UNICAST_PORT_RANDOM_NUMBER "${W_UNICAST_PORT_RANDOM_NUMBER} + 1024")
     endif()
 
-    if(PYTHONINTERP_FOUND AND NOT APPLE AND NOT WIN32)
+    if(Python3_Interpreter_FOUND AND NOT APPLE AND NOT WIN32)
         add_test(NAME AddDiscoveryServerToListFromEnvironmentFile
-            COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/client_server_dynamic_discovery.py)
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/client_server_dynamic_discovery.py)
 
         set_property(TEST AddDiscoveryServerToListFromEnvironmentFile PROPERTY ENVIRONMENT
             "CLIENT_SERVER_DYNAMIC_DISCOVERY_BIN=$<TARGET_FILE:DDSParticipantDiscovery>")

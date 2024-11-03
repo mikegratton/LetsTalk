@@ -4,8 +4,8 @@
 
 #include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
-#include "idl/HelloWorld.h"
-#include "idl/OpenGarage.h"
+#include "idl/HelloWorld.hpp"
+#include "idl/OpenGarage.hpp"
 
 using namespace lt;
 

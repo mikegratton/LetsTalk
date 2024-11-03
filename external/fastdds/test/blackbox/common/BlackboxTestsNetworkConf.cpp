@@ -16,16 +16,16 @@
 #include <string>
 
 #include <gtest/gtest.h>
+#include <fastdds/rtps/common/Locator.hpp>
+#include <fastdds/utils/IPFinder.hpp>
+
 #include "BlackboxTests.hpp"
 #include "PubSubReader.hpp"
 #include "PubSubWriter.hpp"
 #include "PubSubParticipant.hpp"
 
-#include <fastrtps/rtps/common/Locator.h>
-#include <fastrtps/utils/IPFinder.h>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -186,8 +186,8 @@ TEST_P(NetworkConfig, PubSubOutLocatorSelection)
         reader.disable_builtin_transport().add_user_transport_to_pparams(descriptor_);
     }
 
-    reader.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).
-            history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS).
+    reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).
+            history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS).
             resource_limits_allocated_samples(2).
             resource_limits_max_samples(2).init();
 
@@ -195,9 +195,9 @@ TEST_P(NetworkConfig, PubSubOutLocatorSelection)
 
     descriptor_->m_output_udp_socket = static_cast<uint16_t>(locator.port);
 
-    writer.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_kind(
-        eprosima::fastrtps::KEEP_ALL_HISTORY_QOS).
-            durability_kind(eprosima::fastrtps::TRANSIENT_LOCAL_DURABILITY_QOS).
+    writer.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_kind(
+        eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS).
+            durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS).
             resource_limits_allocated_samples(20).
             disable_builtin_transport().
             add_user_transport_to_pparams(descriptor_).
@@ -229,14 +229,14 @@ TEST_P(NetworkConfig, PubSubInterfaceWhitelistLocalhost)
 
     descriptor_->interfaceWhiteList.push_back(ip);
 
-    reader.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
+    reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_depth(10).
             disable_multicast(0).
             disable_builtin_transport().
             add_user_transport_to_pparams(descriptor_).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
-    writer.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
+    writer.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_depth(10).
             disable_multicast(1).
             disable_builtin_transport().
             add_user_transport_to_pparams(descriptor_).init();
@@ -257,77 +257,74 @@ TEST_P(NetworkConfig, PubSubInterfaceWhitelistLocalhost)
     reader.block_for_all();
 }
 
-TEST_P(NetworkConfig, PubSubInterfaceWhitelistUnicast)
+void interface_whitelist_test(
+        const std::vector<IPFinder::info_IP>& pub_interfaces,
+        const std::vector<IPFinder::info_IP>& sub_interfaces,
+        bool interface_name = false)
 {
     PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
     PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
 
-    std::vector<IPFinder::info_IP> interfaces;
-    use_udpv4 ? GetIP4s(interfaces) : GetIP6s(interfaces);
 
-    for (const auto& interface : interfaces)
+    std::shared_ptr<UDPTransportDescriptor> pub_udp_descriptor;
+
+    if (use_udpv4)
     {
-        descriptor_->interfaceWhiteList.push_back(interface.name);
+        pub_udp_descriptor = std::make_shared<UDPv4TransportDescriptor>();
+    }
+    else
+    {
+        pub_udp_descriptor = std::make_shared<UDPv6TransportDescriptor>();
     }
 
-    reader.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
-            disable_builtin_transport().
-            add_user_transport_to_pparams(descriptor_).init();
-
-    ASSERT_TRUE(reader.isInitialized());
-
-    writer.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
-            disable_builtin_transport().
-            add_user_transport_to_pparams(descriptor_).init();
-
-    ASSERT_TRUE(writer.isInitialized());
-
-    // Because its volatile the durability
-    // Wait for discovery.
-    writer.wait_discovery();
-    reader.wait_discovery();
-
-    auto data = default_helloworld_data_generator();
-
-    reader.startReception(data);
-
-    writer.send(data);
-    ASSERT_TRUE(data.empty());
-    reader.block_for_all();
-}
-
-void asymmetric_whitelist_test(
-        const std::vector<IPFinder::info_IP>& pub_interfaces,
-        const std::vector<IPFinder::info_IP>& sub_interfaces)
-{
-    PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
-    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
-
-    std::shared_ptr<UDPTransportDescriptor> pub_upv4_descriptor = std::make_shared<UDPv4TransportDescriptor>();
     // include the interfaces in the transport descriptor
-    for (const auto& interface : pub_interfaces)
+    for (const auto& network_interface : pub_interfaces)
     {
-        pub_upv4_descriptor->interfaceWhiteList.push_back(interface.name);
+        if (!interface_name)
+        {
+            pub_udp_descriptor->interfaceWhiteList.push_back(network_interface.name);
+        }
+        else
+        {
+            pub_udp_descriptor->interfaceWhiteList.push_back(network_interface.dev);
+        }
     }
 
     // Set the transport descriptor WITH interfaces in the writer
-    writer.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
+    writer.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_depth(10).
             disable_builtin_transport().
-            add_user_transport_to_pparams(pub_upv4_descriptor).init();
+            add_user_transport_to_pparams(pub_udp_descriptor).init();
 
     ASSERT_TRUE(writer.isInitialized());
 
-    std::shared_ptr<UDPTransportDescriptor> sub_upv4_descriptor = std::make_shared<UDPv4TransportDescriptor>();
-    // include the interfaces in the transport descriptor
-    for (const auto& interface : sub_interfaces)
+    std::shared_ptr<UDPTransportDescriptor> sub_udp_descriptor;
+
+    if (use_udpv4)
     {
-        sub_upv4_descriptor->interfaceWhiteList.push_back(interface.name);
+        sub_udp_descriptor = std::make_shared<UDPv4TransportDescriptor>();
+    }
+    else
+    {
+        sub_udp_descriptor = std::make_shared<UDPv6TransportDescriptor>();
+    }
+
+    // include the interfaces in the transport descriptor
+    for (const auto& network_interface : sub_interfaces)
+    {
+        if (!interface_name)
+        {
+            sub_udp_descriptor->interfaceWhiteList.push_back(network_interface.name);
+        }
+        else
+        {
+            sub_udp_descriptor->interfaceWhiteList.push_back(network_interface.dev);
+        }
     }
 
     // Set the transport descriptor WITH interfaces in the reader
-    reader.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS).history_depth(10).
+    reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_depth(10).
             disable_builtin_transport().
-            add_user_transport_to_pparams(sub_upv4_descriptor).init();
+            add_user_transport_to_pparams(sub_udp_descriptor).init();
 
     ASSERT_TRUE(reader.isInitialized());
 
@@ -354,73 +351,173 @@ void asymmetric_whitelist_test(
     reader.block_for_all();
 }
 
-// Regression test for redmine issue #18854 to check in UDP (v4) that setting the interface whitelist in one
+// Setting the interface whitelist with all available interfaces case, checking UDP case
+TEST_P(NetworkConfig, PubSubInterfaceWhitelistUnicast)
+{
+    std::vector<IPFinder::info_IP> all_interfaces;
+    use_udpv4 ? GetIP4s(all_interfaces) : GetIP6s(all_interfaces);
+
+    {
+        // IP addresses
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces, all_interfaces);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(all_interfaces, all_interfaces);
+        }
+    }
+
+    {
+        // Interface names
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces, all_interfaces, true);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(all_interfaces, all_interfaces, true);
+        }
+    }
+}
+
+
+// Regression test for redmine issue #18854 to check in UDP that setting the interface whitelist in one
 // of the endpoints, but not in the other, connection is established anyways.
 // All available interfaces case.
-TEST(NetworkConfig, PubSubAsymmetricInterfaceWhitelistAllInterfaces)
+TEST_P(NetworkConfig, PubSubAsymmetricInterfaceWhitelistAllInterfaces)
 {
     std::vector<IPFinder::info_IP> no_interfaces;
 
     std::vector<IPFinder::info_IP> all_interfaces;
-    GetIP4s(all_interfaces, true);
+    use_udpv4 ? GetIP4s(all_interfaces, true) : GetIP6s(all_interfaces, true);
 
     {
-        // Whitelist only in publisher
-        asymmetric_whitelist_test(all_interfaces, no_interfaces);
+        // IP addresses
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces, no_interfaces);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, all_interfaces);
+        }
     }
 
     {
-        // Whitelist only in subscriber
-        asymmetric_whitelist_test(no_interfaces, all_interfaces);
+        // Interface names
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces, no_interfaces, true);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, all_interfaces, true);
+        }
     }
 }
 
-// Regression test for redmine issue #18854 to check in UDP (v4) that setting the interface whitelist in one
+// Regression test for redmine issue #18854 to check in UDP that setting the interface whitelist in one
 // of the endpoints, but not in the other, connection is established anyways.
 // Only loopback interface case.
-TEST(NetworkConfig, PubSubAsymmetricInterfaceWhitelistLocalhostOnly)
+TEST_P(NetworkConfig, PubSubAsymmetricInterfaceWhitelistLocalhostOnly)
 {
+#ifdef _WIN32
+    GTEST_SKIP() << "This test is skipped on Windows";
+#else
     std::vector<IPFinder::info_IP> no_interfaces;
 
     std::vector<IPFinder::info_IP> locahost_interface_only;
-    GetIP4s(locahost_interface_only, true);
-    auto new_end = remove_if(locahost_interface_only.begin(),
-                    locahost_interface_only.end(),
-                    [](IPFinder::info_IP ip)
-                    {
-                        return ip.type != IPFinder::IP4_LOCAL;
-                    });
-    locahost_interface_only.erase(new_end, locahost_interface_only.end());
-
+    if (use_udpv4)
     {
-        // Whitelist only in publisher
-        asymmetric_whitelist_test(locahost_interface_only, no_interfaces);
+        GetIP4s(locahost_interface_only, true);
+        auto new_end = remove_if(locahost_interface_only.begin(),
+                        locahost_interface_only.end(),
+                        [](IPFinder::info_IP info_ip_)
+                        {
+                            return info_ip_.type != IPFinder::IP4_LOCAL;
+                        });
+        locahost_interface_only.erase(new_end, locahost_interface_only.end());
+    }
+    else
+    {
+        GetIP6s(locahost_interface_only, true);
+        auto new_end = remove_if(locahost_interface_only.begin(),
+                        locahost_interface_only.end(),
+                        [](IPFinder::info_IP info_ip_)
+                        {
+                            return info_ip_.type != IPFinder::IP6_LOCAL;
+                        });
+        locahost_interface_only.erase(new_end, locahost_interface_only.end());
     }
 
     {
-        // Whitelist only in subscriber
-        asymmetric_whitelist_test(no_interfaces, locahost_interface_only);
+        // IP Address
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(locahost_interface_only, no_interfaces);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, locahost_interface_only);
+        }
     }
+
+    {
+        // Interface name
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(locahost_interface_only, no_interfaces, true);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, locahost_interface_only, true);
+        }
+    }
+#endif // _WIN32
 }
 
-// Regression test for redmine issue #18854 to check in UDP (v4) that setting the interface whitelist in one
+// Regression test for redmine issue #18854 to check in UDP that setting the interface whitelist in one
 // of the endpoints, but not in the other, connection is established anyways.
 // All available interfaces except loopback case.
-TEST(NetworkConfig, PubSubAsymmetricInterfaceWhitelistAllExceptLocalhost)
+TEST_P(NetworkConfig, PubSubAsymmetricInterfaceWhitelistAllExceptLocalhost)
 {
     std::vector<IPFinder::info_IP> no_interfaces;
 
     std::vector<IPFinder::info_IP> all_interfaces_except_localhost;
-    GetIP4s(all_interfaces_except_localhost, false);
+    use_udpv4 ? GetIP4s(all_interfaces_except_localhost, false) : GetIP6s(all_interfaces_except_localhost, false);
 
     {
-        // Whitelist only in publisher
-        asymmetric_whitelist_test(all_interfaces_except_localhost, no_interfaces);
+        // IP address
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces_except_localhost, no_interfaces);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, all_interfaces_except_localhost);
+        }
     }
 
     {
-        // Whitelist only in subscriber
-        asymmetric_whitelist_test(no_interfaces, all_interfaces_except_localhost);
+        // Interface name
+        {
+            // Whitelist only in publisher
+            interface_whitelist_test(all_interfaces_except_localhost, no_interfaces, true);
+        }
+
+        {
+            // Whitelist only in subscriber
+            interface_whitelist_test(no_interfaces, all_interfaces_except_localhost, true);
+        }
     }
 }
 
@@ -491,10 +588,11 @@ TEST_P(NetworkConfig, PubGetSendingLocatorsWhitelist)
     constexpr uint32_t port = 31337u;
 
     descriptor_->m_output_udp_socket = static_cast<uint16_t>(port);
-    for (const auto& interface : interfaces)
+    for (const auto& network_interface : interfaces)
     {
-        std::cout << "Adding interface '" << interface.name << "' (" << interface.name.size() << ")" << std::endl;
-        descriptor_->interfaceWhiteList.push_back(interface.name);
+        std::cout << "Adding interface '" << network_interface.name << "' (" << network_interface.name.size() << ")" <<
+            std::endl;
+        descriptor_->interfaceWhiteList.push_back(network_interface.name);
     }
 
     writer.disable_builtin_transport().
@@ -544,6 +642,37 @@ TEST_P(NetworkConfig, PubGetSendingLocatorsWhitelist)
             std::cout << "Interface '" << interfaces[i].name << "' not found" << std::endl;
         }
     }
+}
+
+// Regression test for redmine issue #19587
+TEST_P(NetworkConfig, double_binding_fails)
+{
+    PubSubReader<HelloWorldPubSubType> p1(TEST_TOPIC_NAME);
+    PubSubReader<HelloWorldPubSubType> p2(TEST_TOPIC_NAME);
+
+    // Create a participant without whitelist
+    p1.disable_builtin_transport().add_user_transport_to_pparams(descriptor_);
+    p1.init();
+    ASSERT_TRUE(p1.isInitialized());
+
+    // Add the announced addresses to the interface whitelist
+    LocatorList_t locators_p1;
+    p1.get_native_reader().get_listening_locators(locators_p1);
+    for (const auto& loc : locators_p1)
+    {
+        descriptor_->interfaceWhiteList.push_back(IPLocator::ip_to_string(loc));
+    }
+
+    // Try to listen on the same locators as the first participant
+    p2.disable_builtin_transport().add_user_transport_to_pparams(descriptor_);
+    p2.set_default_unicast_locators(locators_p1);
+    p2.init();
+    ASSERT_TRUE(p2.isInitialized());
+
+    // Should be listening on different locators
+    LocatorList_t locators_p2;
+    p2.get_native_reader().get_listening_locators(locators_p2);
+    EXPECT_FALSE(locators_p1 == locators_p2);
 }
 
 #ifdef INSTANTIATE_TEST_SUITE_P

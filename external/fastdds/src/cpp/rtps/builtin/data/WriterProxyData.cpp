@@ -17,21 +17,23 @@
  *
  */
 
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
-
-#include <fastdds/dds/log/Log.hpp>
-
 #include <fastdds/core/policy/ParameterList.hpp>
 #include <fastdds/core/policy/QosPoliciesSerializer.hpp>
-#include <rtps/network/NetworkFactory.h>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/common/VendorId_t.hpp>
+
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/network/NetworkFactory.hpp>
 
 #include "ProxyDataFilters.hpp"
 
 using ParameterList = eprosima::fastdds::dds::ParameterList;
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
+
+using ::operator <<;
 
 WriterProxyData::WriterProxyData(
         const size_t max_unicast_locators,
@@ -175,6 +177,9 @@ uint32_t WriterProxyData::get_serialized_size(
 {
     uint32_t ret_val = include_encapsulation ? 4 : 0;
 
+    // PID_ENDPOINT_GUID
+    ret_val += 4 + PARAMETER_GUID_LENGTH;
+
     // PID_NETWORK_CONFIGURATION_SET
     ret_val += 4 + PARAMETER_NETWORKCONFIGSET_LENGTH;
 
@@ -188,16 +193,13 @@ uint32_t WriterProxyData::get_serialized_size(
     ret_val += 4 + PARAMETER_GUID_LENGTH;
 
     // PID_TOPIC_NAME
-    ret_val += fastdds::dds::ParameterSerializer<Parameter_t>::cdr_serialized_size(m_topicName);
+    ret_val += dds::ParameterSerializer<Parameter_t>::cdr_serialized_size(m_topicName);
 
     // PID_TYPE_NAME
-    ret_val += fastdds::dds::ParameterSerializer<Parameter_t>::cdr_serialized_size(m_typeName);
+    ret_val += dds::ParameterSerializer<Parameter_t>::cdr_serialized_size(m_typeName);
 
     // PID_KEY_HASH
     ret_val += 4 + 16;
-
-    // PID_ENDPOINT_GUID
-    ret_val += 4 + PARAMETER_GUID_LENGTH;
 
     // PID_TYPE_MAX_SIZE_SERIALIZED
     ret_val += 4 + 4;
@@ -215,103 +217,98 @@ uint32_t WriterProxyData::get_serialized_size(
     }
     if (m_qos.m_durability.send_always() || m_qos.m_durability.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DurabilityQosPolicy>::cdr_serialized_size(m_qos.m_durability);
+        ret_val +=
+                dds::QosPoliciesSerializer<dds::DurabilityQosPolicy>::cdr_serialized_size(m_qos.m_durability);
     }
     if (m_qos.m_durabilityService.send_always() || m_qos.m_durabilityService.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DurabilityServiceQosPolicy>::cdr_serialized_size(
+        ret_val += dds::QosPoliciesSerializer<dds::DurabilityServiceQosPolicy>::cdr_serialized_size(
             m_qos.m_durabilityService);
     }
     if (m_qos.m_deadline.send_always() || m_qos.m_deadline.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DeadlineQosPolicy>::cdr_serialized_size(m_qos.m_deadline);
+        ret_val += dds::QosPoliciesSerializer<dds::DeadlineQosPolicy>::cdr_serialized_size(m_qos.m_deadline);
     }
     if (m_qos.m_latencyBudget.send_always() || m_qos.m_latencyBudget.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<LatencyBudgetQosPolicy>::cdr_serialized_size(
-            m_qos.m_latencyBudget);
+        ret_val += dds::QosPoliciesSerializer<dds::LatencyBudgetQosPolicy>::cdr_serialized_size(m_qos.m_latencyBudget);
     }
     if (m_qos.m_liveliness.send_always() || m_qos.m_liveliness.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<LivelinessQosPolicy>::cdr_serialized_size(m_qos.m_liveliness);
+        ret_val +=
+                dds::QosPoliciesSerializer<dds::LivelinessQosPolicy>::cdr_serialized_size(m_qos.m_liveliness);
     }
     if (m_qos.m_reliability.send_always() || m_qos.m_reliability.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<ReliabilityQosPolicy>::cdr_serialized_size(m_qos.m_reliability);
+        ret_val += dds::QosPoliciesSerializer<dds::ReliabilityQosPolicy>::cdr_serialized_size(m_qos.m_reliability);
     }
     if (m_qos.m_lifespan.send_always() || m_qos.m_lifespan.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<LifespanQosPolicy>::cdr_serialized_size(m_qos.m_lifespan);
+        ret_val += dds::QosPoliciesSerializer<dds::LifespanQosPolicy>::cdr_serialized_size(m_qos.m_lifespan);
     }
     if (m_qos.m_userData.send_always() || m_qos.m_userData.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<UserDataQosPolicy>::cdr_serialized_size(m_qos.m_userData);
+        ret_val += dds::QosPoliciesSerializer<dds::UserDataQosPolicy>::cdr_serialized_size(m_qos.m_userData);
     }
     if (m_qos.m_timeBasedFilter.send_always() || m_qos.m_timeBasedFilter.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<TimeBasedFilterQosPolicy>::cdr_serialized_size(
+        ret_val += dds::QosPoliciesSerializer<dds::TimeBasedFilterQosPolicy>::cdr_serialized_size(
             m_qos.m_timeBasedFilter);
     }
     if (m_qos.m_ownership.send_always() || m_qos.m_ownership.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<OwnershipQosPolicy>::cdr_serialized_size(m_qos.m_ownership);
+        ret_val += dds::QosPoliciesSerializer<dds::OwnershipQosPolicy>::cdr_serialized_size(m_qos.m_ownership);
     }
     if (m_qos.m_ownershipStrength.send_always() || m_qos.m_ownershipStrength.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<OwnershipStrengthQosPolicy>::cdr_serialized_size(
+        ret_val += dds::QosPoliciesSerializer<dds::OwnershipStrengthQosPolicy>::cdr_serialized_size(
             m_qos.m_ownershipStrength);
     }
     if (m_qos.m_destinationOrder.send_always() || m_qos.m_destinationOrder.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DestinationOrderQosPolicy>::cdr_serialized_size(
+        ret_val += dds::QosPoliciesSerializer<dds::DestinationOrderQosPolicy>::cdr_serialized_size(
             m_qos.m_destinationOrder);
     }
     if (m_qos.m_presentation.send_always() || m_qos.m_presentation.hasChanged)
     {
         ret_val +=
-                fastdds::dds::QosPoliciesSerializer<PresentationQosPolicy>::cdr_serialized_size(m_qos.m_presentation);
+                dds::QosPoliciesSerializer<dds::PresentationQosPolicy>::cdr_serialized_size(m_qos.m_presentation);
     }
     if (m_qos.m_partition.send_always() || m_qos.m_partition.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<PartitionQosPolicy>::cdr_serialized_size(m_qos.m_partition);
+        ret_val += dds::QosPoliciesSerializer<dds::PartitionQosPolicy>::cdr_serialized_size(m_qos.m_partition);
     }
     if (m_qos.m_topicData.send_always() || m_qos.m_topicData.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<TopicDataQosPolicy>::cdr_serialized_size(m_qos.m_topicData);
+        ret_val += dds::QosPoliciesSerializer<dds::TopicDataQosPolicy>::cdr_serialized_size(m_qos.m_topicData);
     }
     if (m_qos.m_disablePositiveACKs.send_always() || m_qos.m_disablePositiveACKs.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DisablePositiveACKsQosPolicy>::cdr_serialized_size(
+        ret_val += dds::QosPoliciesSerializer<dds::DisablePositiveACKsQosPolicy>::cdr_serialized_size(
             m_qos.m_disablePositiveACKs);
     }
     if ((m_qos.data_sharing.send_always() || m_qos.data_sharing.hasChanged) &&
             m_qos.data_sharing.kind() != fastdds::dds::OFF)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<DataSharingQosPolicy>::cdr_serialized_size(
-            m_qos.data_sharing);
+        ret_val += dds::QosPoliciesSerializer<dds::DataSharingQosPolicy>::cdr_serialized_size(m_qos.data_sharing);
     }
     if (m_qos.m_groupData.send_always() || m_qos.m_groupData.hasChanged)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<GroupDataQosPolicy>::cdr_serialized_size(m_qos.m_groupData);
+        ret_val += dds::QosPoliciesSerializer<dds::GroupDataQosPolicy>::cdr_serialized_size(m_qos.m_groupData);
     }
-    if (m_type_id && m_type_id->m_type_identifier._d() != 0)
+    if (m_type_id && m_type_id->m_type_identifier._d() != fastdds::dds::xtypes::TK_NONE)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<TypeIdV1>::cdr_serialized_size(*m_type_id);
+        ret_val += dds::QosPoliciesSerializer<dds::TypeIdV1>::cdr_serialized_size(*m_type_id);
     }
-    if (m_type && m_type->m_type_object._d() != 0)
+    if (m_type && m_type->m_type_object._d() != fastdds::dds::xtypes::TK_NONE)
     {
-        ret_val += fastdds::dds::QosPoliciesSerializer<TypeObjectV1>::cdr_serialized_size(*m_type);
-    }
-    if (m_type_information && m_type_information->assigned())
-    {
-        ret_val +=
-                fastdds::dds::QosPoliciesSerializer<xtypes::TypeInformation>::cdr_serialized_size(*m_type_information);
+        ret_val += dds::QosPoliciesSerializer<dds::TypeObjectV1>::cdr_serialized_size(*m_type);
     }
 
     if (m_properties.size() > 0)
     {
         // PID_PROPERTY_LIST
-        ret_val += fastdds::dds::ParameterSerializer<ParameterPropertyList_t>::cdr_serialized_size(m_properties);
+        ret_val += dds::ParameterSerializer<dds::ParameterPropertyList_t>::cdr_serialized_size(m_properties);
     }
 
 #if HAVE_SECURITY
@@ -320,6 +317,18 @@ uint32_t WriterProxyData::get_serialized_size(
         ret_val += 4 + PARAMETER_ENDPOINT_SECURITY_INFO_LENGTH;
     }
 #endif // if HAVE_SECURITY
+
+    if (m_qos.representation.send_always() || m_qos.representation.hasChanged)
+    {
+        ret_val += dds::QosPoliciesSerializer<dds::DataRepresentationQosPolicy>::cdr_serialized_size(
+            m_qos.representation);
+    }
+
+    if (m_type_information && m_type_information->assigned())
+    {
+        ret_val += dds::QosPoliciesSerializer<dds::xtypes::TypeInformationParameter>::cdr_serialized_size(
+            *m_type_information);
+    }
 
     // PID_SENTINEL
     return ret_val + 4;
@@ -338,9 +347,17 @@ bool WriterProxyData::writeToCDRMessage(
     }
 
     {
+        ParameterGuid_t p(fastdds::dds::PID_ENDPOINT_GUID, 16, m_guid);
+        if (!dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
+        {
+            return false;
+        }
+    }
+
+    {
         ParameterNetworkConfigSet_t p(fastdds::dds::PID_NETWORK_CONFIGURATION_SET, PARAMETER_NETWORKCONFIGSET_LENGTH);
         p.netconfigSet = m_networkConfiguration;
-        if (!fastdds::dds::ParameterSerializer<ParameterNetworkConfigSet_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterNetworkConfigSet_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
@@ -349,7 +366,7 @@ bool WriterProxyData::writeToCDRMessage(
     for (const Locator_t& locator : remote_locators_.unicast)
     {
         ParameterLocator_t p(fastdds::dds::PID_UNICAST_LOCATOR, PARAMETER_LOCATOR_LENGTH, locator);
-        if (!fastdds::dds::ParameterSerializer<ParameterLocator_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterLocator_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
@@ -357,63 +374,56 @@ bool WriterProxyData::writeToCDRMessage(
     for (const Locator_t& locator : remote_locators_.multicast)
     {
         ParameterLocator_t p(fastdds::dds::PID_MULTICAST_LOCATOR, PARAMETER_LOCATOR_LENGTH, locator);
-        if (!fastdds::dds::ParameterSerializer<ParameterLocator_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterLocator_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterGuid_t p(fastdds::dds::PID_PARTICIPANT_GUID, PARAMETER_GUID_LENGTH, m_RTPSParticipantKey);
-        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterString_t p(fastdds::dds::PID_TOPIC_NAME, 0, m_topicName);
-        if (!fastdds::dds::ParameterSerializer<ParameterString_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterString_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterString_t p(fastdds::dds::PID_TYPE_NAME, 0, m_typeName);
-        if (!fastdds::dds::ParameterSerializer<ParameterString_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterString_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterKey_t p(fastdds::dds::PID_KEY_HASH, 16, m_key);
-        if (!fastdds::dds::ParameterSerializer<ParameterKey_t>::add_to_cdr_message(p, msg))
-        {
-            return false;
-        }
-    }
-    {
-        ParameterGuid_t p(fastdds::dds::PID_ENDPOINT_GUID, 16, m_guid);
-        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterKey_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterPort_t p(fastdds::dds::PID_TYPE_MAX_SIZE_SERIALIZED, 4, m_typeMaxSerialized);
-        if (!fastdds::dds::ParameterSerializer<ParameterPort_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterPort_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterProtocolVersion_t p(fastdds::dds::PID_PROTOCOL_VERSION, 4);
-        if (!fastdds::dds::ParameterSerializer<ParameterProtocolVersion_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterProtocolVersion_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     {
         ParameterVendorId_t p(fastdds::dds::PID_VENDORID, 4);
-        if (!fastdds::dds::ParameterSerializer<ParameterVendorId_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterVendorId_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
@@ -421,125 +431,116 @@ bool WriterProxyData::writeToCDRMessage(
     if (persistence_guid_ != c_Guid_Unknown)
     {
         ParameterGuid_t p(fastdds::dds::PID_PERSISTENCE_GUID, 16, persistence_guid_);
-        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterGuid_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
     if ( m_qos.m_durability.send_always() || m_qos.m_durability.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<DurabilityQosPolicy>::add_to_cdr_message(m_qos.m_durability, msg))
+        if (!dds::QosPoliciesSerializer<dds::DurabilityQosPolicy>::add_to_cdr_message(m_qos.m_durability, msg))
         {
             return false;
         }
     }
     if (m_qos.m_durabilityService.send_always() || m_qos.m_durabilityService.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<DurabilityServiceQosPolicy>::add_to_cdr_message(m_qos.
-                        m_durabilityService, msg))
+        if (!dds::QosPoliciesSerializer<dds::DurabilityServiceQosPolicy>::add_to_cdr_message(
+                    m_qos.m_durabilityService, msg))
         {
             return false;
         }
     }
     if (m_qos.m_deadline.send_always() ||  m_qos.m_deadline.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<DeadlineQosPolicy>::add_to_cdr_message(m_qos.m_deadline, msg))
+        if (!dds::QosPoliciesSerializer<dds::DeadlineQosPolicy>::add_to_cdr_message(m_qos.m_deadline, msg))
         {
             return false;
         }
     }
     if (m_qos.m_latencyBudget.send_always() ||  m_qos.m_latencyBudget.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<LatencyBudgetQosPolicy>::add_to_cdr_message(m_qos.m_latencyBudget,
-                msg))
+        if (!dds::QosPoliciesSerializer<dds::LatencyBudgetQosPolicy>::add_to_cdr_message(m_qos.m_latencyBudget, msg))
         {
             return false;
         }
     }
     if (m_qos.m_liveliness.send_always() ||  m_qos.m_liveliness.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<LivelinessQosPolicy>::add_to_cdr_message(m_qos.m_liveliness, msg))
+        if (!dds::QosPoliciesSerializer<dds::LivelinessQosPolicy>::add_to_cdr_message(m_qos.m_liveliness, msg))
         {
             return false;
         }
     }
     if (m_qos.m_reliability.send_always() ||  m_qos.m_reliability.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<ReliabilityQosPolicy>::add_to_cdr_message(m_qos.m_reliability, msg))
+        if (!dds::QosPoliciesSerializer<dds::ReliabilityQosPolicy>::add_to_cdr_message(m_qos.m_reliability, msg))
         {
             return false;
         }
     }
     if (m_qos.m_lifespan.send_always() ||  m_qos.m_lifespan.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<LifespanQosPolicy>::add_to_cdr_message(m_qos.m_lifespan, msg))
+        if (!dds::QosPoliciesSerializer<dds::LifespanQosPolicy>::add_to_cdr_message(m_qos.m_lifespan, msg))
         {
             return false;
         }
     }
     if ( m_qos.m_userData.send_always() || m_qos.m_userData.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<UserDataQosPolicy>::add_to_cdr_message(m_qos.m_userData, msg))
+        if (!dds::QosPoliciesSerializer<dds::UserDataQosPolicy>::add_to_cdr_message(m_qos.m_userData, msg))
         {
             return false;
         }
     }
     if (m_qos.m_timeBasedFilter.send_always() ||  m_qos.m_timeBasedFilter.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<TimeBasedFilterQosPolicy>::add_to_cdr_message(m_qos.m_timeBasedFilter,
-                msg))
+        if (!dds::QosPoliciesSerializer<dds::TimeBasedFilterQosPolicy>::add_to_cdr_message(
+                    m_qos.m_timeBasedFilter, msg))
         {
             return false;
         }
     }
     if (m_qos.m_ownership.send_always() ||  m_qos.m_ownership.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<OwnershipQosPolicy>::add_to_cdr_message(m_qos.m_ownership, msg))
+        if (!dds::QosPoliciesSerializer<dds::OwnershipQosPolicy>::add_to_cdr_message(m_qos.m_ownership, msg))
         {
             return false;
         }
     }
     if (m_qos.m_ownershipStrength.send_always() ||  m_qos.m_ownershipStrength.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<OwnershipStrengthQosPolicy>::add_to_cdr_message(m_qos.
-                        m_ownershipStrength, msg))
+        if (!dds::QosPoliciesSerializer<dds::OwnershipStrengthQosPolicy>::add_to_cdr_message(
+                    m_qos.m_ownershipStrength, msg))
         {
             return false;
         }
     }
     if (m_qos.m_destinationOrder.send_always() ||  m_qos.m_destinationOrder.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<DestinationOrderQosPolicy>::add_to_cdr_message(m_qos.m_destinationOrder,
-                msg))
+        if (!dds::QosPoliciesSerializer<dds::DestinationOrderQosPolicy>::add_to_cdr_message(
+                    m_qos.m_destinationOrder, msg))
         {
             return false;
         }
     }
     if (m_qos.m_presentation.send_always() ||  m_qos.m_presentation.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<PresentationQosPolicy>::add_to_cdr_message(m_qos.m_presentation, msg))
+        if (!dds::QosPoliciesSerializer<dds::PresentationQosPolicy>::add_to_cdr_message(m_qos.m_presentation, msg))
         {
             return false;
         }
     }
     if (m_qos.m_partition.send_always() ||  m_qos.m_partition.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<PartitionQosPolicy>::add_to_cdr_message(m_qos.m_partition, msg))
+        if (!dds::QosPoliciesSerializer<dds::PartitionQosPolicy>::add_to_cdr_message(m_qos.m_partition, msg))
         {
             return false;
         }
     }
     if (m_qos.m_topicData.send_always() || m_qos.m_topicData.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<TopicDataQosPolicy>::add_to_cdr_message(m_qos.m_topicData, msg))
-        {
-            return false;
-        }
-    }
-    if ((m_qos.data_sharing.send_always() || m_qos.data_sharing.hasChanged) &&
-            m_qos.data_sharing.kind() != fastdds::dds::OFF)
-    {
-        if (!fastdds::dds::QosPoliciesSerializer<DataSharingQosPolicy>::add_to_cdr_message(m_qos.data_sharing, msg))
+        if (!dds::QosPoliciesSerializer<dds::TopicDataQosPolicy>::add_to_cdr_message(m_qos.m_topicData, msg))
         {
             return false;
         }
@@ -547,39 +548,38 @@ bool WriterProxyData::writeToCDRMessage(
     if ((m_qos.m_disablePositiveACKs.send_always() || m_qos.m_topicData.hasChanged) &&
             m_qos.m_disablePositiveACKs.enabled)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<DisablePositiveACKsQosPolicy>::add_to_cdr_message(m_qos.
-                        m_disablePositiveACKs, msg))
+        if (!dds::QosPoliciesSerializer<dds::DisablePositiveACKsQosPolicy>::add_to_cdr_message(
+                    m_qos.m_disablePositiveACKs, msg))
+        {
+            return false;
+        }
+    }
+    if ((m_qos.data_sharing.send_always() || m_qos.data_sharing.hasChanged) &&
+            m_qos.data_sharing.kind() != fastdds::dds::OFF)
+    {
+        if (!dds::QosPoliciesSerializer<dds::DataSharingQosPolicy>::add_to_cdr_message(m_qos.data_sharing, msg))
         {
             return false;
         }
     }
     if (m_qos.m_groupData.send_always() ||  m_qos.m_groupData.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<GroupDataQosPolicy>::add_to_cdr_message(m_qos.m_groupData, msg))
+        if (!dds::QosPoliciesSerializer<dds::GroupDataQosPolicy>::add_to_cdr_message(m_qos.m_groupData, msg))
         {
             return false;
         }
     }
-
-    if (m_type_id && m_type_id->m_type_identifier._d() != 0)
+    if (m_type_information && m_type_information->assigned())
     {
-        if (!fastdds::dds::QosPoliciesSerializer<TypeIdV1>::add_to_cdr_message(*m_type_id, msg))
+        if (!dds::QosPoliciesSerializer<dds::xtypes::TypeInformationParameter>::add_to_cdr_message(
+                    *m_type_information, msg))
         {
             return false;
         }
     }
-
-    if (m_type && m_type->m_type_object._d() != 0)
-    {
-        if (!fastdds::dds::QosPoliciesSerializer<TypeObjectV1>::add_to_cdr_message(*m_type, msg))
-        {
-            return false;
-        }
-    }
-
     if (m_properties.size() > 0)
     {
-        if (!fastdds::dds::ParameterSerializer<ParameterPropertyList_t>::add_to_cdr_message(m_properties, msg))
+        if (!dds::ParameterSerializer<ParameterPropertyList_t>::add_to_cdr_message(m_properties, msg))
         {
             return false;
         }
@@ -591,57 +591,56 @@ bool WriterProxyData::writeToCDRMessage(
         ParameterEndpointSecurityInfo_t p;
         p.security_attributes = security_attributes_;
         p.plugin_security_attributes = plugin_security_attributes_;
-        if (!fastdds::dds::ParameterSerializer<ParameterEndpointSecurityInfo_t>::add_to_cdr_message(p, msg))
+        if (!dds::ParameterSerializer<ParameterEndpointSecurityInfo_t>::add_to_cdr_message(p, msg))
         {
             return false;
         }
     }
 #endif // if HAVE_SECURITY
 
-    /* TODO - Enable when implement XCDR, XCDR2 and/or XML
-       if (m_qos.representation.send_always() || m_qos.representation.hasChanged)
-       {
-        if (!m_qos.representation.addToCDRMessage(msg)) return false;
-       }
-     */
-
-    if (m_type_information && m_type_information->assigned())
+    if (m_qos.representation.send_always() || m_qos.representation.hasChanged)
     {
-        if (!fastdds::dds::QosPoliciesSerializer<xtypes::TypeInformation>::add_to_cdr_message(*m_type_information, msg))
+        if (!dds::QosPoliciesSerializer<dds::DataRepresentationQosPolicy>::add_to_cdr_message(
+                    m_qos.representation, msg))
         {
             return false;
         }
     }
 
-    return fastdds::dds::ParameterSerializer<Parameter_t>::add_parameter_sentinel(msg);
+
+
+    return dds::ParameterSerializer<Parameter_t>::add_parameter_sentinel(msg);
 }
 
 bool WriterProxyData::readFromCDRMessage(
         CDRMessage_t* msg,
-        const NetworkFactory& network,
-        bool is_shm_transport_available)
+        NetworkFactory& network,
+        bool should_filter_locators,
+        fastdds::rtps::VendorId_t source_vendor_id)
 {
-    auto param_process = [this, &network, &is_shm_transport_available](
+    auto param_process = [this, &network, &should_filter_locators, source_vendor_id](
         CDRMessage_t* msg, const ParameterId_t& pid, uint16_t plength)
             {
+                VendorId_t vendor_id = source_vendor_id;
+
                 switch (pid)
                 {
                     case fastdds::dds::PID_VENDORID:
                     {
                         ParameterVendorId_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterVendorId_t>::read_from_cdr_message(p, msg,
-                                plength))
+                        if (!dds::ParameterSerializer<ParameterVendorId_t>::read_from_cdr_message(
+                                    p, msg, plength))
                         {
                             return false;
                         }
 
-                        is_shm_transport_available &= (p.vendorId == c_VendorId_eProsima);
+                        vendor_id = p.vendorId;
                         break;
                     }
                     case fastdds::dds::PID_DURABILITY:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DurabilityQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_durability, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::DurabilityQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_durability, msg, plength))
                         {
                             return false;
                         }
@@ -649,7 +648,7 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_DURABILITY_SERVICE:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DurabilityServiceQosPolicy>::read_from_cdr_message(
+                        if (!dds::QosPoliciesSerializer<dds::DurabilityServiceQosPolicy>::read_from_cdr_message(
                                     m_qos.m_durabilityService, msg, plength))
                         {
                             return false;
@@ -658,8 +657,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_DEADLINE:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DeadlineQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_deadline, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::DeadlineQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_deadline, msg, plength))
                         {
                             return false;
                         }
@@ -667,8 +666,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_LATENCY_BUDGET:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<LatencyBudgetQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_latencyBudget, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::LatencyBudgetQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_latencyBudget, msg, plength))
                         {
                             return false;
                         }
@@ -676,8 +675,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_LIVELINESS:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<LivelinessQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_liveliness, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::LivelinessQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_liveliness, msg, plength))
                         {
                             return false;
                         }
@@ -685,8 +684,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_RELIABILITY:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<ReliabilityQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_reliability, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::ReliabilityQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_reliability, msg, plength))
                         {
                             return false;
                         }
@@ -694,8 +693,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_LIFESPAN:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<LifespanQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_lifespan, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::LifespanQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_lifespan, msg, plength))
                         {
                             return false;
                         }
@@ -703,8 +702,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_USER_DATA:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<UserDataQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_userData, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::UserDataQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_userData, msg, plength))
                         {
                             return false;
                         }
@@ -712,8 +711,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_TIME_BASED_FILTER:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<TimeBasedFilterQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_timeBasedFilter, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::TimeBasedFilterQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_timeBasedFilter, msg, plength))
                         {
                             return false;
                         }
@@ -721,8 +720,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_OWNERSHIP:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<OwnershipQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_ownership, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::OwnershipQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_ownership, msg, plength))
                         {
                             return false;
                         }
@@ -730,7 +729,7 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_OWNERSHIP_STRENGTH:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<OwnershipStrengthQosPolicy>::read_from_cdr_message(
+                        if (!dds::QosPoliciesSerializer<dds::OwnershipStrengthQosPolicy>::read_from_cdr_message(
                                     m_qos.m_ownershipStrength, msg, plength))
                         {
                             return false;
@@ -739,8 +738,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_DESTINATION_ORDER:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DestinationOrderQosPolicy>::read_from_cdr_message(m_qos
-                                        .m_destinationOrder, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::DestinationOrderQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_destinationOrder, msg, plength))
                         {
                             return false;
                         }
@@ -748,8 +747,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_PRESENTATION:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<PresentationQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_presentation, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::PresentationQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_presentation, msg, plength))
                         {
                             return false;
                         }
@@ -757,8 +756,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_PARTITION:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<PartitionQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_partition, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::PartitionQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_partition, msg, plength))
                         {
                             return false;
                         }
@@ -766,7 +765,7 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_TOPIC_DATA:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<TopicDataQosPolicy>::read_from_cdr_message(
+                        if (!dds::QosPoliciesSerializer<dds::TopicDataQosPolicy>::read_from_cdr_message(
                                     m_qos.m_topicData, msg, plength))
                         {
                             return false;
@@ -775,8 +774,8 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_GROUP_DATA:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<GroupDataQosPolicy>::read_from_cdr_message(m_qos.
-                                        m_groupData, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::GroupDataQosPolicy>::read_from_cdr_message(
+                                    m_qos.m_groupData, msg, plength))
                         {
                             return false;
                         }
@@ -785,8 +784,7 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_TOPIC_NAME:
                     {
                         ParameterString_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterString_t>::read_from_cdr_message(p, msg,
-                                plength))
+                        if (!dds::ParameterSerializer<ParameterString_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -797,8 +795,7 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_TYPE_NAME:
                     {
                         ParameterString_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterString_t>::read_from_cdr_message(p, msg,
-                                plength))
+                        if (!dds::ParameterSerializer<ParameterString_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -809,7 +806,7 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_PARTICIPANT_GUID:
                     {
                         ParameterGuid_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
+                        if (!dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -820,7 +817,7 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_ENDPOINT_GUID:
                     {
                         ParameterGuid_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
+                        if (!dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -831,8 +828,23 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_PERSISTENCE_GUID:
                     {
+                        VendorId_t local_vendor_id = source_vendor_id;
+                        if (c_VendorId_Unknown == local_vendor_id)
+                        {
+                            local_vendor_id = ((c_VendorId_Unknown == vendor_id) ? c_VendorId_eProsima : vendor_id);
+                        }
+
+                        // Ignore custom PID when coming from other vendors except RTI Connext
+                        if ((c_VendorId_eProsima != local_vendor_id) &&
+                                (fastdds::rtps::c_VendorId_rti_connext != local_vendor_id))
+                        {
+                            EPROSIMA_LOG_INFO(RTPS_PROXY_DATA,
+                                    "Ignoring custom PID" << pid << " from vendor " << local_vendor_id);
+                            return true;
+                        }
+
                         ParameterGuid_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
+                        if (!dds::ParameterSerializer<ParameterGuid_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -842,9 +854,23 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_NETWORK_CONFIGURATION_SET:
                     {
+                        VendorId_t local_vendor_id = source_vendor_id;
+                        if (c_VendorId_Unknown == local_vendor_id)
+                        {
+                            local_vendor_id = ((c_VendorId_Unknown == vendor_id) ? c_VendorId_eProsima : vendor_id);
+                        }
+
+                        // Ignore custom PID when coming from other vendors
+                        if (c_VendorId_eProsima != local_vendor_id)
+                        {
+                            EPROSIMA_LOG_INFO(RTPS_PROXY_DATA,
+                                    "Ignoring custom PID" << pid << " from vendor " << local_vendor_id);
+                            return true;
+                        }
+
                         ParameterNetworkConfigSet_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterNetworkConfigSet_t>::read_from_cdr_message(p,
-                                msg, plength))
+                        if (!dds::ParameterSerializer<ParameterNetworkConfigSet_t>::read_from_cdr_message(
+                                    p, msg, plength))
                         {
                             return false;
                         }
@@ -855,47 +881,61 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_UNICAST_LOCATOR:
                     {
                         ParameterLocator_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterLocator_t>::read_from_cdr_message(p, msg,
-                                plength))
+                        if (!dds::ParameterSerializer<ParameterLocator_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
 
-                        Locator_t temp_locator;
-                        if (network.transform_remote_locator(p.locator, temp_locator, m_networkConfiguration))
+                        if (!should_filter_locators)
                         {
-                            ProxyDataFilters::filter_locators(
-                                is_shm_transport_available,
-                                remote_locators_,
-                                temp_locator,
-                                true);
+                            remote_locators_.add_unicast_locator(p.locator);
+                        }
+                        else
+                        {
+                            Locator_t temp_locator;
+                            if (network.transform_remote_locator(p.locator, temp_locator, m_networkConfiguration,
+                                    m_guid.is_from_this_host()))
+                            {
+                                ProxyDataFilters::filter_locators(
+                                    network,
+                                    remote_locators_,
+                                    temp_locator,
+                                    true);
+                            }
                         }
                         break;
                     }
                     case fastdds::dds::PID_MULTICAST_LOCATOR:
                     {
                         ParameterLocator_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterLocator_t>::read_from_cdr_message(p, msg,
-                                plength))
+                        if (!dds::ParameterSerializer<ParameterLocator_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
 
-                        Locator_t temp_locator;
-                        if (network.transform_remote_locator(p.locator, temp_locator, m_networkConfiguration))
+                        if (!should_filter_locators)
                         {
-                            ProxyDataFilters::filter_locators(
-                                is_shm_transport_available,
-                                remote_locators_,
-                                temp_locator,
-                                false);
+                            remote_locators_.add_multicast_locator(p.locator);
+                        }
+                        else
+                        {
+                            Locator_t temp_locator;
+                            if (network.transform_remote_locator(p.locator, temp_locator, m_networkConfiguration,
+                                    m_guid.is_from_this_host()))
+                            {
+                                ProxyDataFilters::filter_locators(
+                                    network,
+                                    remote_locators_,
+                                    temp_locator,
+                                    false);
+                            }
                         }
                         break;
                     }
                     case fastdds::dds::PID_KEY_HASH:
                     {
                         ParameterKey_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterKey_t>::read_from_cdr_message(p, msg, plength))
+                        if (!dds::ParameterSerializer<ParameterKey_t>::read_from_cdr_message(p, msg, plength))
                         {
                             return false;
                         }
@@ -906,26 +946,34 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_TYPE_IDV1:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<TypeIdV1>::read_from_cdr_message(type_id(), msg,
-                                plength))
-                        {
-                            return false;
-                        }
+                        EPROSIMA_LOG_WARNING(RTPS_PROXY_DATA,
+                                "Reception of TypeIdentifiers is not supported. They will be ignored.");
                         break;
                     }
                     case fastdds::dds::PID_TYPE_OBJECTV1:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<TypeObjectV1>::read_from_cdr_message(type(), msg,
-                                plength))
-                        {
-                            return false;
-                        }
+                        EPROSIMA_LOG_WARNING(RTPS_PROXY_DATA,
+                                "Reception of TypeObjects is not supported. They will be ignored.");
                         break;
                     }
                     case fastdds::dds::PID_TYPE_INFORMATION:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<xtypes::TypeInformation>::read_from_cdr_message(
-                                    type_information(), msg, plength))
+                        VendorId_t local_vendor_id = source_vendor_id;
+                        if (c_VendorId_Unknown == local_vendor_id)
+                        {
+                            local_vendor_id = ((c_VendorId_Unknown == vendor_id) ? c_VendorId_eProsima : vendor_id);
+                        }
+
+                        // Ignore this PID when coming from other vendors
+                        if (c_VendorId_eProsima != local_vendor_id)
+                        {
+                            EPROSIMA_LOG_INFO(RTPS_PROXY_DATA,
+                                    "Ignoring PID" << pid << " from vendor " << local_vendor_id);
+                            return true;
+                        }
+
+                        if (!dds::QosPoliciesSerializer<dds::xtypes::TypeInformationParameter>::
+                                read_from_cdr_message(type_information(), msg, plength))
                         {
                             return false;
                         }
@@ -933,8 +981,23 @@ bool WriterProxyData::readFromCDRMessage(
                     }
                     case fastdds::dds::PID_DISABLE_POSITIVE_ACKS:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DisablePositiveACKsQosPolicy>::read_from_cdr_message(
-                                    m_qos.m_disablePositiveACKs, msg, plength))
+                        VendorId_t local_vendor_id = source_vendor_id;
+                        if (c_VendorId_Unknown == local_vendor_id)
+                        {
+                            local_vendor_id = ((c_VendorId_Unknown == vendor_id) ? c_VendorId_eProsima : vendor_id);
+                        }
+
+                        // Ignore custom PID when coming from other vendors except RTI Connext
+                        if ((c_VendorId_eProsima != local_vendor_id) &&
+                                (fastdds::rtps::c_VendorId_rti_connext != local_vendor_id))
+                        {
+                            EPROSIMA_LOG_INFO(RTPS_PROXY_DATA,
+                                    "Ignoring custom PID" << pid << " from vendor " << local_vendor_id);
+                            return true;
+                        }
+
+                        if (!dds::QosPoliciesSerializer<dds::DisablePositiveACKsQosPolicy>::
+                                read_from_cdr_message(m_qos.m_disablePositiveACKs, msg, plength))
                         {
                             return false;
                         }
@@ -944,8 +1007,8 @@ bool WriterProxyData::readFromCDRMessage(
                     case fastdds::dds::PID_ENDPOINT_SECURITY_INFO:
                     {
                         ParameterEndpointSecurityInfo_t p(pid, plength);
-                        if (!fastdds::dds::ParameterSerializer<ParameterEndpointSecurityInfo_t>::read_from_cdr_message(p,
-                                msg, plength))
+                        if (!dds::ParameterSerializer<ParameterEndpointSecurityInfo_t>::read_from_cdr_message(
+                                    p, msg, plength))
                         {
                             return false;
                         }
@@ -957,8 +1020,8 @@ bool WriterProxyData::readFromCDRMessage(
 #endif // if HAVE_SECURITY
                     case fastdds::dds::PID_DATA_REPRESENTATION:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DataRepresentationQosPolicy>::read_from_cdr_message(
-                                    m_qos.representation, msg, plength))
+                        if (!dds::QosPoliciesSerializer<dds::DataRepresentationQosPolicy>::
+                                read_from_cdr_message(m_qos.representation, msg, plength))
                         {
                             return false;
                         }
@@ -973,7 +1036,7 @@ bool WriterProxyData::readFromCDRMessage(
 
                     case fastdds::dds::PID_PROPERTY_LIST:
                     {
-                        if (!fastdds::dds::ParameterSerializer<ParameterPropertyList_t>::read_from_cdr_message(
+                        if (!dds::ParameterSerializer<ParameterPropertyList_t>::read_from_cdr_message(
                                     m_properties, msg, plength))
                         {
                             return false;
@@ -983,7 +1046,21 @@ bool WriterProxyData::readFromCDRMessage(
 
                     case fastdds::dds::PID_DATASHARING:
                     {
-                        if (!fastdds::dds::QosPoliciesSerializer<DataSharingQosPolicy>::read_from_cdr_message(
+                        VendorId_t local_vendor_id = source_vendor_id;
+                        if (c_VendorId_Unknown == local_vendor_id)
+                        {
+                            local_vendor_id = ((c_VendorId_Unknown == vendor_id) ? c_VendorId_eProsima : vendor_id);
+                        }
+
+                        // Ignore custom PID when coming from other vendors
+                        if (c_VendorId_eProsima != local_vendor_id)
+                        {
+                            EPROSIMA_LOG_INFO(RTPS_PROXY_DATA,
+                                    "Ignoring custom PID" << pid << " from vendor " << local_vendor_id);
+                            return true;
+                        }
+
+                        if (!dds::QosPoliciesSerializer<dds::DataSharingQosPolicy>::read_from_cdr_message(
                                     m_qos.data_sharing, msg, plength))
                         {
                             EPROSIMA_LOG_ERROR(RTPS_WRITER_PROXY_DATA,
@@ -1004,6 +1081,7 @@ bool WriterProxyData::readFromCDRMessage(
 
     uint32_t qos_size;
     clear();
+    m_qos.data_sharing.off();
     try
     {
         if (ParameterList::readParameterListfromCDRMsg(*msg, param_process, true, qos_size))
@@ -1063,15 +1141,15 @@ void WriterProxyData::clear()
 
     if (m_type_id)
     {
-        *m_type_id = TypeIdV1();
+        *m_type_id = dds::TypeIdV1();
     }
     if (m_type)
     {
-        *m_type = TypeObjectV1();
+        *m_type = dds::TypeObjectV1();
     }
     if (m_type_information)
     {
-        *m_type_information = xtypes::TypeInformation();
+        *m_type_information = dds::xtypes::TypeInformationParameter();
     }
 }
 
@@ -1172,7 +1250,7 @@ void WriterProxyData::set_remote_unicast_locators(
     remote_locators_.unicast.clear();
     for (const Locator_t& locator : locators)
     {
-        if (network.is_locator_allowed(locator))
+        if (network.is_locator_remote_or_allowed(locator, m_guid.is_from_this_host()))
         {
             remote_locators_.add_unicast_locator(locator);
         }
@@ -1192,7 +1270,7 @@ void WriterProxyData::set_multicast_locators(
     remote_locators_.multicast.clear();
     for (const Locator_t& locator : locators)
     {
-        if (network.is_locator_allowed(locator))
+        if (network.is_locator_remote_or_allowed(locator, m_guid.is_from_this_host()))
         {
             remote_locators_.add_multicast_locator(locator);
         }
@@ -1215,7 +1293,7 @@ void WriterProxyData::set_remote_locators(
 
     for (const Locator_t& locator : locators.unicast)
     {
-        if (network.is_locator_allowed(locator))
+        if (network.is_locator_remote_or_allowed(locator, m_guid.is_from_this_host()))
         {
             remote_locators_.add_unicast_locator(locator);
         }
@@ -1225,7 +1303,7 @@ void WriterProxyData::set_remote_locators(
     {
         for (const Locator_t& locator : locators.multicast)
         {
-            if (network.is_locator_allowed(locator))
+            if (network.is_locator_remote_or_allowed(locator, m_guid.is_from_this_host()))
             {
                 remote_locators_.add_multicast_locator(locator);
             }
@@ -1234,5 +1312,5 @@ void WriterProxyData::set_remote_locators(
 }
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */

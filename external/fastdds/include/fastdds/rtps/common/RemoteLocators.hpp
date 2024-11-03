@@ -16,15 +16,15 @@
  * @file RemoteLocators.hpp
  */
 
-#ifndef _FASTDDS_RTPS_COMMON_REMOTELOCATORS_HPP_
-#define _FASTDDS_RTPS_COMMON_REMOTELOCATORS_HPP_
+#ifndef FASTDDS_RTPS_COMMON__REMOTELOCATORS_HPP
+#define FASTDDS_RTPS_COMMON__REMOTELOCATORS_HPP
 
-#include <fastdds/rtps/common/Locator.h>
-#include <fastrtps/utils/collections/ResourceLimitedVector.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
+#include <fastdds/utils/collections/ResourceLimitedVector.hpp>
 #include <fastdds/dds/log/Log.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 /**
@@ -193,6 +193,7 @@ inline std::istream& operator >>(
             if (letter == 'M')
             {
                 input.get(sb_aux, '[');
+                input >> punct;
 
                 // Read every locator
                 while (punct != ']')
@@ -207,6 +208,7 @@ inline std::istream& operator >>(
 
             if (letter == 'U')
             {
+                input.get(sb_aux, '[');
                 input >> punct;
 
                 // Read every locator
@@ -233,8 +235,8 @@ inline std::istream& operator >>(
     return input;
 }
 
-} /* namespace rtps */
-} /* namespace fastrtps */
-} /* namespace eprosima */
+} // namespace rtps
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTDDS_RTPS_COMMON_REMOTELOCATORS_HPP_ */
+#endif // FASTDDS_RTPS_COMMON__REMOTELOCATORS_HPP

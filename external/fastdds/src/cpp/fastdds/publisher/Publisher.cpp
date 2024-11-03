@@ -23,8 +23,9 @@
 
 #include <fastdds/dds/log/Log.hpp>
 
-using namespace eprosima;
-using namespace eprosima::fastdds::dds;
+namespace eprosima {
+namespace fastdds {
+namespace dds {
 
 Publisher::Publisher(
         PublisherImpl* p,
@@ -52,17 +53,17 @@ ReturnCode_t Publisher::enable()
 {
     if (enable_)
     {
-        return ReturnCode_t::RETCODE_OK;
+        return RETCODE_OK;
     }
 
     if (false == impl_->get_participant()->is_enabled())
     {
-        return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
+        return RETCODE_PRECONDITION_NOT_MET;
     }
 
     enable_ = true;
     ReturnCode_t ret_code = impl_->enable();
-    enable_ = ReturnCode_t::RETCODE_OK == ret_code;
+    enable_ = RETCODE_OK == ret_code;
     return ret_code;
 }
 
@@ -75,7 +76,7 @@ ReturnCode_t Publisher::get_qos(
         PublisherQos& qos) const
 {
     qos = impl_->get_qos();
-    return ReturnCode_t::RETCODE_OK;
+    return RETCODE_OK;
 }
 
 ReturnCode_t Publisher::set_qos(
@@ -100,7 +101,7 @@ ReturnCode_t Publisher::set_listener(
         const StatusMask& mask)
 {
     ReturnCode_t ret_val = impl_->set_listener(listener);
-    if (ret_val == ReturnCode_t::RETCODE_OK)
+    if (ret_val == RETCODE_OK)
     {
         status_mask_ = mask;
     }
@@ -113,7 +114,7 @@ DataWriter* Publisher::create_datawriter(
         const DataWriterQos& qos,
         DataWriterListener* listener,
         const StatusMask& mask,
-        std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool)
+        std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool)
 {
     return impl_->create_datawriter(topic, qos, listener, mask, payload_pool);
 }
@@ -123,7 +124,7 @@ DataWriter* Publisher::create_datawriter_with_profile(
         const std::string& profile_name,
         DataWriterListener* listener,
         const StatusMask& mask,
-        std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool)
+        std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool)
 {
     return impl_->create_datawriter_with_profile(topic, profile_name, listener, mask, payload_pool);
 }
@@ -142,7 +143,7 @@ DataWriter* Publisher::lookup_datawriter(
 
 ReturnCode_t Publisher::suspend_publications()
 {
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->suspend_publications();
      */
@@ -150,7 +151,7 @@ ReturnCode_t Publisher::suspend_publications()
 
 ReturnCode_t Publisher::resume_publications()
 {
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->resume_publications();
      */
@@ -158,7 +159,7 @@ ReturnCode_t Publisher::resume_publications()
 
 ReturnCode_t Publisher::begin_coherent_changes()
 {
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->begin_coherent_changes();
      */
@@ -166,14 +167,14 @@ ReturnCode_t Publisher::begin_coherent_changes()
 
 ReturnCode_t Publisher::end_coherent_changes()
 {
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->end_coherent_changes();
      */
 }
 
 ReturnCode_t Publisher::wait_for_acknowledgments(
-        const fastrtps::Duration_t& max_wait)
+        const fastdds::dds::Duration_t& max_wait)
 {
     return impl_->wait_for_acknowledgments(max_wait);
 }
@@ -203,22 +204,17 @@ ReturnCode_t Publisher::get_default_datawriter_qos(
         DataWriterQos& qos) const
 {
     qos = impl_->get_default_datawriter_qos();
-    return ReturnCode_t::RETCODE_OK;
+    return RETCODE_OK;
 }
 
 ReturnCode_t Publisher::copy_from_topic_qos(
         fastdds::dds::DataWriterQos& writer_qos,
-        const fastdds::dds::TopicQos& topic_qos) const
+        const fastdds::dds::TopicQos& topic_qos)
 {
-    static_cast<void> (writer_qos);
-    static_cast<void> (topic_qos);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
-    /*
-       return impl_->copy_from_topic_qos(writer_qos, topic_qos);
-     */
+    return PublisherImpl::copy_from_topic_qos(writer_qos, topic_qos);
 }
 
-const fastrtps::rtps::InstanceHandle_t& Publisher::get_instance_handle() const
+const fastdds::rtps::InstanceHandle_t& Publisher::get_instance_handle() const
 {
     return impl_->get_instance_handle();
 }
@@ -240,3 +236,62 @@ ReturnCode_t Publisher::get_datawriter_qos_from_profile(
 {
     return impl_->get_datawriter_qos_from_profile(profile_name, qos);
 }
+
+ReturnCode_t Publisher::get_datawriter_qos_from_profile(
+        const std::string& profile_name,
+        DataWriterQos& qos,
+        std::string& topic_name) const
+{
+    return impl_->get_datawriter_qos_from_profile(profile_name, qos, topic_name);
+}
+
+ReturnCode_t Publisher::get_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos) const
+{
+    return impl_->get_datawriter_qos_from_xml(xml, qos);
+}
+
+ReturnCode_t Publisher::get_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos,
+        std::string& topic_name) const
+{
+    return impl_->get_datawriter_qos_from_xml(xml, qos, topic_name);
+}
+
+ReturnCode_t Publisher::get_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos,
+        const std::string& profile_name) const
+{
+    return impl_->get_datawriter_qos_from_xml(xml, qos, profile_name);
+}
+
+ReturnCode_t Publisher::get_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos,
+        std::string& topic_name,
+        const std::string& profile_name) const
+{
+    return impl_->get_datawriter_qos_from_xml(xml, qos, topic_name, profile_name);
+}
+
+ReturnCode_t Publisher::get_default_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos) const
+{
+    return impl_->get_default_datawriter_qos_from_xml(xml, qos);
+}
+
+ReturnCode_t Publisher::get_default_datawriter_qos_from_xml(
+        const std::string& xml,
+        DataWriterQos& qos,
+        std::string& topic_name) const
+{
+    return impl_->get_default_datawriter_qos_from_xml(xml, qos, topic_name);
+}
+
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima

@@ -16,8 +16,9 @@
 #define __TRANSPORT_TCPSENDERRESOURCE_HPP__
 
 #include <fastdds/rtps/common/LocatorsIterator.hpp>
-#include <fastdds/rtps/transport/SenderResource.h>
+#include <fastdds/rtps/transport/SenderResource.hpp>
 
+#include <rtps/transport/ChainingSenderResource.hpp>
 #include <rtps/transport/TCPChannelResource.h>
 #include <rtps/transport/TCPTransportInterface.h>
 
@@ -25,30 +26,30 @@ namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-class TCPSenderResource : public fastrtps::rtps::SenderResource
+class TCPSenderResource : public SenderResource
 {
 public:
 
     TCPSenderResource(
             TCPTransportInterface& transport,
-            std::shared_ptr<TCPChannelResource>& channel)
-        : fastrtps::rtps::SenderResource(transport.kind())
-        , channel_(channel)
+            Locator_t& locator)
+        : SenderResource(transport.kind())
+        , locator_(locator)
     {
         // Implementation functions are bound to the right transport parameters
         clean_up = [this, &transport]()
                 {
-                    transport.CloseOutputChannel(channel_);
+                    transport.SenderResourceHasBeenClosed(locator_);
                 };
 
-        send_lambda_ = [this, &transport](
-            const fastrtps::rtps::octet* data,
-            uint32_t dataSize,
-            fastrtps::rtps::LocatorsIterator* destination_locators_begin,
-            fastrtps::rtps::LocatorsIterator* destination_locators_end,
+        send_buffers_lambda_ = [this, &transport](
+            const std::vector<NetworkBuffer>& buffers,
+            uint32_t total_bytes,
+            LocatorsIterator* destination_locators_begin,
+            LocatorsIterator* destination_locators_end,
             const std::chrono::steady_clock::time_point&) -> bool
                 {
-                    return transport.send(data, dataSize, channel_, destination_locators_begin,
+                    return transport.send(buffers, total_bytes, locator_, destination_locators_begin,
                                    destination_locators_end);
                 };
     }
@@ -61,13 +62,13 @@ public:
         }
     }
 
-    std::shared_ptr<TCPChannelResource>& channel()
+    Locator_t& locator()
     {
-        return channel_;
+        return locator_;
     }
 
     static TCPSenderResource* cast(
-            TransportInterface& transport,
+            const TransportInterface& transport,
             SenderResource* sender_resource)
     {
         TCPSenderResource* returned_resource = nullptr;
@@ -75,6 +76,17 @@ public:
         if (sender_resource->kind() == transport.kind())
         {
             returned_resource = dynamic_cast<TCPSenderResource*>(sender_resource);
+
+            //! May be chained
+            if (!returned_resource)
+            {
+                auto chaining_sender = dynamic_cast<ChainingSenderResource*>(sender_resource);
+
+                if (chaining_sender)
+                {
+                    returned_resource = dynamic_cast<TCPSenderResource*>(chaining_sender->lower_sender_cast());
+                }
+            }
         }
 
         return returned_resource;
@@ -90,11 +102,11 @@ private:
     TCPSenderResource& operator =(
             const SenderResource&) = delete;
 
-    std::shared_ptr<TCPChannelResource> channel_;
+    Locator_t locator_;
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 #endif // __TRANSPORT_UDPSENDERRESOURCE_HPP__

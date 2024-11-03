@@ -16,13 +16,16 @@
  * @file RTCPMessageManager.cpp
  *
  */
-#include <fastdds/rtps/transport/TCPv4TransportDescriptor.h>
-#include <fastdds/rtps/transport/TCPv6TransportDescriptor.h>
-#include <fastdds/dds/log/Log.hpp>
-#include <fastrtps/utils/IPLocator.h>
-#include <fastrtps/utils/System.h>
-#include <rtps/transport/tcp/RTCPHeader.h>
+
 #include <rtps/transport/tcp/RTCPMessageManager.h>
+
+#include <thread>
+
+#include <fastdds/rtps/transport/TCPv4TransportDescriptor.hpp>
+#include <fastdds/rtps/transport/TCPv6TransportDescriptor.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/utils/IPLocator.hpp>
+#include <rtps/transport/tcp/RTCPHeader.h>
 #include <rtps/transport/TCPChannelResource.h>
 #include <rtps/transport/TCPTransportInterface.h>
 
@@ -30,18 +33,10 @@
 
 #define IDSTRING "(ID:" << std::this_thread::get_id() << ") " <<
 
-//using namespace eprosima::fastrtps;
-
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-using IPLocator = fastrtps::rtps::IPLocator;
-using SerializedPayload_t = fastrtps::rtps::SerializedPayload_t;
-using octet = fastrtps::rtps::octet;
-using CDRMessage_t = fastrtps::rtps::CDRMessage_t;
-using RTPSMessageCreator = fastrtps::rtps::RTPSMessageCreator;
-using ProtocolVersion_t = fastrtps::rtps::ProtocolVersion_t;
 using Log = fastdds::dds::Log;
 
 static void endpoint_to_locator(
@@ -139,7 +134,7 @@ bool RTCPMessageManager::sendData(
     TCPHeader header;
     TCPControlMsgHeader ctrlHeader;
     CDRMessage_t msg(this->mTransport->get_configuration()->max_message_size());
-    fastrtps::rtps::CDRMessage::initCDRMsg(&msg);
+    fastdds::rtps::CDRMessage::initCDRMsg(&msg);
     const ResponseCode* code = (respCode != RETCODE_VOID) ? &respCode : nullptr;
 
     fillHeaders(kind, transaction_id, ctrlHeader, header, payload, code);
@@ -211,7 +206,7 @@ void RTCPMessageManager::fillHeaders(
             break;
     }
 
-    retCtrlHeader.endianess(fastrtps::rtps::DEFAULT_ENDIAN); // Override "false" endianess set on the switch
+    retCtrlHeader.endianess(fastdds::rtps::DEFAULT_ENDIAN); // Override "false" endianess set on the switch
     header.logical_port = 0; // This is a control message
     header.length = static_cast<uint32_t>(retCtrlHeader.length() + TCPHeader::size());
 
@@ -299,18 +294,11 @@ TCPTransactionId RTCPMessageManager::sendConnectionRequest(
     Locator locator;
     mTransport->endpoint_to_locator(channel->local_endpoint(), locator);
 
-    auto config = mTransport->configuration();
-    if (!config->listening_ports.empty())
-    {
-        IPLocator::setPhysicalPort(locator, *(config->listening_ports.begin()));
-    }
-    else
-    {
-        IPLocator::setPhysicalPort(locator, static_cast<uint16_t>(SystemInfo::instance().process_id()));
-    }
+    mTransport->fill_local_physical_port(locator);
 
     if (locator.kind == LOCATOR_KIND_TCPv4)
     {
+        auto config = mTransport->configuration();
         const TCPv4TransportDescriptor* pTCPv4Desc = static_cast<TCPv4TransportDescriptor*>(config);
         IPLocator::setWan(locator, pTCPv4Desc->wan_addr[0], pTCPv4Desc->wan_addr[1], pTCPv4Desc->wan_addr[2],
                 pTCPv4Desc->wan_addr[3]);
@@ -470,11 +458,13 @@ ResponseCode RTCPMessageManager::processBindConnectionRequest(
 
     if (RETCODE_OK == code)
     {
-        // In server side, at this moment, the channel has to be included in the map.
         mTransport->bind_socket(channel);
     }
 
     sendData(channel, BIND_CONNECTION_RESPONSE, transaction_id, &payload, code);
+
+    // Add pending logical ports to the channel
+    mTransport->send_channel_pending_logical_ports(channel);
 
     return RETCODE_OK;
 }
@@ -484,8 +474,11 @@ ResponseCode RTCPMessageManager::processOpenLogicalPortRequest(
         const OpenLogicalPortRequest_t& request,
         const TCPTransactionId& transaction_id)
 {
-    if (!channel->connection_established())
+    // A server can send an OpenLogicalPortRequest to a client before the BindConnectionResponse is processed.
+    if (!channel->connection_established() &&
+            channel->connection_status_ != TCPChannelResource::eConnectionStatus::eWaitingForBindResponse)
     {
+        EPROSIMA_LOG_ERROR(RTCP, "Trying to send [OPEN_LOGICAL_PORT_RESPONSE] without connection established.");
         sendData(channel, CHECK_LOGICAL_PORT_RESPONSE, transaction_id, nullptr, RETCODE_SERVER_ERROR);
     }
     else if (request.logicalPort() == 0 || !mTransport->is_input_port_open(request.logicalPort()))
@@ -682,7 +675,7 @@ ResponseCode RTCPMessageManager::processRTCPMessage(
         std::shared_ptr<TCPChannelResource>& channel,
         octet* receive_buffer,
         size_t receivedSize,
-        fastrtps::rtps::Endianness_t msg_endian)
+        fastdds::rtps::Endianness_t msg_endian)
 {
     ResponseCode responseCode(RETCODE_OK);
 
@@ -857,5 +850,5 @@ bool RTCPMessageManager::isCompatibleProtocol(
 }
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */

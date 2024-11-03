@@ -22,16 +22,16 @@
 #include <rtps/history/TopicPayloadPool.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class DynamicReusableTopicPayloadPool : public TopicPayloadPool
 {
     bool get_payload(
             uint32_t size,
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        return do_get_payload(size, cache_change, true);
+        return do_get_payload(size, payload, true);
     }
 
 protected:
@@ -41,10 +41,14 @@ protected:
         return DYNAMIC_REUSABLE_MEMORY_MODE;
     }
 
+private:
+
+    using TopicPayloadPool::get_payload;
+
 };
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
 #endif  // RTPS_HISTORY_TOPICPAYLOADPOOLIMPL_DYNAMIC_REUSABLE_HPP

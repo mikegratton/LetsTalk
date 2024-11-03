@@ -16,17 +16,17 @@
  * @file MockCryptographyPlugin.h
  */
 
-#ifndef _RTPS_SECURITY_MOCKCRYPTOGRAPHYPLUGIN_H_
-#define _RTPS_SECURITY_MOCKCRYPTOGRAPHYPLUGIN_H_
+#ifndef FASTDDS_RTPS_SECURITY__MOCKCRYPTOGRAPHYPLUGIN_H
+#define FASTDDS_RTPS_SECURITY__MOCKCRYPTOGRAPHYPLUGIN_H
 
-#include <fastrtps/rtps/security/cryptography/Cryptography.h>
 
-#include <rtps/security/MockCryptoKeyFactory.h>
+#include <rtps/security/cryptography/Cryptography.h>
 #include <rtps/security/MockCryptoKeyExchange.h>
+#include <rtps/security/MockCryptoKeyFactory.h>
 #include <rtps/security/MockCryptoTransform.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -56,7 +56,7 @@ public:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
-#endif // _RTPS_SECURITY_MOCKCRYPTOGRAPHYPLUGIN_H_
+#endif // FASTDDS_RTPS_SECURITY__MOCKCRYPTOGRAPHYPLUGIN_H

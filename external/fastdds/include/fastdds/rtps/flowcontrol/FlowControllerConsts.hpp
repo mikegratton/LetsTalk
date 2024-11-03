@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERCONSTS_HPP
-#define FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERCONSTS_HPP
+#ifndef FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERCONSTS_HPP
+#define FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERCONSTS_HPP
 
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
 //! Name of the default flow controller.
-extern RTPS_DllAPI const char* const FASTDDS_FLOW_CONTROLLER_DEFAULT;
+extern FASTDDS_EXPORTED_API const char* const FASTDDS_FLOW_CONTROLLER_DEFAULT;
 //! Name of the default flow controller for statistics writers.
-extern RTPS_DllAPI const char* const FASTDDS_STATISTICS_FLOW_CONTROLLER_DEFAULT;
+extern FASTDDS_EXPORTED_API const char* const FASTDDS_STATISTICS_FLOW_CONTROLLER_DEFAULT;
 
 } // namespace rtps
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERCONSTS_HPP
+#endif // FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERCONSTS_HPP

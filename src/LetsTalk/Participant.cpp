@@ -1,10 +1,12 @@
 #include <cstdlib>
+#include <fastdds/dds/core/Time_t.hpp>
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/publisher/Publisher.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
+#include <fastdds/rtps/common/WriteParams.hpp>
 #include <iostream>
 #include <mutex>
 
@@ -12,9 +14,6 @@
 #include "LetsTalkFwd.hpp"
 
 namespace lt {
-
-namespace efd = eprosima::fastdds::dds;
-namespace efr = eprosima::fastrtps::rtps;
 
 // The default profile is a string constant stored elsewhere
 std::string getDefaultProfileXml();
@@ -55,7 +54,7 @@ ParticipantPtr Participant::create(uint8_t i_domain, std::string const& i_qosPro
     efd::DomainParticipantQos qos = factory->get_default_participant_qos();
     if (!i_qosProfile.empty()) {
         auto status = factory->get_participant_qos_from_profile(i_qosProfile, qos);
-        if (status != ReturnCode_t::RETCODE_OK) {
+        if (status != efd::RETCODE_OK) {
             LT_LOG << "Could not get participant QOS profile \"" << i_qosProfile << "\"\n";
             qos = factory->get_default_participant_qos();
         }
@@ -124,7 +123,7 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
     efd::DataWriterQos qos = m_publisher->get_default_datawriter_qos();
     if (!i_qosProfile.empty()) {
         auto status = m_publisher->get_datawriter_qos_from_profile(i_qosProfile, qos);
-        if (status != ReturnCode_t::RETCODE_OK) {
+        if (status != efd::RETCODE_OK) {
             LT_LOG << m_participant << " error setting qos profile \"" << i_qosProfile << "\"\n";
             qos = m_publisher->get_default_datawriter_qos();
         }
@@ -133,7 +132,9 @@ Publisher Participant::doAdvertise(std::string const& i_topic, efd::TypeSupport 
     qos.history() = topic->get_qos().history();
     // Follow the pattern of binding the raw object with its deleter in a shared_ptr
     efd::DataWriter* rawWriter = m_publisher->create_datawriter(topic, qos);
-    auto writerDeleter = [this](efd::DataWriter* raw) { m_publisher->delete_datawriter(raw); };
+    auto writerDeleter = [this](efd::DataWriter* raw) {
+        if (m_publisher) { m_publisher->delete_datawriter(raw); }
+    };
     auto writer = std::shared_ptr<efd::DataWriter>(rawWriter, writerDeleter);
     LT_LOG << m_participant << " created new publisher for type \"" << i_type.get_type_name() << "\" on topic \""
            << i_topic << "\"\n";
@@ -161,7 +162,7 @@ void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport const
     efd::DataReaderQos qos = m_subscriber->get_default_datareader_qos();
     if (!i_qosProfile.empty()) {
         auto status = m_subscriber->get_datareader_qos_from_profile(i_qosProfile, qos);
-        if (status != ReturnCode_t::RETCODE_OK) {
+        if (status != efd::RETCODE_OK) {
             LT_LOG << m_participant << " error setting qos profile \"" << i_qosProfile << "\"\n";
             qos = m_subscriber->get_default_datareader_qos();
         }
@@ -172,8 +173,8 @@ void Participant::doSubscribe(std::string const& i_topic, efd::TypeSupport const
     qos.history() = topicQos.history();
     m_subscriber->copy_from_topic_qos(qos, topic->get_qos());
     reader = m_subscriber->create_datareader(topic, qos, i_listener, efd::StatusMask::data_available());
-    LT_LOG << m_participant << " created new subscriber for type \"" << i_type->getName() << "\" on topic \"" << i_topic
-           << "\"\n";
+    LT_LOG << m_participant << " created new subscriber for type \"" << i_type->get_name() << "\" on topic \""
+           << i_topic << "\"\n";
 }
 
 // Since we don't keep an instance of the reader, we'll look it up on demand
@@ -259,7 +260,7 @@ void Participant::registerType(efd::TypeSupport const& i_type)
 
 std::string Participant::topicType(std::string const& i_topic) const
 {
-    auto topic = m_participant->find_topic(i_topic, eprosima::fastrtps::Duration_t(0, 10000));
+    auto topic = m_participant->find_topic(i_topic, efd::Duration_t(0, 10000));
     if (nullptr == topic) { return std::string(); }
     std::string type_name = topic->get_type_name();
     m_participant->delete_topic(topic);
@@ -277,7 +278,7 @@ efd::Topic* Participant::getTopic(std::string const& i_topic, efd::TypeSupport c
     }
     history.depth = i_historyDepth;
 
-    auto topic = m_participant->find_topic(i_topic, eprosima::fastrtps::Duration_t(0, 10000));
+    auto topic = m_participant->find_topic(i_topic, efd::Duration_t(0, 10000));
     bool foundIt = (topic != nullptr);
     if (!foundIt) {
         registerType(i_type);

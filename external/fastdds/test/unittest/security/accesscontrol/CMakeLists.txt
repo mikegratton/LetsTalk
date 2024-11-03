@@ -16,27 +16,33 @@ if(WIN32)
     add_definitions(
         -D_WIN32_WINNT=0x0601
         -D_CRT_SECURE_NO_WARNINGS
+        -DNOMINMAX
         )
 endif()
 
 set(COMMON_SOURCES_ACCESS_CONTROL_TEST_SOURCE
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/attributes/PropertyPolicy.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/policy/ParameterList.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/flowcontrol/ThroughputControllerDescriptor.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/attributes/PropertyPolicy.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Token.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/exceptions/Exception.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/messages/CDRMessage.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/attributes/EndpointSecurityAttributes.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/ResourceEvent.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEvent.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEventImpl.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Token.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/exceptions/Exception.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/exceptions/SecurityException.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/common/SharedSecretHandle.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp//utils/TimedConditionVariable.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/exceptions/SecurityException.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/logging/Logging.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/security/logging/LoggingLevel.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/TimedConditionVariable.cpp
     )
 
 if(TINYXML2_SOURCE_DIR)
@@ -95,6 +101,7 @@ target_link_libraries(AccessControlTests
     GTest::gmock
     ${OPENSSL_LIBRARIES}
     fastcdr
+    fastdds::log
     foonathan_memory
     $<$<BOOL:${WIN32}>:ws2_32>
     ${TINYXML2_LIBRARY}
@@ -108,13 +115,8 @@ if(MSVC OR MSVC_IDE)
 endif()
 
 
-add_gtest(AccessControlTests
-    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/AccessControlTests.cpp
-    ENVIRONMENTS "CERTS_PATH=${PROJECT_SOURCE_DIR}/test/certs")
-
-if(ANDROID)
-    set_property(TARGET AccessControlTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+gtest_discover_tests(AccessControlTests
+    PROPERTIES ENVIRONMENT "CERTS_PATH=${PROJECT_SOURCE_DIR}/test/certs")
 
 ####################################################################################################
 ####################################################################################################
@@ -127,15 +129,20 @@ set(
 add_executable(
     ${DISTINGUISHEDNAME_TEST_NAME}
 
-    # Log related files
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
-
     # src files
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/security/accesscontrol/DistinguishedName.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
+    # Log related files
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
 
     # test files
     ${CMAKE_CURRENT_SOURCE_DIR}/DistinguishedNameTests.cpp
@@ -144,6 +151,8 @@ add_executable(
 target_compile_definitions(
     ${DISTINGUISHEDNAME_TEST_NAME}
     PRIVATE
+        BOOST_ASIO_STANDALONE
+        ASIO_STANDALONE
         $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
         $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
 )
@@ -151,18 +160,16 @@ target_compile_definitions(
 target_include_directories(
     ${DISTINGUISHEDNAME_TEST_NAME}
     PRIVATE
+        ${Asio_INCLUDE_DIR}
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_BINARY_DIR}/include
         ${PROJECT_SOURCE_DIR}/src/cpp
 )
 
-target_link_libraries(
-    ${DISTINGUISHEDNAME_TEST_NAME}
+target_link_libraries(${DISTINGUISHEDNAME_TEST_NAME}
+    fastcdr
+    fastdds::log
     GTest::gtest
 )
 
-add_gtest(
-    ${DISTINGUISHEDNAME_TEST_NAME}
-    SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/DistinguishedNameTests.cpp
-)
+gtest_discover_tests( ${DISTINGUISHEDNAME_TEST_NAME})

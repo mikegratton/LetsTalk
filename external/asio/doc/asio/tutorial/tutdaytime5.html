@@ -8,6 +8,7 @@
 <link rel="up" href="../tutorial.html" title="Tutorial">
 <link rel="prev" href="tutdaytime4/src.html" title="Source listing for Daytime.4">
 <link rel="next" href="tutdaytime5/src.html" title="Source listing for Daytime.5">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -42,7 +43,7 @@
       </p>
 <pre class="programlisting">    <span class="keyword">for</span> <span class="special">(;;)</span>
     <span class="special">{</span>
-      <span class="identifier">boost</span><span class="special">::</span><span class="identifier">array</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;</span> <span class="identifier">recv_buf</span><span class="special">;</span>
+      <span class="identifier">std</span><span class="special">::</span><span class="identifier">array</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;</span> <span class="identifier">recv_buf</span><span class="special">;</span>
       <span class="identifier">udp</span><span class="special">::</span><span class="identifier">endpoint</span> <span class="identifier">remote_endpoint</span><span class="special">;</span>
       <span class="identifier">socket</span><span class="special">.</span><span class="identifier">receive_from</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">recv_buf</span><span class="special">),</span> <span class="identifier">remote_endpoint</span><span class="special">);</span>
 </pre>
@@ -54,7 +55,7 @@
 <p>
         Send the response to the remote_endpoint.
       </p>
-<pre class="programlisting">      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="identifier">ignored_error</span><span class="special">;</span>
+<pre class="programlisting">      <span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span> <span class="identifier">ignored_error</span><span class="special">;</span>
       <span class="identifier">socket</span><span class="special">.</span><span class="identifier">send_to</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">message</span><span class="special">),</span>
           <span class="identifier">remote_endpoint</span><span class="special">,</span> <span class="number">0</span><span class="special">,</span> <span class="identifier">ignored_error</span><span class="special">);</span>
     <span class="special">}</span>
@@ -86,14 +87,11 @@
         UDP daytime server</a>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="tutdaytime4/src.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="tutdaytime5/src.html"><img src="../../next.png" alt="Next"></a>

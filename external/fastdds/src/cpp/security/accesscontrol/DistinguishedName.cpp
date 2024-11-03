@@ -19,12 +19,12 @@
 #include <array>
 #include <cstring>
 
-#include <fastrtps/log/Log.h>
+#include <fastdds/dds/log/Log.hpp>
 
 #include <security/accesscontrol/DistinguishedName.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -391,5 +391,5 @@ bool rfc2253_string_compare(
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima

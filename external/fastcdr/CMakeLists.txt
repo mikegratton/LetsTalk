@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ##############################################################################
+###############################################################################
 # CMake build rules for FastCDR                                               #
-# ##############################################################################
-cmake_minimum_required(VERSION 3.22)
+###############################################################################
+cmake_minimum_required(VERSION 3.20)
 
 # Set CMAKE_BUILD_TYPE to Release by default.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -32,10 +32,10 @@ if(NOT BUILD_TESTING)
     set(BUILD_TESTING OFF CACHE BOOL "Enable testing" FORCE)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Project                                                                     #
-# ##############################################################################
-project(fastcdr VERSION 2.0.0 LANGUAGES CXX)
+###############################################################################
+project(fastcdr VERSION 2.2.5 LANGUAGES CXX)
 
 set(PROJECT_NAME_STYLED "FastCDR")
 set(PROJECT_NAME_LARGE "Fast CDR")
@@ -46,10 +46,10 @@ set(${PROJECT_NAME}_DESCRIPTION "eProsima ${PROJECT_NAME_LARGE} library provides
 message(STATUS "Configuring ${PROJECT_NAME_LARGE}")
 message(STATUS "Version: ${PROJECT_VERSION}")
 
-# ##############################################################################
+###############################################################################
 # CCache on Windows on CI
-# ##############################################################################
-if(MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
+###############################################################################
+if (MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
     foreach(config DEBUG RELWITHDEBINFO)
         foreach(lang C CXX)
             set(flags_var "CMAKE_${lang}_FLAGS_${config}")
@@ -59,26 +59,26 @@ if(MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
     endforeach()
 endif()
 
-# ##############################################################################
+###############################################################################
 # GCC colors if using CCache
-# ##############################################################################
+###############################################################################
 if("${CMAKE_CXX_COMPILER_LAUNCHER}" STREQUAL "ccache" AND
         CMAKE_COMPILER_IS_GNUCXX AND
         CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4,8)
     add_compile_options(-fdiagnostics-color=always)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Default shared libraries
-# ##############################################################################
+###############################################################################
 # Global flag to cause add_library() to create shared libraries if on.
 # If set to true, this will cause all libraries to be built shared
 # unless the library was explicitly added as a static library.
 option(BUILD_SHARED_LIBS "Create shared libraries by default" ON)
 
-# ##############################################################################
+###############################################################################
 # Test system configuration
-# ##############################################################################
+###############################################################################
 include(${PROJECT_SOURCE_DIR}/cmake/common/check_configuration.cmake)
 
 set(FORCE_CXX "11" CACHE STRING "C++ standard fulfillment selection")
@@ -87,61 +87,61 @@ check_stdcxx(${FORCE_CXX})
 check_endianness()
 check_type_sizes()
 
-# ##############################################################################
+###############################################################################
 # Check MSVC architecture
-# ##############################################################################
+###############################################################################
 if(MSVC OR MSVC_IDE)
     check_msvc_arch()
 endif()
 
-# ##############################################################################
+###############################################################################
 # Installation paths
-# ##############################################################################
+###############################################################################
 option(APPEND_PROJECT_NAME_TO_INCLUDEDIR
-    "When ON headers are installed to a path ending with a folder called \
+  "When ON headers are installed to a path ending with a folder called \
   ${PROJECT_NAME}. This avoids include directory search order issues when \
   overriding this package from a merged catkin, ament, or colcon workspace."
-    OFF)
+  OFF)
 
 set(BIN_INSTALL_DIR bin/ CACHE PATH "Installation directory for binaries")
 set(_include_dir "include/")
-
 if(APPEND_PROJECT_NAME_TO_INCLUDEDIR)
-    string(APPEND _include_dir "${PROJECT_NAME}/")
+  string(APPEND _include_dir "${PROJECT_NAME}/")
 endif()
-
 set(INCLUDE_INSTALL_DIR "${_include_dir}" CACHE PATH "Installation directory for C++ headers")
 unset(_include_dir)
 set(LIB_INSTALL_DIR lib${LIB_SUFFIX}/ CACHE PATH "Installation directory for libraries")
 set(DATA_INSTALL_DIR share/ CACHE PATH "Installation directory for data")
-
 if(WIN32)
     set(DOC_DIR "doc")
 else()
     set(DOC_DIR "${DATA_INSTALL_DIR}/doc")
 endif()
-
 set(DOC_INSTALL_DIR ${DOC_DIR} CACHE PATH "Installation directory for documentation")
 set(LICENSE_INSTALL_DIR ${DATA_INSTALL_DIR}/${PROJECT_NAME} CACHE PATH "Installation directory for licenses")
 
-# ##############################################################################
+###############################################################################
 # Compile library.
-# ##############################################################################
+###############################################################################
 add_subdirectory(src/cpp)
 
-# ##############################################################################
+###############################################################################
 # Testing
-# ##############################################################################
-# enable_testing()
-# include(CTest)
-#
-# if (BUILD_TESTING)
-# add_subdirectory(test)
-# endif()
+###############################################################################
+enable_testing()
+include(CTest)
 
-# ##############################################################################
+if (BUILD_TESTING)
+    if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.22)
+        add_subdirectory(test)
+    else()
+        message(INFO "Tests are disabled because the version of CMake is less than 3.22")
+    endif()
+endif()
+
+###############################################################################
 # Documentation
-# ##############################################################################
+###############################################################################
 # Add an option to toggle the generation of the API documentation.
 option(BUILD_DOCUMENTATION "Use doxygen to create product documentation" OFF)
 option(CHECK_DOCUMENTATION "Use doxygen to check code documentation" OFF)
@@ -153,14 +153,11 @@ endif()
 
 if(BUILD_DOCUMENTATION)
     find_package(Doxygen)
-
     if(NOT DOXYGEN_FOUND)
         message(FATAL_ERROR "doxygen is needed to build the documentation. Please install it correctly")
     endif()
-
     if(UNIX)
         find_program(DOXYFILE_MAKE make)
-
         if(DOXYFILE_MAKE)
             message(STATUS "Found Make: ${DOXYFILE_MAKE}")
         else()
@@ -172,15 +169,12 @@ if(BUILD_DOCUMENTATION)
 
     if(NOT CHECK_DOCUMENTATION)
         find_program(WGET_EXE wget)
-
         if(WGET_EXE)
             message(STATUS "Found WGet: ${WGET_EXE}")
         else()
             message(FATAL_ERROR "wget is needed to build the documentation. Please install it correctly")
         endif()
-
         find_program(UNZIP_EXE unzip)
-
         if(UNZIP_EXE)
             message(STATUS "Found Unzip: ${UNZIP_EXE}")
         else()
@@ -193,22 +187,19 @@ if(BUILD_DOCUMENTATION)
         COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/doc
         COMMENT "Creating documentation directory" VERBATIM)
 
-    # ## Doxygen ########################3
+    ### Doxygen ########################3
     if(CHECK_DOCUMENTATION)
         set(USE_DOT NO)
     else()
         set(USE_DOT YES)
     endif()
-
     if(GENERATE_PDF_DOC)
         set(GENERATE_LATEX YES)
     else()
         set(GENERATE_LATEX NO)
     endif()
-
     # Configure the template doxyfile for or specific project
     configure_file(doxyfile.in ${PROJECT_BINARY_DIR}/doxyfile @ONLY IMMEDIATE)
-
     # Add custom target to run doxygen when ever the project is build
     add_custom_target(doxygen
         COMMAND "${DOXYGEN_EXECUTABLE}" "${PROJECT_BINARY_DIR}/doxyfile"
@@ -226,7 +217,8 @@ if(BUILD_DOCUMENTATION)
         add_dependencies(make_pdf doxygen)
     endif()
 
-    # ## README html ########################
+    ### README html ########################
+
     if(WIN32)
         set(README_LOCATION "${PROJECT_BINARY_DIR}/")
         set(README_LOCATION_PREFFIX "doc/")
@@ -244,31 +236,33 @@ if(BUILD_DOCUMENTATION)
     add_dependencies(doc doxygen)
 endif()
 
-# ##############################################################################
+
+###############################################################################
 # Packaging
-# ##############################################################################
+###############################################################################
 # Install licenses
 install(FILES ${PROJECT_SOURCE_DIR}/LICENSE
     DESTINATION ${LICENSE_INSTALL_DIR}
     COMPONENT licenses
-)
+    )
 
 if(BUILD_DOCUMENTATION)
+
     # Instalation of doxygen files
     install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/api_reference
         DESTINATION ${DOC_INSTALL_DIR}
         COMPONENT documentation
-    )
+        )
 
     install(FILES "${README_LOCATION}/README.html"
         DESTINATION ${README_INSTALL_LOCATION}
         COMPONENT documentation
-    )
+        )
 
     if(GENERATE_PDF_DOC)
         install(FILES "${PROJECT_BINARY_DIR}/doxygen/latex/refman.pdf"
-            DESTINATION ${DOC_INSTALL_DIR}
-            RENAME fastcdr-${PROJECT_VERSION}-api-reference.pdf
-            COMPONENT documentation)
+        DESTINATION ${DOC_INSTALL_DIR}
+        RENAME fastcdr-${PROJECT_VERSION}-api-reference.pdf
+        COMPONENT documentation)
     endif()
 endif()

@@ -1,13 +1,45 @@
+// MIT License
+// 
+// Copyright (c) 2024 Michael B. Gratton 
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 group JsonSupportSource;
+
+module(ctx, parent, module, definition_list) ::= <<
+namespace $module.name$ {
+$definition_list$
+} // namespace $module.name$
+>>
+
+definition_list(definitions) ::= <<
+$definitions; separator="\n\n"$
+>>
 
 main(ctx, definitions) ::= <<
 /*
  * This automatically generated source file contains JSON support for the types 
  * described in $ctx.filename$.idl 
  */
-$ctx.directIncludeDependencies : {include | #include "$include$JsonSupport.h"}; separator="\n"$
-#include "$ctx.filename$.h"
-#include "$ctx.filename$JsonSupport.h"
+$ctx.directIncludeDependencies : {include | #include "$include$JsonSupport.hpp"}; separator="\n"$
+#include "$ctx.filename$.hpp"
+#include "$ctx.filename$JsonSupport.hpp"
 #include <utility>
 
 /***********************************************************************************
@@ -331,13 +363,6 @@ JsonParseError::JsonParseError(char const* i_what, char const* at, char const* c
 }
 
 template<class T>
-struct Assign {
-    T& target;
-    Assign(T& i_target) : target(i_target) { }
-    void operator()(T const& i_value) { target = i_value; }
-};
-
-template<class T>
 T fromString(std::string const& value);
 
 template<>
@@ -413,6 +438,7 @@ std::string ToJsonString<float>(float const& value)
     return buf;
 }
 } // namespace
+// End of built-in json parser
 /*********************************************************************/
 
 
@@ -420,15 +446,29 @@ $definitions; separator="\n"$
 
 >>
 
+////////////////////////////////////////////////////////////////////////
+// String templates for performing the json <-> idltype conversions follow
+//
+// Conventions:
+//  * The parsed json data is always "data"
+//  * Raw json strings are always "json"
+//  * The idltype is always "sample"
+//  * If a temp type must be formed (for a union), it is always "var"
+//  * When for loops are used, the reference is always of the form "element_*"
 
+// Call the function to return a reference to a given struct member
 json_member_access(member) ::= "sample.$member.name$()"
 
+// Form the element variable for a loop
 json_element_name(member) ::= "element_$member.name$"
 
+// Get the key in a (key, value) pair
 json_map_key(member) ::= "element_$member.name$.first"
 
+// Get the value in a (key, value) pair
 json_map_value(member) ::= "element_$member.name$.second"
 
+// Encode idltype to json for a sequence using a range-based for loop
 to_json_sequence(member) ::= <<
 json += "[ ";
 for (auto const& $json_element_name(member)$ : $json_member_access(member)$) {
@@ -438,9 +478,10 @@ for (auto const& $json_element_name(member)$ : $json_member_access(member)$) {
 json.back() = ']';
 >>
 
+// Encode idltype to json for a map using a range-based for loop
 to_json_map(member) ::= <<
 json += "{ ";
-for (auto const& entry_$member.name$ : $json_member_access(member)$) {       
+for (auto const& element_$member.name$ : $json_member_access(member)$) {       
     $if (member.typecode.keyTypeCode.isStringType)$
     json += "\"" + $json_map_key(member)$ + "\":";
     $else$
@@ -452,6 +493,7 @@ for (auto const& entry_$member.name$ : $json_member_access(member)$) {
 json.back() = '}';
 >>
 
+// Encode an idltype to a json string
 to_json_value(member, typecode, access) ::= <<
 $if(typecode.isEnumType)$
 json += "\"" + $typecode.name$ToJson($access$) + "\"";
@@ -476,19 +518,23 @@ $else$
 $endif$
 >>
 
-
+// Fully encode a member as "name" : <<value>>
 to_json(member) ::= <<
 json += "\"$member.name$\":";
 $to_json_value(member=member, typecode=member.typecode, access=json_member_access(member))$
 json += ",";
 >>
 
-/* FromJson items */
+// Access a member of a struct
 name_access(it) ::= "sample.$it.name$"
 
+// Push onto the back of a sequence
 back_access(access) ::= "$access$().push_back"
 
+// Access the json entry for a given key
 json_access(key) ::= <<data["$key$"]>>
+
+json_second(key) ::= "$element_name(key)$.second"
 
 json_ref_name(name) ::= "ref_$name$"
 
@@ -498,45 +544,50 @@ array_access(access, index) ::= "$access$()[$index$]"
 
 array_assign(name) ::= "$name$Access"
 
-member_deserialize(member, typecode, access, json) ::= <<
+recursive_temp(name) ::= "$name$_i"
+
+// json to idltype for a member type. This creates a temporary $varname$ of the appropriate type 
+var_deserialize(member, typecode, varname, json) ::= <<
 $if(typecode.isEnumType)$
 if (!$json$.is_string()) {
     throw std::runtime_error("$member.name$ expected to be a string type");
 }
-$access$($typecode.name$FromJson($json$.get_string()));
+$typecode.cppTypename$ $varname$ = $typecode.name$FromJson($json$.get_string());
 $elseif(typecode.primitive)$
-$access$($json$.get_primitive<$typecode.cppTypename$>());
+$typecode.cppTypename$ $varname$ = $json$.get_primitive<$typecode.cppTypename$>();
 $elseif(typecode.isStringType)$
 if (!$json$.is_string()) {
     throw std::runtime_error("$member.name$ expected to be a string type");
 }
-$access$($json$.get_string());
+$typecode.cppTypename$ $varname$ = $json$.get_string();
 $elseif(typecode.isStructType)$
 if (!$json$.is_object()) {
     throw std::runtime_error("$member.name$ expected to be an object type");
 }
-$access$($typecode.name$FromJson(&$json$));
+$typecode.cppTypename$ $varname$($typecode.name$FromJson(&$json$));
 $elseif(typecode.isMapType)$
 if (!$json$.is_object()) {
     throw std::runtime_error("$member.name$ expected to be an object type");
 }
-for (auto const& $element_name(member.name)$ : $json$.as_object()) {
-    // DANGER does not work for enums
+$typecode.cppTypename$ $varname$;
+for (auto const& $element_name(member.name)$ : $json$.as_object()) {    
     auto key_$member.name$ = fromString<$typecode.keyTypeCode.cppTypename$>($element_name(member.name)$.first);
-    auto value_$member.name$ = $element_name(member.name)$.second.get_primitive<$typecode.valueTypeCode.cppTypename$>();
-    $access$()[key_$member.name$] = value_$member.name$;
+    $var_deserialize( member=member, typecode=typecode.valueTypeCode, varname=recursive_temp(varname), json=json_second(member.name))$
+    $varname$.insert({key_$member.name$, $recursive_temp(varname)$});
 }
 $elseif(typecode.isUnionType)$
 if (!$json$.is_object()) {
     throw std::runtime_error("$member.name$ expected to be an object type");
 }
-$access$($typecode.name$FromJson(&$json$));
+$typecode.cppTypename$ $varname$ = $typecode.name$FromJson(&$json$);
 $elseif(typecode.isSequenceType)$
 if (!$json$.is_array()) {
     throw std::runtime_error("$member.name$ expected to be an array type");
 }
+$typecode.cppTypename$ $varname$;
 for (auto const& $element_name(member.name)$ : $json$.as_array()) {        
-    $member_deserialize( member=member, typecode=typecode.contentTypeCode, access=back_access(access), json=element_name(member.name))$
+    $var_deserialize( member=member, typecode=typecode.contentTypeCode, varname=recursive_temp(varname), json=element_name(member.name))$
+    $varname$.push_back($recursive_temp(varname)$);
 }
 $elseif(typecode.isArrayType)$
 if (!$json$.is_array()) {
@@ -545,33 +596,25 @@ if (!$json$.is_array()) {
 if ($json$.size() != $typecode.size$) {
     throw std::runtime_error("$member.name$ expected array of exactly $typecode.size$ values");
 }
-for (std::size_t $element_name(member.name)$=0; $element_name(member.name)$ < $json$.size(); $element_name(member.name)$++) {
-    Assign<$typecode.contentTypeCode.cppTypename$> $array_assign(member.name)$($array_access(access=access, index=element_name(member.name))$);
+$typecode.cppTypename$ $varname$;
+for (std::size_t $element_name(member.name)$=0; $element_name(member.name)$ < $json$.size(); $element_name(member.name)$++) {    
     JsonNode const& $json_ref_name(member.name)$ = $json$[$element_name(member.name)$];    
-    $member_deserialize( member=member, typecode=typecode.contentTypeCode, access=array_assign(member.name), json=json_ref_name(member.name))$
+    $var_deserialize( member=member, typecode=typecode.contentTypeCode, varname=recursive_temp(varname), json=json_ref_name(member.name))$
+    $varname$[$element_name(member.name)$] = $recursive_temp(varname)$;
 }
 $elseif(typecode.isBitsetType)$
 if (!$json$.is_object()) {
     throw std::runtime_error("$member.name$ expected to be an object type");
 }
-$access$($typecode.name$FromJson(&$json$));
+$typecode.cppTypename$ $varname$ = $typecode.name$FromJson(&$json$);
 $else$
 // Unhandled type $member.name$
 $endif$
 >>
 
-module(ctx, parent, module, definition_list) ::= <<
-namespace $module.name$ {
-$definition_list$
-} // namespace $module.name$
->>
 
-definition_list(definitions) ::= <<
-$definitions; separator="\n\n"$
->>
+struct_type(ctx, parent, struct, member_list) ::= <<
 
-
-struct_type(ctx, parent, struct, extension) ::= <<
 $struct.name$ $struct.name$FromJson(std::string const& text)
 {
     JsonNode data = JsonNode::parse(text);
@@ -582,7 +625,10 @@ $struct.name$ $struct.name$FromJson(void const* opaque)
 {
     JsonNode const& data = *reinterpret_cast<JsonNode const*>(opaque);
     $struct.name$ sample;
-    $struct.members:{it|$member_deserialize(member=it, typecode=it.typecode, access=name_access(it), json=json_access(it.name))$}; separator="\n"$
+    $struct.members:{it|{
+    $var_deserialize(member=it, typecode=it.typecode, varname=recursive_temp(it.name), json=json_access(it.name))$
+    $name_access(it)$(std::move($recursive_temp(it.name)$)); 
+\} }; separator="\n"$
     return sample;
 }
 
@@ -596,6 +642,7 @@ std::string $struct.name$ToJson($struct.name$ const& sample)
     return json;
 }
 >>
+
 
 bitset_type(ctx, parent, bitset) ::= <<
 $bitset.name$ $bitset.name$FromJson(std::string const& text)
@@ -623,41 +670,6 @@ std::string $bitset.name$ToJson($bitset.name$ const& sample)
 }
 >>
 
-union_type(ctx, parent, union) ::= <<
-$union.name$ $union.name$FromJson(std::string const& text)
-{
-    JsonNode data = JsonNode::parse(text);    
-    return $union.name$FromJson(&data);
-}
-
-$union.name$ $union.name$FromJson(void const* opaque)
-{
-    JsonNode const& data = *reinterpret_cast<JsonNode const*>(opaque);
-    $union.name$ sample;    
-    $first(union.members),first(union.discriminator.members):{it,dname|if (data.contains("$it.name$")) {
-    sample._d() = $dname.name$;
-    $member_deserialize(member=it, typecode=it.typecode, access=name_access(it), json=json_access(it.name))$\} }; separator="\n"$
-    $rest(union.members),rest(union.discriminator.members):{it,dname|else if (data.contains("$it.name$")) { 
-    sample._d() = $dname.name$;
-    $member_deserialize(member=it, typecode=it.typecode, access=name_access(it), json=json_access(it.name))$\} }; separator="\n"$
-    return sample;
-}
-
-std::string $union.name$ToJson($union.name$ const& sample)
-{
-    std::string json;
-    json += "{";
-    switch(sample._d()) {
-        $union.members:{member | $member.labels:{it | case $it$: }; separator="\n"$ 
-        json += "\"$member.name$\":";
-        $to_json_value(member=member, typecode=member.typecode, access=json_member_access(member))$break; }; anchor, separator="\n"$
-        default: 
-            json += "\"unknown\":null";
-    }
-    json += "}";
-    return json;
-}
->>
 
 enum_type(ctx, parent, enum) ::= <<
 $enum.name$ $enum.name$FromJson(std::string const& text)
@@ -675,20 +687,113 @@ std::string $enum.name$ToJson($enum.name$ const& sample)
 }
 >>
 
+union_type(ctx, parent, union, extensions, switch_type) ::= <<
+$union.name$ $union.name$FromJson(std::string const& text)
+{
+    JsonNode data = JsonNode::parse(text);    
+    return $union.name$FromJson(&data);
+}
+
+$union.name$ $union.name$FromJson(void const* opaque)
+{
+    JsonNode const& data = *reinterpret_cast<JsonNode const*>(opaque);
+    $union.name$ sample;
+    $union.members:{it|if (data.contains("$it.name$")) {
+    $var_deserialize(member=it, typecode=it.typecode, varname=recursive_temp(it.name), json=json_access(it.name))$
+    $name_access(it)$(std::move($recursive_temp(it.name)$)); 
+    return sample; 
+\} }; separator="\n"$
+    throw std::runtime_error("Could not find data for any $union.name$ member");
+}
+
+std::string $union.name$ToJson($union.name$ const& sample)
+{
+    std::string json;
+    json += "{";
+    switch(sample._d()) {
+    $union.members:{member | $member.labels:{it | case $it$: }; separator="\n"$ 
+    json += "\"$member.name$\":";
+    $to_json_value(member=member, typecode=member.typecode, access=json_member_access(member))$break; }; anchor, separator="\n"$
+    default: 
+        json += "\"unknown\":null";
+    }
+    json += "}";
+    return json;
+}
+>>
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+// Unused templates follow
+
+annotation(ctx, annotation) ::= <<>>
+
+const_decl(ctx, parent, const, const_type) ::= <<
+
+$const_type$
+
+>>
+
+typedef_decl(ctx, parent, typedefs, typedefs_type, declarator_type) ::= <<
+
+$declarator_type$
+$typedefs_type$
+
+>>
+
+fwd_decl(ctx, parent, type) ::= <<>>
+
+member_type(ctx, member, type_member, declarators) ::= <<
+
+$type_member$
+$declarators$
+
+>>
+
+element_type(ctx, element, type_element, declarator) ::= <<
+
+$type_element$
+$declarator$
+
+>>
+
+bitmask_type(ctx, parent, bitmask) ::= <<>>
+
+sequence_type(ctx, sequence, type_sequence) ::= <<
+
+$type_sequence$
+
+>>
+
+map_type(ctx, map, key_type, value_type) ::= <<
+
+$key_type$
+$value_type$
+
+>>
+
+string_type(ctx, string) ::= <<>>
+
+wide_string_type(ctx, wstring) ::= <<>>
+
+array_declarator(ctx, array) ::= <<>>
+
 interface(ctx, parent, interface, export_list) ::= <<>>
 
 export_list(exports) ::= <<>>
 
 exception(ctx, parent, exception) ::= <<>>
 
-operation(ctx, parent, operation, param_list) ::= <<>>
+operation(ctx, parent, operation, param_list, operation_type) ::= <<
+
+$operation_type$
+$param_list$
+
+>>
 
 param_list(parameters) ::= <<>>
 
-param(parameter) ::= <<>>
+param(parameter, parameter_type) ::= <<
 
-const_decl(ctx, parent, const) ::= <<>>
+$parameter_type$
 
-typedef_decl(ctx, parent, typedefs) ::= <<>>
-
-bitmask_type(ctx, parent, bitmask) ::= <<>>
+>>

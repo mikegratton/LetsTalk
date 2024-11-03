@@ -13,43 +13,67 @@
 # limitations under the License.
 
 set(READERHISTORYTESTS_SOURCE ReaderHistoryTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/ReaderHistory.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/History.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/History.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/ReaderHistory.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 set(BASICPOOLSTESTS_SOURCE BasicPoolsTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 set(CACHECHANGEPOOLTESTS_SOURCE CacheChangePoolTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/CacheChangePool.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 set(TOPICPAYLOADPOOLTESTS_SOURCE
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
     TopicPayloadPoolTests.cpp TopicPayloadPoolRegistryTests.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/TopicPayloadPool.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/history/TopicPayloadPoolRegistry.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 if(WIN32)
@@ -66,10 +90,13 @@ endif()
 
 add_executable(ReaderHistoryTests ${READERHISTORYTESTS_SOURCE})
 target_compile_definitions(ReaderHistoryTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(ReaderHistoryTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/Endpoint
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/ResourceEvent
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/RTPSReader
@@ -77,53 +104,63 @@ target_include_directories(ReaderHistoryTests PRIVATE
     ${PROJECT_SOURCE_DIR}/src/cpp
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(ReaderHistoryTests
+    fastcdr
+    fastdds::log
     GTest::gmock
     ${CMAKE_DL_LIBS})
-add_gtest(ReaderHistoryTests SOURCES ${READERHISTORYTESTS_SOURCE})
+gtest_discover_tests(ReaderHistoryTests)
 
 add_executable(BasicPoolsTests ${BASICPOOLSTESTS_SOURCE})
 target_compile_definitions(BasicPoolsTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(BasicPoolsTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/src/cpp
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(BasicPoolsTests
+    fastcdr
+    fastdds::log
     GTest::gtest
     ${CMAKE_DL_LIBS})
-add_gtest(BasicPoolsTests SOURCES ${BASICPOOLSTESTS_SOURCE})
+gtest_discover_tests(BasicPoolsTests)
 
 add_executable(CacheChangePoolTests ${CACHECHANGEPOOLTESTS_SOURCE})
 target_compile_definitions(CacheChangePoolTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(CacheChangePoolTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/src/cpp
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(CacheChangePoolTests
+    fastcdr
+    fastdds::log
     GTest::gtest
     ${CMAKE_DL_LIBS})
-add_gtest(CacheChangePoolTests SOURCES ${CACHECHANGEPOOLTESTS_SOURCE})
+gtest_discover_tests(CacheChangePoolTests)
 
 add_executable(TopicPayloadPoolTests ${TOPICPAYLOADPOOLTESTS_SOURCE})
 target_compile_definitions(TopicPayloadPoolTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(TopicPayloadPoolTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/test/mock/rtps/TopicPayloadPoolProxy
     ${PROJECT_SOURCE_DIR}/src/cpp
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(TopicPayloadPoolTests
+    fastcdr
+    fastdds::log
     GTest::gtest
     ${CMAKE_DL_LIBS})
-add_gtest(TopicPayloadPoolTests SOURCES ${TOPICPAYLOADPOOLTESTS_SOURCE})
-
-if(ANDROID)
-    set_property(TARGET ReaderHistoryTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET BasicPoolsTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET CacheChangePoolTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET CacheChangeTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+gtest_discover_tests(TopicPayloadPoolTests)

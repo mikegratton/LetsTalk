@@ -16,11 +16,11 @@
  * @file GuidPrefix_t.hpp
  */
 
-#ifndef _FASTDDS_RTPS_COMMON_GUIDPREFIX_T_HPP_
-#define _FASTDDS_RTPS_COMMON_GUIDPREFIX_T_HPP_
+#ifndef FASTDDS_RTPS_COMMON__GUIDPREFIX_T_HPP
+#define FASTDDS_RTPS_COMMON__GUIDPREFIX_T_HPP
 
-#include <fastrtps/fastrtps_dll.h>
-#include <fastdds/rtps/common/Types.h>
+#include <fastdds/fastdds_dll.hpp>
+#include <fastdds/rtps/common/Types.hpp>
 
 #include <cstdint>
 #include <cstring>
@@ -28,12 +28,12 @@
 #include <iomanip>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 //!@brief Structure GuidPrefix_t, Guid Prefix of GUID_t.
 //!@ingroup COMMON_MODULE
-struct RTPS_DllAPI GuidPrefix_t
+struct FASTDDS_EXPORTED_API GuidPrefix_t
 {
     static constexpr unsigned int size = 12;
     octet value[size];
@@ -43,6 +43,44 @@ struct RTPS_DllAPI GuidPrefix_t
     {
         memset(value, 0, size);
     }
+
+    /**
+     * Checks whether this guid prefix is from an entity on the same host as another guid prefix.
+     *
+     * @note This method assumes the value of \c other_guid_prefix was originally assigned by Fast-DDS vendor.
+     *
+     * @param other_guid_prefix GuidPrefix_t to compare to.
+     *
+     * @return true when this guid prefix is on the same host, false otherwise.
+     */
+    bool is_on_same_host_as(
+            const GuidPrefix_t& other_guid_prefix) const;
+
+    /**
+     * Checks whether this guid prefix is from a (Fast-DDS) entity created on this host (from where this method is called).
+     *
+     * @return true when this guid prefix is from a (Fast-DDS) entity created on this host, false otherwise.
+     */
+    bool is_from_this_host() const;
+
+    /**
+     * Checks whether this guid prefix is for an entity on the same host and process as another guid prefix.
+     *
+     * @note This method assumes the value of \c other_guid_prefix was originally assigned by Fast-DDS vendor.
+     *
+     * @param other_guid_prefix GuidPrefix_t to compare to.
+     *
+     * @return true when this guid prefix is on the same host and process, false otherwise.
+     */
+    bool is_on_same_process_as(
+            const GuidPrefix_t& other_guid_prefix) const;
+
+    /**
+     * Checks whether this guid prefix is from a (Fast-DDS) entity created on this host and process (from where this method is called).
+     *
+     * @return true when this guid prefix is from a (Fast-DDS) entity created on this host and process, false otherwise.
+     */
+    bool is_from_this_process() const;
 
     static GuidPrefix_t unknown()
     {
@@ -171,7 +209,7 @@ inline std::istream& operator >>(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
-#endif /* _FASTDDS_RTPS_COMMON_GUIDPREFIX_T_HPP_ */
+#endif // FASTDDS_RTPS_COMMON__GUIDPREFIX_T_HPP

@@ -17,11 +17,10 @@
  *
  */
 
-#ifndef _FASTDDS_SUBSCRIBERQOS_HPP_
-#define _FASTDDS_SUBSCRIBERQOS_HPP_
+#ifndef FASTDDS_DDS_SUBSCRIBER_QOS__SUBSCRIBERQOS_HPP
+#define FASTDDS_DDS_SUBSCRIBER_QOS__SUBSCRIBERQOS_HPP
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
-#include <fastrtps/attributes/SubscriberAttributes.h>
 
 namespace eprosima {
 namespace fastdds {
@@ -42,14 +41,14 @@ public:
     /**
      * @brief Constructor
      */
-    RTPS_DllAPI SubscriberQos()
+    FASTDDS_EXPORTED_API SubscriberQos()
     {
     }
 
     /**
      * @brief Destructor
      */
-    RTPS_DllAPI virtual ~SubscriberQos()
+    FASTDDS_EXPORTED_API virtual ~SubscriberQos()
     {
     }
 
@@ -201,11 +200,11 @@ private:
     EntityFactoryQosPolicy entity_factory_;
 };
 
-RTPS_DllAPI extern const SubscriberQos SUBSCRIBER_QOS_DEFAULT;
+FASTDDS_EXPORTED_API extern const SubscriberQos SUBSCRIBER_QOS_DEFAULT;
 
 
-} /* namespace dds */
-} /* namespace fastdds */
-} /* namespace eprosima */
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTDDS_SUBSCRIBERQOS_HPP_ */
+#endif // FASTDDS_DDS_SUBSCRIBER_QOS__SUBSCRIBERQOS_HPP

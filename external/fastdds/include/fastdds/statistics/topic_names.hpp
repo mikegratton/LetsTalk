@@ -16,8 +16,8 @@
  * @file topic_names.hpp
  */
 
-#ifndef _FASTDDS_STATISTICS_TOPIC_NAMES_HPP_
-#define _FASTDDS_STATISTICS_TOPIC_NAMES_HPP_
+#ifndef FASTDDS_STATISTICS__TOPIC_NAMES_HPP
+#define FASTDDS_STATISTICS__TOPIC_NAMES_HPP
 
 namespace eprosima {
 namespace fastdds {
@@ -59,9 +59,11 @@ constexpr const char* DISCOVERY_TOPIC = "_fastdds_statistics_discovered_entity";
 constexpr const char* SAMPLE_DATAS_TOPIC = "_fastdds_statistics_sample_datas";
 //! Statistics topic that reports the host, user and process where the module is running
 constexpr const char* PHYSICAL_DATA_TOPIC = "_fastdds_statistics_physical_data";
+//! Statistics topic that enables the monitor service feature
+constexpr const char* MONITOR_SERVICE_TOPIC = "_fastdds_monitor_service_status";
 
 } // statistics
 } // fastdds
 } // eprosima
 
-#endif /* _FASTDDS_STATISTICS_TOPIC_NAMES_HPP_ */
+#endif // FASTDDS_STATISTICS__TOPIC_NAMES_HPP

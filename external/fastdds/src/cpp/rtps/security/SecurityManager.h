@@ -15,35 +15,38 @@
 /*!
  * @file SecurityManager.h
  */
-#ifndef _RTPS_SECURITY_SECURITYMANAGER_H_
-#define _RTPS_SECURITY_SECURITYMANAGER_H_
+#ifndef FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H
+#define FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H
 
-#include <rtps/security/SecurityPluginFactory.h>
-
-#include <fastdds/rtps/attributes/HistoryAttributes.h>
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
-#include <fastdds/rtps/common/SequenceNumber.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastdds/rtps/reader/ReaderListener.h>
-#include <fastdds/rtps/resources/TimedEvent.h>
-#include <fastdds/rtps/security/authentication/Handshake.h>
-#include <fastdds/rtps/security/common/ParticipantGenericMessage.h>
-#include <fastrtps/utils/ProxyPool.hpp>
-#include <fastrtps/utils/shared_mutex.hpp>
-
-#include <map>
-#include <mutex>
 #include <atomic>
-#include <memory>
 #include <list>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <thread>
+
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/common/SequenceNumber.hpp>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
+#include <fastdds/rtps/reader/ReaderListener.hpp>
+#include <fastdds/rtps/writer/WriterListener.hpp>
+
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/resources/TimedEvent.h>
+#include <rtps/security/authentication/Handshake.h>
+#include <rtps/security/common/ParticipantGenericMessage.h>
+#include <rtps/security/ISecurityPluginFactory.h>
+#include <utils/ProxyPool.hpp>
+#include <utils/shared_mutex.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class RTPSParticipantImpl;
+class RTPSWriter;
 class StatelessWriter;
 class StatelessReader;
 class StatefulWriter;
@@ -65,7 +68,7 @@ struct EndpointSecurityAttributes;
  *
  * @ingroup SECURITY_MODULE
  */
-class SecurityManager
+class SecurityManager : private WriterListener
 {
 public:
 
@@ -75,7 +78,8 @@ public:
      * @param participant RTPSParticipantImpl* references the associated participant
      */
     SecurityManager(
-            RTPSParticipantImpl* participant);
+            RTPSParticipantImpl* participant,
+            ISecurityPluginFactory& plugin_factory);
 
     // @brief Destructor
     ~SecurityManager();
@@ -354,6 +358,30 @@ private:
         AUTHENTICATION_NOT_AVAILABLE
     };
 
+    struct AuthenticationHandshakeProperties
+    {
+        AuthenticationHandshakeProperties();
+        ~AuthenticationHandshakeProperties() = default;
+
+        /**
+         * @brief Parses the properties from a propertypolicy rule
+         * @param properties PropertyPolicy reference to the properties to parse
+         */
+        void parse_from_property_policy(
+                const PropertyPolicy& properties);
+
+        // Maximum number of handshake requests to be sent
+        // Must be greater than 0
+        int32_t max_handshake_requests_;
+        // Initial wait time (in milliseconds) for the first handshake request resend
+        // Must be greater than 0
+        int32_t initial_handshake_resend_period_ms_;
+        // Gain for the period between handshake request resends
+        // The initial period is multiplied by this value each time a resend is performed
+        // Must be greater than 1
+        double handshake_resend_period_gain_;
+    };
+
     class DiscoveredParticipantInfo
     {
         struct AuthenticationInfo
@@ -364,12 +392,13 @@ private:
 
             AuthenticationInfo(
                     AuthenticationStatus auth_status)
-                : identity_handle_(nullptr)
+                : handshake_requests_sent_(0)
+                , identity_handle_(nullptr)
                 , handshake_handle_(nullptr)
                 , auth_status_(auth_status)
                 , expected_sequence_number_(0)
                 , change_sequence_number_(SequenceNumber_t::unknown())
-                , handshake_requests_sent_(0)
+
             {
             }
 
@@ -384,6 +413,8 @@ private:
             {
             }
 
+            int32_t handshake_requests_sent_;
+
             IdentityHandle* identity_handle_;
 
             HandshakeHandle* handshake_handle_;
@@ -396,8 +427,6 @@ private:
 
             EventUniquePtr event_;
 
-            uint32_t handshake_requests_sent_;
-
         private:
 
             AuthenticationInfo(
@@ -407,9 +436,6 @@ private:
     public:
 
         typedef std::unique_ptr<AuthenticationInfo> AuthUniquePtr;
-
-        static constexpr uint32_t INITIAL_RESEND_HANDSHAKE_MILLISECS = 125;
-        static constexpr uint32_t MAX_HANDSHAKE_REQUESTS = 5;
 
         DiscoveredParticipantInfo(
                 AuthenticationStatus auth_status,
@@ -533,7 +559,7 @@ private:
 
     };
 
-    class ParticipantStatelessMessageListener : public eprosima::fastrtps::rtps::ReaderListener
+    class ParticipantStatelessMessageListener : public eprosima::fastdds::rtps::ReaderListener
     {
     public:
 
@@ -547,7 +573,7 @@ private:
         {
         }
 
-        void onNewCacheChangeAdded(
+        void on_new_cache_change_added(
                 RTPSReader* reader,
                 const CacheChange_t* const change) override;
 
@@ -560,7 +586,7 @@ private:
     }
     participant_stateless_message_listener_;
 
-    class ParticipantVolatileMessageListener : public eprosima::fastrtps::rtps::ReaderListener
+    class ParticipantVolatileMessageListener : public eprosima::fastdds::rtps::ReaderListener
     {
     public:
 
@@ -574,7 +600,7 @@ private:
         {
         }
 
-        void onNewCacheChangeAdded(
+        void on_new_cache_change_added(
                 RTPSReader* reader,
                 const CacheChange_t* const change) override;
 
@@ -769,30 +795,29 @@ private:
             const ParticipantProxyData& participant_data,
             const SecurityException& exception) const;
 
-    RTPSParticipantImpl* participant_;
-    StatelessWriter* participant_stateless_message_writer_;
-    WriterHistory* participant_stateless_message_writer_history_;
-    StatelessReader* participant_stateless_message_reader_;
-    ReaderHistory* participant_stateless_message_reader_history_;
-    StatefulWriter* participant_volatile_message_secure_writer_;
-    WriterHistory* participant_volatile_message_secure_writer_history_;
-    StatefulReader* participant_volatile_message_secure_reader_;
-    ReaderHistory* participant_volatile_message_secure_reader_history_;
-    SecurityPluginFactory factory_;
+    RTPSParticipantImpl* participant_ = nullptr;
+    StatelessWriter* participant_stateless_message_writer_ = nullptr;
+    WriterHistory* participant_stateless_message_writer_history_ = nullptr;
+    StatelessReader* participant_stateless_message_reader_ = nullptr;
+    ReaderHistory* participant_stateless_message_reader_history_ = nullptr;
+    StatefulWriter* participant_volatile_message_secure_writer_ = nullptr;
+    WriterHistory* participant_volatile_message_secure_writer_history_ = nullptr;
+    StatefulReader* participant_volatile_message_secure_reader_ = nullptr;
+    ReaderHistory* participant_volatile_message_secure_reader_history_ = nullptr;
+    ISecurityPluginFactory& factory_;
 
-    Logging* logging_plugin_;
+    Logging* logging_plugin_ = nullptr;
+    Authentication* authentication_plugin_ = nullptr;
+    AccessControl* access_plugin_ = nullptr;
+    Cryptography* crypto_plugin_ = nullptr;
 
-    Authentication* authentication_plugin_;
+    uint32_t domain_id_ = 0;
 
-    AccessControl* access_plugin_;
+    AuthenticationHandshakeProperties auth_handshake_props_;
 
-    Cryptography* crypto_plugin_;
+    IdentityHandle* local_identity_handle_ = nullptr;
 
-    uint32_t domain_id_;
-
-    IdentityHandle* local_identity_handle_;
-
-    PermissionsHandle* local_permissions_handle_;
+    PermissionsHandle* local_permissions_handle_ = nullptr;
 
     std::shared_ptr<ParticipantCryptoHandle> local_participant_crypto_handle_;
 
@@ -851,6 +876,10 @@ private:
         }
     }
 
+    void on_writer_change_received_by_all(
+            RTPSWriter* writer,
+            CacheChange_t* change) override;
+
     /**
      * Syncronization object for plugin initialization, <tt>mutex_</tt> protection is not necessary to guarantee plugin
      * availability.
@@ -891,7 +920,7 @@ private:
         std::map<GUID_t, std::tuple<WriterProxyData, DatawriterCryptoHandle*>> associated_writers;
     };
 
-    // TODO(Ricardo) Temporal. Store individual in FastRTPS code.
+    // TODO(Ricardo) Temporal. Store individual in Fast DDS code.
     std::map<GUID_t, DatawriterAssociations> writer_handles_;
     std::map<GUID_t, DatareaderAssociations> reader_handles_;
 
@@ -917,7 +946,7 @@ private:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
-#endif // _RTPS_SECURITY_SECURITYMANAGER_H_
+#endif // FASTDDS_RTPS_SECURITY__SECURITYMANAGER_H

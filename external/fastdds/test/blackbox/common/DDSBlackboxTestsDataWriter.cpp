@@ -14,20 +14,29 @@
 
 #include <chrono>
 
-#include "BlackboxTests.hpp"
+#include <gtest/gtest.h>
 
+#include <fastdds/dds/domain/DomainParticipant.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
+#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
+#include <fastdds/dds/publisher/qos/PublisherQos.hpp>
+#include <fastdds/dds/subscriber/DataReader.hpp>
+#include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
+#include <fastdds/dds/subscriber/qos/SubscriberQos.hpp>
+#include <fastdds/dds/subscriber/Subscriber.hpp>
+#include <fastdds/dds/topic/qos/TopicQos.hpp>
+#include <fastdds/dds/topic/Topic.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.hpp>
+
+#include "BlackboxTests.hpp"
 #include "PubSubReader.hpp"
 #include "PubSubWriter.hpp"
 
-#include <gtest/gtest.h>
-
-#include <fastrtps/attributes/LibrarySettingsAttributes.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-#include <rtps/transport/test_UDPv4Transport.h>
-
-using namespace eprosima::fastrtps;
-using test_UDPv4Transport = eprosima::fastdds::rtps::test_UDPv4Transport;
-using test_UDPv4TransportDescriptor = eprosima::fastdds::rtps::test_UDPv4TransportDescriptor;
+using namespace eprosima::fastdds;
 
 enum communication_type
 {
@@ -42,12 +51,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -60,12 +69,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -86,19 +95,19 @@ TEST_P(DDSDataWriter, WaitForAcknowledgmentInstance)
     PubSubWriter<KeyedHelloWorldPubSubType> writer(TEST_TOPIC_NAME);
     PubSubReader<KeyedHelloWorldPubSubType> reader(TEST_TOPIC_NAME);
 
-    auto testTransport = std::make_shared<test_UDPv4TransportDescriptor>();
+    auto test_transport = std::make_shared<eprosima::fastdds::rtps::test_UDPv4TransportDescriptor>();
 
-    writer.disable_builtin_transport().add_user_transport_to_pparams(testTransport).init();
+    writer.disable_builtin_transport().add_user_transport_to_pparams(test_transport).init();
     ASSERT_TRUE(writer.isInitialized());
 
-    reader.reliability(RELIABLE_RELIABILITY_QOS).init();
+    reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).init();
     ASSERT_TRUE(reader.isInitialized());
 
     writer.wait_discovery();
     reader.wait_discovery();
 
     // Disable communication to prevent reception of ACKs
-    test_UDPv4Transport::test_UDPv4Transport_ShutdownAllNetwork = true;
+    test_transport->test_transport_options->test_UDPv4Transport_ShutdownAllNetwork = true;
 
     auto data = default_keyedhelloworld_data_generator(2);
 
@@ -128,7 +137,7 @@ TEST_P(DDSDataWriter, WaitForAcknowledgmentInstance)
     }
 
     // Enable communication and wait for acknowledgment
-    test_UDPv4Transport::test_UDPv4Transport_ShutdownAllNetwork = false;
+    test_transport->test_transport_options->test_UDPv4Transport_ShutdownAllNetwork = false;
 
     EXPECT_TRUE(writer.waitForInstanceAcked(&sample_1, instance_handle_1, std::chrono::seconds(1)));
     EXPECT_TRUE(writer.waitForInstanceAcked(&sample_2, rtps::c_InstanceHandle_Unknown, std::chrono::seconds(1)));
@@ -144,9 +153,9 @@ TEST_P(DDSDataWriter, GetKeyValue)
 
     // Test variables
     KeyedHelloWorld data;
-    eprosima::fastrtps::rtps::InstanceHandle_t wrong_handle;
+    eprosima::fastdds::rtps::InstanceHandle_t wrong_handle;
     wrong_handle.value[0] = 0xee;
-    eprosima::fastrtps::rtps::InstanceHandle_t valid_handle;
+    eprosima::fastdds::rtps::InstanceHandle_t valid_handle;
     KeyedHelloWorld valid_data;
     valid_data.key(27);
     valid_data.index(1);
@@ -162,40 +171,40 @@ TEST_P(DDSDataWriter, GetKeyValue)
     DataWriter* instance_datawriter = &keyed_writer.get_native_writer();
 
     // 1. Check nullptr on key_holder
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, datawriter->get_key_value(nullptr, wrong_handle));
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(nullptr, wrong_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, datawriter->get_key_value(nullptr, wrong_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(nullptr, wrong_handle));
 
     // 2. Check HANDLE_NIL
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, datawriter->get_key_value(&data, HANDLE_NIL));
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, HANDLE_NIL));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, datawriter->get_key_value(&data, HANDLE_NIL));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, HANDLE_NIL));
 
     // 3. Check type should have keys
-    EXPECT_EQ(ReturnCode_t::RETCODE_ILLEGAL_OPERATION, datawriter->get_key_value(&data, wrong_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_ILLEGAL_OPERATION, datawriter->get_key_value(&data, wrong_handle));
 
-    // 4. Calling get_key_value with a key not yet registered returns RETCODE_BAD_PARAMETER
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, wrong_handle));
+    // 4. Calling get_key_value with a key not yet registered returns eprosima::fastdds::dds::RETCODE_BAD_PARAMETER
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, wrong_handle));
 
     // 5. Calling get_key_value on a registered instance should work.
     valid_handle = instance_datawriter->register_instance(&valid_data);
     EXPECT_NE(HANDLE_NIL, valid_handle);
     data.key(0);
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
     EXPECT_EQ(valid_data.key(), data.key());
 
-    // 6. Calling get_key_value on an unregistered instance should return RETCODE_BAD_PARAMETER.
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->unregister_instance(&valid_data, valid_handle));
-    EXPECT_EQ(ReturnCode_t::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, valid_handle));
+    // 6. Calling get_key_value on an unregistered instance should return eprosima::fastdds::dds::RETCODE_BAD_PARAMETER.
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->unregister_instance(&valid_data, valid_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_BAD_PARAMETER, instance_datawriter->get_key_value(&data, valid_handle));
 
     // 7. Calling get_key_value with a valid instance should work
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->write(&valid_data, HANDLE_NIL));
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->write(&valid_data, HANDLE_NIL));
     data.key(0);
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
     EXPECT_EQ(valid_data.key(), data.key());
 
     // 8. Calling get_key_value on a disposed instance should work.
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->dispose(&valid_data, valid_handle));
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->dispose(&valid_data, valid_handle));
     data.key(0);
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, instance_datawriter->get_key_value(&data, valid_handle));
     EXPECT_EQ(valid_data.key(), data.key());
 }
 
@@ -204,7 +213,7 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
     using namespace eprosima::fastdds::dds;
 
     // Test variables
-    eprosima::fastrtps::Time_t ts;
+    eprosima::fastdds::dds::Time_t ts;
 
     KeyedHelloWorld valid_data;
     valid_data.key(27);
@@ -213,8 +222,8 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
 
     // Create and initialize reader
     PubSubReader<KeyedHelloWorldPubSubType> reader(TEST_TOPIC_NAME);
-    reader.durability_kind(eprosima::fastrtps::TRANSIENT_LOCAL_DURABILITY_QOS)
-            .reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    reader.durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS)
+            .reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .history_depth(10)
             .init();
     ASSERT_TRUE(reader.isInitialized());
@@ -222,15 +231,15 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
 
     // Create and initialize writer
     PubSubWriter<KeyedHelloWorldPubSubType> writer(TEST_TOPIC_NAME);
-    writer.durability_kind(eprosima::fastrtps::TRANSIENT_LOCAL_DURABILITY_QOS)
-            .reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    writer.durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS)
+            .reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .history_depth(10)
             .init();
     ASSERT_TRUE(writer.isInitialized());
     DataWriter& datawriter = writer.get_native_writer();
     DataWriterQos qos = datawriter.get_qos();
     qos.writer_data_lifecycle().autodispose_unregistered_instances = false;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datawriter.set_qos(qos));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datawriter.set_qos(qos));
 
     // Wait discovery, since we are going to unregister an instance
     reader.wait_discovery();
@@ -245,16 +254,17 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
     ts.nanosec--;
     // Write with custom timestamp
     ts.nanosec++;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datawriter.write_w_timestamp(&valid_data, HANDLE_NIL, ts));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datawriter.write_w_timestamp(&valid_data, HANDLE_NIL, ts));
     // Dispose with custom timestamp
     ts.nanosec++;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datawriter.dispose_w_timestamp(&valid_data, HANDLE_NIL, ts));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datawriter.dispose_w_timestamp(&valid_data, HANDLE_NIL, ts));
     // Write with custom timestamp
     ts.nanosec++;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datawriter.write_w_timestamp(&valid_data, HANDLE_NIL, ts));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datawriter.write_w_timestamp(&valid_data, HANDLE_NIL, ts));
     // Unregister with custom timestamp
     ts.nanosec++;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datawriter.unregister_instance_w_timestamp(&valid_data, HANDLE_NIL, ts));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datawriter.unregister_instance_w_timestamp(&valid_data, HANDLE_NIL,
+            ts));
 
     // Wait and take all data
     auto num_samples = ts.nanosec;
@@ -266,7 +276,7 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
     FASTDDS_CONST_SEQUENCE(DataSeq, KeyedHelloWorld);
     SampleInfoSeq infos;
     DataSeq datas;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datareader.take(datas, infos));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datareader.take(datas, infos));
 
     // Check received timestamps
     ts.seconds = 0;
@@ -278,7 +288,7 @@ TEST_P(DDSDataWriter, WithTimestampOperations)
         ts.nanosec++;
     }
 
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, datareader.return_loan(datas, infos));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, datareader.return_loan(datas, infos));
 }
 
 /**
@@ -367,6 +377,158 @@ TEST(DDSDataWriter, OfferedDeadlineMissedListener)
                         return deadline_called.load();
                     });
     ASSERT_TRUE(ret);
+}
+
+/**
+ * Regression test for EasyRedmine issue https://eprosima.easyredmine.com/issues/20059
+ *
+ * The test creates a writer and reader that communicate with transient_local reliable QoS.
+ * The issue corresponds to a race condition involving writer's history destruction and heartbeat delivery, so in order
+ * to increment the probability of occurrence a high history depth and heartbeat frequency are used.
+ *
+ * Note:
+ *   - Only affects TRANSPORT case (UDP or SHM communication, data_sharing and intraprocess disabled)
+ *   - Destruction order matters: writer must be destroyed before reader (otherwise heartbeats would no be sent while
+ *     destroying the writer)
+ * Edit: this test has been updated to ensure that HistoryQoS and ResourceLimitQoS constraints are met (#20401).
+ */
+TEST(DDSDataWriter, HeartbeatWhileDestruction)
+{
+    PubSubReader<HelloWorldPubSubType> reader(TEST_TOPIC_NAME);
+
+    // Force writer to be destroyed before reader, so they are still matched, and heartbeats are sent while writer is destroyed
+    {
+        PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+
+        // A high number of samples increases the probability of the data race to occur
+        size_t n_samples = 1000;
+
+        reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
+                .durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS)
+                .init();
+        ASSERT_TRUE(reader.isInitialized());
+
+        writer.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
+                .durability_kind(eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS)
+                .history_kind(eprosima::fastdds::dds::KEEP_LAST_HISTORY_QOS)
+                .history_depth(static_cast<int32_t>(n_samples))
+                .resource_limits_max_samples(static_cast<int32_t>(n_samples))
+                .resource_limits_max_instances(static_cast<int32_t>(1))
+                .resource_limits_max_samples_per_instance(static_cast<int32_t>(n_samples))
+                .heartbeat_period_seconds(0)
+                .heartbeat_period_nanosec(20 * 1000)
+                .init();
+        ASSERT_TRUE(writer.isInitialized());
+
+        reader.wait_discovery();
+        writer.wait_discovery();
+
+        auto data = default_helloworld_data_generator(n_samples);
+        reader.startReception(data);
+        writer.send(data);
+
+        EXPECT_TRUE(data.empty());
+    }
+}
+
+/**
+ * This is a regression test for issue https://eprosima.easyredmine.com/issues/20504.
+ * It checks that a DataWriter be created with default Qos and a large history depth.
+ */
+TEST(DDSDataWriter, default_qos_large_history_depth)
+{
+    PubSubWriter<HelloWorldPubSubType> writer(TEST_TOPIC_NAME);
+    writer.history_depth(1000).init();
+    ASSERT_TRUE(writer.isInitialized());
+}
+
+/**
+ * Utility class to set some values other than default to those Qos common to Topic and DataWriter.
+ *
+ * This is a class instead of a free function to avoid linking with its TestsDataReader counterpart.
+ */
+class TestsDataWriterQosCommonUtils
+{
+public:
+
+    template<typename T>
+    static void set_common_qos(
+            T& qos)
+    {
+        qos.durability_service().history_kind = eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS;
+        qos.reliability().kind = eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS;
+        qos.durability().kind = eprosima::fastdds::dds::VOLATILE_DURABILITY_QOS;
+        qos.deadline().period = {0, 500000000};
+        qos.latency_budget().duration = 0;
+        qos.liveliness().kind = eprosima::fastdds::dds::MANUAL_BY_PARTICIPANT_LIVELINESS_QOS;
+        qos.resource_limits().max_samples = 1000;
+        qos.transport_priority().value = 1;
+        qos.ownership().kind = eprosima::fastdds::dds::EXCLUSIVE_OWNERSHIP_QOS;
+        qos.representation().m_value.push_back(eprosima::fastdds::dds::DataRepresentationId_t::XCDR2_DATA_REPRESENTATION);
+        qos.history().kind = eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS;
+        qos.lifespan().duration = {5, 0};
+    }
+
+};
+
+/*
+ * This test:
+ *   1. Creates a Topic with custom Qos
+ *   2. Updates the default DataWriter Qos that are not in common with Topic Qos with non-default values
+ *   3. Creates a DataWriter with DATAWRITER_QOS_USE_TOPIC_QOS
+ *   4. Checks that the used Qos are the merge between the default ones and the Topic ones
+ */
+TEST(DDSDataWriter, datawriter_qos_use_topic_qos)
+{
+    using namespace eprosima::fastdds::dds;
+
+    /* Create a topic with custom Qos */
+    // Set Topic Qos different from default
+    TopicQos topic_qos;
+    TestsDataWriterQosCommonUtils::set_common_qos(topic_qos);
+
+    // Create DomainParticipant
+    DomainParticipant* participant =
+            DomainParticipantFactory::get_instance()->create_participant(0, PARTICIPANT_QOS_DEFAULT);
+    ASSERT_NE(participant, nullptr);
+
+    /* Create a DataWriter with modified default Qos using the Topic Qos */
+    // Create Topic
+    TypeSupport type_support;
+    type_support.reset(new HelloWorldPubSubType());
+    type_support.register_type(participant, "HelloWorld");
+    Topic* topic = participant->create_topic("HelloWorldTopic", "HelloWorld", topic_qos);
+
+    // Create the Publisher
+    Publisher* publisher = participant->create_publisher(PUBLISHER_QOS_DEFAULT);
+    ASSERT_NE(publisher, nullptr);
+
+    // Change default DataWriter Qos (only those that are different from Topic Qos)
+    DataWriterQos control_qos;
+    control_qos.ownership_strength().value = 1;
+    control_qos.publish_mode().kind = eprosima::fastdds::dds::ASYNCHRONOUS_PUBLISH_MODE;
+    control_qos.writer_data_lifecycle().autodispose_unregistered_instances = false;
+    control_qos.user_data().push_back(0);
+    control_qos.endpoint().entity_id = 1;
+    control_qos.writer_resource_limits().matched_subscriber_allocation =
+            ResourceLimitedContainerConfig::fixed_size_configuration(1u);
+    control_qos.data_sharing().off();
+    publisher->set_default_datawriter_qos(control_qos);
+
+    // Create DataWriter with DATAREADER_QOS_USE_TOPIC_QOS
+    DataWriter* writer = publisher->create_datawriter(topic, DATAWRITER_QOS_USE_TOPIC_QOS);
+    ASSERT_NE(writer, nullptr);
+
+    /* Check that used Qos are the merge between the default ones and the Topic ones */
+    // Set the topic values on the control DataWriterQos
+    TestsDataWriterQosCommonUtils::set_common_qos(control_qos);
+
+    // Get used DataWriter Qos
+    DataWriterQos test_qos = writer->get_qos();
+
+    // Check that the Qos that are not in common with Topic Qos are correctly set as the default ones,
+    // and that the rest of the Qos are left unmodified
+    ASSERT_EQ(control_qos, test_qos);
 }
 
 #ifdef INSTANTIATE_TEST_SUITE_P

@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#include <fastrtps/types/TypeObject.h>
+#include <fastdds/dds/xtypes/type_representation/TypeObject.hpp>
 
 #include "DDSFilterParseNode.hpp"
 
@@ -34,21 +34,21 @@ namespace parser {
 /**
  * Performs parsing of a string containing a DDS-SQL filter expression.
  *
- * @param[in]  expression   The string to parse.
- * @param[in]  type_object  The TypeObject representing the type of the topic being filtered.
+ * @param [in]  expression   The string to parse.
+ * @param [in]  type_object  The TypeObject representing the type of the topic being filtered.
  *
  * @return nullptr when there is a parsing error.
  * @return A pointer to the root node of the AST tree for the expression.
  */
 std::unique_ptr<ParseNode> parse_filter_expression(
         const char* expression,
-        const eprosima::fastrtps::types::TypeObject* type_object);
+        const std::shared_ptr<eprosima::fastdds::dds::xtypes::TypeObject>& type_object);
 
 /**
  * Performs parsing of a string containing a literal value.
  * This method is used to perform parsing of parameter values.
  *
- * @param[in]  value  The string to parse.
+ * @param [in]  value  The string to parse.
  *
  * @return nullptr when there is a parsing error.
  * @return A simple tree consisting of a root node, with a single child that contains the generated DDSFilterValue.

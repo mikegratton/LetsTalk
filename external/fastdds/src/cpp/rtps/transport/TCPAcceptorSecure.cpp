@@ -14,14 +14,14 @@
 
 #include <rtps/transport/TCPAcceptorSecure.h>
 
-#include <fastrtps/utils/IPLocator.h>
+#include <fastdds/utils/IPLocator.hpp>
 #include <rtps/transport/TCPTransportInterface.h>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-using Locator_t = fastrtps::rtps::Locator_t;
+using Locator_t = fastdds::rtps::Locator_t;
 using Log = fastdds::dds::Log;
 
 using namespace asio;
@@ -36,9 +36,9 @@ TCPAcceptorSecure::TCPAcceptorSecure(
 
 TCPAcceptorSecure::TCPAcceptorSecure(
         io_service& io_service,
-        const std::string& interface,
+        const std::string& iface,
         const Locator_t& locator)
-    : TCPAcceptor(io_service, interface, locator)
+    : TCPAcceptor(io_service, iface, locator)
 {
 }
 
@@ -117,5 +117,5 @@ void TCPAcceptorSecure::accept(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

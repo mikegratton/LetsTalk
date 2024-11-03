@@ -2,6 +2,8 @@
 #include <iostream>
 
 #include "LetsTalk.hpp"
+#include "fastdds/dds/core/detail/DDSReturnCode.hpp"
+#include "fastdds/dds/core/detail/DDSSecurityReturnCode.hpp"
 
 #if defined(__GNUC__) || defined(__clang__)
 #include <cxxabi.h>
@@ -83,52 +85,25 @@ const bool s_IGNORE_NONLOCAL = getIgnoreNonlocal();
 
 }  // namespace detail
 
-}  // namespace lt
-
-// Why is ReturnCode_t so needlessly complicated?
-namespace eprosima {
-namespace fastrtps {
-namespace types {
-
-std::ostream& operator<<(std::ostream& os, ReturnCode_t i_return)
+char const* returnCodeToString(efd::ReturnCode_t i_return)
 {
-    /*
-    enum ReturnCodeValue
-    {
-        RETCODE_OK = 0,
-        RETCODE_ERROR = 1,
-        RETCODE_UNSUPPORTED = 2,
-        RETCODE_BAD_PARAMETER = 3,
-        RETCODE_PRECONDITION_NOT_MET = 4,
-        RETCODE_OUT_OF_RESOURCES = 5,
-        RETCODE_NOT_ENABLED = 6,
-        RETCODE_IMMUTABLE_POLICY = 7,
-        RETCODE_INCONSISTENT_POLICY = 8,
-        RETCODE_ALREADY_DELETED = 9,
-        RETCODE_TIMEOUT = 10,
-        RETCODE_NO_DATA = 11,
-        RETCODE_ILLEGAL_OPERATION = 12,
-        RETCODE_NOT_ALLOWED_BY_SECURITY = 13
-    };
-    */
-    switch (i_return()) {
-        case 0: return os << "OKAY";
-        case 1: return os << "ERROR";
-        case 2: return os << "UNSUPPORTED";
-        case 3: return os << "BAD PARAMETER";
-        case 4: return os << "PRECONDITION NOT MET";
-        case 5: return os << "OUT OF RESOURCES";
-        case 6: return os << "NOT ENABLED";
-        case 7: return os << "IMMUTABLE POLICY";
-        case 8: return os << "INCONSISTENT POLICY";
-        case 9: return os << "ALREADY DELETED";
-        case 10: return os << "TIMEOUT";
-        case 11: return os << "NO DATA";
-        case 12: return os << "ILLEGAL OPERATION";
-        case 13: return os << "NOT ALLOWED BY SECURITY";
-        default: return os << "UNKNOWN (" << i_return() << ")";
+    switch (i_return) {
+        case efd::RETCODE_OK: return "OKAY";
+        case efd::RETCODE_ERROR: return "ERROR";
+        case efd::RETCODE_UNSUPPORTED: return "UNSUPPORTED";
+        case efd::RETCODE_BAD_PARAMETER: return "BAD PARAMETER";
+        case efd::RETCODE_PRECONDITION_NOT_MET: return "PRECONDITION NOT MET";
+        case efd::RETCODE_OUT_OF_RESOURCES: return "OUT OF RESOURCES";
+        case efd::RETCODE_NOT_ENABLED: return "NOT ENABLED";
+        case efd::RETCODE_IMMUTABLE_POLICY: return "IMMUTABLE POLICY";
+        case efd::RETCODE_INCONSISTENT_POLICY: return "INCONSISTENT POLICY";
+        case efd::RETCODE_ALREADY_DELETED: return "ALREADY DELETED";
+        case efd::RETCODE_TIMEOUT: return "TIMEOUT";
+        case efd::RETCODE_NO_DATA: return "NO DATA";
+        case efd::RETCODE_ILLEGAL_OPERATION: return "ILLEGAL OPERATION";
+        case efd::RETCODE_NOT_ALLOWED_BY_SECURITY: return "NOT ALLOWED BY SECURITY";
+        default: return "UNKNOWN";
     }
 }
-}  // namespace types
-}  // namespace fastrtps
-}  // namespace eprosima
+
+}  // namespace lt

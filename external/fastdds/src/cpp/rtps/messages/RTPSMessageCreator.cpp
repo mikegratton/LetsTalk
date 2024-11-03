@@ -17,25 +17,23 @@
  *
  */
 
-#include <fastdds/rtps/messages/RTPSMessageCreator.h>
-
-#include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/messages/CDRMessage.h>
+#include <rtps/messages/RTPSMessageCreator.hpp>
 
 #include <fastdds/core/policy/ParameterList.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/common/VendorId_t.hpp>
 
-using namespace eprosima::fastrtps;
 using ParameterList = eprosima::fastdds::dds::ParameterList;
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 bool RTPSMessageCreator::addHeader(
         CDRMessage_t* msg,
         const GuidPrefix_t& guidPrefix,
         const ProtocolVersion_t& version,
-        const VendorId_t& vendorId)
+        const fastdds::rtps::VendorId_t& vendorId)
 {
     CDRMessage::addOctet(msg, 'R');
     CDRMessage::addOctet(msg, 'T');
@@ -128,7 +126,7 @@ bool RTPSMessageCreator::addSubmessageInfoTS(
 bool RTPSMessageCreator::addSubmessageInfoSRC(
         CDRMessage_t* msg,
         const ProtocolVersion_t& version,
-        const VendorId_t& vendorId,
+        const fastdds::rtps::VendorId_t& vendorId,
         const GuidPrefix_t& guidPrefix)
 {
     octet flags = 0x0;

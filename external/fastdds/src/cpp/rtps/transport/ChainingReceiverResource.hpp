@@ -15,7 +15,7 @@
 #ifndef _RTPS_TRANSPORT_CHAININGRECEIVERRESOURCE_HPP_
 #define _RTPS_TRANSPORT_CHAININGRECEIVERRESOURCE_HPP_
 
-#include <fastdds/rtps/transport/TransportReceiverInterface.h>
+#include <fastdds/rtps/transport/TransportReceiverInterface.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -45,10 +45,10 @@ public:
      * @param remote_locator Locator identifying the remote endpoint.
      */
     void OnDataReceived(
-            const fastrtps::rtps::octet* data,
+            const octet* data,
             const uint32_t size,
-            const fastrtps::rtps::Locator_t& local_locator,
-            const fastrtps::rtps::Locator_t& remote_locator) override
+            const Locator_t& local_locator,
+            const Locator_t& remote_locator) override
     {
         transport_.receive(low_receiver_resource_, data, size, local_locator, remote_locator);
     }

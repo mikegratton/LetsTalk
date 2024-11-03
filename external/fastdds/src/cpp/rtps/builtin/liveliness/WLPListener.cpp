@@ -16,31 +16,32 @@
  * @file WLPListener.cpp
  *
  */
-#include <fastdds/rtps/builtin/liveliness/WLPListener.h>
+#include <rtps/builtin/liveliness/WLPListener.h>
 
 #include <cstdint>
 #include <cstring>
 #include <mutex>
 #include <vector>
 
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
 #include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/builtin/BuiltinProtocols.h>
-#include <fastdds/rtps/builtin/discovery/participant/PDPSimple.h>
-#include <fastdds/rtps/builtin/liveliness/WLP.h>
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastdds/rtps/common/CDRMessage_t.h>
+#include <fastdds/rtps/common/CacheChange.hpp>
+#include <fastdds/rtps/common/CDRMessage_t.hpp>
 #include <fastdds/rtps/common/GuidPrefix_t.hpp>
-#include <fastdds/rtps/common/InstanceHandle.h>
-#include <fastdds/rtps/common/SerializedPayload.h>
-#include <fastdds/rtps/common/Types.h>
-#include <fastdds/rtps/history/ReaderHistory.h>
-#include <fastdds/rtps/messages/CDRMessage.h>
-#include <fastdds/rtps/reader/RTPSReader.h>
-#include <fastdds/rtps/writer/LivelinessManager.h>
-#include <fastrtps/qos/QosPolicies.h>
+#include <fastdds/rtps/common/InstanceHandle.hpp>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
+#include <fastdds/rtps/common/Types.hpp>
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+
+#include <rtps/builtin/BuiltinProtocols.h>
+#include <rtps/builtin/discovery/participant/PDPSimple.h>
+#include <rtps/builtin/liveliness/WLP.hpp>
+#include <rtps/messages/CDRMessage.hpp>
+#include <rtps/writer/LivelinessManager.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 WLPListener::WLPListener(
@@ -53,14 +54,14 @@ WLPListener::~WLPListener()
 {
 }
 
-void WLPListener::onNewCacheChangeAdded(
+void WLPListener::on_new_cache_change_added(
         RTPSReader* reader,
         const CacheChange_t* const changeIN)
 {
     std::lock_guard<std::recursive_mutex> guard2(*mp_WLP->mp_builtinProtocols->mp_PDP->getMutex());
 
     GuidPrefix_t guidP;
-    LivelinessQosPolicyKind livelinessKind = AUTOMATIC_LIVELINESS_QOS;
+    dds::LivelinessQosPolicyKind livelinessKind = dds::AUTOMATIC_LIVELINESS_QOS;
     CacheChange_t* change = (CacheChange_t*)changeIN;
     if (!computeKey(change))
     {
@@ -68,7 +69,7 @@ void WLPListener::onNewCacheChangeAdded(
         return;
     }
     //Check the serializedPayload:
-    auto history = reader->getHistory();
+    auto history = reader->get_history();
     for (auto ch = history->changesBegin(); ch != history->changesEnd(); ++ch)
     {
         if ((*ch)->instanceHandle == change->instanceHandle && (*ch)->sequenceNumber < change->sequenceNumber)
@@ -145,11 +146,11 @@ void WLPListener::onNewCacheChangeAdded(
     history->getMutex()->unlock();
     if (mp_WLP->automatic_readers_)
     {
-        mp_WLP->sub_liveliness_manager_->assert_liveliness(AUTOMATIC_LIVELINESS_QOS);
+        mp_WLP->sub_liveliness_manager_->assert_liveliness(dds::AUTOMATIC_LIVELINESS_QOS, guidP);
     }
-    if (livelinessKind == MANUAL_BY_PARTICIPANT_LIVELINESS_QOS)
+    if (livelinessKind == dds::MANUAL_BY_PARTICIPANT_LIVELINESS_QOS)
     {
-        mp_WLP->sub_liveliness_manager_->assert_liveliness(MANUAL_BY_PARTICIPANT_LIVELINESS_QOS);
+        mp_WLP->sub_liveliness_manager_->assert_liveliness(dds::MANUAL_BY_PARTICIPANT_LIVELINESS_QOS, guidP);
     }
     mp_WLP->mp_builtinProtocols->mp_PDP->getMutex()->unlock();
     history->getMutex()->lock();
@@ -160,7 +161,7 @@ void WLPListener::onNewCacheChangeAdded(
 bool WLPListener::separateKey(
         InstanceHandle_t& key,
         GuidPrefix_t* guidP,
-        LivelinessQosPolicyKind* liveliness)
+        dds::LivelinessQosPolicyKind* liveliness)
 {
     bool ret = get_wlp_kind(&key.value[12], *liveliness);
     if (ret)
@@ -189,7 +190,7 @@ bool WLPListener::computeKey(
 
 bool WLPListener::get_wlp_kind(
         const octet* serialized_kind,
-        LivelinessQosPolicyKind& liveliness_kind)
+        dds::LivelinessQosPolicyKind& liveliness_kind)
 {
     /*
      * From RTPS 2.5 9.6.3.1, the ParticipantMessageData kinds for WLP are:
@@ -205,7 +206,7 @@ bool WLPListener::get_wlp_kind(
     if (is_wlp)
     {
         // Adjust and cast to LivelinessQosPolicyKind enum, where AUTOMATIC_LIVELINESS_QOS == 0
-        liveliness_kind = static_cast<LivelinessQosPolicyKind>(serialized_kind[3] - 0x01);
+        liveliness_kind = static_cast<dds::LivelinessQosPolicyKind>(serialized_kind[3] - 0x01);
     }
 
     return is_wlp;

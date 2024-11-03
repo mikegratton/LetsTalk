@@ -19,18 +19,20 @@
 #ifndef TEST_COMMUNICATION_SUBSCRIBER_HPP
 #define TEST_COMMUNICATION_SUBSCRIBER_HPP
 
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <map>
+#include <mutex>
+
+#include <fastdds/dds/builtin/topic/ParticipantBuiltinTopicData.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/subscriber/SubscriberListener.hpp>
-#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.h>
+#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.hpp>
 
-#include "types/FixedSizedPubSubTypes.h"
-#include "types/HelloWorldPubSubTypes.h"
-
-#include <mutex>
-#include <condition_variable>
-#include <map>
-#include <chrono>
+#include "types/FixedSizedPubSubTypes.hpp"
+#include "types/HelloWorldPubSubTypes.hpp"
 
 namespace eprosima {
 namespace fastdds {
@@ -44,12 +46,16 @@ public:
     SubscriberModule(
             const uint32_t publishers,
             const uint32_t max_number_samples,
-            bool fixed_type = false,
-            bool zero_copy = false)
+            bool fixed_type,
+            bool zero_copy,
+            bool succeed_on_timeout,
+            bool die_on_data_received)
         : publishers_(publishers)
         , max_number_samples_(max_number_samples)
         , fixed_type_(zero_copy || fixed_type) // If zero copy active, fixed type is required
         , zero_copy_(zero_copy)
+        , succeed_on_timeout_(succeed_on_timeout)
+        , die_on_data_received_(die_on_data_received)
     {
     }
 
@@ -57,12 +63,14 @@ public:
 
     void on_participant_discovery(
             DomainParticipant* /*participant*/,
-            fastrtps::rtps::ParticipantDiscoveryInfo&& info) override;
+            eprosima::fastdds::rtps::ParticipantDiscoveryStatus status,
+            const ParticipantBuiltinTopicData& info,
+            bool& should_be_ignored) override;
 
 #if HAVE_SECURITY
     void onParticipantAuthentication(
             DomainParticipant* /*participant*/,
-            fastrtps::rtps::ParticipantAuthenticationInfo&& info) override;
+            fastdds::rtps::ParticipantAuthenticationInfo&& info) override;
 #endif // if HAVE_SECURITY
 
     void on_subscription_matched(
@@ -81,27 +89,34 @@ public:
             const std::string& magic);
 
     bool run(
-            bool notexit);
+            bool notexit,
+            const uint32_t rescan_interval,
+            uint32_t timeout);
 
     bool run_for(
             bool notexit,
+            const uint32_t rescan_interval,
             const std::chrono::milliseconds& timeout);
 
 private:
+
+    using DomainParticipantListener::on_participant_discovery;
 
     std::mutex mutex_;
     std::condition_variable cv_;
     const uint32_t publishers_ = 0;
     const uint32_t max_number_samples_ = 0;
-    std::map<eprosima::fastrtps::rtps::GUID_t, uint32_t> number_samples_;
+    std::map<eprosima::fastdds::rtps::GUID_t, uint32_t> number_samples_;
     bool fixed_type_ = false;
     bool zero_copy_ = false;
-    bool run_ = true;
+    std::atomic_bool run_{true};
+    bool succeed_on_timeout_ = false;
     DomainParticipant* participant_ = nullptr;
     TypeSupport type_;
     Subscriber* subscriber_ = nullptr;
     DataReader* reader_ = nullptr;
     Topic* topic_ = nullptr;
+    bool die_on_data_received_ = false;
 };
 
 } // dds

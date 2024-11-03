@@ -17,11 +17,10 @@
  */
 
 
-#ifndef _FASTDDS_PUBLISHERQOS_HPP_
-#define _FASTDDS_PUBLISHERQOS_HPP_
+#ifndef FASTDDS_DDS_PUBLISHER_QOS__PUBLISHERQOS_HPP
+#define FASTDDS_DDS_PUBLISHER_QOS__PUBLISHERQOS_HPP
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
-#include <fastrtps/attributes/PublisherAttributes.h>
 
 namespace eprosima {
 namespace fastdds {
@@ -43,14 +42,14 @@ public:
     /**
      * @brief Constructor
      */
-    RTPS_DllAPI PublisherQos()
+    FASTDDS_EXPORTED_API PublisherQos()
     {
     }
 
     /**
      * @brief Destructor
      */
-    RTPS_DllAPI virtual ~PublisherQos() = default;
+    FASTDDS_EXPORTED_API virtual ~PublisherQos() = default;
 
     bool operator ==(
             const PublisherQos& b) const
@@ -201,10 +200,10 @@ private:
 
 };
 
-RTPS_DllAPI extern const PublisherQos PUBLISHER_QOS_DEFAULT;
+FASTDDS_EXPORTED_API extern const PublisherQos PUBLISHER_QOS_DEFAULT;
 
 } // namespace dds
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_PUBLISHERQOS_HPP_
+#endif // FASTDDS_DDS_PUBLISHER_QOS__PUBLISHERQOS_HPP

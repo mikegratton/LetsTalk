@@ -19,33 +19,38 @@
 #ifndef _RTPS_BUILTIN_DISCOVERY_ENDPOINT_EDPUTILS_HPP_
 #define _RTPS_BUILTIN_DISCOVERY_ENDPOINT_EDPUTILS_HPP_
 
-#include <fastdds/rtps/attributes/HistoryAttributes.h>
-#include <fastdds/rtps/attributes/ReaderAttributes.h>
-#include <fastdds/rtps/attributes/WriterAttributes.h>
+#include <memory>
+#include <string>
+
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/attributes/ReaderAttributes.hpp>
+#include <fastdds/rtps/attributes/WriterAttributes.hpp>
 #include <fastdds/rtps/common/EntityId_t.hpp>
-#include <fastdds/rtps/history/ReaderHistory.h>
-#include <fastdds/rtps/history/WriterHistory.h>
-#include <fastdds/rtps/reader/StatefulReader.h>
-#include <fastdds/rtps/writer/StatefulWriter.h>
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
 
 #include <rtps/history/ITopicPayloadPool.h>
 #include <rtps/history/PoolConfig.h>
 #include <rtps/history/TopicPayloadPoolRegistry.hpp>
-
 #include <rtps/participant/RTPSParticipantImpl.h>
+#include <rtps/reader/StatefulReader.hpp>
+#include <rtps/writer/StatefulWriter.hpp>
 
-#include <memory>
-#include <string>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class EDPUtils
 {
 public:
 
-    using WriterHistoryPair = std::pair<StatefulWriter*, WriterHistory*>;
+    struct WriterHistoryPair
+    {
+        StatefulWriter* first = nullptr;
+        WriterHistory* second = nullptr;
+        std::shared_ptr<ITopicPayloadPool> payload_pool {};
+    };
     using ReaderHistoryPair = std::pair<StatefulReader*, ReaderHistory*>;
 
     static std::shared_ptr<ITopicPayloadPool> create_payload_pool(
@@ -111,16 +116,13 @@ public:
             const HistoryAttributes& history_att,
             WriterAttributes& watt,
             WriterListener* listener,
-            std::shared_ptr<ITopicPayloadPool>& payload_pool,
             WriterHistoryPair& edp_writer)
     {
         RTPSWriter* waux = nullptr;
 
-        payload_pool = create_payload_pool(topic_name, history_att, false);
-        edp_writer.second = new WriterHistory(history_att);
-        bool created =
-                participant->createWriter(&waux, watt, payload_pool, edp_writer.second, listener, entity_id,
-                        true);
+        edp_writer.payload_pool = create_payload_pool(topic_name, history_att, false);
+        edp_writer.second = new WriterHistory(history_att, edp_writer.payload_pool);
+        bool created = participant->createWriter(&waux, watt, edp_writer.second, listener, entity_id, true);
 
         if (created)
         {
@@ -130,16 +132,25 @@ public:
         {
             delete(edp_writer.second);
             edp_writer.second = nullptr;
-            release_payload_pool(payload_pool, history_att, false);
+            release_payload_pool(edp_writer.payload_pool, history_att, false);
         }
 
         return created;
     }
 
+    static CacheChange_t* create_change(
+            const WriterHistoryPair& writer,
+            ChangeKind_t change_kind,
+            InstanceHandle_t handle,
+            uint32_t cdr_size)
+    {
+        return writer.second->create_change(cdr_size, change_kind, handle);
+    }
+
 };
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */
 
 #endif // _RTPS_BUILTIN_DISCOVERY_ENDPOINT_EDPUTILS_HPP_

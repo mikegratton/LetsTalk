@@ -17,12 +17,11 @@
 
 #include <functional>
 
-#include <fastrtps/rtps/messages/MessageReceiver.h>
-
+#include <rtps/messages/MessageReceiver.h>
 #include <rtps/network/ReceiverResource.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class MockMessageReceiver;
@@ -31,13 +30,18 @@ class MockReceiverResource : public ReceiverResource
 {
 public:
 
+    bool is_valid() const
+    {
+        return mValid;
+    }
+
     virtual void OnDataReceived(
             const octet*,
             const uint32_t,
             const Locator_t&,
             const Locator_t&) override;
     MockReceiverResource(
-            TransportInterface& transport,
+            eprosima::fastdds::rtps::TransportInterface& transport,
             const Locator_t& locator);
     ~MockReceiverResource();
     MessageReceiver* CreateMessageReceiver() override;
@@ -63,7 +67,7 @@ public:
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 #endif //MOCK_RECEIVER_STUFF_H

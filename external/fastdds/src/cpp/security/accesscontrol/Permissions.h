@@ -19,11 +19,11 @@
 #ifndef _SECURITY_ACCESSCONTROL_PERMISSIONS_H_
 #define _SECURITY_ACCESSCONTROL_PERMISSIONS_H_
 
-#include <fastdds/rtps/security/accesscontrol/AccessControl.h>
-#include <fastdds/rtps/common/Token.h>
+#include <fastdds/rtps/common/Token.hpp>
+#include <rtps/security/accesscontrol/AccessControl.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -135,7 +135,7 @@ public:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #endif // _SECURITY_ACCESSCONTROL_PERMISSIONS_H_

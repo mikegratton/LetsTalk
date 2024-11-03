@@ -21,77 +21,19 @@
     FRIEND_TEST(WriterProxyTests, ReceivedChangeSet); \
     FRIEND_TEST(WriterProxyTests, IrrelevantChangeSet);
 
-#include <rtps/reader/WriterProxy.h>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+
+#include <rtps/builtin/data/WriterProxyData.hpp>
 #include <rtps/participant/RTPSParticipantImpl.h>
-#include <fastrtps/rtps/reader/RTPSReader.h>
-#include <fastrtps/rtps/reader/StatefulReader.h>
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
-#include <fastrtps/rtps/resources/TimedEvent.h>
-
+#include <rtps/reader/StatefulReader.hpp>
+#include <rtps/reader/WriterProxy.h>
 #include <rtps/reader/WriterProxy.cpp>
+#include <rtps/resources/TimedEvent.h>
 
-// Make SequenceNumberSet_t compatible with GMock macros
-
-namespace testing {
-namespace internal {
-using namespace eprosima::fastrtps::rtps;
-
-template<>
-bool AnyEq::operator ()(
-        const SequenceNumberSet_t& a,
-        const SequenceNumberSet_t& b) const
-{
-    // remember that using SequenceNumberSet_t = BitmapRange<SequenceNumber_t, SequenceNumberDiff, 256>;
-    // see test\unittest\utils\BitmapRangeTests.cpp method TestResult::Check
-
-    if (a.empty() && b.empty())
-    {
-        return true;
-    }
-
-    if (a.base() == b.base())
-    {
-        uint32_t num_bits[2];
-        uint32_t num_longs[2];
-        SequenceNumberSet_t::bitmap_type bitmap[2];
-
-        a.bitmap_get(num_bits[0], bitmap[0], num_longs[0]);
-        b.bitmap_get(num_bits[1], bitmap[1], num_longs[1]);
-
-        if (num_bits[0] != num_bits[1] || num_longs[0] != num_longs[1])
-        {
-            return false;
-        }
-        return std::equal(bitmap[0].cbegin(), bitmap[0].cbegin() + num_longs[0], bitmap[1].cbegin());
-    }
-    else
-    {
-        bool equal = true;
-
-        a.for_each([&b, &equal](const SequenceNumber_t& e)
-                {
-                    equal &= b.is_set(e);
-                });
-
-        if (!equal)
-        {
-            return false;
-        }
-
-        b.for_each([&a, &equal](const SequenceNumber_t& e)
-                {
-                    equal &= a.is_set(e);
-                });
-
-        return equal;
-    }
-}
-
-} // namespace internal
-} // namespace testing
+#include "../../common/operators.hpp"
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 TEST(WriterProxyTests, MissingChangesUpdate)
@@ -107,8 +49,8 @@ TEST(WriterProxyTests, MissingChangesUpdate)
     // Testing the Timed events are properly configured
     EXPECT_CALL(readerMock, getEventResource()).Times(1u);
     WriterProxy wproxy(&readerMock, RemoteLocatorsAllocationAttributes(), ResourceLimitedContainerConfig());
-    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initialAcknackDelay)).Times(1u);
-    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeatResponseDelay)).Times(1u);
+    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initial_acknack_delay)).Times(1u);
+    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeat_response_delay)).Times(1u);
     EXPECT_CALL(*wproxy.initial_acknack_, restart_timer()).Times(1u);
     wproxy.start(wattr, SequenceNumber_t());
 
@@ -306,8 +248,8 @@ TEST(WriterProxyTests, LostChangesUpdate)
     StatefulReader readerMock;
     EXPECT_CALL(readerMock, getEventResource()).Times(1u);
     WriterProxy wproxy(&readerMock, RemoteLocatorsAllocationAttributes(), ResourceLimitedContainerConfig());
-    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initialAcknackDelay)).Times(1u);
-    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeatResponseDelay)).Times(1u);
+    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initial_acknack_delay)).Times(1u);
+    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeat_response_delay)).Times(1u);
     EXPECT_CALL(*wproxy.initial_acknack_, restart_timer()).Times(1u);
     wproxy.start(wattr, SequenceNumber_t());
 
@@ -432,8 +374,8 @@ TEST(WriterProxyTests, ReceivedChangeSet)
     /// Tests that heartbeat response timed event is updated with new interval
     /// Tests that initial acknack timed event is started
 
-    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initialAcknackDelay)).Times(1u);
-    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeatResponseDelay)).Times(1u);
+    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initial_acknack_delay)).Times(1u);
+    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeat_response_delay)).Times(1u);
     EXPECT_CALL(*wproxy.initial_acknack_, restart_timer()).Times(1u);
     wproxy.start(wattr, SequenceNumber_t());
 
@@ -602,8 +544,8 @@ TEST(WriterProxyTests, IrrelevantChangeSet)
     StatefulReader readerMock;
     EXPECT_CALL(readerMock, getEventResource()).Times(1u);
     WriterProxy wproxy(&readerMock, RemoteLocatorsAllocationAttributes(), ResourceLimitedContainerConfig());
-    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initialAcknackDelay)).Times(1u);
-    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeatResponseDelay)).Times(1u);
+    EXPECT_CALL(*wproxy.initial_acknack_, update_interval(readerMock.getTimes().initial_acknack_delay)).Times(1u);
+    EXPECT_CALL(*wproxy.heartbeat_response_, update_interval(readerMock.getTimes().heartbeat_response_delay)).Times(1u);
     EXPECT_CALL(*wproxy.initial_acknack_, restart_timer()).Times(1u);
     wproxy.start(wattr, SequenceNumber_t());
 
@@ -746,7 +688,7 @@ TEST(WriterProxyTests, IrrelevantChangeSet)
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 int main(

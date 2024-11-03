@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef _FASTDDS_DDS_LOG_FILECONSUMER_HPP_
-#define _FASTDDS_DDS_LOG_FILECONSUMER_HPP_
+#ifndef FASTDDS_DDS_LOG__FILECONSUMER_HPP
+#define FASTDDS_DDS_LOG__FILECONSUMER_HPP
 
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/log/OStreamConsumer.hpp>
@@ -39,13 +39,13 @@ class FileConsumer : public OStreamConsumer
 public:
 
     //! Default constructor: filename = "output.log", append = false.
-    RTPS_DllAPI FileConsumer();
+    FASTDDS_EXPORTED_API FileConsumer();
 
     /** Constructor with parameters.
      * @param filename path of the output file where the log will be wrote.
      * @param append indicates if the consumer must append the content in the filename.
      */
-    RTPS_DllAPI FileConsumer(
+    FASTDDS_EXPORTED_API FileConsumer(
             const std::string& filename,
             bool append = false);
 
@@ -57,7 +57,7 @@ private:
      * Called by Log consume to get the correct stream
      * @param entry Log::Entry to consume.
      */
-    RTPS_DllAPI virtual std::ostream& get_stream(
+    FASTDDS_EXPORTED_API virtual std::ostream& get_stream(
             const Log::Entry& entry) override;
 
     std::string output_file_;
@@ -69,4 +69,4 @@ private:
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_DDS_LOG_FILECONSUMER_HPP_
+#endif // FASTDDS_DDS_LOG__FILECONSUMER_HPP

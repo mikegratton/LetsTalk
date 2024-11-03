@@ -8,6 +8,7 @@
 <link rel="up" href="../overview.html" title="Overview">
 <link rel="prev" href="cpp2011/chrono.html" title="Chrono">
 <link rel="next" href="../using.html" title="Using, Building, and Configuring Asio">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -93,6 +94,53 @@
           </li></ul></div>
 <h5>
 <a name="asio.overview.implementation.h2"></a>
+        <span><a name="asio.overview.implementation.linux_kernel_5_10"></a></span><a class="link" href="implementation.html#asio.overview.implementation.linux_kernel_5_10">Linux
+        Kernel 5.10</a>
+      </h5>
+<p>
+        Demultiplexing mechanism:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+            If <code class="computeroutput"><span class="identifier">ASIO_HAS_IO_URING</span></code>
+            is defined, uses <code class="computeroutput"><span class="identifier">io_uring</span></code>
+            for file-related asynchonous operations.
+          </li>
+<li class="listitem">
+            Uses <code class="computeroutput"><span class="identifier">epoll</span></code> for demultiplexing
+            other event sources.
+          </li>
+<li class="listitem">
+            Optionally uses <code class="computeroutput"><span class="identifier">io_uring</span></code>
+            for all asynchronous operations if, in addition to <code class="computeroutput"><span class="identifier">ASIO_HAS_IO_URING</span></code>,
+            <code class="computeroutput"><span class="identifier">ASIO_DISABLE_EPOLL</span></code> is
+            defined to disable <code class="computeroutput"><span class="identifier">epoll</span></code>.
+          </li>
+</ul></div>
+<p>
+        Threads:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+            Demultiplexing using <code class="computeroutput"><span class="identifier">epoll</span></code>
+            and <code class="computeroutput"><span class="identifier">io_uring</span></code> is performed
+            in one of the threads that calls <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">run</span><span class="special">()</span></code>, <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">run_one</span><span class="special">()</span></code>, <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">poll</span><span class="special">()</span></code> or <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">poll_one</span><span class="special">()</span></code>.
+          </li>
+<li class="listitem">
+            An additional thread per <code class="computeroutput"><span class="identifier">io_context</span></code>
+            is used to emulate asynchronous host resolution. This thread is created
+            on the first call to either <code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">tcp</span><span class="special">::</span><span class="identifier">resolver</span><span class="special">::</span><span class="identifier">async_resolve</span><span class="special">()</span></code> or <code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">udp</span><span class="special">::</span><span class="identifier">resolver</span><span class="special">::</span><span class="identifier">async_resolve</span><span class="special">()</span></code>.
+          </li>
+</ul></div>
+<p>
+        Scatter-Gather:
+      </p>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem">
+            At most <code class="computeroutput"><span class="identifier">min</span><span class="special">(</span><span class="number">64</span><span class="special">,</span><span class="identifier">IOV_MAX</span><span class="special">)</span></code> buffers may be transferred in a single
+            operation.
+          </li></ul></div>
+<h5>
+<a name="asio.overview.implementation.h3"></a>
         <span><a name="asio.overview.implementation.solaris"></a></span><a class="link" href="implementation.html#asio.overview.implementation.solaris">Solaris</a>
       </h5>
 <p>
@@ -123,7 +171,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h3"></a>
+<a name="asio.overview.implementation.h4"></a>
         <span><a name="asio.overview.implementation.qnx_neutrino"></a></span><a class="link" href="implementation.html#asio.overview.implementation.qnx_neutrino">QNX
         Neutrino</a>
       </h5>
@@ -157,7 +205,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h4"></a>
+<a name="asio.overview.implementation.h5"></a>
         <span><a name="asio.overview.implementation.mac_os_x"></a></span><a class="link" href="implementation.html#asio.overview.implementation.mac_os_x">Mac
         OS X</a>
       </h5>
@@ -189,7 +237,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h5"></a>
+<a name="asio.overview.implementation.h6"></a>
         <span><a name="asio.overview.implementation.freebsd"></a></span><a class="link" href="implementation.html#asio.overview.implementation.freebsd">FreeBSD</a>
       </h5>
 <p>
@@ -220,7 +268,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h6"></a>
+<a name="asio.overview.implementation.h7"></a>
         <span><a name="asio.overview.implementation.aix"></a></span><a class="link" href="implementation.html#asio.overview.implementation.aix">AIX</a>
       </h5>
 <p>
@@ -253,7 +301,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h7"></a>
+<a name="asio.overview.implementation.h8"></a>
         <span><a name="asio.overview.implementation.hp_ux"></a></span><a class="link" href="implementation.html#asio.overview.implementation.hp_ux">HP-UX</a>
       </h5>
 <p>
@@ -286,7 +334,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h8"></a>
+<a name="asio.overview.implementation.h9"></a>
         <span><a name="asio.overview.implementation.tru64"></a></span><a class="link" href="implementation.html#asio.overview.implementation.tru64">Tru64</a>
       </h5>
 <p>
@@ -319,7 +367,7 @@
             operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h9"></a>
+<a name="asio.overview.implementation.h10"></a>
         <span><a name="asio.overview.implementation.windows_95__98_and_me"></a></span><a class="link" href="implementation.html#asio.overview.implementation.windows_95__98_and_me">Windows
         95, 98 and Me</a>
       </h5>
@@ -350,9 +398,9 @@
             For sockets, at most 16 buffers may be transferred in a single operation.
           </li></ul></div>
 <h5>
-<a name="asio.overview.implementation.h10"></a>
-        <span><a name="asio.overview.implementation.windows_nt__2000__xp__2003__vista__7_and_8"></a></span><a class="link" href="implementation.html#asio.overview.implementation.windows_nt__2000__xp__2003__vista__7_and_8">Windows
-        NT, 2000, XP, 2003, Vista, 7 and 8</a>
+<a name="asio.overview.implementation.h11"></a>
+        <span><a name="asio.overview.implementation.windows_nt__2000__xp__2003__vista__7__8__10_and_11"></a></span><a class="link" href="implementation.html#asio.overview.implementation.windows_nt__2000__xp__2003__vista__7__8__10_and_11">Windows
+        NT, 2000, XP, 2003, Vista, 7, 8, 10 and 11</a>
       </h5>
 <p>
         Demultiplexing mechanism:
@@ -421,7 +469,7 @@
           </li>
 </ul></div>
 <h5>
-<a name="asio.overview.implementation.h11"></a>
+<a name="asio.overview.implementation.h12"></a>
         <span><a name="asio.overview.implementation.windows_runtime"></a></span><a class="link" href="implementation.html#asio.overview.implementation.windows_runtime">Windows
         Runtime</a>
       </h5>
@@ -492,14 +540,11 @@
             For sockets, at most one buffer may be transferred in a single operation.
           </li></ul></div>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="cpp2011/chrono.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../overview.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="../using.html"><img src="../../next.png" alt="Next"></a>

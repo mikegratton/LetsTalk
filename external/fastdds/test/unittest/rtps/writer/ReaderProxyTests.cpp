@@ -15,13 +15,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <fastrtps/rtps/writer/ReaderProxy.h>
-#include <fastrtps/rtps/writer/StatefulWriter.h>
 #include <rtps/messages/RTPSGapBuilder.hpp>
+#include <rtps/writer/ReaderProxy.hpp>
+#include <rtps/writer/StatefulWriter.hpp>
 
-//using namespace eprosima::fastrtps::rtps;
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 TEST(ReaderProxyTests, find_change_test)
@@ -128,7 +127,7 @@ TEST(ReaderProxyTests, requested_changes_set_test)
     RTPSGapBuilder gap_builder(message_group);
 
     ReaderProxyData reader_attributes(0, 0);
-    reader_attributes.m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
+    reader_attributes.m_qos.m_reliability.kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
     rproxy.start(reader_attributes);
 
 
@@ -188,7 +187,7 @@ TEST(ReaderProxyTests, process_nack_frag_single_fragment_different_windows_test)
     RTPSGapBuilder gap_builder(message_group);
 
     ReaderProxyData reader_attributes(0, 0);
-    reader_attributes.m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
+    reader_attributes.m_qos.m_reliability.kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
     rproxy.start(reader_attributes);
 
     ChangeForReader_t change(&seq);
@@ -257,7 +256,7 @@ TEST(ReaderProxyTests, process_nack_frag_multiple_fragments_different_windows_te
     RTPSGapBuilder gap_builder(message_group);
 
     ReaderProxyData reader_attributes(0, 0);
-    reader_attributes.m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
+    reader_attributes.m_qos.m_reliability.kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
     rproxy.start(reader_attributes);
 
     ChangeForReader_t change(&seq);
@@ -346,7 +345,7 @@ TEST(ReaderProxyTests, has_been_delivered_test)
     seq2.sequenceNumber = {0, 2};
 
     ReaderProxyData reader_attributes(0, 0);
-    reader_attributes.m_qos.m_reliability.kind = RELIABLE_RELIABILITY_QOS;
+    reader_attributes.m_qos.m_reliability.kind = fastdds::dds::RELIABLE_RELIABILITY_QOS;
     rproxy.start(reader_attributes);
 
     auto expect_result = [&rproxy](SequenceNumber_t seq, bool delivered, bool should_be_found)
@@ -382,8 +381,40 @@ TEST(ReaderProxyTests, has_been_delivered_test)
     expect_result({0, 3}, false, false);
 }
 
+// Test expectations regarding acknack count.
+// Serves as a regression test for redmine issue #20729.
+TEST(ReaderProxyTests, acknack_count)
+{
+    StatefulWriter writer_mock;
+    WriterTimes w_times;
+    RemoteLocatorsAllocationAttributes alloc;
+    ReaderProxy rproxy(w_times, alloc, &writer_mock);
+
+    ReaderProxyData reader_attributes(0, 0);
+    reader_attributes.m_qos.m_reliability.kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+    rproxy.start(reader_attributes);
+
+    // Check that the initial acknack count is 0.
+    EXPECT_TRUE(rproxy.check_and_set_acknack_count(0u));
+    // Check that it is not accepted twice.
+    EXPECT_FALSE(rproxy.check_and_set_acknack_count(0u));
+    // Check that it is accepted if it is incremented.
+    EXPECT_TRUE(rproxy.check_and_set_acknack_count(1u));
+    // Check that it is not accepted twice.
+    EXPECT_FALSE(rproxy.check_and_set_acknack_count(1u));
+    // Check that it is not accepted if it is decremented.
+    EXPECT_FALSE(rproxy.check_and_set_acknack_count(0u));
+    // Check that it is accepted if it has a big increment.
+    EXPECT_TRUE(rproxy.check_and_set_acknack_count(100u));
+    // Check that previous values are rejected.
+    for (uint32_t i = 0; i <= 100u; ++i)
+    {
+        EXPECT_FALSE(rproxy.check_and_set_acknack_count(i));
+    }
+}
+
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 int main(

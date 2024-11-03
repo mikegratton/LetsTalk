@@ -19,9 +19,9 @@
 #ifndef RTPS_DATASHARING_WRITERPOOL_HPP
 #define RTPS_DATASHARING_WRITERPOOL_HPP
 
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
-#include <fastdds/rtps/resources/ResourceManagement.h>
+#include <fastdds/rtps/attributes/ResourceManagement.hpp>
+#include <fastdds/rtps/common/CacheChange.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
 #include <fastdds/dds/log/Log.hpp>
 #include <rtps/DataSharing/DataSharingPayloadPool.hpp>
 #include <utils/collections/FixedSizeQueue.hpp>
@@ -29,7 +29,7 @@
 #include <memory>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class WriterPool : public DataSharingPayloadPool
@@ -43,7 +43,6 @@ public:
         : max_data_size_(payload_size)
         , pool_size_(pool_size)
         , free_history_size_(0)
-        , writer_(nullptr)
     {
     }
 
@@ -61,55 +60,45 @@ public:
 
     bool get_payload(
             uint32_t /*size*/,
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
         if (free_payloads_.empty())
         {
             return false;
         }
 
-        PayloadNode* payload = free_payloads_.front();
+        PayloadNode* payload_node = free_payloads_.front();
         free_payloads_.pop_front();
         // Reset all the metadata to signal the reader that the payload is dirty
-        payload->reset();
+        payload_node->reset();
 
-        cache_change.serializedPayload.data = payload->data();
-        cache_change.serializedPayload.max_size = max_data_size_;
-        cache_change.payload_owner(this);
+        payload.data = payload_node->data();
+        payload.max_size = max_data_size_;
+        payload.payload_owner = this;
 
         return true;
     }
 
     bool get_payload(
-            SerializedPayload_t& data,
-            IPayloadPool*& data_owner,
-            CacheChange_t& cache_change) override
+            const SerializedPayload_t& data,
+            SerializedPayload_t& payload) override
     {
-        assert(cache_change.writerGUID != GUID_t::unknown());
-        assert(cache_change.sequenceNumber != SequenceNumber_t::unknown());
-
-        if (data_owner == this)
+        if (data.payload_owner == this)
         {
-            cache_change.serializedPayload.data = data.data;
-            cache_change.serializedPayload.length = data.length;
-            cache_change.serializedPayload.max_size = data.length;
-            cache_change.payload_owner(this);
+            payload.data = data.data;
+            payload.length = data.length;
+            payload.max_size = data.length;
+            payload.payload_owner = this;
             return true;
         }
         else
         {
-            if (get_payload(data.length, cache_change))
+            if (get_payload(data.length, payload))
             {
-                if (!cache_change.serializedPayload.copy(&data, true))
+                if (!payload.copy(&data, true))
                 {
-                    release_payload(cache_change);
+                    release_payload(payload);
                     return false;
-                }
-
-                if (data_owner == nullptr)
-                {
-                    data_owner = this;
-                    data.data = cache_change.serializedPayload.data;
                 }
 
                 return true;
@@ -120,23 +109,23 @@ public:
     }
 
     bool release_payload(
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        assert(cache_change.payload_owner() == this);
+        assert(payload.payload_owner == this);
 
         // Payloads are reset on the `get` operation, the `release` leaves the data to give more chances to the reader
-        PayloadNode* payload = PayloadNode::get_from_data(cache_change.serializedPayload.data);
-        if (payload->has_been_removed())
+        PayloadNode* payload_node = PayloadNode::get_from_data(payload.data);
+        if (payload_node->has_been_removed())
         {
             advance_till_first_non_removed();
         }
         else
         {
-            free_payloads_.push_back(payload);
+            free_payloads_.push_back(payload_node);
         }
-        EPROSIMA_LOG_INFO(DATASHARING_PAYLOADPOOL, "Change released with SN " << cache_change.sequenceNumber);
+        EPROSIMA_LOG_INFO(DATASHARING_PAYLOADPOOL, "Serialized payload released.");
 
-        return DataSharingPayloadPool::release_payload(cache_change);
+        return DataSharingPayloadPool::release_payload(payload);
     }
 
     template <typename T>
@@ -144,8 +133,7 @@ public:
             const RTPSWriter* writer,
             const std::string& shared_dir)
     {
-        writer_ = writer;
-        segment_id_ = writer_->getGuid();
+        segment_id_ = writer->getGuid();
         segment_name_ = generate_segment_name(shared_dir, segment_id_);
         std::unique_ptr<T> local_segment;
         size_t payload_size;
@@ -182,7 +170,8 @@ public:
             {
                 EPROSIMA_LOG_ERROR(DATASHARING_PAYLOADPOOL, "Failed to create segment " << segment_name_
                                                                                         << ": Segment size is too large: " << estimated_size_for_payloads_pool
-                                                                                        << " (max is " << std::numeric_limits<uint32_t>::max() << ")."
+                                                                                        << " (max is " <<
+                        (std::numeric_limits<uint32_t>::max)() << ")."
                                                                                         << " Please reduce the maximum size of the history");
                 return false;
             }
@@ -273,7 +262,7 @@ public:
     {
         assert(cache_change);
         assert(cache_change->serializedPayload.data);
-        assert(cache_change->payload_owner() == this);
+        assert(cache_change->serializedPayload.payload_owner == this);
         assert(free_history_size_ > 0);
 
         // Fill the payload metadata with the change info
@@ -311,7 +300,7 @@ public:
     {
         assert(cache_change);
         assert(cache_change->serializedPayload.data);
-        assert(cache_change->payload_owner() == this);
+        assert(cache_change->serializedPayload.payload_owner == this);
         assert(descriptor_->notified_end != descriptor_->notified_begin);
         assert(free_history_size_ < descriptor_->history_size);
 
@@ -352,6 +341,8 @@ public:
 
 private:
 
+    using DataSharingPayloadPool::init_shared_memory;
+
     octet* payloads_pool_;          //< Shared pool of payloads
 
     uint32_t max_data_size_;        //< Maximum size of the serialized payload data
@@ -360,15 +351,13 @@ private:
 
     FixedSizeQueue<PayloadNode*> free_payloads_;    //< Pointers to the free payloads in the pool
 
-    const RTPSWriter* writer_;      //< Writer that is owner of the pool
-
     bool is_initialized_ = false;   //< Whether the pool has been initialized on shared memory
 
 };
 
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
 #endif  // RTPS_DATASHARING_WRITERPOOL_HPP

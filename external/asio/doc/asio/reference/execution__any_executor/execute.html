@@ -8,6 +8,7 @@
 <link rel="up" href="../execution__any_executor.html" title="execution::any_executor">
 <link rel="prev" href="context.html" title="execution::any_executor::context">
 <link rel="next" href="operator_bool.html" title="execution::any_executor::operator bool">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
@@ -30,28 +31,15 @@ Execute
     <span class="identifier">Function</span> <span class="special">&amp;&amp;</span> <span class="identifier">f</span><span class="special">)</span> <span class="keyword">const</span><span class="special">;</span>
 </pre>
 <p>
-          Do not call this function directly. It is intended for use with the <a class="link" href="../execution__execute.html" title="execution::execute"><code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">execute</span></code></a>
-          customisation point.
-        </p>
-<p>
-          For example:
-        </p>
-<pre class="programlisting"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">any_executor</span><span class="special">&lt;&gt;</span> <span class="identifier">ex</span> <span class="special">=</span> <span class="special">...;</span>
-<span class="identifier">execution</span><span class="special">::</span><span class="identifier">execute</span><span class="special">(</span><span class="identifier">ex</span><span class="special">,</span> <span class="identifier">my_function_object</span><span class="special">);</span>
-</pre>
-<p>
           Throws <a class="link" href="../bad_executor.html" title="bad_executor"><code class="computeroutput"><span class="identifier">bad_executor</span></code></a>
           if the polymorphic wrapper has no target.
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="context.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../execution__any_executor.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="operator_bool.html"><img src="../../../next.png" alt="Next"></a>

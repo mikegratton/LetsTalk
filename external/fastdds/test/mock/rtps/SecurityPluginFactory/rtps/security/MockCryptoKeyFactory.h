@@ -15,21 +15,21 @@
 /*!
  * @file MockCryptoKeyFactory.h
  */
-#ifndef _RTPS_SECURITY_MOCKCRYPTOKEYFACTORY_H_
-#define _RTPS_SECURITY_MOCKCRYPTOKEYFACTORY_H_
-
-#include <fastrtps/rtps/security/cryptography/CryptoKeyFactory.h>
-#include <fastrtps/rtps/security/cryptography/CryptoTypes.h>
-
-#include <security/cryptography/AESGCMGMAC_Types.h>
+#ifndef FASTDDS_RTPS_SECURITY__MOCKCRYPTOKEYFACTORY_H
+#define FASTDDS_RTPS_SECURITY__MOCKCRYPTOKEYFACTORY_H
 
 #include <gmock/gmock.h>
+
+#include <rtps/security/cryptography/CryptoKeyFactory.h>
+#include <rtps/security/cryptography/CryptoTypes.h>
+
+#include <security/cryptography/AESGCMGMAC_Types.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4373)
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -118,9 +118,9 @@ public:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #pragma warning(pop)
 
-#endif // _RTPS_SECURITY_MOCKCRYPTOKEYFACTORY_H_
+#endif // FASTDDS_RTPS_SECURITY__MOCKCRYPTOKEYFACTORY_H

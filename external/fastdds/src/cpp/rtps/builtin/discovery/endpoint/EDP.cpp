@@ -17,48 +17,50 @@
  *
  */
 
-#include <fastdds/rtps/builtin/discovery/endpoint/EDP.h>
+#include <rtps/builtin/discovery/endpoint/EDP.h>
 
-#include <fastdds/dds/log/Log.hpp>
-
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
-
-#include <fastdds/rtps/builtin/discovery/participant/PDP.h>
-
-#include <fastdds/rtps/reader/ReaderListener.h>
-#include <fastdds/rtps/reader/RTPSReader.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
-#include <fastdds/rtps/writer/WriterListener.h>
-
-#include <fastrtps/attributes/TopicAttributes.h>
-
-#include <fastrtps/utils/StringMatching.h>
-
-#include <fastrtps/types/TypeObjectFactory.h>
-
-#include <fastdds/core/policy/ParameterList.hpp>
+#include <cassert>
+#include <mutex>
 
 #include <foonathan/memory/container.hpp>
 #include <foonathan/memory/memory_pool.hpp>
 
+#include <fastdds/core/policy/ParameterList.hpp>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/dds/publisher/qos/WriterQos.hpp>
+#include <fastdds/rtps/builtin/data/TopicDescription.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
+#include <fastdds/rtps/reader/ReaderListener.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
+#include <fastdds/rtps/writer/WriterListener.hpp>
+
+#include <fastdds/utils/TypePropagation.hpp>
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
 #include <rtps/builtin/data/ProxyHashTables.hpp>
-#include <rtps/network/ExternalLocatorsProcessor.hpp>
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/builtin/discovery/participant/PDP.h>
+#include <rtps/network/utils/external_locators.hpp>
 #include <rtps/participant/RTPSParticipantImpl.h>
-
+#include <rtps/reader/BaseReader.hpp>
+#include <rtps/RTPSDomainImpl.hpp>
+#if HAVE_SECURITY
+#include <rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
+#endif // if HAVE_SECURITY
+#include <rtps/writer/BaseWriter.hpp>
 #include <utils/collections/node_size_helpers.hpp>
+#include <utils/StringMatching.hpp>
+#ifdef FASTDDS_STATISTICS
+#include <statistics/rtps/monitor-service/interfaces/IProxyObserver.hpp>
+#endif //FASTDDS_STATISTICS
 
-#include <mutex>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::types;
 using eprosima::fastdds::dds::PublicationMatchedStatus;
 using eprosima::fastdds::dds::SubscriptionMatchedStatus;
 using ParameterList = eprosima::fastdds::dds::ParameterList;
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 using reader_map_helper = utilities::collections::map_size_helper<GUID_t, SubscriptionMatchedStatus>;
@@ -70,21 +72,21 @@ static bool is_partition_empty(
     return partition.size() <= 1 && 0 == strlen(partition.name());
 }
 
+static bool is_same_type(
+        const dds::xtypes::TypeInformation& t1,
+        const dds::xtypes::TypeInformation& t2)
+{
+    return (dds::xtypes::TK_NONE != t1.complete().typeid_with_size().type_id()._d()
+           && t1.complete().typeid_with_size() == t2.complete().typeid_with_size())
+           || (dds::xtypes::TK_NONE != t1.minimal().typeid_with_size().type_id()._d()
+           && t1.minimal().typeid_with_size() == t2.minimal().typeid_with_size());
+}
+
 EDP::EDP(
         PDP* p,
         RTPSParticipantImpl* part)
     : mp_PDP(p)
     , mp_RTPSParticipant(part)
-    , reader_status_allocator_(
-        reader_map_helper::node_size,
-        reader_map_helper::min_pool_size<pool_allocator_t>(
-            part->getRTPSParticipantAttributes().allocation.total_readers().initial))
-    , writer_status_allocator_(
-        writer_map_helper::node_size,
-        writer_map_helper::min_pool_size<pool_allocator_t>(
-            part->getRTPSParticipantAttributes().allocation.total_writers().initial))
-    , reader_status_(reader_status_allocator_)
-    , writer_status_(writer_status_allocator_)
 {
 }
 
@@ -93,15 +95,17 @@ EDP::~EDP()
     // TODO Auto-generated destructor stub
 }
 
-bool EDP::newLocalReaderProxyData(
-        RTPSReader* reader,
-        const TopicAttributes& att,
-        const ReaderQos& rqos,
+bool EDP::new_reader_proxy_data(
+        RTPSReader* rtps_reader,
+        const TopicDescription& topic,
+        const fastdds::dds::ReaderQos& qos,
         const fastdds::rtps::ContentFilterProperty* content_filter)
 {
-    EPROSIMA_LOG_INFO(RTPS_EDP, "Adding " << reader->getGuid().entityId << " in topic " << att.topicName);
+    EPROSIMA_LOG_INFO(RTPS_EDP,
+            "Adding " << rtps_reader->getGuid().entityId << " in topic " <<
+            topic.topic_name.to_string());
 
-    auto init_fun = [this, reader, &att, &rqos, content_filter](
+    auto init_fun = [this, rtps_reader, &topic, &qos, content_filter](
         ReaderProxyData* rpd,
         bool updating,
         const ParticipantProxyData& participant_data)
@@ -109,17 +113,17 @@ bool EDP::newLocalReaderProxyData(
                 if (updating)
                 {
                     EPROSIMA_LOG_ERROR(RTPS_EDP,
-                            "Adding already existent reader " << reader->getGuid().entityId << " in topic "
-                                                              << att.topicName);
+                            "Adding already existent reader " << rtps_reader->getGuid().entityId << " in topic "
+                                                              << topic.topic_name.to_string());
                     return false;
                 }
 
                 const NetworkFactory& network = mp_RTPSParticipant->network_factory();
-                const auto& ratt = reader->getAttributes();
+                const auto& ratt = rtps_reader->getAttributes();
 
                 rpd->isAlive(true);
-                rpd->m_expectsInlineQos = reader->expectsInlineQos();
-                rpd->guid(reader->getGuid());
+                rpd->m_expectsInlineQos = rtps_reader->expects_inline_qos();
+                rpd->guid(rtps_reader->getGuid());
                 rpd->key() = rpd->guid();
                 if (ratt.multicastLocatorList.empty() && ratt.unicastLocatorList.empty())
                 {
@@ -129,26 +133,51 @@ bool EDP::newLocalReaderProxyData(
                 {
                     rpd->set_multicast_locators(ratt.multicastLocatorList, network);
                     rpd->set_announced_unicast_locators(ratt.unicastLocatorList);
-                    fastdds::rtps::ExternalLocatorsProcessor::add_external_locators(*rpd,
+                    fastdds::rtps::network::external_locators::add_external_locators(*rpd,
                             ratt.external_unicast_locators);
                 }
                 rpd->RTPSParticipantKey() = mp_RTPSParticipant->getGuid();
-                rpd->topicName(att.getTopicName());
-                rpd->typeName(att.getTopicDataType());
-                rpd->topicKind(att.getTopicKind());
-                if (att.type_id.m_type_identifier._d() != static_cast<uint8_t>(0x00))
+                rpd->topicName(topic.topic_name);
+                rpd->typeName(topic.type_name);
+                rpd->topicKind((rpd->guid().entityId.value[3] & 0x0F) == 0x07 ? WITH_KEY : NO_KEY);
+
+                using dds::utils::TypePropagation;
+                using dds::xtypes::TypeInformationParameter;
+
+                auto type_propagation = mp_RTPSParticipant->type_propagation();
+                assert(TypePropagation::TYPEPROPAGATION_UNKNOWN != type_propagation);
+
+                const auto& type_info = topic.type_information;
+                if (type_info.assigned())
                 {
-                    rpd->type_id(att.type_id);
+                    switch (type_propagation)
+                    {
+                        case TypePropagation::TYPEPROPAGATION_ENABLED:
+                        {
+                            rpd->type_information(type_info);
+                            break;
+                        }
+                        case TypePropagation::TYPEPROPAGATION_MINIMAL_BANDWIDTH:
+                        {
+                            TypeInformationParameter minimal;
+                            minimal.type_information.minimal(type_info.type_information.minimal());
+                            minimal.assigned(true);
+                            rpd->type_information(minimal);
+                            break;
+                        }
+                        case TypePropagation::TYPEPROPAGATION_REGISTRATION_ONLY:
+                        default:
+                        {
+                            if (rpd->has_type_information())
+                            {
+                                rpd->type_information().assigned(false);
+                            }
+                            break;
+                        }
+                    }
                 }
-                if (att.type.m_type_object._d() != static_cast<uint8_t>(0x00))
-                {
-                    rpd->type(att.type);
-                }
-                if (att.type_information.assigned())
-                {
-                    rpd->type_information(att.type_information);
-                }
-                rpd->m_qos.setQos(rqos, true);
+
+                rpd->m_qos.setQos(qos, true);
                 rpd->userDefinedId(ratt.getUserDefinedID());
                 if (nullptr != content_filter)
                 {
@@ -177,80 +206,48 @@ bool EDP::newLocalReaderProxyData(
                     rpd->plugin_security_attributes_ = 0UL;
                 }
 #endif // if HAVE_SECURITY
-                if (att.auto_fill_type_information)
-                {
-                    // TypeInformation, TypeObject and TypeIdentifier
-                    if (!att.type_information.assigned())
-                    {
-                        const types::TypeInformation* type_info =
-                                types::TypeObjectFactory::get_instance()->get_type_information(rpd->typeName().c_str());
-                        if (type_info != nullptr)
-                        {
-                            rpd->type_information() = *type_info;
-                        }
-                    }
-                }
-
-                if (att.auto_fill_type_object)
-                {
-                    bool has_type_id = true;
-                    if (att.type_id.m_type_identifier._d() == static_cast<uint8_t>(0x00))
-                    {
-                        has_type_id = false;
-                        const types::TypeIdentifier* type_id =
-                                types::TypeObjectFactory::get_instance()->get_type_identifier_trying_complete(
-                            rpd->typeName().c_str());
-                        if (type_id != nullptr)
-                        {
-                            has_type_id = true;
-                            rpd->type_id().m_type_identifier = *type_id;
-                        }
-                    }
-
-                    if (att.type.m_type_object._d() == static_cast<uint8_t>(0x00))
-                    {
-                        bool type_is_complete = has_type_id &&
-                                rpd->type_id().m_type_identifier._d() == types::EK_COMPLETE;
-                        const types::TypeObject* type_obj =
-                                types::TypeObjectFactory::get_instance()->get_type_object(
-                            rpd->typeName().c_str(), type_is_complete);
-                        if (type_obj != nullptr)
-                        {
-                            rpd->type().m_type_object = *type_obj;
-                        }
-                    }
-                }
 
                 return true;
             };
 
     //ADD IT TO THE LIST OF READERPROXYDATA
     GUID_t participant_guid;
-    ReaderProxyData* reader_data = this->mp_PDP->addReaderProxyData(reader->getGuid(), participant_guid, init_fun);
+    ReaderProxyData* reader_data = this->mp_PDP->addReaderProxyData(
+        rtps_reader->getGuid(), participant_guid, init_fun);
     if (reader_data == nullptr)
     {
         return false;
     }
+
+#ifdef FASTDDS_STATISTICS
+    // notify monitor service about the new local entity proxy
+    if (nullptr != this->mp_PDP->get_proxy_observer())
+    {
+        this->mp_PDP->get_proxy_observer()->on_local_entity_change(reader_data->guid(), true);
+    }
+#endif //FASTDDS_STATISTICS
 
     //PAIRING
     if (this->mp_PDP->getRTPSParticipant()->should_match_local_endpoints())
     {
         pairing_reader_proxy_with_any_local_writer(participant_guid, reader_data);
     }
-    pairingReader(reader, participant_guid, *reader_data);
+    pairingReader(rtps_reader, participant_guid, *reader_data);
     //DO SOME PROCESSING DEPENDING ON THE IMPLEMENTATION (SIMPLE OR STATIC)
-    processLocalReaderProxyData(reader, reader_data);
+    process_reader_proxy_data(rtps_reader, reader_data);
     return true;
 }
 
-bool EDP::newLocalWriterProxyData(
-        RTPSWriter* writer,
-        const TopicAttributes& att,
-        const WriterQos& wqos)
+bool EDP::new_writer_proxy_data(
+        RTPSWriter* rtps_writer,
+        const TopicDescription& topic,
+        const fastdds::dds::WriterQos& qos)
 {
-    EPROSIMA_LOG_INFO(RTPS_EDP, "Adding " << writer->getGuid().entityId << " in topic " << att.topicName);
+    EPROSIMA_LOG_INFO(RTPS_EDP,
+            "Adding " << rtps_writer->getGuid().entityId << " in topic " <<
+            topic.topic_name.to_string());
 
-    auto init_fun = [this, writer, &att, &wqos](
+    auto init_fun = [this, rtps_writer, &topic, &qos](
         WriterProxyData* wpd,
         bool updating,
         const ParticipantProxyData& participant_data)
@@ -258,15 +255,15 @@ bool EDP::newLocalWriterProxyData(
                 if (updating)
                 {
                     EPROSIMA_LOG_ERROR(RTPS_EDP,
-                            "Adding already existent writer " << writer->getGuid().entityId << " in topic "
-                                                              << att.topicName);
+                            "Adding already existent writer " << rtps_writer->getGuid().entityId << " in topic "
+                                                              << topic.topic_name.to_string());
                     return false;
                 }
 
                 const NetworkFactory& network = mp_RTPSParticipant->network_factory();
-                const auto& watt = writer->getAttributes();
+                const auto& watt = rtps_writer->getAttributes();
 
-                wpd->guid(writer->getGuid());
+                wpd->guid(rtps_writer->getGuid());
                 wpd->key() = wpd->guid();
                 if (watt.multicastLocatorList.empty() && watt.unicastLocatorList.empty())
                 {
@@ -276,27 +273,54 @@ bool EDP::newLocalWriterProxyData(
                 {
                     wpd->set_multicast_locators(watt.multicastLocatorList, network);
                     wpd->set_announced_unicast_locators(watt.unicastLocatorList);
-                    fastdds::rtps::ExternalLocatorsProcessor::add_external_locators(*wpd,
+                    fastdds::rtps::network::external_locators::add_external_locators(*wpd,
                             watt.external_unicast_locators);
                 }
                 wpd->RTPSParticipantKey() = mp_RTPSParticipant->getGuid();
-                wpd->topicName(att.getTopicName());
-                wpd->typeName(att.getTopicDataType());
-                wpd->topicKind(att.getTopicKind());
-                if (att.type_id.m_type_identifier._d() != static_cast<uint8_t>(0x00))
+                wpd->topicName(topic.topic_name);
+                wpd->typeName(topic.type_name);
+                wpd->topicKind((wpd->guid().entityId.value[3] & 0x0F) == 0x02 ? WITH_KEY : NO_KEY);
+
+                using dds::utils::TypePropagation;
+                using dds::xtypes::TypeInformationParameter;
+
+                auto type_propagation = mp_RTPSParticipant->type_propagation();
+                assert(TypePropagation::TYPEPROPAGATION_UNKNOWN != type_propagation);
+
+                const auto& type_info = topic.type_information;
+                if (type_info.assigned())
                 {
-                    wpd->type_id(att.type_id);
+                    switch (type_propagation)
+                    {
+                        case TypePropagation::TYPEPROPAGATION_ENABLED:
+                        {
+                            wpd->type_information(type_info);
+                            break;
+                        }
+                        case TypePropagation::TYPEPROPAGATION_MINIMAL_BANDWIDTH:
+                        {
+                            TypeInformationParameter minimal;
+                            minimal.type_information.minimal(type_info.type_information.minimal());
+                            minimal.assigned(true);
+                            wpd->type_information(minimal);
+                            break;
+                        }
+                        case TypePropagation::TYPEPROPAGATION_REGISTRATION_ONLY:
+                        default:
+                        {
+                            if (wpd->has_type_information())
+                            {
+                                wpd->type_information().assigned(false);
+                            }
+                            break;
+                        }
+                    }
                 }
-                if (att.type.m_type_object._d() != static_cast<uint8_t>(0x00))
-                {
-                    wpd->type(att.type);
-                }
-                if (att.type_information.assigned())
-                {
-                    wpd->type_information(att.type_information);
-                }
-                wpd->typeMaxSerialized(writer->getTypeMaxSerialized());
-                wpd->m_qos.setQos(wqos, true);
+
+                BaseWriter* base_writer = BaseWriter::downcast(rtps_writer);
+                assert(base_writer->get_history() != nullptr);
+                wpd->typeMaxSerialized(base_writer->get_history()->getTypeMaxSerialized());
+                wpd->m_qos.setQos(qos, true);
                 wpd->userDefinedId(watt.getUserDefinedID());
                 wpd->persistence_guid(watt.persistence_guid);
 #if HAVE_SECURITY
@@ -312,79 +336,42 @@ bool EDP::newLocalWriterProxyData(
                 }
 #endif // if HAVE_SECURITY
 
-                if (att.auto_fill_type_information)
-                {
-                    // TypeInformation, TypeObject and TypeIdentifier
-                    if (!att.type_information.assigned())
-                    {
-                        const types::TypeInformation* type_info =
-                                types::TypeObjectFactory::get_instance()->get_type_information(wpd->typeName().c_str());
-                        if (type_info != nullptr)
-                        {
-                            wpd->type_information() = *type_info;
-                        }
-                    }
-                }
-
-                if (att.auto_fill_type_object)
-                {
-                    bool has_type_id = true;
-                    if (att.type_id.m_type_identifier._d() == static_cast<uint8_t>(0x00))
-                    {
-                        has_type_id = false;
-                        const types::TypeIdentifier* type_id =
-                                types::TypeObjectFactory::get_instance()->get_type_identifier_trying_complete(
-                            wpd->typeName().c_str());
-                        if (type_id != nullptr)
-                        {
-                            has_type_id = true;
-                            wpd->type_id().m_type_identifier = *type_id;
-                        }
-                    }
-
-                    if (att.type.m_type_object._d() == static_cast<uint8_t>(0x00))
-                    {
-                        bool type_is_complete = has_type_id &&
-                                wpd->type_id().m_type_identifier._d() == types::EK_COMPLETE;
-                        const types::TypeObject* type_obj =
-                                types::TypeObjectFactory::get_instance()->get_type_object(
-                            wpd->typeName().c_str(), type_is_complete);
-                        if (type_obj != nullptr)
-                        {
-                            wpd->type().m_type_object = *type_obj;
-                        }
-                    }
-                }
-
                 return true;
             };
 
     //ADD IT TO THE LIST OF READERPROXYDATA
     GUID_t participant_guid;
-    WriterProxyData* writer_data = this->mp_PDP->addWriterProxyData(writer->getGuid(), participant_guid, init_fun);
+    WriterProxyData* writer_data = this->mp_PDP->addWriterProxyData(rtps_writer->getGuid(), participant_guid, init_fun);
     if (writer_data == nullptr)
     {
         return false;
     }
+
+#ifdef FASTDDS_STATISTICS
+    // notify monitor service about the new local entity proxy
+    if (nullptr != this->mp_PDP->get_proxy_observer())
+    {
+        this->mp_PDP->get_proxy_observer()->on_local_entity_change(writer_data->guid(), true);
+    }
+#endif //FASTDDS_STATISTICS
 
     //PAIRING
     if (this->mp_PDP->getRTPSParticipant()->should_match_local_endpoints())
     {
         pairing_writer_proxy_with_any_local_reader(participant_guid, writer_data);
     }
-    pairingWriter(writer, participant_guid, *writer_data);
+    pairingWriter(rtps_writer, participant_guid, *writer_data);
     //DO SOME PROCESSING DEPENDING ON THE IMPLEMENTATION (SIMPLE OR STATIC)
-    processLocalWriterProxyData(writer, writer_data);
+    process_writer_proxy_data(rtps_writer, writer_data);
     return true;
 }
 
-bool EDP::updatedLocalReader(
-        RTPSReader* reader,
-        const TopicAttributes& att,
-        const ReaderQos& rqos,
+bool EDP::update_reader(
+        RTPSReader* rtps_reader,
+        const fastdds::dds::ReaderQos& rqos,
         const fastdds::rtps::ContentFilterProperty* content_filter)
 {
-    auto init_fun = [this, reader, &rqos, &att, content_filter](
+    auto init_fun = [this, rtps_reader, &rqos, content_filter](
         ReaderProxyData* rdata,
         bool updating,
         const ParticipantProxyData& participant_data)
@@ -394,15 +381,15 @@ bool EDP::updatedLocalReader(
                 assert(updating);
 
                 const NetworkFactory& network = mp_RTPSParticipant->network_factory();
-                if (reader->getAttributes().multicastLocatorList.empty() &&
-                        reader->getAttributes().unicastLocatorList.empty())
+                if (rtps_reader->getAttributes().multicastLocatorList.empty() &&
+                        rtps_reader->getAttributes().unicastLocatorList.empty())
                 {
                     rdata->set_locators(participant_data.default_locators);
                 }
                 else
                 {
-                    rdata->set_multicast_locators(reader->getAttributes().multicastLocatorList, network);
-                    rdata->set_announced_unicast_locators(reader->getAttributes().unicastLocatorList);
+                    rdata->set_multicast_locators(rtps_reader->getAttributes().multicastLocatorList, network);
+                    rdata->set_announced_unicast_locators(rtps_reader->getAttributes().unicastLocatorList);
                 }
                 rdata->m_qos.setQos(rqos, false);
                 if (nullptr != content_filter)
@@ -425,72 +412,38 @@ bool EDP::updatedLocalReader(
                     rdata->content_filter().filter_expression = "";
                 }
                 rdata->isAlive(true);
-                rdata->m_expectsInlineQos = reader->expectsInlineQos();
-
-                if (att.auto_fill_type_information)
-                {
-                    // TypeInformation, TypeObject and TypeIdentifier
-                    if (!rdata->type_information().assigned())
-                    {
-                        const types::TypeInformation* type_info =
-                                types::TypeObjectFactory::get_instance()->get_type_information(rdata->typeName().c_str());
-                        if (type_info != nullptr)
-                        {
-                            rdata->type_information() = *type_info;
-                        }
-                    }
-                }
-
-                if (att.auto_fill_type_object)
-                {
-
-                    if (rdata->type_id().m_type_identifier._d() == static_cast<uint8_t>(0x00))
-                    {
-                        const types::TypeIdentifier* type_id =
-                                types::TypeObjectFactory::get_instance()->get_type_identifier_trying_complete(
-                            rdata->typeName().c_str());
-                        if (type_id != nullptr)
-                        {
-                            rdata->type_id().m_type_identifier = *type_id;
-                        }
-                    }
-
-                    if (rdata->type().m_type_object._d() == static_cast<uint8_t>(0x00))
-                    {
-                        const types::TypeObject* type_obj =
-                                types::TypeObjectFactory::get_instance()->get_type_object(
-                            rdata->typeName().c_str(), rdata->type_id().m_type_identifier._d() == types::EK_COMPLETE);
-                        if (type_obj != nullptr)
-                        {
-                            rdata->type().m_type_object = *type_obj;
-                        }
-                    }
-                }
+                rdata->m_expectsInlineQos = rtps_reader->expects_inline_qos();
 
                 return true;
             };
 
     GUID_t participant_guid;
-    ReaderProxyData* reader_data = this->mp_PDP->addReaderProxyData(reader->getGuid(), participant_guid, init_fun);
+    ReaderProxyData* reader_data = this->mp_PDP->addReaderProxyData(rtps_reader->getGuid(), participant_guid, init_fun);
     if (reader_data != nullptr)
     {
-        processLocalReaderProxyData(reader, reader_data);
+        process_reader_proxy_data(rtps_reader, reader_data);
+#ifdef FASTDDS_STATISTICS
+        // notify monitor service about the new local entity proxy update
+        if (nullptr != this->mp_PDP->get_proxy_observer())
+        {
+            this->mp_PDP->get_proxy_observer()->on_local_entity_change(reader_data->guid(), true);
+        }
+#endif //FASTDDS_STATISTICS
         if (this->mp_PDP->getRTPSParticipant()->should_match_local_endpoints())
         {
             pairing_reader_proxy_with_any_local_writer(participant_guid, reader_data);
         }
-        pairingReader(reader, participant_guid, *reader_data);
+        pairingReader(rtps_reader, participant_guid, *reader_data);
         return true;
     }
     return false;
 }
 
-bool EDP::updatedLocalWriter(
+bool EDP::update_writer(
         RTPSWriter* writer,
-        const TopicAttributes& att,
-        const WriterQos& wqos)
+        const fastdds::dds::WriterQos& wqos)
 {
-    auto init_fun = [this, writer, &wqos, &att](
+    auto init_fun = [this, writer, &wqos](
         WriterProxyData* wdata,
         bool updating,
         const ParticipantProxyData& participant_data)
@@ -512,46 +465,6 @@ bool EDP::updatedLocalWriter(
                 }
                 wdata->m_qos.setQos(wqos, false);
 
-                if (att.auto_fill_type_information)
-                {
-                    // TypeInformation, TypeObject and TypeIdentifier
-                    if (!wdata->type_information().assigned())
-                    {
-                        const types::TypeInformation* type_info =
-                                types::TypeObjectFactory::get_instance()->get_type_information(wdata->typeName().c_str());
-                        if (type_info != nullptr)
-                        {
-                            wdata->type_information() = *type_info;
-                        }
-                    }
-                }
-
-                if (att.auto_fill_type_object)
-                {
-
-                    if (wdata->type_id().m_type_identifier._d() == static_cast<uint8_t>(0x00))
-                    {
-                        const types::TypeIdentifier* type_id =
-                                types::TypeObjectFactory::get_instance()->get_type_identifier_trying_complete(
-                            wdata->typeName().c_str());
-                        if (type_id != nullptr)
-                        {
-                            wdata->type_id().m_type_identifier = *type_id;
-                        }
-                    }
-
-                    if (wdata->type().m_type_object._d() == static_cast<uint8_t>(0x00))
-                    {
-                        const types::TypeObject* type_obj =
-                                types::TypeObjectFactory::get_instance()->get_type_object(
-                            wdata->typeName().c_str(), wdata->type_id().m_type_identifier._d() == types::EK_COMPLETE);
-                        if (type_obj != nullptr)
-                        {
-                            wdata->type().m_type_object = *type_obj;
-                        }
-                    }
-                }
-
                 return true;
             };
 
@@ -559,7 +472,16 @@ bool EDP::updatedLocalWriter(
     WriterProxyData* writer_data = this->mp_PDP->addWriterProxyData(writer->getGuid(), participant_guid, init_fun);
     if (writer_data != nullptr)
     {
-        processLocalWriterProxyData(writer, writer_data);
+        process_writer_proxy_data(writer, writer_data);
+
+#ifdef FASTDDS_STATISTICS
+        // notify monitor service about the new local entity proxy update
+        if (nullptr != this->mp_PDP->get_proxy_observer())
+        {
+            this->mp_PDP->get_proxy_observer()->on_local_entity_change(writer_data->guid(), true);
+        }
+#endif //FASTDDS_STATISTICS
+
         if (this->mp_PDP->getRTPSParticipant()->should_match_local_endpoints())
         {
             pairing_writer_proxy_with_any_local_reader(participant_guid, writer_data);
@@ -579,28 +501,24 @@ bool EDP::unpairWriterProxy(
 
     EPROSIMA_LOG_INFO(RTPS_EDP, writer_guid);
 
-    mp_RTPSParticipant->forEachUserReader([&, removed_by_lease](RTPSReader& r) -> bool
+    mp_RTPSParticipant->forEachUserReader([&, removed_by_lease](BaseReader& r) -> bool
             {
                 if (r.matched_writer_remove(writer_guid, removed_by_lease))
                 {
-                    const GUID_t& reader_guid = r.getGuid();
 #if HAVE_SECURITY
+                    const GUID_t& reader_guid = r.getGuid();
                     mp_RTPSParticipant->security_manager().remove_writer(reader_guid,
                     participant_guid, writer_guid);
 #endif // if HAVE_SECURITY
 
                     //MATCHED AND ADDED CORRECTLY:
                     ReaderListener* listener = nullptr;
-                    if (nullptr != (listener = r.getListener()))
+                    if (nullptr != (listener = r.get_listener()))
                     {
                         MatchingInfo info;
                         info.status = REMOVED_MATCHING;
                         info.remoteEndpointGuid = writer_guid;
-                        listener->onReaderMatched(&r, info);
-
-                        const SubscriptionMatchedStatus& sub_info =
-                        update_subscription_matched_status(reader_guid, writer_guid, -1);
-                        listener->onReaderMatched(&r, sub_info);
+                        listener->on_reader_matched(&r, info);
                     }
                 }
 
@@ -619,27 +537,23 @@ bool EDP::unpairReaderProxy(
 
     EPROSIMA_LOG_INFO(RTPS_EDP, reader_guid);
 
-    mp_RTPSParticipant->forEachUserWriter([&](RTPSWriter& w) -> bool
+    mp_RTPSParticipant->forEachUserWriter([&](BaseWriter& w) -> bool
             {
                 if (w.matched_reader_remove(reader_guid))
                 {
-                    const GUID_t& writer_guid = w.getGuid();
 #if HAVE_SECURITY
+                    const GUID_t& writer_guid = w.getGuid();
                     mp_RTPSParticipant->security_manager().remove_reader(writer_guid,
                     participant_guid, reader_guid);
 #endif // if HAVE_SECURITY
                     //MATCHED AND ADDED CORRECTLY:
                     WriterListener* listener = nullptr;
-                    if (nullptr != (listener = w.getListener()))
+                    if (nullptr != (listener = w.get_listener()))
                     {
                         MatchingInfo info;
                         info.status = REMOVED_MATCHING;
                         info.remoteEndpointGuid = reader_guid;
-                        listener->onWriterMatched(&w, info);
-
-                        const PublicationMatchedStatus& pub_info =
-                        update_publication_matched_status(reader_guid, writer_guid, -1);
-                        listener->onWriterMatched(&w, pub_info);
+                        listener->on_writer_matched(&w, info);
                     }
                 }
 
@@ -648,15 +562,6 @@ bool EDP::unpairReaderProxy(
             });
 
     return true;
-}
-
-bool EDP::validMatching(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata)
-{
-    MatchingFailureMask reason;
-    fastdds::dds::PolicyMask incompatible_qos;
-    return valid_matching(wdata, rdata, reason, incompatible_qos);
 }
 
 bool EDP::valid_matching(
@@ -674,12 +579,22 @@ bool EDP::valid_matching(
         return false;
     }
 
-    // Type Consistency Enforcement QosPolicy
-    if (!checkTypeValidation(wdata, rdata))
+    if ((wdata->has_type_information() && wdata->type_information().assigned()) &&
+            (rdata->has_type_information() && rdata->type_information().assigned()))
     {
-        // TODO Trigger INCONSISTENT_TOPIC status change
-        reason.set(MatchingFailureMask::inconsistent_topic);
-        return false;
+        if (!is_same_type(wdata->type_information().type_information, rdata->type_information().type_information))
+        {
+            reason.set(MatchingFailureMask::different_typeinfo);
+            return false;
+        }
+    }
+    else
+    {
+        if (wdata->typeName() != rdata->typeName())
+        {
+            reason.set(MatchingFailureMask::inconsistent_topic);
+            return false;
+        }
     }
 
     if (wdata->topicKind() != rdata->topicKind())
@@ -687,7 +602,6 @@ bool EDP::valid_matching(
         EPROSIMA_LOG_WARNING(RTPS_EDP, "INCOMPATIBLE QOS:Remote Reader " << rdata->guid() << " is publishing in topic "
                                                                          << rdata->topicName() << "(keyed:" << rdata->topicKind() <<
                 "), local writer publishes as keyed: " << wdata->topicKind());
-
         reason.set(MatchingFailureMask::inconsistent_topic);
         return false;
     }
@@ -699,8 +613,8 @@ bool EDP::valid_matching(
         return false;
     }
 
-    if ( wdata->m_qos.m_reliability.kind == BEST_EFFORT_RELIABILITY_QOS
-            && rdata->m_qos.m_reliability.kind == RELIABLE_RELIABILITY_QOS)
+    if ( wdata->m_qos.m_reliability.kind == dds::BEST_EFFORT_RELIABILITY_QOS
+            && rdata->m_qos.m_reliability.kind == dds::RELIABLE_RELIABILITY_QOS)
     //Means our writer is BE but the reader wants RE
     {
         EPROSIMA_LOG_WARNING(RTPS_EDP, "INCOMPATIBLE QOS (topic: " << rdata->topicName() << "):Remote Reader "
@@ -750,6 +664,13 @@ bool EDP::valid_matching(
     {
         EPROSIMA_LOG_WARNING(RTPS_EDP, "Incompatible liveliness kinds: offered kind is < requested kind");
         incompatible_qos.set(fastdds::dds::LIVELINESS_QOS_POLICY_ID);
+    }
+
+    // DataRepresentationQosPolicy
+    if (!checkDataRepresentationQos(wdata, rdata))
+    {
+        EPROSIMA_LOG_WARNING(RTPS_EDP, "Incompatible Data Representation QoS");
+        incompatible_qos.set(fastdds::dds::DATAREPRESENTATION_QOS_POLICY_ID);
     }
 
 #if HAVE_SECURITY
@@ -827,7 +748,7 @@ bool EDP::valid_matching(
  * Table 7.57 XTypes document 1.2
  * Writer   Reader  Compatible
  * XCDR     XCDR    true
- * XCDR     XCDR2   true
+ * XCDR     XCDR2   false
  * XCDR2    XCDR    false
  * XCDR2    XCDR2   true
  * @param wdata
@@ -843,60 +764,29 @@ bool EDP::checkDataRepresentationQos(
 
     if (wdata->m_qos.representation.m_value.empty())
     {
-        compatible |= std::find(rr.begin(), rr.end(), fastdds::dds::XCDR2_DATA_REPRESENTATION) != rr.end();
-        compatible |= std::find(rr.begin(), rr.end(), fastdds::dds::XCDR_DATA_REPRESENTATION) != rr.end() || rr.empty();
+        compatible |=  rr.empty() ||
+                std::find(rr.begin(), rr.end(), fastdds::dds::XCDR_DATA_REPRESENTATION) != rr.end();
     }
     else
     {
-        for (DataRepresentationId writerRepresentation : wdata->m_qos.representation.m_value)
+        dds::DataRepresentationId writerRepresentation {wdata->m_qos.representation.m_value.at(0)};
+
+        if (writerRepresentation == fastdds::dds::XCDR2_DATA_REPRESENTATION)
         {
-            if (writerRepresentation == fastdds::dds::XCDR2_DATA_REPRESENTATION)
-            {
-                compatible |= std::find(rr.begin(), rr.end(), fastdds::dds::XCDR2_DATA_REPRESENTATION) != rr.end();
-            }
-            else if (writerRepresentation == fastdds::dds::XCDR_DATA_REPRESENTATION)
-            {
-                compatible |= std::find(rr.begin(), rr.end(), fastdds::dds::XCDR2_DATA_REPRESENTATION) != rr.end();
-                compatible |=
-                        std::find(rr.begin(), rr.end(),
-                                fastdds::dds::XCDR_DATA_REPRESENTATION) != rr.end() || rr.empty();
-            }
-            else // XML_DATA_REPRESENTATION
-            {
-                EPROSIMA_LOG_INFO(EDP, "DataRepresentationQosPolicy XML_DATA_REPRESENTATION isn't supported.");
-            }
+            compatible |= std::find(rr.begin(), rr.end(), fastdds::dds::XCDR2_DATA_REPRESENTATION) != rr.end();
+        }
+        else if (writerRepresentation == fastdds::dds::XCDR_DATA_REPRESENTATION)
+        {
+            compatible |= rr.empty() ||
+                    std::find(rr.begin(), rr.end(), fastdds::dds::XCDR_DATA_REPRESENTATION) != rr.end();
+        }
+        else // XML_DATA_REPRESENTATION
+        {
+            EPROSIMA_LOG_INFO(EDP, "DataRepresentationQosPolicy XML_DATA_REPRESENTATION isn't supported.");
         }
     }
 
     return compatible;
-}
-
-bool EDP::checkTypeValidation(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata) const
-{
-    // Step 1: Both specify a TypeObject
-    if (hasTypeObject(wdata, rdata))
-    {
-        return checkTypeObject(wdata, rdata);
-    }
-    // Not explicitely said in the standard, but is not done, what's the intention of TypeIdV1?
-    if (hasTypeIdentifier(wdata, rdata))
-    {
-        return checkTypeIdentifier(wdata, rdata);
-    }
-
-    // Step 2: Writer or reader doesn't specify a TypeObject
-    return !rdata->m_qos.type_consistency.m_force_type_validation && (wdata->typeName() == rdata->typeName());
-}
-
-bool EDP::validMatching(
-        const ReaderProxyData* rdata,
-        const WriterProxyData* wdata)
-{
-    MatchingFailureMask reason;
-    fastdds::dds::PolicyMask incompatible_qos;
-    return valid_matching(rdata, wdata, reason, incompatible_qos);
 }
 
 bool EDP::valid_matching(
@@ -905,152 +795,7 @@ bool EDP::valid_matching(
         MatchingFailureMask& reason,
         fastdds::dds::PolicyMask& incompatible_qos)
 {
-    reason.reset();
-    incompatible_qos.reset();
-
-    if (rdata->topicName() != wdata->topicName())
-    {
-        reason.set(MatchingFailureMask::different_topic);
-        return false;
-    }
-
-    // Type Consistency Enforcement QosPolicy
-    if (!checkTypeValidation(wdata, rdata))
-    {
-        // TODO Trigger INCONSISTENT_TOPIC status change
-        reason.set(MatchingFailureMask::inconsistent_topic);
-        return false;
-    }
-
-    if (rdata->topicKind() != wdata->topicKind())
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "INCOMPATIBLE QOS:Remote Writer " << wdata->guid() <<
-                " is publishing in topic " << wdata->topicName() << "(keyed:" << wdata->topicKind() <<
-                "), local reader subscribes as keyed: " << rdata->topicKind());
-        reason.set(MatchingFailureMask::inconsistent_topic);
-        return false;
-    }
-    if (rdata->m_qos.m_reliability.kind == RELIABLE_RELIABILITY_QOS
-            && wdata->m_qos.m_reliability.kind == BEST_EFFORT_RELIABILITY_QOS)
-    //Means our reader is reliable but hte writer is not
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP,
-                "INCOMPATIBLE QOS (topic: " << wdata->topicName() << "): Remote Writer " << wdata->guid()
-                                            << " is Best Effort and local reader is RELIABLE "
-                );
-        incompatible_qos.set(fastdds::dds::RELIABILITY_QOS_POLICY_ID);
-    }
-    if (rdata->m_qos.m_durability.kind > wdata->m_qos.m_durability.kind)
-    {
-        // TODO (MCC) Change log message
-        EPROSIMA_LOG_WARNING(RTPS_EDP,
-                "INCOMPATIBLE QOS (topic: " << wdata->topicName() << "):RemoteWriter " << wdata->guid()
-                                            << " has VOLATILE DURABILITY and we want TRANSIENT_LOCAL";
-                );
-        incompatible_qos.set(fastdds::dds::DURABILITY_QOS_POLICY_ID);
-    }
-    if (rdata->m_qos.m_ownership.kind != wdata->m_qos.m_ownership.kind)
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP,
-                "INCOMPATIBLE QOS (topic: " << wdata->topicName() << "):Remote Writer " << wdata->guid()
-                                            << " has different Ownership Kind");
-        incompatible_qos.set(fastdds::dds::OWNERSHIP_QOS_POLICY_ID);
-    }
-    if (rdata->m_qos.m_deadline.period < wdata->m_qos.m_deadline.period)
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "INCOMPATIBLE QOS (topic: "
-                << wdata->topicName() << "):RemoteWriter "
-                << wdata->guid() << "has smaller DEADLINE period");
-        incompatible_qos.set(fastdds::dds::DEADLINE_QOS_POLICY_ID);
-    }
-    if (rdata->m_qos.m_disablePositiveACKs.enabled && !wdata->m_qos.m_disablePositiveACKs.enabled)
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "Incompatible Disable Positive Acks QoS: writer is enabled but reader is not");
-        incompatible_qos.set(fastdds::dds::DISABLEPOSITIVEACKS_QOS_POLICY_ID);
-    }
-    if (wdata->m_qos.m_liveliness.lease_duration > rdata->m_qos.m_liveliness.lease_duration)
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "Incompatible liveliness lease durations: offered lease duration "
-                << wdata->m_qos.m_liveliness.lease_duration << " must be <= requested lease duration "
-                << rdata->m_qos.m_liveliness.lease_duration);
-        incompatible_qos.set(fastdds::dds::LIVELINESS_QOS_POLICY_ID);
-    }
-    if (wdata->m_qos.m_liveliness.kind < rdata->m_qos.m_liveliness.kind)
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "Incompatible liveliness kinds: offered kind is < than requested kind");
-        incompatible_qos.set(fastdds::dds::LIVELINESS_QOS_POLICY_ID);
-    }
-
-#if HAVE_SECURITY
-    // TODO: Check EndpointSecurityInfo
-#endif // if HAVE_SECURITY
-
-    //Partition mismatch does not trigger status change
-    if (incompatible_qos.any())
-    {
-        reason.set(MatchingFailureMask::incompatible_qos);
-        return false;
-    }
-
-    //Partition check:
-    bool matched = false;
-    if (rdata->m_qos.m_partition.empty() && wdata->m_qos.m_partition.empty())
-    {
-        matched = true;
-    }
-    else if (rdata->m_qos.m_partition.empty() && wdata->m_qos.m_partition.size() > 0)
-    {
-        for (auto rnameit = wdata->m_qos.m_partition.begin();
-                rnameit != wdata->m_qos.m_partition.end(); ++rnameit)
-        {
-            if (is_partition_empty(*rnameit))
-            {
-                matched = true;
-                break;
-            }
-        }
-    }
-    else if (rdata->m_qos.m_partition.size() > 0 && wdata->m_qos.m_partition.empty())
-    {
-        for (auto wnameit = rdata->m_qos.m_partition.begin();
-                wnameit !=  rdata->m_qos.m_partition.end(); ++wnameit)
-        {
-            if (is_partition_empty(*wnameit))
-            {
-                matched = true;
-                break;
-            }
-        }
-    }
-    else
-    {
-        for (auto wnameit = rdata->m_qos.m_partition.begin();
-                wnameit !=  rdata->m_qos.m_partition.end(); ++wnameit)
-        {
-            for (auto rnameit = wdata->m_qos.m_partition.begin();
-                    rnameit != wdata->m_qos.m_partition.end(); ++rnameit)
-            {
-                if (StringMatching::matchString(wnameit->name(), rnameit->name()))
-                {
-                    matched = true;
-                    break;
-                }
-            }
-            if (matched)
-            {
-                break;
-            }
-        }
-    }
-    if (!matched) //Different partitions
-    {
-        EPROSIMA_LOG_WARNING(RTPS_EDP, "INCOMPATIBLE QOS (topic: " <<  wdata->topicName() <<
-                "): Different Partitions");
-        reason.set(MatchingFailureMask::partitions);
-    }
-
-    return matched;
-
+    return valid_matching(wdata, rdata, reason, incompatible_qos);
 }
 
 ProxyPool<ReaderProxyData>& EDP::get_temporary_reader_proxies_pool()
@@ -1072,7 +817,9 @@ bool EDP::pairingReader(
         const GUID_t& participant_guid,
         const ReaderProxyData& rdata)
 {
-    (void)participant_guid;
+    static_cast<void>(participant_guid);
+
+    BaseReader* reader = BaseReader::downcast(R);
 
     EPROSIMA_LOG_INFO(RTPS_EDP, rdata.guid() << " in topic: \"" << rdata.topicName() << "\"");
     std::lock_guard<std::recursive_mutex> pguard(*mp_PDP->getMutex());
@@ -1091,48 +838,45 @@ bool EDP::pairingReader(
             MatchingFailureMask no_match_reason;
             fastdds::dds::PolicyMask incompatible_qos;
             bool valid = valid_matching(&rdata, wdatait, no_match_reason, incompatible_qos);
-            const GUID_t& reader_guid = R->getGuid();
+            const GUID_t& reader_guid = reader->getGuid();
             const GUID_t& writer_guid = wdatait->guid();
 
             if (valid)
             {
 #if HAVE_SECURITY
-                if (!mp_RTPSParticipant->security_manager().discovered_writer(R->m_guid, (*pit)->m_guid,
-                        *wdatait, R->getAttributes().security_attributes()))
+                if (!mp_RTPSParticipant->security_manager().discovered_writer(reader_guid, (*pit)->m_guid,
+                        *wdatait, reader->getAttributes().security_attributes()))
                 {
                     EPROSIMA_LOG_ERROR(RTPS_EDP, "Security manager returns an error for reader " << reader_guid);
                 }
 #else
-                if (R->matched_writer_add(*wdatait))
+                if (reader->matched_writer_add_edp(*wdatait))
                 {
+                    static_cast<void>(reader_guid);  // Void cast to force usage if we don't have LOG_INFOs
                     EPROSIMA_LOG_INFO(RTPS_EDP_MATCH,
-                            "WP:" << wdatait->guid() << " match R:" << R->getGuid() << ". RLoc:" <<
+                            "WP:" << wdatait->guid() << " match R:" << reader_guid << ". RLoc:" <<
                             wdatait->remote_locators());
                     //MATCHED AND ADDED CORRECTLY:
-                    if (R->getListener() != nullptr)
+                    if (reader->get_listener() != nullptr)
                     {
                         MatchingInfo info;
                         info.status = MATCHED_MATCHING;
                         info.remoteEndpointGuid = writer_guid;
-                        R->getListener()->onReaderMatched(R, info);
-
-                        const SubscriptionMatchedStatus& sub_info =
-                                update_subscription_matched_status(reader_guid, writer_guid, 1);
-                        R->getListener()->onReaderMatched(R, sub_info);
+                        reader->get_listener()->on_reader_matched(reader, info);
                     }
                 }
 #endif // if HAVE_SECURITY
             }
             else
             {
-                if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && R->getListener() != nullptr)
+                if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && reader->get_listener() != nullptr)
                 {
-                    R->getListener()->on_requested_incompatible_qos(R, incompatible_qos);
+                    reader->get_listener()->on_requested_incompatible_qos(reader, incompatible_qos);
                 }
 
                 //EPROSIMA_LOG_INFO(RTPS_EDP,RTPS_CYAN<<"Valid Matching to writerProxy: "<<wdatait->m_guid<<RTPS_DEF<<endl);
-                if (R->matched_writer_is_matched(wdatait->guid())
-                        && R->matched_writer_remove(wdatait->guid()))
+                if (reader->matched_writer_is_matched(wdatait->guid())
+                        && reader->matched_writer_remove(wdatait->guid()))
                 {
 #if HAVE_SECURITY
                     mp_RTPSParticipant->security_manager().remove_writer(reader_guid, participant_guid,
@@ -1140,16 +884,12 @@ bool EDP::pairingReader(
 #endif // if HAVE_SECURITY
 
                     //MATCHED AND ADDED CORRECTLY:
-                    if (R->getListener() != nullptr)
+                    if (reader->get_listener() != nullptr)
                     {
                         MatchingInfo info;
                         info.status = REMOVED_MATCHING;
                         info.remoteEndpointGuid = writer_guid;
-                        R->getListener()->onReaderMatched(R, info);
-
-                        const SubscriptionMatchedStatus& sub_info =
-                                update_subscription_matched_status(reader_guid, writer_guid, -1);
-                        R->getListener()->onReaderMatched(R, sub_info);
+                        reader->get_listener()->on_reader_matched(reader, info);
                     }
                 }
             }
@@ -1164,9 +904,13 @@ bool EDP::pairingWriter(
         const GUID_t& participant_guid,
         const WriterProxyData& wdata)
 {
-    (void)participant_guid;
+    static_cast<void>(participant_guid);
 
-    EPROSIMA_LOG_INFO(RTPS_EDP, W->getGuid() << " in topic: \"" << wdata.topicName() << "\"");
+    BaseWriter* writer = BaseWriter::downcast(W);
+    const GUID_t& writer_guid = writer->getGuid();
+    static_cast<void>(writer_guid); // Void cast to force usage if LOG_INFO and SECURITY are disabled
+
+    EPROSIMA_LOG_INFO(RTPS_EDP, writer_guid << " in topic: \"" << wdata.topicName() << "\"");
     std::lock_guard<std::recursive_mutex> pguard(*mp_PDP->getMutex());
 
     ResourceLimitedVector<ParticipantProxyData*>::const_iterator pit = mp_PDP->ParticipantProxiesBegin();
@@ -1193,59 +937,48 @@ bool EDP::pairingWriter(
             if (valid)
             {
 #if HAVE_SECURITY
-                if (!mp_RTPSParticipant->security_manager().discovered_reader(W->getGuid(), (*pit)->m_guid,
-                        *rdatait, W->getAttributes().security_attributes()))
+                if (!mp_RTPSParticipant->security_manager().discovered_reader(writer_guid, (*pit)->m_guid,
+                        *rdatait, writer->getAttributes().security_attributes()))
                 {
-                    EPROSIMA_LOG_ERROR(RTPS_EDP, "Security manager returns an error for writer " << W->getGuid());
+                    EPROSIMA_LOG_ERROR(RTPS_EDP, "Security manager returns an error for writer " << writer_guid);
                 }
 #else
-                if (W->matched_reader_add(*rdatait))
+                if (writer->matched_reader_add_edp(*rdatait))
                 {
                     EPROSIMA_LOG_INFO(RTPS_EDP_MATCH,
-                            "RP:" << rdatait->guid() << " match W:" << W->getGuid() << ". WLoc:" <<
+                            "RP:" << rdatait->guid() << " match W:" << writer_guid << ". WLoc:" <<
                             rdatait->remote_locators());
                     //MATCHED AND ADDED CORRECTLY:
-                    if (W->getListener() != nullptr)
+                    if (writer->get_listener() != nullptr)
                     {
                         MatchingInfo info;
                         info.status = MATCHED_MATCHING;
                         info.remoteEndpointGuid = reader_guid;
-                        W->getListener()->onWriterMatched(W, info);
-
-                        const GUID_t& writer_guid = W->getGuid();
-                        const PublicationMatchedStatus& pub_info =
-                                update_publication_matched_status(reader_guid, writer_guid, 1);
-                        W->getListener()->onWriterMatched(W, pub_info);
+                        writer->get_listener()->on_writer_matched(writer, info);
                     }
                 }
 #endif // if HAVE_SECURITY
             }
             else
             {
-                if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && W->getListener() != nullptr)
+                if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && writer->get_listener() != nullptr)
                 {
-                    W->getListener()->on_offered_incompatible_qos(W, incompatible_qos);
+                    writer->get_listener()->on_offered_incompatible_qos(writer, incompatible_qos);
                 }
 
                 //EPROSIMA_LOG_INFO(RTPS_EDP,RTPS_CYAN<<"Valid Matching to writerProxy: "<<wdatait->m_guid<<RTPS_DEF<<endl);
-                if (W->matched_reader_is_matched(reader_guid) && W->matched_reader_remove(reader_guid))
+                if (writer->matched_reader_is_matched(reader_guid) && writer->matched_reader_remove(reader_guid))
                 {
 #if HAVE_SECURITY
-                    mp_RTPSParticipant->security_manager().remove_reader(W->getGuid(), participant_guid, reader_guid);
+                    mp_RTPSParticipant->security_manager().remove_reader(writer_guid, participant_guid, reader_guid);
 #endif // if HAVE_SECURITY
                     //MATCHED AND ADDED CORRECTLY:
-                    if (W->getListener() != nullptr)
+                    if (writer->get_listener() != nullptr)
                     {
                         MatchingInfo info;
                         info.status = REMOVED_MATCHING;
                         info.remoteEndpointGuid = reader_guid;
-                        W->getListener()->onWriterMatched(W, info);
-
-                        const GUID_t& writer_guid = W->getGuid();
-                        const PublicationMatchedStatus& pub_info =
-                                update_publication_matched_status(reader_guid, writer_guid, -1);
-                        W->getListener()->onWriterMatched(W, pub_info);
-
+                        writer->get_listener()->on_writer_matched(writer, info);
                     }
                 }
             }
@@ -1262,7 +995,7 @@ bool EDP::pairing_reader_proxy_with_any_local_writer(
 
     EPROSIMA_LOG_INFO(RTPS_EDP, rdata->guid() << " in topic: \"" << rdata->topicName() << "\"");
 
-    mp_RTPSParticipant->forEachUserWriter([&, rdata](RTPSWriter& w) -> bool
+    mp_RTPSParticipant->forEachUserWriter([&, rdata](BaseWriter& w) -> bool
             {
                 auto temp_writer_proxy_data = get_temporary_writer_proxies_pool().get();
                 GUID_t writerGUID = w.getGuid();
@@ -1285,31 +1018,27 @@ bool EDP::pairing_reader_proxy_with_any_local_writer(
                             EPROSIMA_LOG_ERROR(RTPS_EDP, "Security manager returns an error for writer " << writerGUID);
                         }
 #else
-                        if (w.matched_reader_add(*rdata))
+                        if (w.matched_reader_add_edp(*rdata))
                         {
                             EPROSIMA_LOG_INFO(RTPS_EDP_MATCH,
                             "RP:" << rdata->guid() << " match W:" << w.getGuid() << ". RLoc:" <<
                                 rdata->remote_locators());
                             //MATCHED AND ADDED CORRECTLY:
-                            if (w.getListener() != nullptr)
+                            if (w.get_listener() != nullptr)
                             {
                                 MatchingInfo info;
                                 info.status = MATCHED_MATCHING;
                                 info.remoteEndpointGuid = reader_guid;
-                                w.getListener()->onWriterMatched(&w, info);
-
-                                const PublicationMatchedStatus& pub_info =
-                                update_publication_matched_status(reader_guid, writerGUID, 1);
-                                w.getListener()->onWriterMatched(&w, pub_info);
+                                w.get_listener()->on_writer_matched(&w, info);
                             }
                         }
 #endif // if HAVE_SECURITY
                     }
                     else
                     {
-                        if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && w.getListener() != nullptr)
+                        if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && w.get_listener() != nullptr)
                         {
-                            w.getListener()->on_offered_incompatible_qos(&w, incompatible_qos);
+                            w.get_listener()->on_offered_incompatible_qos(&w, incompatible_qos);
                         }
 
                         if (w.matched_reader_is_matched(reader_guid)
@@ -1320,16 +1049,12 @@ bool EDP::pairing_reader_proxy_with_any_local_writer(
                                 w.getGuid(), participant_guid, reader_guid);
 #endif // if HAVE_SECURITY
                             //MATCHED AND ADDED CORRECTLY:
-                            if (w.getListener() != nullptr)
+                            if (w.get_listener() != nullptr)
                             {
                                 MatchingInfo info;
                                 info.status = REMOVED_MATCHING;
                                 info.remoteEndpointGuid = reader_guid;
-                                w.getListener()->onWriterMatched(&w, info);
-
-                                const PublicationMatchedStatus& pub_info =
-                                update_publication_matched_status(reader_guid, writerGUID, -1);
-                                w.getListener()->onWriterMatched(&w, pub_info);
+                                w.get_listener()->on_writer_matched(&w, info);
                             }
                         }
                     }
@@ -1349,7 +1074,7 @@ bool EDP::pairing_reader_proxy_with_local_writer(
 {
     EPROSIMA_LOG_INFO(RTPS_EDP, rdata.guid() << " in topic: \"" << rdata.topicName() << "\"");
 
-    mp_RTPSParticipant->forEachUserWriter([&](RTPSWriter& w) -> bool
+    mp_RTPSParticipant->forEachUserWriter([&](BaseWriter& w) -> bool
             {
                 GUID_t writerGUID = w.getGuid();
                 const GUID_t& reader_guid = rdata.guid();
@@ -1379,9 +1104,9 @@ bool EDP::pairing_reader_proxy_with_local_writer(
                         else
                         {
                             if (no_match_reason.test(MatchingFailureMask::incompatible_qos) &&
-                            w.getListener() != nullptr)
+                            w.get_listener() != nullptr)
                             {
-                                w.getListener()->on_offered_incompatible_qos(&w, incompatible_qos);
+                                w.get_listener()->on_offered_incompatible_qos(&w, incompatible_qos);
                             }
 
                             if (w.matched_reader_is_matched(reader_guid)
@@ -1390,16 +1115,12 @@ bool EDP::pairing_reader_proxy_with_local_writer(
                                 mp_RTPSParticipant->security_manager().remove_reader(w.getGuid(),
                                 remote_participant_guid, reader_guid);
                                 //MATCHED AND ADDED CORRECTLY:
-                                if (w.getListener() != nullptr)
+                                if (w.get_listener() != nullptr)
                                 {
                                     MatchingInfo info;
                                     info.status = REMOVED_MATCHING;
                                     info.remoteEndpointGuid = reader_guid;
-                                    w.getListener()->onWriterMatched(&w, info);
-
-                                    const PublicationMatchedStatus& pub_info =
-                                    update_publication_matched_status(reader_guid, writerGUID, -1);
-                                    w.getListener()->onWriterMatched(&w, pub_info);
+                                    w.get_listener()->on_writer_matched(&w, info);
                                 }
                             }
                         }
@@ -1419,7 +1140,7 @@ bool EDP::pairing_remote_reader_with_local_writer_after_security(
     bool matched = false;
     bool found = false;
 
-    mp_RTPSParticipant->forEachUserWriter([&](RTPSWriter& w) -> bool
+    mp_RTPSParticipant->forEachUserWriter([&](BaseWriter& w) -> bool
             {
                 GUID_t writerGUID = w.getGuid();
 
@@ -1429,23 +1150,19 @@ bool EDP::pairing_remote_reader_with_local_writer_after_security(
                 {
                     found = true;
 
-                    if (w.matched_reader_add(remote_reader_data))
+                    if (w.matched_reader_add_edp(remote_reader_data))
                     {
                         EPROSIMA_LOG_INFO(RTPS_EDP, "Valid Matching to local writer: " << writerGUID.entityId);
 
                         matched = true;
 
                         //MATCHED AND ADDED CORRECTLY:
-                        if (w.getListener() != nullptr)
+                        if (w.get_listener() != nullptr)
                         {
                             MatchingInfo info;
                             info.status = MATCHED_MATCHING;
                             info.remoteEndpointGuid = reader_guid;
-                            w.getListener()->onWriterMatched(&w, info);
-
-                            const PublicationMatchedStatus& pub_info =
-                            update_publication_matched_status(reader_guid, writerGUID, 1);
-                            w.getListener()->onWriterMatched(&w, pub_info);
+                            w.get_listener()->on_writer_matched(&w, info);
                         }
                     }
                     // don't look anymore
@@ -1469,7 +1186,7 @@ bool EDP::pairing_writer_proxy_with_any_local_reader(
 
     EPROSIMA_LOG_INFO(RTPS_EDP, wdata->guid() << " in topic: \"" << wdata->topicName() << "\"");
 
-    mp_RTPSParticipant->forEachUserReader([&, wdata](RTPSReader& r) -> bool
+    mp_RTPSParticipant->forEachUserReader([&, wdata](BaseReader& r) -> bool
             {
                 auto temp_reader_proxy_data = get_temporary_reader_proxies_pool().get();
                 GUID_t readerGUID = r.getGuid();
@@ -1492,31 +1209,27 @@ bool EDP::pairing_writer_proxy_with_any_local_reader(
                             EPROSIMA_LOG_ERROR(RTPS_EDP, "Security manager returns an error for reader " << readerGUID);
                         }
 #else
-                        if (r.matched_writer_add(*wdata))
+                        if (r.matched_writer_add_edp(*wdata))
                         {
                             EPROSIMA_LOG_INFO(RTPS_EDP_MATCH,
                             "WP:" << wdata->guid() << " match R:" << r.getGuid() << ". WLoc:" <<
                                 wdata->remote_locators());
                             //MATCHED AND ADDED CORRECTLY:
-                            if (r.getListener() != nullptr)
+                            if (r.get_listener() != nullptr)
                             {
                                 MatchingInfo info;
                                 info.status = MATCHED_MATCHING;
                                 info.remoteEndpointGuid = writer_guid;
-                                r.getListener()->onReaderMatched(&r, info);
-
-                                const SubscriptionMatchedStatus& sub_info =
-                                update_subscription_matched_status(readerGUID, writer_guid, 1);
-                                r.getListener()->onReaderMatched(&r, sub_info);
+                                r.get_listener()->on_reader_matched(&r, info);
                             }
                         }
 #endif // if HAVE_SECURITY
                     }
                     else
                     {
-                        if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && r.getListener() != nullptr)
+                        if (no_match_reason.test(MatchingFailureMask::incompatible_qos) && r.get_listener() != nullptr)
                         {
-                            r.getListener()->on_requested_incompatible_qos(&r, incompatible_qos);
+                            r.get_listener()->on_requested_incompatible_qos(&r, incompatible_qos);
                         }
 
                         if (r.matched_writer_is_matched(writer_guid)
@@ -1527,16 +1240,12 @@ bool EDP::pairing_writer_proxy_with_any_local_reader(
                             writer_guid);
 #endif // if HAVE_SECURITY
                             //MATCHED AND ADDED CORRECTLY:
-                            if (r.getListener() != nullptr)
+                            if (r.get_listener() != nullptr)
                             {
                                 MatchingInfo info;
                                 info.status = REMOVED_MATCHING;
                                 info.remoteEndpointGuid = writer_guid;
-                                r.getListener()->onReaderMatched(&r, info);
-
-                                const SubscriptionMatchedStatus& sub_info =
-                                update_subscription_matched_status(readerGUID, writer_guid, -1);
-                                r.getListener()->onReaderMatched(&r, sub_info);
+                                r.get_listener()->on_reader_matched(&r, info);
                             }
                         }
                     }
@@ -1556,7 +1265,7 @@ bool EDP::pairing_writer_proxy_with_local_reader(
 {
     EPROSIMA_LOG_INFO(RTPS_EDP, wdata.guid() << " in topic: \"" << wdata.topicName() << "\"");
 
-    mp_RTPSParticipant->forEachUserReader([&](RTPSReader& r) -> bool
+    mp_RTPSParticipant->forEachUserReader([&](BaseReader& r) -> bool
             {
                 GUID_t readerGUID = r.getGuid();
 
@@ -1586,9 +1295,9 @@ bool EDP::pairing_writer_proxy_with_local_reader(
                         else
                         {
                             if (no_match_reason.test(MatchingFailureMask::incompatible_qos) &&
-                            r.getListener() != nullptr)
+                            r.get_listener() != nullptr)
                             {
-                                r.getListener()->on_requested_incompatible_qos(&r, incompatible_qos);
+                                r.get_listener()->on_requested_incompatible_qos(&r, incompatible_qos);
                             }
 
                             if (r.matched_writer_is_matched(writer_guid)
@@ -1597,16 +1306,12 @@ bool EDP::pairing_writer_proxy_with_local_reader(
                                 mp_RTPSParticipant->security_manager().remove_writer(readerGUID,
                                 remote_participant_guid, writer_guid);
                                 //MATCHED AND ADDED CORRECTLY:
-                                if (r.getListener() != nullptr)
+                                if (r.get_listener() != nullptr)
                                 {
                                     MatchingInfo info;
                                     info.status = REMOVED_MATCHING;
                                     info.remoteEndpointGuid = writer_guid;
-                                    r.getListener()->onReaderMatched(&r, info);
-
-                                    const SubscriptionMatchedStatus& sub_info =
-                                    update_subscription_matched_status(readerGUID, writer_guid, -1);
-                                    r.getListener()->onReaderMatched(&r, sub_info);
+                                    r.get_listener()->on_reader_matched(&r, info);
                                 }
                             }
                         }
@@ -1628,7 +1333,7 @@ bool EDP::pairing_remote_writer_with_local_reader_after_security(
     bool matched = false;
     bool found = false;
 
-    mp_RTPSParticipant->forEachUserReader([&](RTPSReader& r) -> bool
+    mp_RTPSParticipant->forEachUserReader([&](BaseReader& r) -> bool
             {
                 GUID_t readerGUID = r.getGuid();
 
@@ -1638,24 +1343,19 @@ bool EDP::pairing_remote_writer_with_local_reader_after_security(
                 {
                     found = true;
 
-                    // TODO(richiware) Implement and use move with attributes
-                    if (r.matched_writer_add(remote_writer_data))
+                    if (r.matched_writer_add_edp(remote_writer_data))
                     {
                         EPROSIMA_LOG_INFO(RTPS_EDP, "Valid Matching to local reader: " << readerGUID.entityId);
 
                         matched = true;
 
                         //MATCHED AND ADDED CORRECTLY:
-                        if (r.getListener() != nullptr)
+                        if (r.get_listener() != nullptr)
                         {
                             MatchingInfo info;
                             info.status = MATCHED_MATCHING;
                             info.remoteEndpointGuid = writer_guid;
-                            r.getListener()->onReaderMatched(&r, info);
-
-                            const SubscriptionMatchedStatus& sub_info =
-                            update_subscription_matched_status(readerGUID, writer_guid, 1);
-                            r.getListener()->onReaderMatched(&r, sub_info);
+                            r.get_listener()->on_reader_matched(&r, info);
 
                         }
                     }
@@ -1672,199 +1372,6 @@ bool EDP::pairing_remote_writer_with_local_reader_after_security(
 
 #endif // if HAVE_SECURITY
 
-bool EDP::checkTypeIdentifier(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata) const
-{
-    // TODO - Remove once XCDR or XCDR2 is implemented.
-    TypeConsistencyEnforcementQosPolicy coercion;
-    coercion.m_kind = DISALLOW_TYPE_COERCION;
-    coercion.m_ignore_member_names = false;
-    coercion.m_ignore_string_bounds = false;
-    coercion.m_force_type_validation = true;
-    coercion.m_prevent_type_widening = true;
-    coercion.m_ignore_sequence_bounds = false;
-    return wdata->type_id().m_type_identifier._d() != static_cast<uint8_t>(0x00) &&
-           wdata->type_id().m_type_identifier.consistent(
-        //rdata->type_id().m_type_identifier, rdata->m_qos.type_consistency);
-        rdata->type_id().m_type_identifier, coercion);
-}
-
-bool EDP::hasTypeIdentifier(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata) const
-{
-    return wdata->has_type_id() && wdata->type_id().m_type_identifier._d() != static_cast<uint8_t>(0x00) &&
-           rdata->has_type_id() && rdata->type_id().m_type_identifier._d() != static_cast<uint8_t>(0x00);
-}
-
-bool EDP::checkTypeObject(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata) const
-{
-    if (wdata->has_type_information() && wdata->type_information().assigned() &&
-            rdata->has_type_information() && rdata->type_information().assigned())
-    {
-        const types::TypeIdentifier* rtype = nullptr;
-        const types::TypeIdentifier* wtype = nullptr;
-
-        if (wdata->type_information().type_information.complete().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00) &&
-                rdata->type_information().type_information.complete().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00))
-        {
-            rtype = &rdata->type_information().type_information.complete().typeid_with_size().type_id();
-            wtype = &wdata->type_information().type_information.complete().typeid_with_size().type_id();
-        }
-        else if (wdata->type_information().type_information.minimal().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00) &&
-                rdata->type_information().type_information.minimal().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00))
-        {
-            rtype = &rdata->type_information().type_information.minimal().typeid_with_size().type_id();
-            wtype = &wdata->type_information().type_information.minimal().typeid_with_size().type_id();
-        }
-
-        if (wtype != nullptr)
-        {
-            // TODO - Remove once XCDR or XCDR2 is implemented.
-            /*
-             * Currently consistency checks are applied to type structure and compatibility,
-             * but doesn't check about annotations behavior.
-             * This may cause false matching cases with annotations @key or @non_serialize,
-             * for example.
-             * Once XCDR or XCDR2 is implemented, is it doesn't solve this cases, we must
-             * think about this problem and how consistency could solve it.
-             */
-            TypeConsistencyEnforcementQosPolicy coercion;
-            coercion.m_kind = DISALLOW_TYPE_COERCION;
-            coercion.m_ignore_member_names = false;
-            coercion.m_ignore_string_bounds = false;
-            coercion.m_force_type_validation = true;
-            coercion.m_prevent_type_widening = true;
-            coercion.m_ignore_sequence_bounds = false;
-            //return wtype->consistent(*rtype, rdata->m_qos.type_consistency);
-            return wtype->consistent(*rtype, coercion);
-        }
-
-        return false;
-    }
-
-    if (wdata->has_type() && wdata->type().m_type_object._d() != static_cast<uint8_t>(0x00) &&
-            rdata->has_type() && rdata->type().m_type_object._d() != static_cast<uint8_t>(0x00))
-    {
-        // TODO - Remove once XCDR or XCDR2 is implemented.
-        /*
-         * Currently consistency checks are applied to type structure and compatibility,
-         * but doesn't check about annotations behavior.
-         * This may cause false matching cases with annotations @key or @non_serialize,
-         * for example.
-         * Once XCDR or XCDR2 is implemented, is it doesn't solve this cases, we must
-         * think about this problem and how consistency could solve it.
-         */
-        TypeConsistencyEnforcementQosPolicy coercion;
-        coercion.m_kind = DISALLOW_TYPE_COERCION;
-        coercion.m_ignore_member_names = false;
-        coercion.m_ignore_string_bounds = false;
-        coercion.m_force_type_validation = true;
-        coercion.m_prevent_type_widening = true;
-        coercion.m_ignore_sequence_bounds = false;
-        //return wdata->type().m_type_object.consistent(rdata->type().m_type_object, rdata->m_qos.type_consistency);
-        return wdata->type().m_type_object.consistent(rdata->type().m_type_object, coercion);
-    }
-
-    return false;
-}
-
-bool EDP::hasTypeObject(
-        const WriterProxyData* wdata,
-        const ReaderProxyData* rdata) const
-{
-    if (wdata->has_type_information() && wdata->type_information().assigned() &&
-            rdata->has_type_information() && rdata->type_information().assigned())
-    {
-        if (wdata->type_information().type_information.complete().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00) &&
-                rdata->type_information().type_information.complete().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00))
-        {
-            return true;
-        }
-        else if (wdata->type_information().type_information.minimal().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00) &&
-                rdata->type_information().type_information.minimal().typeid_with_size().type_id()._d() !=
-                static_cast<uint8_t>(0x00))
-        {
-            return true;
-        }
-        return false;
-    }
-
-    if (wdata->has_type() && wdata->type().m_type_object._d() != static_cast<uint8_t>(0x00) &&
-            rdata->has_type() && rdata->type().m_type_object._d() != static_cast<uint8_t>(0x00))
-    {
-        return true;
-    }
-
-    return false;
-}
-
-const SubscriptionMatchedStatus& EDP::update_subscription_matched_status(
-        const GUID_t& reader_guid,
-        const GUID_t& writer_guid,
-        int change)
-{
-    std::lock_guard<std::recursive_mutex> _(*mp_PDP->getMutex());
-
-    SubscriptionMatchedStatus* status;
-    auto it = reader_status_.find(reader_guid);
-    if (it == reader_status_.end())
-    {
-        auto pair = reader_status_.emplace(reader_guid, SubscriptionMatchedStatus{});
-        status = &pair.first->second;
-    }
-    else
-    {
-        status = &it->second;
-    }
-
-    status->current_count = change;
-    status->current_count_change = change;
-    status->total_count += change;
-    status->total_count_change += change;
-    status->last_publication_handle = writer_guid;
-
-    return *status;
-}
-
-const fastdds::dds::PublicationMatchedStatus& EDP::update_publication_matched_status(
-        const GUID_t& reader_guid,
-        const GUID_t& writer_guid,
-        int change)
-{
-    std::lock_guard<std::recursive_mutex> _(*mp_PDP->getMutex());
-
-    PublicationMatchedStatus* status;
-    auto it = writer_status_.find(writer_guid);
-    if (it == writer_status_.end())
-    {
-        auto pair = writer_status_.emplace(writer_guid, PublicationMatchedStatus{});
-        status = &pair.first->second;
-    }
-    else
-    {
-        status = &it->second;
-    }
-
-    status->current_count = change;
-    status->current_count_change = change;
-    status->total_count += change;
-    status->total_count_change += change;
-    status->last_subscription_handle = reader_guid;
-
-    return *status;
-}
-
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

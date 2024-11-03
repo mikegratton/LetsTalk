@@ -16,18 +16,18 @@
  * @file EntityId_t.hpp
  */
 
-#ifndef _FASTDDS_RTPS_COMMON_ENTITYID_T_HPP_
-#define _FASTDDS_RTPS_COMMON_ENTITYID_T_HPP_
+#ifndef FASTDDS_RTPS_COMMON__ENTITYID_T_HPP
+#define FASTDDS_RTPS_COMMON__ENTITYID_T_HPP
 
-#include <fastrtps/fastrtps_dll.h>
-#include <fastdds/rtps/common/Types.h>
+#include <fastdds/fastdds_dll.hpp>
+#include <fastdds/rtps/common/Types.hpp>
 
 #include <cstdint>
 #include <cstring>
 #include <sstream>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 
@@ -67,9 +67,13 @@ namespace rtps {
 #define ENTITYID_DS_SERVER_VIRTUAL_WRITER 0x00030073
 #define ENTITYID_DS_SERVER_VIRTUAL_READER 0x00030074
 
+#ifdef FASTDDS_STATISTICS
+#define ENTITYID_MONITOR_SERVICE_WRITER 0x004000D2
+#endif // ifdef FASTDDS_STATISTICS
+
 //!@brief Structure EntityId_t, entity id part of GUID_t.
 //!@ingroup COMMON_MODULE
-struct RTPS_DllAPI EntityId_t
+struct FASTDDS_EXPORTED_API EntityId_t
 {
     static constexpr unsigned int size = 4;
     octet value[size];
@@ -373,16 +377,20 @@ const EntityId_t c_EntityId_spdp_reliable_participant_secure_writer =
 const EntityId_t ds_server_virtual_writer = ENTITYID_DS_SERVER_VIRTUAL_WRITER;
 const EntityId_t ds_server_virtual_reader = ENTITYID_DS_SERVER_VIRTUAL_READER;
 
+#ifdef FASTDDS_STATISTICS
+const EntityId_t monitor_service_status_writer = ENTITYID_MONITOR_SERVICE_WRITER;
+#endif // if FASTDDS_STATISTICS
+
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 namespace std {
 template <>
-struct hash<eprosima::fastrtps::rtps::EntityId_t>
+struct hash<eprosima::fastdds::rtps::EntityId_t>
 {
     std::size_t operator ()(
-            const eprosima::fastrtps::rtps::EntityId_t& k) const
+            const eprosima::fastdds::rtps::EntityId_t& k) const
     {
         return (static_cast<size_t>(k.value[0]) << 16) |
                (static_cast<size_t>(k.value[1]) << 8) |
@@ -394,4 +402,4 @@ struct hash<eprosima::fastrtps::rtps::EntityId_t>
 } // namespace std
 
 
-#endif /* _FASTDDS_RTPS_COMMON_ENTITYID_T_HPP_ */
+#endif // FASTDDS_RTPS_COMMON__ENTITYID_T_HPP

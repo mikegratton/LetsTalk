@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-
-#include "PubSubReader.hpp"
-#include "PubSubWriter.hpp"
-#include "ReqRepAsReliableHelloWorldRequester.hpp"
-#include "ReqRepAsReliableHelloWorldReplier.hpp"
-
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/LibrarySettings.hpp>
 #include <gtest/gtest.h>
 
-#include <fastrtps/utils/TimeConversion.h>
-#include <fastrtps/xmlparser//XMLProfileManager.h>
+#include "BlackboxTests.hpp"
+#include "PubSubReader.hpp"
+#include "PubSubWriter.hpp"
+#include "ReqRepAsReliableHelloWorldReplier.hpp"
+#include "ReqRepAsReliableHelloWorldRequester.hpp"
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -40,12 +38,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -58,12 +56,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -93,11 +91,11 @@ TEST_P(LifespanQos, LongLifespan)
     // Lifespan period in milliseconds
     uint32_t lifespan_ms = 10000;
 
-    writer.history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS)
+    writer.history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
             .lifespan_period(lifespan_ms * 1e-3)
             .init();
-    reader.history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS)
-            .reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    reader.history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
+            .reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .init();
 
     ASSERT_TRUE(reader.isInitialized());
@@ -146,10 +144,10 @@ TEST_P(LifespanQos, ShortLifespan)
     // Lifespan period in milliseconds
     uint32_t lifespan_ms = 1;
 
-    writer.history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS)
+    writer.history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
             .lifespan_period(lifespan_ms * 1e-3)
             .init();
-    reader.history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS)
+    reader.history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
             .lifespan_period(lifespan_ms * 1e-3)
             .init();
 

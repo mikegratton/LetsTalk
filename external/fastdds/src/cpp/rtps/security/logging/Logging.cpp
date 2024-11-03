@@ -1,7 +1,9 @@
-#include <fastdds/rtps/security/logging/Logging.h>
+#include <rtps/security/logging/Logging.h>
+
+#include <rtps/security/exceptions/SecurityException.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -174,12 +176,12 @@ bool Logging::set_domain_id(
         const uint32_t id,
         SecurityException& exception)
 {
-    if (std::numeric_limits<uint32_t>::max() == id)
+    if ((std::numeric_limits<uint32_t>::max)() == id)
     {
         exception = SecurityException("Invalid domaine id value.");
         return false;
     }
-    else if (std::numeric_limits<uint32_t>::max() != domain_id_)
+    else if ((std::numeric_limits<uint32_t>::max)() != domain_id_)
     {
         exception = SecurityException("Domaine id already set (" + std::to_string(domain_id_) + ")");
         return false;
@@ -193,5 +195,5 @@ bool Logging::set_domain_id(
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima

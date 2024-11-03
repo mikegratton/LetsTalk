@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+<dds xmlns="http://www.eprosima.com" >
     <profiles>
         <participant profile_name="secure_ds_with_prefix" is_default_profile="true">
             <rtps>
@@ -12,7 +12,7 @@
                         <locator>
                             <udpv4>
                                 <address>127.0.0.1</address>
-                                <port>11811</port>
+                                <port>32823</port>
                             </udpv4>
                         </locator>
                     </metatrafficUnicastLocatorList>
@@ -74,7 +74,7 @@
                         <locator>
                             <udpv4>
                                 <address>127.0.0.1</address>
-                                <port>11811</port>
+                                <port>32823</port>
                             </udpv4>
                         </locator>
                     </metatrafficUnicastLocatorList>

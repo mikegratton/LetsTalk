@@ -7,13 +7,14 @@
 <link rel="home" href="../../../index.html" title="Asio">
 <link rel="up" href="../composition.html" title="Composition and Completion Tokens">
 <link rel="prev" href="compose.html" title="Compositions as Asynchronous Operations">
-<link rel="next" href="../networking.html" title="Networking">
+<link rel="next" href="type_erasure.html" title="Type Erasure, Separate Compilation and Virtual Functions">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="compose.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../composition.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="../networking.html"><img src="../../../next.png" alt="Next"></a>
+<a accesskey="p" href="compose.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../composition.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="type_erasure.html"><img src="../../../next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h4 class="title">
@@ -41,8 +42,8 @@
         </p>
 <h6>
 <a name="asio.overview.composition.token_adapters.h0"></a>
-          <span><a name="asio.overview.composition.token_adapters.bind_executor__bind_allocator__and_bind_cancellation_slot"></a></span><a class="link" href="token_adapters.html#asio.overview.composition.token_adapters.bind_executor__bind_allocator__and_bind_cancellation_slot">bind_executor,
-          bind_allocator, and bind_cancellation_slot</a>
+          <span><a name="asio.overview.composition.token_adapters.bind_executor__bind_allocator__bind_cancellation_slot__and_bind_immediate_executor"></a></span><a class="link" href="token_adapters.html#asio.overview.composition.token_adapters.bind_executor__bind_allocator__bind_cancellation_slot__and_bind_immediate_executor">bind_executor,
+          bind_allocator, bind_cancellation_slot, and bind_immediate_executor</a>
         </h6>
 <p>
           The <a class="link" href="../../reference/bind_executor.html" title="bind_executor"><code class="computeroutput"><span class="identifier">bind_executor</span></code></a>
@@ -77,11 +78,12 @@
 <span class="special">}</span>
 </pre>
 <p>
-          The <a class="link" href="../../reference/bind_allocator.html" title="bind_allocator"><code class="computeroutput"><span class="identifier">bind_allocator</span></code></a>
-          and <a class="link" href="../../reference/bind_cancellation_slot.html" title="bind_cancellation_slot"><code class="computeroutput"><span class="identifier">bind_cancellation_slot</span></code></a> adapters
+          The <a class="link" href="../../reference/bind_allocator.html" title="bind_allocator"><code class="computeroutput"><span class="identifier">bind_allocator</span></code></a>,
+          <a class="link" href="../../reference/bind_cancellation_slot.html" title="bind_cancellation_slot"><code class="computeroutput"><span class="identifier">bind_cancellation_slot</span></code></a>,
+          and <a class="link" href="../../reference/bind_immediate_executor.html" title="bind_immediate_executor"><code class="computeroutput"><span class="identifier">bind_immediate_executor</span></code></a> adapters
           work similarly, to imbue the completion handler with an <a class="link" href="../model/allocators.html" title="Allocators">associated
-          allocator</a> or <a class="link" href="../model/cancellation.html" title="Cancellation">associated
-          cancellation slot</a> respectively.
+          allocator</a>, <a class="link" href="../model/cancellation.html" title="Cancellation">associated
+          cancellation slot</a>, and associated immediate executor respectively.
         </p>
 <h6>
 <a name="asio.overview.composition.token_adapters.h1"></a>
@@ -216,7 +218,8 @@
       <span class="special">{</span>
         <span class="comment">// ...</span>
       <span class="special">},</span>
-    <span class="number">42</span><span class="special">)</span>
+      <span class="number">42</span>
+    <span class="special">)</span>
   <span class="special">);</span>
 
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">future</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">&gt;</span> <span class="identifier">f</span> <span class="special">=</span> <span class="identifier">timer</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span>
@@ -244,7 +247,8 @@
       <span class="special">{</span>
         <span class="comment">// ...</span>
       <span class="special">},</span>
-    <span class="number">42</span><span class="special">)</span>
+      <span class="number">42</span>
+    <span class="special">)</span>
   <span class="special">);</span>
 
 <span class="identifier">std</span><span class="special">::</span><span class="identifier">future</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">tuple</span><span class="special">&lt;</span><span class="keyword">int</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&gt;&gt;</span> <span class="identifier">f</span> <span class="special">=</span> <span class="identifier">timer</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span>
@@ -256,6 +260,41 @@
 </pre>
 <h6>
 <a name="asio.overview.composition.token_adapters.h6"></a>
+          <span><a name="asio.overview.composition.token_adapters.consign"></a></span><a class="link" href="token_adapters.html#asio.overview.composition.token_adapters.consign">consign</a>
+        </h6>
+<p>
+          The <a class="link" href="../../reference/consign.html" title="consign"><code class="computeroutput"><span class="identifier">consign</span></code></a>
+          completion token adapter can be used to attach additional values to a completion
+          handler. This is typically used to keep at least one copy of an object,
+          such as a smart pointer, alive until the completion handler is called.
+        </p>
+<p>
+          For example:
+        </p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">timer1</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">make_shared</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">steady_timer</span><span class="special">&gt;(</span><span class="identifier">my_io_context</span><span class="special">);</span>
+<span class="identifier">timer1</span><span class="special">-&gt;</span><span class="identifier">expires_after</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">seconds</span><span class="special">(</span><span class="number">1</span><span class="special">));</span>
+<span class="identifier">timer1</span><span class="special">-&gt;</span><span class="identifier">async_wait</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">consign</span><span class="special">(</span>
+      <span class="special">[](</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span> <span class="identifier">ec</span><span class="special">)</span>
+      <span class="special">{</span>
+        <span class="comment">// ...</span>
+      <span class="special">},</span>
+      <span class="identifier">timer1</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+
+<span class="keyword">auto</span> <span class="identifier">timer2</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">make_shared</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">steady_timer</span><span class="special">&gt;(</span><span class="identifier">my_io_context</span><span class="special">);</span>
+<span class="identifier">timer2</span><span class="special">-&gt;</span><span class="identifier">expires_after</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">seconds</span><span class="special">(</span><span class="number">30</span><span class="special">));</span>
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">future</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;</span> <span class="identifier">f</span> <span class="special">=</span>
+  <span class="identifier">timer2</span><span class="special">-&gt;</span><span class="identifier">async_wait</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">consign</span><span class="special">(</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">use_future</span><span class="special">,</span>
+      <span class="identifier">timer2</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+</pre>
+<h6>
+<a name="asio.overview.composition.token_adapters.h7"></a>
           <span><a name="asio.overview.composition.token_adapters.see_also"></a></span><a class="link" href="token_adapters.html#asio.overview.composition.token_adapters.see_also">See
           Also</a>
         </h6>
@@ -265,17 +304,14 @@
           <a class="link" href="../../reference/append.html" title="append">append</a>, <a class="link" href="../../reference/prepend.html" title="prepend">prepend</a>.
         </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="compose.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../composition.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="../networking.html"><img src="../../../next.png" alt="Next"></a>
+<a accesskey="p" href="compose.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../composition.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="type_erasure.html"><img src="../../../next.png" alt="Next"></a>
 </div>
 </body>
 </html>

@@ -18,16 +18,16 @@
 
 #include <statistics/rtps/StatisticsBase.hpp>
 
-#include <fastdds/rtps/writer/RTPSWriter.h>
-#include <statistics/types/types.h>
+#include <rtps/writer/BaseWriter.hpp>
+#include <statistics/types/types.hpp>
 
-using eprosima::fastrtps::RecursiveTimedMutex;
-using eprosima::fastrtps::rtps::RTPSWriter;
-using eprosima::fastrtps::rtps::GUID_t;
 
 namespace eprosima {
 namespace fastdds {
 namespace statistics {
+
+using eprosima::fastdds::rtps::BaseWriter;
+using eprosima::fastdds::rtps::GUID_t;
 
 StatisticsWriterImpl::StatisticsWriterImpl()
 {
@@ -46,28 +46,28 @@ StatisticsWriterAncillary* StatisticsWriterImpl::get_members() const
 RecursiveTimedMutex& StatisticsWriterImpl::get_statistics_mutex()
 {
     static_assert(
-        std::is_base_of<StatisticsWriterImpl, RTPSWriter>::value,
+        std::is_base_of<StatisticsWriterImpl, BaseWriter>::value,
         "Must be call from a writer.");
 
-    return static_cast<RTPSWriter*>(this)->getMutex();
+    return static_cast<BaseWriter*>(this)->getMutex();
 }
 
 const GUID_t& StatisticsWriterImpl::get_guid() const
 {
-    using eprosima::fastrtps::rtps::RTPSWriter;
+    using eprosima::fastdds::rtps::BaseWriter;
 
     static_assert(
-        std::is_base_of<StatisticsWriterImpl, RTPSWriter>::value,
-        "This method should be called from an actual RTPSWriter");
+        std::is_base_of<StatisticsWriterImpl, BaseWriter>::value,
+        "This method should be called from an actual BaseWriter");
 
-    return static_cast<const RTPSWriter*>(this)->getGuid();
+    return static_cast<const BaseWriter*>(this)->getGuid();
 }
 
 void StatisticsWriterImpl::on_sample_datas(
-        const fastrtps::rtps::SampleIdentity& sample_identity,
+        const fastdds::rtps::SampleIdentity& sample_identity,
         size_t num_sent_submessages)
 {
-    if (!are_statistics_writers_enabled(EventKindBits::SAMPLE_DATAS))
+    if (!are_statistics_writers_enabled(EventKind::SAMPLE_DATAS))
     {
         return;
     }
@@ -90,14 +90,14 @@ void StatisticsWriterImpl::on_sample_datas(
 void StatisticsWriterImpl::on_data_generated(
         size_t num_destinations)
 {
-    std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+    std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
     auto members = get_members();
     members->data_counter += static_cast<uint64_t>(num_destinations);
 }
 
 void StatisticsWriterImpl::on_data_sent()
 {
-    if (!are_statistics_writers_enabled(EventKindBits::DATA_COUNT))
+    if (!are_statistics_writers_enabled(EventKind::DATA_COUNT))
     {
         return;
     }
@@ -106,7 +106,7 @@ void StatisticsWriterImpl::on_data_sent()
     notification.guid(to_statistics_type(get_guid()));
 
     {
-        std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+        std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
         auto members = get_members();
         notification.count(members->data_counter);
     }
@@ -115,7 +115,7 @@ void StatisticsWriterImpl::on_data_sent()
     Data data;
     // note that the setter sets RESENT_DATAS by default
     data.entity_count(std::move(notification));
-    data._d(EventKindBits::DATA_COUNT);
+    data._d(EventKind::DATA_COUNT);
 
     for_each_listener([&data](const std::shared_ptr<IListener>& listener)
             {
@@ -126,7 +126,7 @@ void StatisticsWriterImpl::on_data_sent()
 void StatisticsWriterImpl::on_heartbeat(
         uint32_t count)
 {
-    if (!are_statistics_writers_enabled(EventKindBits::HEARTBEAT_COUNT))
+    if (!are_statistics_writers_enabled(EventKind::HEARTBEAT_COUNT))
     {
         return;
     }
@@ -139,7 +139,7 @@ void StatisticsWriterImpl::on_heartbeat(
     Data data;
     // note that the setter sets RESENT_DATAS by default
     data.entity_count(std::move(notification));
-    data._d(EventKindBits::HEARTBEAT_COUNT);
+    data._d(EventKind::HEARTBEAT_COUNT);
 
     for_each_listener([&data](const std::shared_ptr<IListener>& listener)
             {
@@ -149,7 +149,7 @@ void StatisticsWriterImpl::on_heartbeat(
 
 void StatisticsWriterImpl::on_gap()
 {
-    if (!are_statistics_writers_enabled(EventKindBits::GAP_COUNT))
+    if (!are_statistics_writers_enabled(EventKind::GAP_COUNT))
     {
         return;
     }
@@ -158,7 +158,7 @@ void StatisticsWriterImpl::on_gap()
     notification.guid(to_statistics_type(get_guid()));
 
     {
-        std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+        std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
         notification.count(++get_members()->gap_counter);
     }
 
@@ -166,7 +166,7 @@ void StatisticsWriterImpl::on_gap()
     Data data;
     // note that the setter sets RESENT_DATAS by default
     data.entity_count(std::move(notification));
-    data._d(EventKindBits::GAP_COUNT);
+    data._d(EventKind::GAP_COUNT);
 
     for_each_listener([&data](const std::shared_ptr<IListener>& listener)
             {
@@ -182,7 +182,7 @@ void StatisticsWriterImpl::on_resent_data(
         return;
     }
 
-    if (!are_statistics_writers_enabled(EventKindBits::RESENT_DATAS))
+    if (!are_statistics_writers_enabled(EventKind::RESENT_DATAS))
     {
         return;
     }
@@ -191,7 +191,7 @@ void StatisticsWriterImpl::on_resent_data(
     notification.guid(to_statistics_type(get_guid()));
 
     {
-        std::lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+        std::lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
         notification.count(get_members()->resent_counter += to_send);
     }
 
@@ -214,7 +214,7 @@ void StatisticsWriterImpl::on_publish_throughput(
 
     if (payload > 0 )
     {
-        if (!are_statistics_writers_enabled(EventKindBits::PUBLICATION_THROUGHPUT))
+        if (!are_statistics_writers_enabled(EventKind::PUBLICATION_THROUGHPUT))
         {
             return;
         }
@@ -223,7 +223,7 @@ void StatisticsWriterImpl::on_publish_throughput(
         time_point<steady_clock> former_timepoint;
         auto& current_timepoint = get_members()->last_history_change_;
         {
-            lock_guard<fastrtps::RecursiveTimedMutex> lock(get_statistics_mutex());
+            lock_guard<fastdds::RecursiveTimedMutex> lock(get_statistics_mutex());
             former_timepoint = current_timepoint;
             current_timepoint = steady_clock::now();
         }

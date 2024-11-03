@@ -16,8 +16,8 @@
  * @file DataReaderQos.hpp
  */
 
-#ifndef _FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS_DATAREADERQOS_HPP_
-#define _FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS_DATAREADERQOS_HPP_
+#ifndef FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS__DATAREADERQOS_HPP
+#define FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS__DATAREADERQOS_HPP
 
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 
@@ -38,15 +38,33 @@ public:
     /**
      * @brief Constructor
      */
-    RTPS_DllAPI DataReaderQos();
+    FASTDDS_EXPORTED_API DataReaderQos();
+};
+
+/**
+ * Class MonitorServiceDataReaderQos: extends standard DDS DataReaderQos class to include specific default constructor for the
+ * recommended MonitorServiceDataReaderQos profile.
+ * @ingroup STATISTICS_MODULE
+ */
+class MonitorServiceDataReaderQos : public eprosima::fastdds::dds::DataReaderQos
+{
+public:
+
+    /**
+     * @brief Constructor
+     */
+    FASTDDS_EXPORTED_API MonitorServiceDataReaderQos();
 };
 
 //! Constant to access default Statistics DataReader Qos
 const eprosima::fastdds::statistics::dds::DataReaderQos STATISTICS_DATAREADER_QOS;
+
+//! Constant to access default Monitor Service Statistics DataReader Qos
+const eprosima::fastdds::statistics::dds::MonitorServiceDataReaderQos MONITOR_SERVICE_DATAREADER_QOS;
 
 } // dds
 } // statistics
 } // fastdds
 } // eprosima
 
-#endif /* _FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS_DATAREADERQOS_HPP_ */
+#endif // FASTDDS_STATISTICS_DDS_SUBSCRIBER_QOS__DATAREADERQOS_HPP

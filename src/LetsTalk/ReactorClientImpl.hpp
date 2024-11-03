@@ -48,7 +48,7 @@ class ReactorClientBackend : public std::enable_shared_from_this<ReactorClientBa
                 serialized.data = const_cast<unsigned char*>(i_progress.data().data());
                 serialized.encapsulation = CDR_LE;  // FIXME how do you know? It's in the encapsulation bytes, but
                                                     // we've got to dig through *OMG* documents for it :(
-                haveData = deser.deserialize(&serialized, &sample);
+                haveData = deser.deserialize(serialized, &sample);
                 serialized.data = nullptr;  // Prevent double free, as mem is owned by rawData
             }
             // Place the sample

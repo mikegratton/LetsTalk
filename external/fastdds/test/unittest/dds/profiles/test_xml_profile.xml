@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"  ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com">
     <profiles>
         <participant profile_name="test_participant_profile">
             <domainId>123</domainId>
@@ -27,6 +27,11 @@
                     <send_buffers>
                         <preallocated_number>65</preallocated_number>
                         <dynamic>true</dynamic>
+                        <network_buffers_config>
+                            <initial>16</initial>
+                            <maximum>0</maximum>
+                            <increment>16</increment>
+                        </network_buffers_config>
                     </send_buffers>
                 </allocation>
                 <defaultUnicastLocatorList>
@@ -123,6 +128,42 @@
                 <participantID>66</participantID>
                 <useBuiltinTransports>true</useBuiltinTransports>
                 <name>test_name</name>
+                <builtin_controllers_sender_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </builtin_controllers_sender_thread>
+                <timed_events_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </timed_events_thread>
+                <discovery_server_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </discovery_server_thread>
+                <typelookup_service_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </typelookup_service_thread>
+                <builtin_transports_reception_threads>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </builtin_transports_reception_threads>
+                <security_log_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </security_log_thread>
+                <flow_controller_descriptor_list>
+                    <flow_controller_descriptor>
+                        <name>test_flow_controller</name>
+                        <max_bytes_per_period>2048</max_bytes_per_period>
+                        <period_ms>45</period_ms>
+                        <scheduler>FIFO</scheduler>
+                        <sender_thread>
+                            <affinity>15</affinity>
+                            <stack_size>1048576</stack_size>
+                        </sender_thread>
+                    </flow_controller_descriptor>
+                </flow_controller_descriptor_list>
             </rtps>
         </participant>
 
@@ -152,6 +193,11 @@
                     <send_buffers>
                         <preallocated_number>65</preallocated_number>
                         <dynamic>true</dynamic>
+                        <network_buffers_config>
+                            <initial>16</initial>
+                            <maximum>0</maximum>
+                            <increment>16</increment>
+                        </network_buffers_config>
                     </send_buffers>
                 </allocation>
                 <defaultUnicastLocatorList>
@@ -248,6 +294,42 @@
                 <participantID>99</participantID>
                 <useBuiltinTransports>true</useBuiltinTransports>
                 <name>default_name</name>
+                <builtin_controllers_sender_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </builtin_controllers_sender_thread>
+                <timed_events_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </timed_events_thread>
+                <discovery_server_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </discovery_server_thread>
+                <typelookup_service_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </typelookup_service_thread>
+                <builtin_transports_reception_threads>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </builtin_transports_reception_threads>
+                <security_log_thread>
+                    <affinity>15</affinity>
+                    <stack_size>1048576</stack_size>
+                </security_log_thread>
+                <flow_controller_descriptor_list>
+                    <flow_controller_descriptor>
+                        <name>test_default_flow_controller</name>
+                        <max_bytes_per_period>2048</max_bytes_per_period>
+                        <period_ms>45</period_ms>
+                        <scheduler>FIFO</scheduler>
+                        <sender_thread>
+                            <affinity>15</affinity>
+                            <stack_size>1048576</stack_size>
+                        </sender_thread>
+                    </flow_controller_descriptor>
+                </flow_controller_descriptor_list>
             </rtps>
         </participant>
 
@@ -297,22 +379,22 @@
                 </publishMode>
             </qos>
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>5</sec>
                     <nanosec>0</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>5</sec>
                     <nanosec>0</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>5</sec>
                     <nanosec>0</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>120</sec>
                     <nanosec>500</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -397,25 +479,26 @@
                 </partition>
                 <publishMode>
                     <kind>ASYNCHRONOUS</kind>
+                    <flow_controller_name>test_default_flow_controller</flow_controller_name>
                 </publishMode>
             </qos>
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>11</sec>
                     <nanosec>32</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>121</sec>
                     <nanosec>332</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -457,6 +540,7 @@
             </matchedSubscribersAllocation>
         </data_writer>
 
+        <!-- This profile has been updated to ensure that HistoryQoS and ResourceLimitQoS constraints are met (#20401) -->
         <data_reader profile_name="test_subscriber_profile">
             <topic>
                 <historyQos>
@@ -464,9 +548,9 @@
                     <depth>500</depth>
                 </historyQos>
                 <resourceLimitsQos>
-                    <max_samples>10</max_samples>
+                    <max_samples>2500</max_samples>
                     <max_instances>5</max_instances>
-                    <max_samples_per_instance>2</max_samples_per_instance>
+                    <max_samples_per_instance>500</max_samples_per_instance>
                     <allocated_samples>10</allocated_samples>
                 </resourceLimitsQos>
             </topic>
@@ -500,14 +584,14 @@
                 </partition>
             </qos>
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>5</sec>
                     <nanosec>0</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>5</sec>
                     <nanosec>0</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -540,7 +624,7 @@
                     </udpv4>
                 </locator>
             </multicastLocatorList>
-            <expectsInlineQos>false</expectsInlineQos>
+            <expects_inline_qos>false</expects_inline_qos>
             <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
             <userDefinedID>40</userDefinedID>
             <entityID>40</entityID>
@@ -595,14 +679,14 @@
                 </partition>
             </qos>
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>18</sec>
                     <nanosec>81</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -635,7 +719,7 @@
                     </udpv4>
                 </locator>
             </multicastLocatorList>
-            <expectsInlineQos>true</expectsInlineQos>
+            <expects_inline_qos>true</expects_inline_qos>
             <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
             <userDefinedID>13</userDefinedID>
             <entityID>31</entityID>
@@ -646,7 +730,7 @@
             </matchedPublishersAllocation>
         </data_reader>
 
-        <topic profile_name = "test_topic_profile">
+        <topic profile_name = "test_topic_profile" is_default_profile="true">
             <historyQos>
                 <kind>KEEP_LAST</kind>
                 <depth>20</depth>
@@ -658,6 +742,52 @@
                 <allocated_samples>50</allocated_samples>
             </resourceLimitsQos>
         </topic>
+
+        <replier profile_name="test_replier_profile"
+                service_name="service_name"
+                request_type="request_type"
+                reply_type="reply_type"
+                is_default_profile="true">
+            <request_topic_name>request_topic_name</request_topic_name>
+            <reply_topic_name>reply_topic_name</reply_topic_name>
+            <data_writer>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_writer>
+            <data_reader>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_reader>
+        </replier>
+
+        <requester profile_name="test_requester_profile"
+                service_name="service_name"
+                request_type="request_type"
+                reply_type="reply_type"
+                is_default_profile="true">
+            <request_topic_name>request_topic_name</request_topic_name>
+            <reply_topic_name>reply_topic_name</reply_topic_name>
+            <data_writer>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_writer>
+            <data_reader>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_reader>
+        </requester>
     </profiles>
     <library_settings>
         <intraprocess_delivery>FULL</intraprocess_delivery>

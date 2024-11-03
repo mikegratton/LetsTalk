@@ -15,21 +15,20 @@
 #include <string>
 
 #include <gtest/gtest.h>
-
 #include <tinyxml2.h>
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
 #include <fastdds/rtps/flowcontrol/FlowControllerConsts.hpp>
 #include <fastdds/statistics/dds/domain/DomainParticipant.hpp>
 #include <fastdds/statistics/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/statistics/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/statistics/topic_names.hpp>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
 
 #ifdef FASTDDS_STATISTICS
 #include <statistics/fastdds/domain/DomainParticipantImpl.hpp>
@@ -39,8 +38,6 @@ namespace eprosima {
 namespace fastdds {
 namespace statistics {
 namespace dds {
-
-using ReturnCode_t = eprosima::fastrtps::types::ReturnCode_t;
 
 class StatisticsFromXMLProfileTests : public ::testing::Test
 {
@@ -129,7 +126,7 @@ TEST(StatisticsQosTests, StatisticsDataWriterQosTest)
 {
     EXPECT_EQ(STATISTICS_DATAWRITER_QOS.reliability().kind, eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS);
     EXPECT_EQ(STATISTICS_DATAWRITER_QOS.durability().kind, eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS);
-    const std::string* pushMode_property = eprosima::fastrtps::rtps::PropertyPolicyHelper::find_property(
+    const std::string* pushMode_property = eprosima::fastdds::rtps::PropertyPolicyHelper::find_property(
         STATISTICS_DATAWRITER_QOS.properties(), "fastdds.push_mode");
     ASSERT_NE(pushMode_property, nullptr);
     EXPECT_EQ(pushMode_property->compare("false"), 0);
@@ -170,7 +167,7 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     const std::string xml =
             "                                                                                                                 \
             <?xml version=\"1.0\" encoding=\"utf-8\"  ?>                                                                      \
-                <dds xmlns=\"http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles\">                                          \
+                <dds xmlns=\"http://www.eprosima.com\">                                           \
                     <profiles>                                                                                                \
                         <participant profile_name=\"statistics_participant\" is_default_profile=\"true\">                     \
                             <rtps>                                                                                            \
@@ -318,10 +315,10 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     ASSERT_EQ(network_latency_writer, nullptr);
 
     // But user can enable it manually through enable_statistics_datawriter_with_profile()
-    ReturnCode_t ret = statistics_participant->enable_statistics_datawriter_with_profile(
+    fastdds::dds::ReturnCode_t ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "NETWORK_LATENCY_TOPIC",
         "NETWORK_LATENCY_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_OK, ret);
     network_latency_writer =
             statistics_publisher->lookup_datawriter(network_latency_name);
     ASSERT_NE(network_latency_writer, nullptr);
@@ -339,7 +336,7 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "SUBSCRIPTION_THROUGHPUT_TOPIC",
         "SUBSCRIPTION_THROUGHPUT_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_OK, ret);
     subscription_througput_writer =
             statistics_publisher->lookup_datawriter(subscription_throughput_name);
     ASSERT_NE(subscription_througput_writer, nullptr);
@@ -347,7 +344,7 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     // Expected QoS construction for Subscription_Throughput topic:
     efd::DataWriterQos qos4;
     qos4.reliability().kind = eprosima::fastdds::dds::ReliabilityQosPolicyKind::BEST_EFFORT_RELIABILITY_QOS;
-    eprosima::fastrtps::rtps::Property property;
+    eprosima::fastdds::rtps::Property property;
     property.name("partitions");
     std::string partitions = "part1;part2";
     property.value(std::move(partitions));
@@ -359,11 +356,11 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     ASSERT_EQ(qos4, subscription_througput_writer->get_qos());
 
     // Calling enable_statistics_datawriter_with_profile with a profile that does not exist,
-    // RETCODE_ERROR must be returned.
+    // fastdds::dds::RETCODE_ERROR must be returned.
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "FAKE_TOPIC",
         "FAKE_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_ERROR, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_ERROR, ret);
 
     // DATA_COUNT_TOPIC is defined with inconsistent QoS policies,
     // and configured to be enabled automatically at initialization
@@ -376,17 +373,17 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     ASSERT_EQ(data_count_writer, nullptr);
 
     // Calling enable_statistics_datawriter_with_profile with a profile defined with inconsistent QoS configuration,
-    // RETCODE_INCONSISTENT_POLICY must be returned.
+    // fastdds::dds::RETCODE_INCONSISTENT_POLICY must be returned.
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "HEARTBEAT_COUNT_TOPIC",
         "HEARTBEAT_COUNT_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_INCONSISTENT_POLICY, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_INCONSISTENT_POLICY, ret);
 
     // There is the possibility to enable a statistics topic with a profile defined with different name:
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "OTHER_NAME_FOR_PROFILE",
         "NACKFRAG_COUNT_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_OK, ret);
     std::string nackfrag_count_name = NACKFRAG_COUNT_TOPIC;
     eprosima::fastdds::dds::DataWriter* nackfrag_count_writer =
             statistics_publisher->lookup_datawriter(nackfrag_count_name);
@@ -414,20 +411,20 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     statistics_participant = static_cast<DomainParticipant*>(participant);
     ASSERT_NE(statistics_participant, nullptr);
 
-    ReturnCode_t ret = statistics_participant->enable_statistics_datawriter_with_profile(
+    fastdds::dds::ReturnCode_t ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "HISTORY_LATENCY_TOPIC",
         "HISTORY_LATENCY_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, ret);
 
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "NETWORK_LATENCY_TOPIC",
         "NETWORK_LATENCY_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, ret);
 
     ret = statistics_participant->enable_statistics_datawriter_with_profile(
         "SUBSCRIPTION_THROUGHPUT_TOPIC",
         "SUBSCRIPTION_THROUGHPUT_TOPIC");
-    ASSERT_EQ(ReturnCode_t::RETCODE_UNSUPPORTED, ret);
+    ASSERT_EQ(fastdds::dds::RETCODE_UNSUPPORTED, ret);
 
 #endif // FASTDDS_STATISTICS
 
@@ -446,7 +443,7 @@ TEST_F(StatisticsFromXMLProfileTests, XMLConfigurationForStatisticsDataWritersQo
     const std::string xml =
             "                                                                                                                                       \
             <?xml version=\"1.0\" encoding=\"utf-8\"  ?>                                                                                            \
-                <dds xmlns=\"http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles\">                                                                \
+                <dds xmlns=\"http://www.eprosima.com\">                                                                 \
                     <profiles>                                                                                                                      \
                         <participant profile_name=\"statistics_participant\" is_default_profile=\"true\">                                           \
                             <rtps>                                                                                                                  \

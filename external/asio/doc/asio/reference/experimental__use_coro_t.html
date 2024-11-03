@@ -7,13 +7,14 @@
 <link rel="home" href="../../index.html" title="Asio">
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="experimental__use_coro.html" title="experimental::use_coro">
-<link rel="next" href="experimental__use_coro_t/as_default_on.html" title="experimental::use_coro_t::as_default_on">
+<link rel="next" href="experimental__use_coro_t/allocator_type.html" title="experimental::use_coro_t::allocator_type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="experimental__use_coro.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="experimental__use_coro_t/as_default_on.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="experimental__use_coro.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="experimental__use_coro_t/allocator_type.html"><img src="../../next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -24,10 +25,10 @@
       </p>
 <p>
         A <a class="link" href="../overview/model/completion_tokens.html" title="Completion Tokens">completion token</a>
-        that represents the currently executing resumable coroutine.
+        that creates another coro for the task completion.
       </p>
 <pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
-    <span class="keyword">typename</span> <a class="link" href="Executor1.html" title="Executor requirements">Executor</a> <span class="special">=</span> <span class="identifier">any_io_executor</span><span class="special">&gt;</span>
+    <span class="keyword">typename</span> <span class="identifier">Allocator</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">allocator</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">&gt;&gt;</span>
 <span class="keyword">struct</span> <span class="identifier">use_coro_t</span>
 </pre>
 <h5>
@@ -51,7 +52,34 @@
                 </p>
               </th>
 </tr></thead>
-<tbody><tr>
+<tbody>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="experimental__use_coro_t/allocator_type.html" title="experimental::use_coro_t::allocator_type"><span class="bold"><strong>allocator_type</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  The allocator type. The allocator is used when constructing the
+                  std::promise object for a given asynchronous operation.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="experimental__use_coro_t/as_default_on_t.html" title="experimental::use_coro_t::as_default_on_t"><span class="bold"><strong>as_default_on_t</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Type alias to adapt an I/O object to use use_coro_t as its default
+                  completion token type.
+                </p>
+              </td>
+</tr>
+<tr>
 <td>
                 <p>
                   <a class="link" href="experimental__use_coro_t__executor_with_default.html" title="experimental::use_coro_t::executor_with_default"><span class="bold"><strong>executor_with_default</strong></span></a>
@@ -63,7 +91,8 @@
                   default.
                 </p>
               </td>
-</tr></tbody>
+</tr>
+</tbody>
 </table></div>
 <h5>
 <a name="asio.reference.experimental__use_coro_t.h1"></a>
@@ -104,6 +133,30 @@
 <tr>
 <td>
                 <p>
+                  <a class="link" href="experimental__use_coro_t/get_allocator.html" title="experimental::use_coro_t::get_allocator"><span class="bold"><strong>get_allocator</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Obtain allocator.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
+                  <a class="link" href="experimental__use_coro_t/rebind.html" title="experimental::use_coro_t::rebind"><span class="bold"><strong>rebind</strong></span></a>
+                </p>
+              </td>
+<td>
+                <p>
+                  Specify an alternate allocator.
+                </p>
+              </td>
+</tr>
+<tr>
+<td>
+                <p>
                   <a class="link" href="experimental__use_coro_t/use_coro_t.html" title="experimental::use_coro_t::use_coro_t"><span class="bold"><strong>use_coro_t</strong></span></a> <span class="silver">[constructor]</span>
                 </p>
               </td>
@@ -135,6 +188,10 @@
         when the asynchronous operation completes, and the result of the operation
         is returned.
       </p>
+<p>
+        Note that this token is not the most efficient (use <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span></code>
+        for that) but does provide type erasure, as it will always return a <code class="computeroutput"><span class="identifier">coro</span></code>.
+      </p>
 <h5>
 <a name="asio.reference.experimental__use_coro_t.h2"></a>
         <span><a name="asio.reference.experimental__use_coro_t.requirements"></a></span><a class="link" href="experimental__use_coro_t.html#asio.reference.experimental__use_coro_t.requirements">Requirements</a>
@@ -146,17 +203,14 @@
         <span class="emphasis"><em>Convenience header: </em></span>None
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="experimental__use_coro.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="experimental__use_coro_t/as_default_on.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="experimental__use_coro.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="experimental__use_coro_t/allocator_type.html"><img src="../../next.png" alt="Next"></a>
 </div>
 </body>
 </html>

@@ -30,12 +30,11 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TopicListener.hpp>
-#include <fastdds/dds/builtin/typelookup/TypeLookupManager.hpp>
 
-#include <fastdds/rtps/RTPSDomain.h>
-#include <fastdds/rtps/reader/RTPSReader.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
-#include <fastdds/rtps/participant/RTPSParticipant.h>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
+#include <fastdds/rtps/participant/RTPSParticipant.hpp>
 
 
 using ::testing::StrictMock;
@@ -43,11 +42,11 @@ using ::testing::NiceMock;
 using ::testing::Mock;
 using ::testing::_;
 
-using eprosima::fastrtps::rtps::RTPSDomain;
+using eprosima::fastdds::rtps::RTPSDomain;
 
 namespace eprosima {
 
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 class RTPSDomain;
 
@@ -55,18 +54,10 @@ RTPSReader* RTPSDomain::reader_ = nullptr;
 RTPSWriter* RTPSDomain::writer_ = nullptr;
 RTPSParticipant* RTPSDomain::participant_ = nullptr;
 } //namespace rtps
-} //namespace fastrtps
 
-namespace fastdds {
 namespace dds {
 
-namespace builtin {
-
-const fastrtps::rtps::SampleIdentity INVALID_SAMPLE_IDENTITY;
-
-} // namespace builtin
-
-class RTPSParticipantMock : public eprosima::fastrtps::rtps::RTPSParticipant
+class RTPSParticipantMock : public eprosima::fastdds::rtps::RTPSParticipant
 {
 public:
 
@@ -77,7 +68,7 @@ public:
     virtual ~RTPSParticipantMock() = default;
 };
 
-class RTPSReaderMock : public eprosima::fastrtps::rtps::RTPSReader
+class RTPSReaderMock : public eprosima::fastdds::rtps::BaseReader
 {
 public:
 
@@ -87,28 +78,38 @@ public:
 
     virtual ~RTPSReaderMock() = default;
 
-    virtual bool matched_writer_add(
-            const eprosima::fastrtps::rtps::WriterProxyData&)
+    bool matched_writer_add_edp(
+            const eprosima::fastdds::rtps::WriterProxyData&) override
     {
         return true;
     }
 
-    virtual bool matched_writer_remove(
-            const eprosima::fastrtps::rtps::GUID_t&,
-            bool)
+    bool matched_writer_remove(
+            const eprosima::fastdds::rtps::GUID_t&,
+            bool) override
     {
         return true;
     }
 
-    virtual bool matched_writer_is_matched(
-            const eprosima::fastrtps::rtps::GUID_t&)
+    bool matched_writer_is_matched(
+            const eprosima::fastdds::rtps::GUID_t&) override
+    {
+        return true;
+    }
+
+    void assert_writer_liveliness(
+            const eprosima::fastdds::rtps::GUID_t&) override
+    {
+    }
+
+    bool is_in_clean_state() override
     {
         return true;
     }
 
 };
 
-class RTPSWriterMock : public eprosima::fastrtps::rtps::RTPSWriter
+class RTPSWriterMock : public eprosima::fastdds::rtps::RTPSWriter
 {
 public:
 
@@ -119,19 +120,19 @@ public:
     virtual ~RTPSWriterMock() = default;
 
     virtual bool matched_reader_add(
-            const eprosima::fastrtps::rtps::ReaderProxyData&)
+            const eprosima::fastdds::rtps::SubscriptionBuiltinTopicData&)
     {
         return true;
     }
 
     virtual bool matched_reader_remove(
-            const eprosima::fastrtps::rtps::GUID_t&)
+            const eprosima::fastdds::rtps::GUID_t&)
     {
         return true;
     }
 
     virtual bool matched_reader_is_matched(
-            const eprosima::fastrtps::rtps::GUID_t&)
+            const eprosima::fastdds::rtps::GUID_t&)
     {
         return true;
     }
@@ -161,7 +162,7 @@ public:
 
     void on_requested_deadline_missed(
             DataReader*,
-            const fastrtps::RequestedDeadlineMissedStatus&)
+            const RequestedDeadlineMissedStatus&)
     {
         on_requested_deadline_missed_relay();
     }
@@ -170,7 +171,7 @@ public:
 
     void on_liveliness_changed(
             DataReader*,
-            const fastrtps::LivelinessChangedStatus&)
+            const LivelinessChangedStatus&)
     {
         on_liveliness_changed_relay();
     }
@@ -179,7 +180,7 @@ public:
 
     void on_sample_rejected(
             DataReader*,
-            const fastrtps::SampleRejectedStatus&)
+            const SampleRejectedStatus&)
     {
         on_sample_rejected_relay();
     }
@@ -236,7 +237,7 @@ public:
 
     void on_requested_deadline_missed(
             DataReader*,
-            const fastrtps::RequestedDeadlineMissedStatus&)
+            const RequestedDeadlineMissedStatus&)
     {
         on_requested_deadline_missed_relay();
     }
@@ -245,7 +246,7 @@ public:
 
     void on_liveliness_changed(
             DataReader*,
-            const fastrtps::LivelinessChangedStatus&)
+            const LivelinessChangedStatus&)
     {
         on_liveliness_changed_relay();
     }
@@ -254,7 +255,7 @@ public:
 
     void on_sample_rejected(
             DataReader*,
-            const fastrtps::SampleRejectedStatus&)
+            const SampleRejectedStatus&)
     {
         on_sample_rejected_relay();
     }
@@ -429,7 +430,7 @@ public:
 
     void on_requested_deadline_missed(
             DataReader*,
-            const fastrtps::RequestedDeadlineMissedStatus&)
+            const RequestedDeadlineMissedStatus&)
     {
         on_requested_deadline_missed_relay();
     }
@@ -438,7 +439,7 @@ public:
 
     void on_liveliness_changed(
             DataReader*,
-            const fastrtps::LivelinessChangedStatus&)
+            const LivelinessChangedStatus&)
     {
         on_liveliness_changed_relay();
     }
@@ -447,7 +448,7 @@ public:
 
     void on_sample_rejected(
             DataReader*,
-            const fastrtps::SampleRejectedStatus&)
+            const SampleRejectedStatus&)
     {
         on_sample_rejected_relay();
     }
@@ -490,51 +491,62 @@ public:
     TopicDataTypeMock()
         : TopicDataType()
     {
-        m_typeSize = 4u;
-        setName("footype");
+        max_serialized_type_size = 4u;
+        set_name("footype");
     }
 
     bool serialize(
-            void* /*data*/,
-            fastrtps::rtps::SerializedPayload_t* /*payload*/) override
+            const void* const /*data*/,
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
+            fastdds::dds::DataRepresentationId_t /*data_representation*/) override
     {
         return true;
     }
 
     bool deserialize(
-            fastrtps::rtps::SerializedPayload_t* /*payload*/,
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
             void* /*data*/) override
     {
         return true;
     }
 
-    std::function<uint32_t()> getSerializedSizeProvider(
-            void* /*data*/) override
+    uint32_t calculate_serialized_size(
+            const void* const /*data*/,
+            fastdds::dds::DataRepresentationId_t /*data_representation*/) override
     {
-        return []()->uint32_t
-               {
-                   return 0;
-               };
+        return 0;
     }
 
-    void* createData() override
+    void* create_data() override
     {
         return nullptr;
     }
 
-    void deleteData(
+    void delete_data(
             void* /*data*/) override
     {
     }
 
-    bool getKey(
-            void* /*data*/,
-            fastrtps::rtps::InstanceHandle_t* /*ihandle*/,
+    bool compute_key(
+            fastdds::rtps::SerializedPayload_t& /*payload*/,
+            fastdds::rtps::InstanceHandle_t& /*ihandle*/,
             bool /*force_md5*/) override
     {
         return true;
     }
 
+    bool compute_key(
+            const void* const /*data*/,
+            fastdds::rtps::InstanceHandle_t& /*ihandle*/,
+            bool /*force_md5*/) override
+    {
+        return true;
+    }
+
+private:
+
+    using TopicDataType::calculate_serialized_size;
+    using TopicDataType::serialize;
 };
 
 class UserListeners : public ::testing::Test
@@ -573,7 +585,7 @@ protected:
         ASSERT_NE(subscriber_, nullptr);
 
         EXPECT_CALL(participant_mock_,
-                registerReader(&reader_mock_, ::testing::_, ::testing::_, nullptr)).WillRepeatedly(
+                register_reader(&reader_mock_, ::testing::_, ::testing::_, nullptr)).WillRepeatedly(
             ::testing::Return(true));
 
         datareader_ =
@@ -584,15 +596,15 @@ protected:
 
     void TearDown() override
     {
-        ASSERT_EQ(publisher_->delete_datawriter(datawriter_), ReturnCode_t::RETCODE_OK);
-        ASSERT_EQ(participant_->delete_publisher(publisher_), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(publisher_->delete_datawriter(datawriter_), RETCODE_OK);
+        ASSERT_EQ(participant_->delete_publisher(publisher_), RETCODE_OK);
 
-        ASSERT_EQ(subscriber_->delete_datareader(datareader_), ReturnCode_t::RETCODE_OK);
-        ASSERT_EQ(participant_->delete_subscriber(subscriber_), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(subscriber_->delete_datareader(datareader_), RETCODE_OK);
+        ASSERT_EQ(participant_->delete_subscriber(subscriber_), RETCODE_OK);
 
-        ASSERT_EQ(participant_->delete_topic(topic_), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(participant_->delete_topic(topic_), RETCODE_OK);
 
-        ASSERT_EQ(DomainParticipantFactory::get_instance()->delete_participant(participant_), ReturnCode_t::RETCODE_OK);
+        ASSERT_EQ(DomainParticipantFactory::get_instance()->delete_participant(participant_), RETCODE_OK);
     }
 
     // RTPS entity mocks are nice, we don't want to track all calls
@@ -620,9 +632,9 @@ void verify_expectations_on_publication_matched (
         StrictMock<CustomPublisherListener>& publisher_listener_,
         StrictMock<CustomDataWriterListener>& datawriter_listener_)
 {
-    fastdds::dds::PublicationMatchedStatus status;
+    rtps::MatchingInfo status;
 
-    RTPSDomain::writer_->listener_->onWriterMatched(nullptr, status);
+    RTPSDomain::writer_->listener_->on_writer_matched(nullptr, status);
     Mock::VerifyAndClearExpectations(&datawriter_listener_);
     Mock::VerifyAndClearExpectations(&publisher_listener_);
     Mock::VerifyAndClearExpectations(&participant_listener_);
@@ -969,9 +981,9 @@ void verify_expectations_on_subscription_matched (
         StrictMock<CustomSubscriberListener>& subscriber_listener_,
         StrictMock<CustomDataReaderListener>& datareader_listener_)
 {
-    SubscriptionMatchedStatus status;
+    fastdds::rtps::MatchingInfo status;
 
-    RTPSDomain::reader_->listener_->onReaderMatched(nullptr, status);
+    RTPSDomain::reader_->get_listener()->on_reader_matched(nullptr, status);
     Mock::VerifyAndClearExpectations(&datareader_listener_);
     Mock::VerifyAndClearExpectations(&subscriber_listener_);
     Mock::VerifyAndClearExpectations(&participant_listener_);
@@ -1091,7 +1103,7 @@ void verify_expectations_on_liveliness_changed (
 {
     LivelinessChangedStatus status;
 
-    RTPSDomain::reader_->listener_->on_liveliness_changed(nullptr, status);
+    RTPSDomain::reader_->get_listener()->on_liveliness_changed(nullptr, status);
     Mock::VerifyAndClearExpectations(&datareader_listener_);
     Mock::VerifyAndClearExpectations(&subscriber_listener_);
     Mock::VerifyAndClearExpectations(&participant_listener_);
@@ -1211,7 +1223,7 @@ void verify_expectations_on_requested_incompatible_qos (
 {
     PolicyMask status;
 
-    RTPSDomain::reader_->listener_->on_requested_incompatible_qos(nullptr, status);
+    RTPSDomain::reader_->get_listener()->on_requested_incompatible_qos(nullptr, status);
     Mock::VerifyAndClearExpectations(&datareader_listener_);
     Mock::VerifyAndClearExpectations(&subscriber_listener_);
     Mock::VerifyAndClearExpectations(&participant_listener_);
@@ -1330,7 +1342,7 @@ void verify_expectations_on_data_available (
         StrictMock<CustomSubscriberListener>& subscriber_listener_,
         StrictMock<CustomDataReaderListener>& datareader_listener_)
 {
-    fastrtps::rtps::CacheChange_t change;
+    fastdds::rtps::CacheChange_t change;
 
     auto seq = change.sequenceNumber;
     bool notify_individual = false;
@@ -1338,7 +1350,7 @@ void verify_expectations_on_data_available (
     EXPECT_CALL(*RTPSDomain::reader_->history_, get_change(_, _, _))
             .WillRepeatedly(testing::DoAll(testing::SetArgPointee<2>(&change), testing::Return(true)));
 
-    RTPSDomain::reader_->listener_->on_data_available(nullptr, change.writerGUID, seq, seq, notify_individual);
+    RTPSDomain::reader_->get_listener()->on_data_available(nullptr, change.writerGUID, seq, seq, notify_individual);
 
     Mock::VerifyAndClearExpectations(&datareader_listener_);
     Mock::VerifyAndClearExpectations(&subscriber_listener_);
@@ -1348,7 +1360,7 @@ void verify_expectations_on_data_available (
 
 TEST_F(UserListeners, data_available)
 {
-    fastrtps::rtps::CacheChange_t change;
+    fastdds::rtps::CacheChange_t change;
 
     //data_on_readers has priority
     ////////////////////////////////////////////////////////////////////

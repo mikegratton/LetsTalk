@@ -13,12 +13,19 @@
 # limitations under the License.
 
 set(CACHECHANGETESTS_SOURCE CacheChangeTests.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp)
 set(GUID_UTILS_TESTS_SOURCE GuidUtilsTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/GuidPrefix_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/md5.cpp
@@ -39,14 +46,23 @@ endif()
 
 set(SEQUENCENUMBERTESTS_SOURCE SequenceNumberTests.cpp)
 set(PORTPARAMETERSTESTS_SOURCE PortParametersTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
 
 set(TIMETESTS_SOURCE TimeTests.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp)
+
+set(VENDORIDTESTS_SOURCE VendorIdTests.cpp)
 
 add_executable(CacheChangeTests ${CACHECHANGETESTS_SOURCE})
 target_compile_definitions(CacheChangeTests PRIVATE
@@ -54,9 +70,11 @@ target_compile_definitions(CacheChangeTests PRIVATE
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(CacheChangeTests PRIVATE
-    ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
+    ${PROJECT_BINARY_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src/cpp)
 target_link_libraries(CacheChangeTests GTest::gtest)
-add_gtest(CacheChangeTests SOURCES ${CACHECHANGETESTS_SOURCE})
+gtest_discover_tests(CacheChangeTests)
 
 add_executable(GuidUtilsTests ${GUID_UTILS_TESTS_SOURCE})
 target_compile_definitions(GuidUtilsTests PRIVATE
@@ -70,14 +88,18 @@ target_include_directories(GuidUtilsTests PRIVATE
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${Asio_INCLUDE_DIR}
     $<$<BOOL:${ANDROID}>:${ANDROID_IFADDRS_INCLUDE_DIR}>)
-target_link_libraries(GuidUtilsTests GTest::gtest)
+target_link_libraries(GuidUtilsTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    )
 if(QNX)
     target_link_libraries(GuidUtilsTests socket)
 endif()
 if(MSVC OR MSVC_IDE)
     target_link_libraries(GuidUtilsTests ws2_32)
 endif()
-add_gtest(GuidUtilsTests SOURCES ${GUID_UTILS_TESTS_SOURCE})
+gtest_discover_tests(GuidUtilsTests)
 
 add_executable(SequenceNumberTests ${SEQUENCENUMBERTESTS_SOURCE})
 target_compile_definitions(SequenceNumberTests PRIVATE
@@ -87,18 +109,25 @@ target_compile_definitions(SequenceNumberTests PRIVATE
 target_include_directories(SequenceNumberTests PRIVATE
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
 target_link_libraries(SequenceNumberTests GTest::gtest)
-add_gtest(SequenceNumberTests SOURCES ${SEQUENCENUMBERTESTS_SOURCE})
+gtest_discover_tests(SequenceNumberTests)
 
 add_executable(PortParametersTests ${PORTPARAMETERSTESTS_SOURCE})
 target_compile_definitions(PortParametersTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(PortParametersTests PRIVATE
+    ${Asio_INCLUDE_DIR}
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
-target_link_libraries(PortParametersTests GTest::gtest)
-add_gtest(PortParametersTests SOURCES ${PORTPARAMETERSTESTS_SOURCE} LABELS "NoMemoryCheck")
+target_link_libraries(PortParametersTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    )
+gtest_discover_tests(PortParametersTests PROPERTIES LABELS "NoMemoryCheck")
 
 ###################
 # GuifPrefix test #
@@ -115,7 +144,7 @@ target_include_directories(GuidPrefixTests PRIVATE
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
 target_link_libraries(GuidPrefixTests GTest::gtest)
-add_gtest(GuidPrefixTests SOURCES ${GUIDPREFIXTESTS_SOURCE} LABELS "NoMemoryCheck")
+gtest_discover_tests(GuidPrefixTests PROPERTIES LABELS "NoMemoryCheck")
 
 #################
 # EntityId test #
@@ -132,7 +161,7 @@ target_include_directories(EntityIdTests PRIVATE
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
 target_link_libraries(EntityIdTests GTest::gtest)
-add_gtest(EntityIdTests SOURCES ${ENTITYIDTESTS_SOURCE} LABELS "NoMemoryCheck")
+gtest_discover_tests(EntityIdTests PROPERTIES LABELS "NoMemoryCheck")
 
 #############
 # Guid test #
@@ -149,17 +178,7 @@ target_include_directories(GuidTests PRIVATE
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp)
 target_link_libraries(GuidTests GTest::gtest)
-add_gtest(GuidTests SOURCES ${GUIDTESTS_SOURCE} LABELS "NoMemoryCheck")
-
-if(ANDROID)
-    set_property(TARGET CacheChangeTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET EntityIdTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET GuidTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET GuidPrefixTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET GuidUtilsTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET PortParametersTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-    set_property(TARGET SequenceNumberTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+gtest_discover_tests(GuidTests PROPERTIES LABELS "NoMemoryCheck")
 
 #############
 # Time test #
@@ -171,6 +190,22 @@ target_compile_definitions(TimeTests PRIVATE
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(TimeTests PRIVATE ${GTEST_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
+    ${PROJECT_BINARY_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src/cpp)
 target_link_libraries(TimeTests GTest::gtest)
-add_gtest(TimeTests SOURCES ${TIMETESTS_SOURCE} LABELS "NoMemoryCheck")
+gtest_discover_tests(TimeTests PROPERTIES LABELS "NoMemoryCheck")
+
+###################
+# VendorId_t test #
+###################
+
+add_executable(VendorIDTests ${VENDORIDTESTS_SOURCE})
+target_compile_definitions(VendorIDTests PRIVATE
+    $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
+    $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
+    )
+target_include_directories(VendorIDTests PRIVATE ${GTEST_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include)
+target_link_libraries(VendorIDTests GTest::gtest)
+gtest_discover_tests(VendorIDTests PROPERTIES LABELS "NoMemoryCheck")

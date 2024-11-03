@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-
-#include "RTPSWithRegistrationReader.hpp"
-#include "RTPSWithRegistrationWriter.hpp"
-
-#include <gtest/gtest.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-
 #include <unordered_map>
 #include <vector>
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <gtest/gtest.h>
+
+#include "BlackboxTests.hpp"
+#include "RTPSWithRegistrationReader.hpp"
+#include "RTPSWithRegistrationWriter.hpp"
+
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 enum communication_type
 {
@@ -38,12 +38,12 @@ public:
 
     void SetUp() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::rtps::RTPSDomain::set_library_settings(library_settings);
                 break;
             case TRANSPORT:
             default:
@@ -53,12 +53,12 @@ public:
 
     void TearDown() override
     {
-        LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::rtps::RTPSDomain::set_library_settings(library_settings);
                 break;
             case TRANSPORT:
             default:
@@ -97,81 +97,68 @@ public:
 
     bool get_payload(
             uint32_t size,
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        return do_get_payload(size, cache_change);
+        return do_get_payload(size, payload);
     }
 
     bool get_payload(
-            SerializedPayload_t& data,
-            IPayloadPool*& data_owner,
-            CacheChange_t& cache_change) override
+            const SerializedPayload_t& data,
+            SerializedPayload_t& payload) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        octet* payload = data.data;
+        octet* payload_buff = data.data;
 
-        if (data_owner == this)
+        if (data.payload_owner == this)
         {
-            uint32_t& refs = all_payloads_[payload];
+            uint32_t& refs = all_payloads_[payload_buff];
             EXPECT_LT(0u, refs);
             ++refs;
             ++num_reserves_;
             ++num_references_;
 
-            cache_change.serializedPayload.data = payload;
-            cache_change.serializedPayload.length = data.length;
-            cache_change.serializedPayload.max_size = data.max_size;
-            cache_change.payload_owner(this);
+            payload.data = payload_buff;
+            payload.length = data.length;
+            payload.max_size = data.max_size;
+            payload.payload_owner = this;
             return true;
         }
 
-        if (!do_get_payload(data.max_size, cache_change))
+        if (!do_get_payload(data.max_size, payload))
         {
             return false;
         }
 
         ++num_copies_;
-        cache_change.serializedPayload.copy(&data, true);
-
-        if (data_owner == nullptr)
-        {
-            payload = cache_change.serializedPayload.data;
-            uint32_t& refs = all_payloads_[payload];
-            ++refs;
-            ++num_reserves_;
-
-            data_owner = this;
-            data.data = payload;
-            data.max_size = cache_change.serializedPayload.max_size;
-        }
+        payload.copy(&data, true);
 
         return true;
     }
 
     bool release_payload(
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        EXPECT_EQ(this, cache_change.payload_owner());
+        EXPECT_EQ(this, payload.payload_owner);
 
-        octet* payload = cache_change.serializedPayload.data;
-        uint32_t& refs = all_payloads_[payload];
+        octet* payload_buff = payload.data;
+        uint32_t& refs = all_payloads_[payload_buff];
 
         EXPECT_GT(refs, 0u);
 
         ++num_releases_;
         if (0 == --refs)
         {
-            free_payloads_.push_back(payload);
+            free_payloads_.push_back(payload_buff);
         }
 
-        cache_change.serializedPayload.data = nullptr;
-        cache_change.serializedPayload.max_size = 0;
-        cache_change.serializedPayload.length = 0;
-        cache_change.payload_owner(nullptr);
+        payload.data = nullptr;
+        payload.max_size = 0;
+        payload.length = 0;
+        payload.payload_owner = nullptr;
 
         return true;
     }
@@ -200,7 +187,7 @@ private:
 
     bool do_get_payload(
             uint32_t size,
-            CacheChange_t& cache_change)
+            SerializedPayload_t& payload)
     {
         if (free_payloads_.empty())
         {
@@ -209,19 +196,19 @@ private:
 
         EXPECT_LE(size, payload_size_);
 
-        octet* payload = free_payloads_.back();
-        uint32_t& refs = all_payloads_[payload];
+        octet* payload_buff = free_payloads_.back();
+        uint32_t& refs = all_payloads_[payload_buff];
         EXPECT_EQ(0u, refs);
 
         free_payloads_.pop_back();
         ++refs;
         ++num_reserves_;
 
-        cache_change.serializedPayload.data = payload;
-        cache_change.serializedPayload.max_size = payload_size_;
-        cache_change.serializedPayload.length = 0;
-        cache_change.serializedPayload.pos = 0;
-        cache_change.payload_owner(this);
+        payload.data = payload_buff;
+        payload.max_size = payload_size_;
+        payload.length = 0;
+        payload.pos = 0;
+        payload.payload_owner = this;
 
         return true;
     }
@@ -249,7 +236,7 @@ void do_test(
     TType type_support;
     uint32_t num_samples = static_cast<uint32_t>(data.size());
     uint32_t num_endpoints = (uint32_t)pool_on_reader + (uint32_t)pool_on_writer;
-    uint32_t payload_size = static_cast<uint32_t>(type_support.m_typeSize);
+    uint32_t payload_size = static_cast<uint32_t>(type_support.max_serialized_type_size);
     payload_size += static_cast<uint32_t>(eprosima::fastcdr::Cdr::alignment(payload_size, 4)); /* possible submessage alignment */
     payload_size += 4u; // encapsulation header
 
@@ -259,7 +246,7 @@ void do_test(
         RTPSWithRegistrationReader<TType> reader(topic_name);
         RTPSWithRegistrationWriter<TType> writer(topic_name);
 
-        reader.reliability(eprosima::fastrtps::rtps::ReliabilityKind_t::RELIABLE);
+        reader.reliability(eprosima::fastdds::rtps::ReliabilityKind_t::RELIABLE);
         if (pool_on_reader)
         {
             reader.payload_pool(pool);

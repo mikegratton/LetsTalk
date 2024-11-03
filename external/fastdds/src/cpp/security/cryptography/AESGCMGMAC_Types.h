@@ -19,17 +19,19 @@
 #ifndef _SECURITY_AUTHENTICATION_AESGCMGMAC_TYPES_H_
 #define _SECURITY_AUTHENTICATION_AESGCMGMAC_TYPES_H_
 
-#include <fastdds/rtps/security/cryptography/CryptoTypes.h>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
-#include <fastdds/rtps/security/common/Handle.h>
-#include <fastdds/rtps/security/common/SharedSecretHandle.h>
-#include <fastdds/rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
-#include <fastdds/rtps/security/accesscontrol/EndpointSecurityAttributes.h>
-
 #include <cassert>
 #include <functional>
 #include <limits>
 #include <mutex>
+
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <fastdds/rtps/attributes/EndpointSecurityAttributes.hpp>
+
+#include <rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
+#include <rtps/security/common/Handle.h>
+#include <rtps/security/common/SharedSecretHandle.h>
+#include <rtps/security/exceptions/SecurityException.h>
+#include <rtps/security/cryptography/CryptoTypes.h>
 
 // Fix compilation error on Windows
 #if defined(WIN32) && defined(max)
@@ -52,7 +54,7 @@
 #define CRYPTO_TRANSFORMATION_KIND_AES256_GCM       { {0, 0, 0, 4} }
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -137,7 +139,7 @@ struct SecureDataTag
 
 struct KeySessionData
 {
-    uint32_t session_id = std::numeric_limits<uint32_t>::max();
+    uint32_t session_id = (std::numeric_limits<uint32_t>::max)();
     std::array<uint8_t, 32> SessionKey = c_empty_key_material;
     uint64_t session_block_counter = 0;
 };
@@ -208,7 +210,7 @@ typedef HandleImpl<ParticipantKeyHandle, AESGCMGMAC_KeyFactory> AESGCMGMAC_Parti
 
 } //namespaces security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #endif // _SECURITY_AUTHENTICATION_AESGCMGMAC_TYPES_H_

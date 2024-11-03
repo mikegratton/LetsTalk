@@ -16,13 +16,17 @@
  * @file PropertyPolicy.cpp
  */
 
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
 
 #include <algorithm>
 
-using namespace eprosima::fastrtps::rtps;
+namespace eprosima {
+namespace fastdds {
+namespace rtps {
 
-PropertyPolicy PropertyPolicyHelper::get_properties_with_prefix(const PropertyPolicy& property_policy, const std::string& prefix)
+PropertyPolicy PropertyPolicyHelper::get_properties_with_prefix(
+        const PropertyPolicy& property_policy,
+        const std::string& prefix)
 {
     PropertyPolicy returned_property_policy;
 
@@ -30,7 +34,7 @@ PropertyPolicy PropertyPolicyHelper::get_properties_with_prefix(const PropertyPo
     std::for_each(property_policy.properties().begin(), property_policy.properties().end(),
             [&returned_property_policy, &prefix](const Property& property)
             {
-                if(property.name().compare(0, prefix.size(), prefix) == 0)
+                if (property.name().compare(0, prefix.size(), prefix) == 0)
                 {
                     Property new_property(property);
                     new_property.name().erase(0, prefix.size());
@@ -42,7 +46,7 @@ PropertyPolicy PropertyPolicyHelper::get_properties_with_prefix(const PropertyPo
     std::for_each(property_policy.binary_properties().begin(), property_policy.binary_properties().end(),
             [&returned_property_policy, &prefix](const BinaryProperty& property)
             {
-                if(property.name().compare(0, prefix.size(), prefix) == 0)
+                if (property.name().compare(0, prefix.size(), prefix) == 0)
                 {
                     BinaryProperty new_property(property);
                     new_property.name().erase(0, prefix.size());
@@ -53,19 +57,23 @@ PropertyPolicy PropertyPolicyHelper::get_properties_with_prefix(const PropertyPo
     return returned_property_policy;
 }
 
-size_t PropertyPolicyHelper::length(const PropertyPolicy& property_policy)
+size_t PropertyPolicyHelper::length(
+        const PropertyPolicy& property_policy)
 {
     return property_policy.properties().size() +
-        property_policy.binary_properties().size();
+           property_policy.binary_properties().size();
 }
 
-std::string* PropertyPolicyHelper::find_property(PropertyPolicy& property_policy, const std::string& name)
+std::string* PropertyPolicyHelper::find_property(
+        PropertyPolicy& property_policy,
+        const std::string& name)
 {
     std::string* returnedValue = nullptr;
 
-    for(auto property = property_policy.properties().begin(); property != property_policy.properties().end(); ++property)
+    for (auto property = property_policy.properties().begin(); property != property_policy.properties().end();
+            ++property)
     {
-        if(property->name().compare(name) == 0)
+        if (property->name().compare(name) == 0)
         {
             returnedValue = &property->value();
             break;
@@ -75,13 +83,16 @@ std::string* PropertyPolicyHelper::find_property(PropertyPolicy& property_policy
     return returnedValue;
 }
 
-const std::string* PropertyPolicyHelper::find_property(const PropertyPolicy& property_policy, const std::string& name)
+const std::string* PropertyPolicyHelper::find_property(
+        const PropertyPolicy& property_policy,
+        const std::string& name)
 {
     const std::string* returnedValue = nullptr;
 
-    for(auto property = property_policy.properties().begin(); property != property_policy.properties().end(); ++property)
+    for (auto property = property_policy.properties().begin(); property != property_policy.properties().end();
+            ++property)
     {
-        if(property->name().compare(name) == 0)
+        if (property->name().compare(name) == 0)
         {
             returnedValue = &property->value();
             break;
@@ -90,3 +101,26 @@ const std::string* PropertyPolicyHelper::find_property(const PropertyPolicy& pro
 
     return returnedValue;
 }
+
+const Property* PropertyPolicyHelper::get_property(
+        const PropertyPolicy& property_policy,
+        const std::string& name)
+{
+    const Property* returnedValue = nullptr;
+
+    for (auto property = property_policy.properties().begin(); property != property_policy.properties().end();
+            ++property)
+    {
+        if (property->name().compare(name) == 0)
+        {
+            returnedValue = &*property;
+            break;
+        }
+    }
+
+    return returnedValue;
+}
+
+}  // namespace rtps
+}  // namespace fastdds
+}  // namespace eprosima

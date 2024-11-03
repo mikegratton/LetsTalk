@@ -1,6 +1,6 @@
 #include "LetsTalk/LetsTalk.hpp"
 #include "doctest.h"
-#include "idl/HelloWorld.h"
+#include "idl/HelloWorld.hpp"
 
 TEST_CASE("Waitset.ctor")
 {

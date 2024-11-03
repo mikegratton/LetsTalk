@@ -18,15 +18,12 @@
  */
 
 #include <fastdds/dds/core/condition/WaitSet.hpp>
-#include <fastrtps/types/TypesBase.h>
 
 #include <fastdds/core/condition/WaitSetImpl.hpp>
 
 namespace eprosima {
 namespace fastdds {
 namespace dds {
-
-using eprosima::fastrtps::types::ReturnCode_t;
 
 WaitSet::WaitSet()
     : impl_(new detail::WaitSetImpl())
@@ -51,7 +48,7 @@ ReturnCode_t WaitSet::detach_condition(
 
 ReturnCode_t WaitSet::wait(
         ConditionSeq& active_conditions,
-        const fastrtps::Duration_t timeout) const
+        const fastdds::dds::Duration_t timeout) const
 {
     return impl_->wait(active_conditions, timeout);
 }

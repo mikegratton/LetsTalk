@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+<profiles xmlns="http://www.eprosima.com" >
     <participant profile_name="domainparticipant_profile_name">
         <domainId>11</domainId>
         <rtps>
@@ -109,16 +109,12 @@
                     <discoveryProtocol>CLIENT</discoveryProtocol>
 
                     <discoveryServersList>
-                        <RemoteServer prefix="72.61.73.70.66.61.72.6d.74.65.73.74">
-                            <metatrafficUnicastLocatorList>
-                                <locator>
-                                    <udpv4>
-                                        <address>192.168.10.57</address>
-                                        <port>56542</port>
-                                    </udpv4>
-                                </locator>
-                            </metatrafficUnicastLocatorList>
-                        </RemoteServer>
+                        <locator>
+                            <udpv4>
+                                <address>192.168.10.57</address>
+                                <port>56542</port>
+                            </udpv4>
+                        </locator>
                     </discoveryServersList>
 
                     <ignoreParticipantFlags>FILTER_DIFFERENT_HOST</ignoreParticipantFlags>
@@ -292,10 +288,6 @@
 
                 <mutation_tries>55</mutation_tries>
 
-                <typelookup_config>
-                    <use_client>true</use_client>
-                    <use_server>true</use_server>
-                </typelookup_config>
             </builtin>
 
             <port>
@@ -375,6 +367,11 @@
                 <send_buffers>
                     <preallocated_number>127</preallocated_number>
                     <dynamic>true</dynamic>
+                    <network_buffers_config>
+                        <initial>16</initial>
+                        <maximum>0</maximum>
+                        <increment>16</increment>
+                    </network_buffers_config>
                 </send_buffers>
             </allocation>
         </rtps>

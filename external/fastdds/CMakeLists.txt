@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ##############################################################################
+###############################################################################
 # CMake build rules for Fast DDS
-# ##############################################################################
-cmake_minimum_required(VERSION 3.22)
+###############################################################################
+cmake_minimum_required(VERSION 3.20)
 
 # Set CMAKE_BUILD_TYPE to Release by default.
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -26,24 +26,24 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-# ##############################################################################
+###############################################################################
 # Project                                                                     #
-# ##############################################################################
-project(fastrtps VERSION "2.12.0" LANGUAGES C CXX)
+###############################################################################
+project(fastdds VERSION "3.1.0" LANGUAGES C CXX)
 
-set(PROJECT_NAME_LARGE "Fast RTPS")
+set(PROJECT_NAME_LARGE "Fast DDS")
 string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
 
 message(STATUS "Version: ${PROJECT_VERSION}")
 
-# ##############################################################################
+###############################################################################
 # eProsima build options
-# ##############################################################################
+###############################################################################
 option(EPROSIMA_BUILD "Activate internal building" OFF)
 
-# ##############################################################################
+###############################################################################
 # Warning level
-# ##############################################################################
+###############################################################################
 if(MSVC OR MSVC_IDE)
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
         string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -68,15 +68,22 @@ if(MSVC OR MSVC_IDE)
         string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     endif()
 else()
+    # Add some generic warnings common to all compilers
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -Wno-unknown-pragmas -Wno-error=deprecated-declarations")
-
+        "${CMAKE_CXX_FLAGS} -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Wno-error=deprecated-declarations -Wno-switch-bool")
+    # Add compiler specific options
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
     elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-builtins")
+        if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15,0)
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-builtins")
+        endif()
         set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl")
+    endif()
+
+    if(EPROSIMA_EXTRA_CMAKE_CXX_FLAGS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EPROSIMA_EXTRA_CMAKE_CXX_FLAGS}")
     endif()
 
     if(EPROSIMA_BUILD)
@@ -84,10 +91,10 @@ else()
     endif()
 endif()
 
-# ##############################################################################
+###############################################################################
 # CCache on Windows on CI
-# ##############################################################################
-if(MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
+###############################################################################
+if (MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
     foreach(config DEBUG RELWITHDEBINFO)
         foreach(lang C CXX)
             set(flags_var "CMAKE_${lang}_FLAGS_${config}")
@@ -97,18 +104,19 @@ if(MSVC AND CMAKE_CXX_COMPILER_LAUNCHER STREQUAL "ccache")
     endforeach()
 endif()
 
-# ##############################################################################
+###############################################################################
 # GCC colors if using CCache
-# ##############################################################################
+###############################################################################
 if("${CMAKE_CXX_COMPILER_LAUNCHER}" STREQUAL "ccache" AND
         CMAKE_COMPILER_IS_GNUCXX AND
         CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4,8)
     add_compile_options(-fdiagnostics-color=always)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Test system configuration
-# ##############################################################################
+###############################################################################
+
 include(${PROJECT_SOURCE_DIR}/cmake/common/check_configuration.cmake)
 
 set(FORCE_CXX "11" CACHE STRING "C++ standard fulfillment selection")
@@ -116,18 +124,17 @@ check_stdcxx(${FORCE_CXX})
 
 check_endianness()
 
-# ##############################################################################
+###############################################################################
 # Activate Sanitizers
-# ##############################################################################
+###############################################################################
 option(SANITIZER "Enable Thread or Address sanitizers" OFF)
 string(TOUPPER ${SANITIZER} SANITIZER)
 
-if(SANITIZER)
+if (SANITIZER)
     if(${SANITIZER} STREQUAL "ADDRESS")
         message(STATUS "Enabling address sanitizer...")
-
         # Warning/Error messages
-        if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
+        if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(WARNING "Address sanitizer results with an optimized (non-Debug) build may be misleading")
         endif()
 
@@ -149,9 +156,8 @@ if(SANITIZER)
 
     elseif(${SANITIZER} STREQUAL "THREAD")
         message(STATUS "Enabling thread sanitizer...")
-
         # Warning/Error messages
-        if(NOT(CMAKE_BUILD_TYPE STREQUAL "Debug"))
+        if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
             message(WARNING "Thread sanitizer results with an optimized (non-Debug) build may be misleading")
         endif()
 
@@ -173,80 +179,91 @@ if(SANITIZER)
 
     else()
         message(WARNING "Sanitizer option not supported. Continuing without any code instrumentation... ")
+
     endif()
 endif()
 
-# ##############################################################################
+###############################################################################
+# Set warnings as errors if the thread sanitizer is not being used
+###############################################################################
+string(FIND ${CMAKE_CXX_FLAGS} "-fsanitize=thread" SANITIZER_THREAD)
+if (${SANITIZER_THREAD} EQUAL -1)
+    message(STATUS "Setting warnings as errors...")
+    if(MSVC OR MSVC_IDE)
+        add_compile_options(/WX)
+    else()
+        set(CMAKE_CXX_FLAGS
+            "${CMAKE_CXX_FLAGS} -Werror")
+    endif()
+endif()
+
+###############################################################################
 # Installation paths
-# ##############################################################################
+###############################################################################
 option(APPEND_PROJECT_NAME_TO_INCLUDEDIR
-    "When ON headers are installed to a path ending with a folder called \
+  "When ON headers are installed to a path ending with a folder called \
   ${PROJECT_NAME}. This avoids include directory search order issues when \
   overriding this package from a merged catkin, ament, or colcon workspace."
-    OFF)
+  OFF)
 
 set(BIN_INSTALL_DIR bin/ CACHE PATH "Installation directory for binaries")
 set(_include_dir "include/")
-
 if(APPEND_PROJECT_NAME_TO_INCLUDEDIR)
-    string(APPEND _include_dir "${PROJECT_NAME}/")
+  string(APPEND _include_dir "${PROJECT_NAME}/")
 endif()
-
 set(INCLUDE_INSTALL_DIR "${_include_dir}" CACHE PATH "Installation directory for C++ headers")
 unset(_include_dir)
 set(LIB_INSTALL_DIR lib${LIB_SUFFIX}/ CACHE PATH "Installation directory for libraries")
 set(DATA_INSTALL_DIR share/ CACHE PATH "Installation directory for data")
-
 if(WIN32)
     set(DOC_DIR "doc")
 else()
     set(DOC_DIR "${DATA_INSTALL_DIR}/doc")
 endif()
-
 set(DOC_INSTALL_DIR ${DOC_DIR} CACHE PATH "Installation directory for documentation")
 set(LICENSE_INSTALL_DIR ${DATA_INSTALL_DIR}/${PROJECT_NAME} CACHE PATH "Installation directory for licenses")
 
-# ##############################################################################
+###############################################################################
 # Internal debug messages
-# ##############################################################################
+###############################################################################
+
 if(EPROSIMA_BUILD)
     set(INTERNAL_DEBUG ON)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Load CMake modules
-# ##############################################################################
+###############################################################################
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake/modules)
 
-# ##############################################################################
+###############################################################################
 # Default shared libraries
-# ##############################################################################
+###############################################################################
 # Global flag to cause add_library() to create shared libraries if on.
 # If set to true, this will cause all libraries to be built shared
 # unless the library was explicitly added as a static library.
 option(BUILD_SHARED_LIBS "Create shared libraries by default" ON)
 
-# ##############################################################################
+###############################################################################
 # Load external projects.
-# ##############################################################################
+###############################################################################
 include(${PROJECT_SOURCE_DIR}/cmake/common/eprosima_libraries.cmake)
 
-# if we are building Fast-DDS as a static library we must load Fast-CDR as one
+# if we are building Fast DDS as a static library we must load Fast-CDR as one
 if(NOT BUILD_SHARED_LIBS)
     set(FASTDDS_STATIC ON)
 endif()
 
-# eprosima_find_package(fastcdr 2.0 REQUIRED)
-# eprosima_find_thirdparty(Asio asio VERSION 1.10.8)
-# eprosima_find_thirdparty(TinyXML2 tinyxml2)
-set(TINYXML2_LIBRARY tinyxml2::tinyxml2)
+eprosima_find_package(fastcdr 2 REQUIRED)
+eprosima_find_thirdparty(Asio asio VERSION 1.10.8)
+eprosima_find_thirdparty(TinyXML2 tinyxml2)
 
 # find_package(foonathan_memory REQUIRED)
-# message(STATUS "Found foonathan_memory: ${foonathan_memory_DIR}")
+message(STATUS "Found foonathan_memory: ${foonathan_memory_DIR}")
 find_package(ThirdpartyBoost REQUIRED)
 
 if(ANDROID)
-    if((ANDROID_PLATFORM LESS_EQUAL 23) OR(ANDROID_NATIVE_API_LEVEL LESS_EQUAL 23))
+    if((ANDROID_PLATFORM LESS_EQUAL 23) OR (ANDROID_NATIVE_API_LEVEL LESS_EQUAL 23))
         eprosima_find_thirdparty(android-ifaddrs android-ifaddrs)
     endif()
 endif()
@@ -254,9 +271,9 @@ endif()
 include_directories(thirdparty/nlohmann-json)
 include_directories(thirdparty/filewatch)
 
-# ##############################################################################
+###############################################################################
 # Options
-# ##############################################################################
+###############################################################################
 option(SECURITY "Activate security" OFF)
 
 if(QNX)
@@ -274,7 +291,6 @@ if(OPENSSL_FOUND)
 endif()
 
 option(NO_TLS "Disables TLS Support" OFF)
-
 if(OPENSSL_FOUND AND NOT NO_TLS)
     set(TLS_FOUND 1)
 else()
@@ -303,38 +319,39 @@ endif()
 
 option(SQLITE3_SUPPORT "Activate SQLITE3 support" ON)
 
-# ##############################################################################
+###############################################################################
 # SHM as Default transport
-# ##############################################################################
+###############################################################################
 option(SHM_TRANSPORT_DEFAULT "Add SHM transport to the default transports" ON)
 
-# ##############################################################################
+###############################################################################
 # LogConsumer default setup
-# ##############################################################################
+###############################################################################
 set(LOG_CONSUMER_DEFAULT AUTO CACHE STRING "Selects default LogConsumer")
 set_property(CACHE LOG_CONSUMER_DEFAULT PROPERTY STRINGS AUTO STDOUT STDOUTERR)
 
-if(LOG_CONSUMER_DEFAULT STREQUAL "STDOUTERR")
+if(LOG_CONSUMER_DEFAULT STREQUAL "STDOUT")
+    set(STDOUTERR_LOG_CONSUMER OFF)
+else()
     set(STDOUTERR_LOG_CONSUMER ON)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Log Info default setup
-# ##############################################################################
+###############################################################################
+
 include(CMakeDependentOption)
 
 set(LOG_NO_INFO_HELP "\
 Do not compile Info Log level. For the sake of efficiency non-debug \
 configs do not log info messages unless the option FASTDDS_ENFORCE_LOG_INFO \
 is set to on.")
-
-if(CMAKE_BUILD_TYPE MATCHES "^([Dd][Ee][Bb][Uu][Gg])$" # single config generator
-    OR("Debug" IN_LIST CMAKE_CONFIGURATION_TYPES)) # multi config generator
+if(CMAKE_BUILD_TYPE MATCHES "^([Dd][Ee][Bb][Uu][Gg])$"  # single config generator
+   OR ("Debug" IN_LIST CMAKE_CONFIGURATION_TYPES))      # multi config generator
     option(LOG_NO_INFO ${LOG_NO_INFO_HELP} OFF)
 else()
     option(LOG_NO_INFO ${LOG_NO_INFO_HELP} ON)
 endif()
-
 unset(LOG_NO_INFO_HELP)
 
 option(LOG_NO_WARNING "Do not compile Warning Log level" OFF)
@@ -375,40 +392,40 @@ else()
     set(HAVE_LOG_NO_ERROR 0)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Tools default setup
-# ##############################################################################
+###############################################################################
 option(COMPILE_TOOLS "Build tools" ON)
 
 if(EPROSIMA_BUILD)
     set(COMPILE_TOOLS ON)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Fast DDS statistics tool default setup
-# ##############################################################################
+###############################################################################
 option(FASTDDS_STATISTICS "Enable Fast DDS Statistics Module" ON)
 
-# ##############################################################################
+###############################################################################
 # Compile library.
-# ##############################################################################
+###############################################################################
 add_subdirectory(src/cpp)
 
-# ##############################################################################
+###############################################################################
 # Add http://optionparser.sourceforge.net/ as unified cli parser
-# ##############################################################################
+###############################################################################
 add_subdirectory(thirdparty/optionparser)
 
-# ##############################################################################
+###############################################################################
 # Testing options
-# ##############################################################################
+###############################################################################
 enable_testing()
 include(CTest)
 add_subdirectory(test)
 
-# ##############################################################################
+###############################################################################
 # Examples
-# ##############################################################################
+###############################################################################
 option(COMPILE_EXAMPLES "Build example" OFF)
 
 if(EPROSIMA_BUILD)
@@ -419,23 +436,24 @@ if(COMPILE_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Fuzzers
-# ##############################################################################
+###############################################################################
 if(DEFINED ENV{LIB_FUZZING_ENGINE})
     add_subdirectory(fuzz)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Tools
-# ##############################################################################
+###############################################################################
+
 if(COMPILE_TOOLS)
     add_subdirectory(tools)
 endif()
 
-# ##############################################################################
+###############################################################################
 # Documentation
-# ##############################################################################
+###############################################################################
 # Add an option to toggle the generation of the API documentation.
 option(BUILD_DOCUMENTATION "Use doxygen to create product documentation" OFF)
 option(CHECK_DOCUMENTATION "Use doxygen to check code documentation" OFF)
@@ -446,14 +464,11 @@ endif()
 
 if(BUILD_DOCUMENTATION)
     find_package(Doxygen)
-
     if(NOT DOXYGEN_FOUND)
         message(FATAL_ERROR "doxygen is needed to build the documentation. Please install it correctly")
     endif()
-
     if(UNIX)
         find_program(DOXYFILE_MAKE make)
-
         if(DOXYFILE_MAKE)
             message(STATUS "Found Make: ${DOXYFILE_MAKE}")
         else()
@@ -465,7 +480,6 @@ if(BUILD_DOCUMENTATION)
 
     if(NOT CHECK_DOCUMENTATION)
         find_program(UNZIP_EXE unzip)
-
         if(UNZIP_EXE)
             message(STATUS "Found Unzip: ${UNZIP_EXE}")
         else()
@@ -474,29 +488,28 @@ if(BUILD_DOCUMENTATION)
     endif()
 
     # Target to create documentation directories
-    add_custom_target(docdirs
+    add_custom_target(fastdds_docdirs
         COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_BINARY_DIR}/doc
         COMMENT "Creating documentation directory" VERBATIM)
 
-    # ## Doxygen ########################3
+    ### Doxygen ########################3
     if(CHECK_DOCUMENTATION)
         set(USE_DOT NO)
     else()
         set(USE_DOT YES)
     endif()
-
     # Configure the template doxyfile for or specific project
-    configure_file(doxyfile.in ${PROJECT_BINARY_DIR}/doxyfile @ONLY IMMEDIATE)
-
+    configure_file(utils/doxygen/doxyfile.in ${PROJECT_BINARY_DIR}/doxyfile @ONLY IMMEDIATE)
     # Add custom target to run doxygen when ever the project is build
-    add_custom_target(doxygen
+    add_custom_target(fastdds_doxygen
         COMMAND "${DOXYGEN_EXECUTABLE}" "${PROJECT_BINARY_DIR}/doxyfile"
         SOURCES "${PROJECT_BINARY_DIR}/doxyfile"
         COMMENT "Generating API documentation with doxygen" VERBATIM)
 
-    add_dependencies(doxygen docdirs)
+    add_dependencies(fastdds_doxygen fastdds_docdirs)
 
-    # ## README html ########################
+    ### README html ########################
+
     if(WIN32)
         set(README_LOCATION "${PROJECT_BINARY_DIR}/")
         set(README_LOCATION_PREFFIX "doc/")
@@ -506,10 +519,10 @@ if(BUILD_DOCUMENTATION)
         set(README_INSTALL_LOCATION "${DOC_INSTALL_DIR}")
     endif()
 
-    configure_file(doc/README.html.in ${README_LOCATION}/README.html @ONLY IMMEDIATE)
 
-    # ## ReadTheDocs ########################
+    ### ReadTheDocs ########################
     if(NOT CHECK_DOCUMENTATION)
+
         file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom_template.cmake [=[
 
             file(DOWNLOAD "https://fast-dds.docs.eprosima.com/_/downloads/en/v${PROJECT_VERSION}/htmlzip/" "./eprosima-fast-rtps.zip"
@@ -537,83 +550,78 @@ if(BUILD_DOCUMENTATION)
 
             ]=])
 
-        configure_file(${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom_template.cmake ${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom.cmake)
+        configure_file(${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom_template.cmake  ${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom.cmake)
 
         add_custom_target(readthedocs
             COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/readthedocs_custom.cmake
-        )
+            )
 
-        add_dependencies(readthedocs docdirs)
+        add_dependencies(readthedocs fastdds_docdirs)
     endif()
 
-    add_custom_target(doc ALL
+    add_custom_target(fastdds_doc ALL
         COMMENT "Generated project documentation" VERBATIM)
 
-    add_dependencies(doc doxygen)
-
+    add_dependencies(fastdds_doc fastdds_doxygen)
     if(NOT CHECK_DOCUMENTATION)
-        add_dependencies(doc readthedocs)
+        add_dependencies(fastdds_doc readthedocs)
     endif()
 endif()
 
-# ##############################################################################
+###############################################################################
 # Packaging
-# ##############################################################################
+###############################################################################
 # Install licenses
 install(FILES ${PROJECT_SOURCE_DIR}/LICENSE
     DESTINATION ${LICENSE_INSTALL_DIR}
     COMPONENT licenses
-)
+    )
 
 # Install xml validators
-install(FILES ${PROJECT_SOURCE_DIR}/resources/xsd/fastRTPS_profiles.xsd
-    DESTINATION ${DATA_INSTALL_DIR}
+install(FILES ${PROJECT_SOURCE_DIR}/resources/xsd/fastdds_profiles.xsd
+    DESTINATION ${DATA_INSTALL_DIR}/fastdds
     COMPONENT xsd
-)
+    )
 
 install(FILES ${PROJECT_SOURCE_DIR}/resources/xsd/fastdds_static_discovery.xsd
-    DESTINATION ${DATA_INSTALL_DIR}
+    DESTINATION ${DATA_INSTALL_DIR}/fastdds
     COMPONENT xsd
-)
+    )
 
 option(INSTALL_EXAMPLES "Install example" OFF)
 
 if(INSTALL_EXAMPLES)
-    # Install examples
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/examples/cpp
-        DESTINATION examples/
-        COMPONENT examples
-        PATTERN "examples/CMakeLists.txt" EXCLUDE
-    )
+  # Install examples
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/examples/cpp
+      DESTINATION ${DATA_INSTALL_DIR}/fastdds/examples
+      COMPONENT ${DATA_INSTALL_DIR}/fastdds/examples
+      PATTERN "examples/CMakeLists.txt" EXCLUDE
+      )
 endif()
 
 option(INSTALL_TOOLS "Install tools" OFF)
 
 if(INSTALL_TOOLS)
-    # Install tools
-    install(DIRECTORY ${PROJECT_SOURCE_DIR}/tools
-        DESTINATION tools/
-        COMPONENT tools
-        PATTERN "tools/CMakeLists.txt" EXCLUDE
-    )
+  # Install tools
+  install(DIRECTORY ${PROJECT_SOURCE_DIR}/tools
+      DESTINATION tools
+      COMPONENT tools
+      PATTERN "tools/CMakeLists.txt" EXCLUDE
+      )
 endif()
 
 if(BUILD_DOCUMENTATION)
+
     # Instalation of doxygen files
     install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/api_reference
         DESTINATION ${DOC_INSTALL_DIR}
         COMPONENT documentation
-    )
-
-    install(FILES "${README_LOCATION}/README.html"
-        DESTINATION ${README_INSTALL_LOCATION}
-        COMPONENT documentation
-    )
+        )
 
     if(NOT CHECK_DOCUMENTATION)
         install(DIRECTORY ${PROJECT_BINARY_DIR}/doc/manual
             DESTINATION ${DOC_INSTALL_DIR}
             COMPONENT documentation
-        )
+            )
     endif()
 endif()

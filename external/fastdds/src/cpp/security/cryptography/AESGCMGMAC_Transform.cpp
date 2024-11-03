@@ -19,7 +19,8 @@
 #include <security/cryptography/AESGCMGMAC_Transform.h>
 
 #include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/messages/CDRMessage.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <rtps/messages/CDRMessage.hpp>
 
 #include <openssl/aes.h>
 #include <openssl/evp.h>
@@ -37,8 +38,11 @@
 #undef max
 #endif // ifdef WIN32
 
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps::rtps::security;
+namespace eprosima {
+namespace fastdds {
+namespace rtps {
+
+using namespace security;
 
 constexpr int initialization_vector_suffix_length = 8;
 
@@ -2312,3 +2316,7 @@ bool AESGCMGMAC_Transform::lookup_writer(
 
     return false;
 }
+
+} // namespace rtps
+} // namespace fastdds
+} // namespace eprosima

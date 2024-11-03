@@ -16,30 +16,29 @@
  * @file Publisher.cpp
  */
 
-#include <asio.hpp>
-
-#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
-#include <fastdds/dds/domain/DomainParticipant.hpp>
-#include <fastdds/dds/domain/DomainParticipantListener.hpp>
-#include <fastdds/dds/publisher/Publisher.hpp>
-#include <fastdds/dds/publisher/PublisherListener.hpp>
-#include <fastdds/dds/publisher/qos/PublisherQos.hpp>
-#include <fastdds/dds/publisher/DataWriter.hpp>
-#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
-
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/attributes/PublisherAttributes.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-
-#include <mutex>
+#include <chrono>
 #include <condition_variable>
 #include <fstream>
+#include <mutex>
 #include <string>
+#include <thread>
+
+#include <asio.hpp>
+#include <fastdds/dds/domain/DomainParticipant.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/dds/domain/DomainParticipantListener.hpp>
+#include <fastdds/dds/publisher/DataWriter.hpp>
+#include <fastdds/dds/publisher/Publisher.hpp>
+#include <fastdds/dds/publisher/PublisherListener.hpp>
+#include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
+#include <fastdds/dds/publisher/qos/PublisherQos.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicDataFactory.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
 
 using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 static bool run = true;
 
@@ -65,27 +64,29 @@ public:
      */
     void on_participant_discovery(
             DomainParticipant* /*participant*/,
-            rtps::ParticipantDiscoveryInfo&& info) override
+            rtps::ParticipantDiscoveryStatus status,
+            const ParticipantBuiltinTopicData& info,
+            bool& /*should_be_ignored*/) override
     {
-        if (info.status == rtps::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT)
+        if (status == rtps::ParticipantDiscoveryStatus::DISCOVERED_PARTICIPANT)
         {
             std::cout << "Publisher participant " << //participant->getGuid() <<
-                " discovered participant " << info.info.m_guid << std::endl;
+                " discovered participant " << info.guid << std::endl;
         }
-        else if (info.status == rtps::ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT)
+        else if (status == rtps::ParticipantDiscoveryStatus::CHANGED_QOS_PARTICIPANT)
         {
             std::cout << "Publisher participant " << //participant->getGuid() <<
-                " detected changes on participant " << info.info.m_guid << std::endl;
+                " detected changes on participant " << info.guid << std::endl;
         }
-        else if (info.status == rtps::ParticipantDiscoveryInfo::REMOVED_PARTICIPANT)
+        else if (status == rtps::ParticipantDiscoveryStatus::REMOVED_PARTICIPANT)
         {
             std::cout << "Publisher participant " << //participant->getGuid() <<
-                " removed participant " << info.info.m_guid << std::endl;
+                " removed participant " << info.guid << std::endl;
         }
-        else if (info.status == rtps::ParticipantDiscoveryInfo::DROPPED_PARTICIPANT)
+        else if (status == rtps::ParticipantDiscoveryStatus::DROPPED_PARTICIPANT)
         {
             std::cout << "Publisher participant " << //participant->getGuid() <<
-                " dropped participant " << info.info.m_guid << std::endl;
+                " dropped participant " << info.guid << std::endl;
             if (exit_on_lost_liveliness_)
             {
                 run = false;
@@ -113,6 +114,8 @@ public:
 #endif // if HAVE_SECURITY
 
 private:
+
+    using DomainParticipantListener::on_participant_discovery;
 
     bool exit_on_lost_liveliness_;
 };
@@ -165,7 +168,6 @@ int main(
     int arg_count = 1;
     bool exit_on_lost_liveliness = false;
     uint32_t seed = 7800, wait = 0;
-    //char* xml_file = nullptr;
     uint32_t samples = 4;
     std::string magic;
 
@@ -224,23 +226,14 @@ int main(
                 return -1;
             }
 
-            //xml_file = argv[arg_count];
         }
 
         ++arg_count;
     }
 
-    /* TODO - XMLProfileManager doesn't support DDS yet
-       if (xml_file)
-       {
-        DomainParticipantFactory::get_instance()->load_XML_profiles_file(xml_file);
-       }
-     */
-
-    xmlparser::XMLProfileManager::loadXMLFile("example_type_profile.xml");
+    DomainParticipantFactory::get_instance()->load_XML_profiles_file("example_type_profile.xml");
 
     DomainParticipantQos participant_qos;
-    participant_qos.wire_protocol().builtin.typelookup_config.use_server = true;
     ParListener participant_listener(exit_on_lost_liveliness);
     DomainParticipant* participant =
             DomainParticipantFactory::get_instance()->create_participant(seed % 230, participant_qos,
@@ -252,8 +245,15 @@ int main(
         return 1;
     }
 
-    types::DynamicType_ptr dyn_type = xmlparser::XMLProfileManager::getDynamicTypeByName("TypeLookup")->build();
-    TypeSupport type(new types::DynamicPubSubType(dyn_type));
+    DynamicType::_ref_type dyn_type;
+    if (RETCODE_OK != DomainParticipantFactory::get_instance()->
+                    get_dynamic_type_builder_from_xml_by_name("TypeLookup", dyn_type))
+    {
+        std::cout << "Error getting dynamic type from XML file" << std::endl;
+        return 1;
+    }
+
+    TypeSupport type(new DynamicPubSubType(dyn_type));
     type.register_type(participant);
 
     PubListener listener;
@@ -303,16 +303,16 @@ int main(
                 });
     }
 
-    types::DynamicData_ptr data(types::DynamicDataFactory::get_instance()->create_data(dyn_type));
-    data->set_string_value("Hello DDS Dynamic World", 0);
+    DynamicData::_ref_type data {DynamicDataFactory::get_instance()->create_data(dyn_type)};
+    data->set_string_value(0, "Hello DDS Dynamic World");
     data->set_uint32_value(1, 1);
-    types::DynamicData* inner = data->loan_value(2);
-    inner->set_byte_value(10, 0);
+    DynamicData::_ref_type inner {data->loan_value(2)};
+    inner->set_byte_value(0, 10);
     data->return_loaned_value(inner);
 
     while (run)
     {
-        writer->write(data.get());
+        writer->write(&data);
 
         uint32_t index;
         data->get_uint32_value(index, 1);
@@ -323,13 +323,13 @@ int main(
         }
         else
         {
-            data->set_uint32_value(index + 1, 1);
+            data->set_uint32_value(1, index + 1);
         }
 
         inner = data->loan_value(2);
         octet inner_count;
         inner->get_byte_value(inner_count, 0);
-        inner->set_byte_value(inner_count + 1, 0);
+        inner->set_byte_value(0, inner_count + 1);
         data->return_loaned_value(inner);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(250));

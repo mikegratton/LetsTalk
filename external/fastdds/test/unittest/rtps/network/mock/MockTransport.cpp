@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <MockTransport.h>
 #include <algorithm>
-#include <cstring>
+#include <vector>
 
-using namespace std;
+#include <MockTransport.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 std::vector<MockTransport*> MockTransport::mockTransportInstances;
@@ -49,8 +48,8 @@ MockTransport::~MockTransport()
 }
 
 bool MockTransport::init(
-        const PropertyPolicy* /*properties*/)
-
+        const fastdds::rtps::PropertyPolicy* /*properties*/,
+        const uint32_t& /*max_msg_size_no_frag*/)
 {
     return true;
 }
@@ -74,8 +73,14 @@ bool MockTransport::is_locator_allowed(
     return true;
 }
 
+bool MockTransport::is_locator_reachable(
+        const Locator_t& /*locator*/)
+{
+    return true;
+}
+
 bool MockTransport::OpenOutputChannel(
-        SendResourceList& send_resource_list,
+        fastdds::rtps::SendResourceList& send_resource_list,
         const Locator_t& locator)
 {
     if (!IsLocatorSupported(locator))
@@ -98,7 +103,7 @@ bool MockTransport::OpenOutputChannel(
 
 bool MockTransport::OpenInputChannel(
         const Locator_t& locator,
-        TransportReceiverInterface*,
+        fastdds::rtps::TransportReceiverInterface*,
         uint32_t)
 {
     mockOpenInputChannels.push_back(locator.port);
@@ -116,7 +121,6 @@ Locator_t MockTransport::RemoteToMainLocal(
         const Locator_t& remote) const
 {
     Locator_t mainLocal(remote);
-    //memset(mainLocal.address, 0x00, sizeof(mainLocal.address));
     mainLocal.set_Invalid_Address();
     return mainLocal;
 }
@@ -140,12 +144,12 @@ LocatorList_t MockTransport::NormalizeLocator(
 }
 
 void MockTransport::select_locators(
-        LocatorSelector& selector) const
+        fastdds::rtps::LocatorSelector& selector) const
 {
-    ResourceLimitedVector<LocatorSelectorEntry*>& entries = selector.transport_starts();
+    fastdds::ResourceLimitedVector<fastdds::rtps::LocatorSelectorEntry*>& entries = selector.transport_starts();
     for (size_t i = 0; i < entries.size(); ++i)
     {
-        LocatorSelectorEntry* entry = entries[i];
+        fastdds::rtps::LocatorSelectorEntry* entry = entries[i];
         if (entry->transport_should_process)
         {
             for (size_t j = 0; j < entry->unicast.size(); ++j)
@@ -159,5 +163,5 @@ void MockTransport::select_locators(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

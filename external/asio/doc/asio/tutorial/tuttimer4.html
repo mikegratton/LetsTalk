@@ -8,6 +8,7 @@
 <link rel="up" href="../tutorial.html" title="Tutorial">
 <link rel="prev" href="tuttimer3/src.html" title="Source listing for Timer.3">
 <link rel="next" href="tuttimer4/src.html" title="Source listing for Timer.4">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -25,9 +26,9 @@
         handler. The program should execute identically to the tutorial program from
         tutorial Timer.3.
       </p>
-<pre class="programlisting"><span class="special">#</span><span class="identifier">include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
+<pre class="programlisting"><span class="special">#</span><span class="identifier">include</span> <span class="special">&lt;</span><span class="identifier">functional</span><span class="special">&gt;</span>
+<span class="special">#</span><span class="identifier">include</span> <span class="special">&lt;</span><span class="identifier">iostream</span><span class="special">&gt;</span>
 <span class="special">#</span><span class="identifier">include</span> <span class="special">&lt;</span><span class="identifier">asio</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
-<span class="special">#</span><span class="identifier">include</span> <span class="special">&lt;</span><span class="identifier">boost</span><span class="special">/</span><span class="identifier">bind</span><span class="special">/</span><span class="identifier">bind</span><span class="special">.</span><span class="identifier">hpp</span><span class="special">&gt;</span>
 </pre>
 <p>
         Instead of defining a free function <code class="computeroutput"><span class="identifier">print</span></code>
@@ -50,20 +51,20 @@
   <span class="special">{</span>
 </pre>
 <p>
-        The <a class="link" href="boost_bind.html" title="boost::bind">boost::bind</a> function
-        works just as well with class member functions as with free functions. Since
-        all non-static class member functions have an implicit <code class="computeroutput"><span class="keyword">this</span></code>
+        The <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span></code> function works just as well with class
+        member functions as with free functions. Since all non-static class member
+        functions have an implicit <code class="computeroutput"><span class="keyword">this</span></code>
         parameter, we need to bind <code class="computeroutput"><span class="keyword">this</span></code>
-        to the function. As in tutorial Timer.3, <a class="link" href="boost_bind.html" title="boost::bind">boost::bind</a>
+        to the function. As in tutorial Timer.3, <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span></code>
         converts our completion handler (now a member function) into a function object
-        that can be invoked as though it has the signature <code class="computeroutput"><span class="keyword">void</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;)</span></code>.
+        that can be invoked as though it has the signature <code class="computeroutput"><span class="keyword">void</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;)</span></code>.
       </p>
 <p>
         You will note that the asio::placeholders::error placeholder is not specified
         here, as the <code class="computeroutput"><span class="identifier">print</span></code> member
         function does not accept an error object as a parameter.
       </p>
-<pre class="programlisting">    <span class="identifier">timer_</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">printer</span><span class="special">::</span><span class="identifier">print</span><span class="special">,</span> <span class="keyword">this</span><span class="special">));</span>
+<pre class="programlisting">    <span class="identifier">timer_</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">printer</span><span class="special">::</span><span class="identifier">print</span><span class="special">,</span> <span class="keyword">this</span><span class="special">));</span>
   <span class="special">}</span>
 </pre>
 <p>
@@ -88,7 +89,7 @@
       <span class="special">++</span><span class="identifier">count_</span><span class="special">;</span>
 
       <span class="identifier">timer_</span><span class="special">.</span><span class="identifier">expires_at</span><span class="special">(</span><span class="identifier">timer_</span><span class="special">.</span><span class="identifier">expiry</span><span class="special">()</span> <span class="special">+</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">seconds</span><span class="special">(</span><span class="number">1</span><span class="special">));</span>
-      <span class="identifier">timer_</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">printer</span><span class="special">::</span><span class="identifier">print</span><span class="special">,</span> <span class="keyword">this</span><span class="special">));</span>
+      <span class="identifier">timer_</span><span class="special">.</span><span class="identifier">async_wait</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">printer</span><span class="special">::</span><span class="identifier">print</span><span class="special">,</span> <span class="keyword">this</span><span class="special">));</span>
     <span class="special">}</span>
   <span class="special">}</span>
 
@@ -126,14 +127,11 @@
         handlers in multithreaded programs</a>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="tuttimer3/src.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="tuttimer4/src.html"><img src="../../next.png" alt="Next"></a>

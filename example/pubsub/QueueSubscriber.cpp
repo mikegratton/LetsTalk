@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "HelloWorld.h"
+#include "HelloWorld.hpp"
 #include "LetsTalk/LetsTalk.hpp"
 
 int main(int, char**)

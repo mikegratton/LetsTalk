@@ -19,16 +19,19 @@
 #ifndef TEST_DDS_COMMUNICATION_PUBLISHERMODULE_HPP
 #define TEST_DDS_COMMUNICATION_PUBLISHERMODULE_HPP
 
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
+
+#include <fastdds/dds/builtin/topic/ParticipantBuiltinTopicData.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantListener.hpp>
 #include <fastdds/dds/publisher/PublisherListener.hpp>
-#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.h>
+#include <fastdds/rtps/participant/ParticipantDiscoveryInfo.hpp>
 
-#include "types/FixedSizedPubSubTypes.h"
-#include "types/HelloWorldPubSubTypes.h"
-
-#include <mutex>
-#include <condition_variable>
+#include "types/FixedSizedPubSubTypes.hpp"
+#include "types/HelloWorldPubSubTypes.hpp"
 
 namespace eprosima {
 namespace fastdds {
@@ -41,8 +44,8 @@ public:
 
     PublisherModule(
             bool exit_on_lost_liveliness,
-            bool fixed_type = false,
-            bool zero_copy = false)
+            bool fixed_type,
+            bool zero_copy)
         : exit_on_lost_liveliness_(exit_on_lost_liveliness)
         , fixed_type_(zero_copy || fixed_type) // If zero copy active, fixed type is required
         , zero_copy_(zero_copy)
@@ -63,12 +66,14 @@ public:
      */
     void on_participant_discovery(
             DomainParticipant* /*participant*/,
-            fastrtps::rtps::ParticipantDiscoveryInfo&& info) override;
+            fastdds::rtps::ParticipantDiscoveryStatus status,
+            const ParticipantBuiltinTopicData& info,
+            bool& should_be_ignored) override;
 
 #if HAVE_SECURITY
     void onParticipantAuthentication(
             DomainParticipant* participant,
-            fastrtps::rtps::ParticipantAuthenticationInfo&& info) override;
+            fastdds::rtps::ParticipantAuthenticationInfo&& info) override;
 #endif // if HAVE_SECURITY
 
     bool init(
@@ -80,9 +85,13 @@ public:
 
     void run(
             uint32_t samples,
-            uint32_t loops = 0);
+            const uint32_t rescan_interval,
+            uint32_t loops,
+            uint32_t interval);
 
 private:
+
+    using DomainParticipantListener::on_participant_discovery;
 
     std::mutex mutex_;
     std::condition_variable cv_;
@@ -90,7 +99,7 @@ private:
     bool exit_on_lost_liveliness_ = false;
     bool fixed_type_ = false;
     bool zero_copy_ = false;
-    bool run_ = true;
+    std::atomic_bool run_{true};
     DomainParticipant* participant_ = nullptr;
     TypeSupport type_;
     Publisher* publisher_ = nullptr;

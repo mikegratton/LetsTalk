@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+<dds xmlns="http://www.eprosima.com" >
     <profiles>
         <data_writer profile_name="datawriter_profile_example" is_default_profile="true">
             <topic>
@@ -122,21 +122,21 @@
             </qos>
 
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <nanosec>12</nanosec>
-                </initialHeartbeatDelay>
+                </initial_heartbeat_delay>
 
-                <heartbeatPeriod>
+                <heartbeat_period>
                     <sec>3</sec>
-                </heartbeatPeriod>
+                </heartbeat_period>
 
-                <nackResponseDelay>
+                <nack_response_delay>
                     <nanosec>5</nanosec>
-                </nackResponseDelay>
+                </nack_response_delay>
 
-                <nackSupressionDuration>
+                <nack_supression_duration>
                     <sec>0</sec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
 
             <unicastLocatorList>

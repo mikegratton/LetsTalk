@@ -16,10 +16,11 @@
  * @file CdrSerialization.hpp
  */
 
-#ifndef FASTDDS_RTPS_COMMON_CDRSERIALIZATION_HPP
-#define FASTDDS_RTPS_COMMON_CDRSERIALIZATION_HPP
+#ifndef FASTDDS_RTPS_COMMON__CDRSERIALIZATION_HPP
+#define FASTDDS_RTPS_COMMON__CDRSERIALIZATION_HPP
 
-#include <fastcdr/CdrEncoding.hpp>
+#include <fastcdr/Cdr.h>
+#include <fastcdr/CdrSizeCalculator.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -30,4 +31,4 @@ constexpr eprosima::fastcdr::CdrVersion DEFAULT_XCDR_VERSION {eprosima::fastcdr:
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // FASTDDS_RTPS_COMMON_CDRSERIALIZATION_HPP
+#endif // FASTDDS_RTPS_COMMON__CDRSERIALIZATION_HPP

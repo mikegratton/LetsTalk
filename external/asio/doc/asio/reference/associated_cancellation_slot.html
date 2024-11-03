@@ -6,14 +6,15 @@
 <meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="../../index.html" title="Asio">
 <link rel="up" href="../reference.html" title="Reference">
-<link rel="prev" href="associated_allocator_lt__reference_wrapper_lt__T__gt__comma__Allocator__gt_/type.html" title="associated_allocator&lt; reference_wrapper&lt; T &gt;, Allocator &gt;::type">
+<link rel="prev" href="associated_allocator_t.html" title="associated_allocator_t">
 <link rel="next" href="associated_cancellation_slot/get.html" title="associated_cancellation_slot::get">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="associated_allocator_lt__reference_wrapper_lt__T__gt__comma__Allocator__gt_/type.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="associated_cancellation_slot/get.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="associated_allocator_t.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="associated_cancellation_slot/get.html"><img src="../../next.png" alt="Next"></a>
 </div>
 <div class="section">
 <div class="titlepage"><div><div><h3 class="title">
@@ -97,7 +98,9 @@
 <td>
                 <p>
                   If T has a nested type cancellation_slot_type, returns t.get_cancellation_slot().
-                  Otherwise returns s.
+                  Otherwise returns type(). <br> <span class="silver"> —</span><br> If T has a nested type
+                  cancellation_slot_type, returns t.get_cancellation_slot(). Otherwise
+                  returns s.
                 </p>
               </td>
 </tr></tbody>
@@ -120,12 +123,14 @@
 <li class="listitem">
             Provide a noexcept static member function named <code class="computeroutput"><span class="identifier">get</span></code>,
             callable as <code class="computeroutput"><span class="identifier">get</span><span class="special">(</span><span class="identifier">t</span><span class="special">)</span></code>
-            and with return type <code class="computeroutput"><span class="identifier">type</span></code>.
+            and with return type <code class="computeroutput"><span class="identifier">type</span></code>
+            or a (possibly const) reference to <code class="computeroutput"><span class="identifier">type</span></code>.
           </li>
 <li class="listitem">
             Provide a noexcept static member function named <code class="computeroutput"><span class="identifier">get</span></code>,
             callable as <code class="computeroutput"><span class="identifier">get</span><span class="special">(</span><span class="identifier">t</span><span class="special">,</span><span class="identifier">s</span><span class="special">)</span></code>
-            and with return type <code class="computeroutput"><span class="identifier">type</span></code>.
+            and with return type <code class="computeroutput"><span class="identifier">type</span></code>
+            or a (possibly const) reference to <code class="computeroutput"><span class="identifier">type</span></code>.
           </li>
 </ul></div>
 <h5>
@@ -139,17 +144,14 @@
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
-<a accesskey="p" href="associated_allocator_lt__reference_wrapper_lt__T__gt__comma__Allocator__gt_/type.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="associated_cancellation_slot/get.html"><img src="../../next.png" alt="Next"></a>
+<a accesskey="p" href="associated_allocator_t.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="associated_cancellation_slot/get.html"><img src="../../next.png" alt="Next"></a>
 </div>
 </body>
 </html>

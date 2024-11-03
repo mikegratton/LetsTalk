@@ -29,15 +29,7 @@
 #include <fastdds/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/dds/subscriber/Subscriber.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastrtps/types/DynamicData.h>
-#include <fastrtps/types/DynamicDataFactory.h>
-#include <fastrtps/types/DynamicPubSubType.h>
-#include <fastrtps/types/DynamicType.h>
-#include <fastrtps/types/DynamicTypeBuilder.h>
-#include <fastrtps/types/DynamicTypeBuilderFactory.h>
-#include <fastrtps/types/DynamicTypeBuilderPtr.h>
-#include <fastrtps/types/MemberDescriptor.h>
-#include <fastrtps/types/TypeDescriptor.h>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicData.hpp>
 #include "LatencyTestTypes.hpp"
 
 #include "../optionarg.hpp"
@@ -56,8 +48,8 @@ public:
             bool reliable,
             uint32_t pid,
             bool hostname,
-            const eprosima::fastrtps::rtps::PropertyPolicy& part_property_policy,
-            const eprosima::fastrtps::rtps::PropertyPolicy& property_policy,
+            const eprosima::fastdds::rtps::PropertyPolicy& part_property_policy,
+            const eprosima::fastdds::rtps::PropertyPolicy& property_policy,
             const std::string& xml_config_file,
             bool dynamic_data,
             Arg::EnablerValue data_sharing,
@@ -67,6 +59,8 @@ public:
             LatencyDataSizes& latency_data_sizes);
 
     void run();
+
+    void destroy_user_entities();
 
     bool test(
             uint32_t datasize);
@@ -150,7 +144,7 @@ private:
     eprosima::fastdds::dds::TypeSupport latency_command_type_;
 
     /* Dynamic Types */
-    eprosima::fastrtps::types::DynamicData* dynamic_data_ = nullptr;
+    eprosima::fastdds::dds::DynamicData::_ref_type* dynamic_data_ {nullptr};
     eprosima::fastdds::dds::TypeSupport dynamic_pub_sub_type_;
 
     std::vector<uint32_t> data_size_sub_;

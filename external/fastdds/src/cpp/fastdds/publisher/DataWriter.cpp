@@ -52,16 +52,16 @@ ReturnCode_t DataWriter::enable()
 {
     if (enable_)
     {
-        return ReturnCode_t::RETCODE_OK;
+        return RETCODE_OK;
     }
 
     if (false == impl_->get_publisher()->is_enabled())
     {
-        return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET;
+        return RETCODE_PRECONDITION_NOT_MET;
     }
 
     ReturnCode_t ret_code = impl_->enable();
-    enable_ = ReturnCode_t::RETCODE_OK == ret_code;
+    enable_ = RETCODE_OK == ret_code;
     return ret_code;
 }
 
@@ -78,92 +78,60 @@ ReturnCode_t DataWriter::discard_loan(
     return impl_->discard_loan(sample);
 }
 
-bool DataWriter::write(
-        void* data)
+ReturnCode_t DataWriter::write(
+        const void* const data)
 {
     return impl_->write(data);
 }
 
-bool DataWriter::write(
-        void* data,
-        fastrtps::rtps::WriteParams& params)
+ReturnCode_t DataWriter::write(
+        const void* const data,
+        fastdds::rtps::WriteParams& params)
 {
     return impl_->write(data, params);
 }
 
 ReturnCode_t DataWriter::write(
-        void* data,
+        const void* const data,
         const InstanceHandle_t& handle)
 {
     return impl_->write(data, handle);
 }
 
 ReturnCode_t DataWriter::write_w_timestamp(
-        void* data,
+        const void* const data,
         const InstanceHandle_t& handle,
-        const fastrtps::Time_t& timestamp)
+        const fastdds::dds::Time_t& timestamp)
 {
     return impl_->write_w_timestamp(data, handle, timestamp);
 }
 
-ReturnCode_t DataWriter::write_w_timestamp(
-        void* data,
-        const InstanceHandle_t& handle,
-        const fastrtps::rtps::Time_t& timestamp)
-{
-    static_cast<void> (data);
-    static_cast<void> (handle);
-    static_cast<void> (timestamp);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
-}
-
 InstanceHandle_t DataWriter::register_instance(
-        void* instance)
+        const void* const instance)
 {
     return impl_->register_instance(instance);
 }
 
 InstanceHandle_t DataWriter::register_instance_w_timestamp(
-        void* instance,
-        const fastrtps::Time_t& timestamp)
+        const void* const instance,
+        const fastdds::dds::Time_t& timestamp)
 {
     return impl_->register_instance_w_timestamp(instance, timestamp);
 }
 
-InstanceHandle_t DataWriter::register_instance_w_timestamp(
-        void* instance,
-        const fastrtps::rtps::Time_t& timestamp)
-{
-    static_cast<void> (instance);
-    static_cast<void> (timestamp);
-    EPROSIMA_LOG_WARNING(DATA_WRITER, "register_instance_w_timestamp method not yet implemented");
-    return HANDLE_NIL;
-}
-
 ReturnCode_t DataWriter::unregister_instance(
-        void* instance,
+        const void* const instance,
         const InstanceHandle_t& handle)
 {
     return impl_->unregister_instance(instance, handle);
 }
 
 ReturnCode_t DataWriter::unregister_instance_w_timestamp(
-        void* instance,
+        const void* const instance,
         const InstanceHandle_t& handle,
-        const fastrtps::Time_t& timestamp)
+        const fastdds::dds::Time_t& timestamp)
 {
     return impl_->unregister_instance_w_timestamp(instance, handle, timestamp);
-}
-
-ReturnCode_t DataWriter::unregister_instance_w_timestamp(
-        void* instance,
-        const InstanceHandle_t& handle,
-        const fastrtps::rtps::Time_t& timestamp)
-{
-    static_cast<void> (instance);
-    static_cast<void> (handle);
-    static_cast<void> (timestamp);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
 }
 
 ReturnCode_t DataWriter::get_key_value(
@@ -174,7 +142,7 @@ ReturnCode_t DataWriter::get_key_value(
 }
 
 InstanceHandle_t DataWriter::lookup_instance(
-        const void* instance) const
+        const void* const instance) const
 {
     static_cast<void> (instance);
     EPROSIMA_LOG_WARNING(DATA_WRITER, "lookup_instance method not implemented");
@@ -182,21 +150,21 @@ InstanceHandle_t DataWriter::lookup_instance(
 }
 
 ReturnCode_t DataWriter::dispose(
-        void* data,
+        const void* const data,
         const InstanceHandle_t& handle)
 {
     return impl_->unregister_instance(data, handle, true);
 }
 
 ReturnCode_t DataWriter::dispose_w_timestamp(
-        void* instance,
+        const void* const instance,
         const InstanceHandle_t& handle,
-        const fastrtps::Time_t& timestamp)
+        const fastdds::dds::Time_t& timestamp)
 {
     return impl_->unregister_instance_w_timestamp(instance, handle, timestamp, true);
 }
 
-const fastrtps::rtps::GUID_t& DataWriter::guid() const
+const fastdds::rtps::GUID_t& DataWriter::guid() const
 {
     return impl_->guid();
 }
@@ -226,7 +194,7 @@ ReturnCode_t DataWriter::get_qos(
         DataWriterQos& qos) const
 {
     qos = impl_->get_qos();
-    return ReturnCode_t::RETCODE_OK;
+    return RETCODE_OK;
 }
 
 ReturnCode_t DataWriter::set_listener(
@@ -240,7 +208,7 @@ ReturnCode_t DataWriter::set_listener(
         const StatusMask& mask)
 {
     ReturnCode_t ret_val = impl_->set_listener(listener);
-    if (ret_val == ReturnCode_t::RETCODE_OK)
+    if (ret_val == RETCODE_OK)
     {
         status_mask_ = mask;
     }
@@ -264,7 +232,7 @@ const Publisher* DataWriter::get_publisher() const
 }
 
 ReturnCode_t DataWriter::wait_for_acknowledgments(
-        const fastrtps::Duration_t& max_wait)
+        const fastdds::dds::Duration_t& max_wait)
 {
     return impl_->wait_for_acknowledgments(max_wait);
 }
@@ -299,12 +267,12 @@ ReturnCode_t DataWriter::assert_liveliness()
 }
 
 ReturnCode_t DataWriter::get_matched_subscription_data(
-        builtin::SubscriptionBuiltinTopicData& subscription_data,
+        SubscriptionBuiltinTopicData& subscription_data,
         const InstanceHandle_t& subscription_handle) const
 {
     static_cast<void> (subscription_data);
     static_cast<void> (subscription_handle);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->get_matched_subscription_data(subscription_data, subscription_handle);
      */
@@ -314,17 +282,7 @@ ReturnCode_t DataWriter::get_matched_subscriptions(
         std::vector<InstanceHandle_t>& subscription_handles) const
 {
     static_cast<void> (subscription_handles);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
-    /*
-       return impl_->get_matched_subscription_data(subscription_handles);
-     */
-}
-
-ReturnCode_t DataWriter::get_matched_subscriptions(
-        std::vector<InstanceHandle_t*>& subscription_handles) const
-{
-    static_cast<void> (subscription_handles);
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return RETCODE_UNSUPPORTED;
     /*
        return impl_->get_matched_subscription_data(subscription_handles);
      */
@@ -343,11 +301,17 @@ ReturnCode_t DataWriter::get_sending_locators(
 }
 
 ReturnCode_t DataWriter::wait_for_acknowledgments(
-        void* instance,
+        const void* const instance,
         const InstanceHandle_t& handle,
-        const fastrtps::Duration_t& max_wait)
+        const fastdds::dds::Duration_t& max_wait)
 {
     return impl_->wait_for_acknowledgments(instance, handle, max_wait);
+}
+
+ReturnCode_t DataWriter::get_publication_builtin_topic_data(
+        PublicationBuiltinTopicData& publication_data) const
+{
+    return impl_->get_publication_builtin_topic_data(publication_data);
 }
 
 } // namespace dds

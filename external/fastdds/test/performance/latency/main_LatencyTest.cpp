@@ -12,31 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "LatencyTestPublisher.hpp"
-#include "LatencyTestSubscriber.hpp"
-#include "../optionarg.hpp"
-
-#include <stdio.h>
-#include <string>
-#include <iostream>
-#include <iomanip>
 #include <bitset>
 #include <cstdint>
+#include <cstdio>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <string>
 
-#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/log/Colors.hpp>
-#include <fastrtps/Domain.h>
-#include <fastrtps/fastrtps_dll.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
+#include <fastdds/dds/log/Log.hpp>
+
+#include "../optionarg.hpp"
+#include "LatencyTestPublisher.hpp"
+#include "LatencyTestSubscriber.hpp"
 
 #if defined(_MSC_VER)
 #pragma warning (push)
 #pragma warning (disable:4512)
 #endif // if defined(_MSC_VER)
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 #if defined(_WIN32)
 #define COPYSTR strcpy_s
@@ -188,6 +186,7 @@ int main(
         char** argv)
 {
 
+    using Log = eprosima::fastdds::dds::Log;
     Log::SetVerbosity(Log::Kind::Info);
     Log::SetCategoryFilter(std::regex("LatencyTest"));
 
@@ -482,7 +481,7 @@ int main(
     // Load an XML file with predefined profiles for publisher and subscriber
     if (xml_config_file.length() > 0)
     {
-        xmlparser::XMLProfileManager::loadXMLFile(xml_config_file);
+        eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->load_XML_profiles_file(xml_config_file);
     }
 
     LatencyDataSizes data_sizes;
@@ -504,6 +503,7 @@ int main(
                 dynamic_types, data_sharing, data_loans, shared_memory, forced_domain, data_sizes))
         {
             latency_publisher.run();
+            latency_publisher.destroy_user_entities();
         }
         else
         {
@@ -519,6 +519,7 @@ int main(
                 xml_config_file, dynamic_types, data_sharing, data_loans, shared_memory, forced_domain, data_sizes))
         {
             latency_subscriber.run();
+            latency_subscriber.destroy_user_entities();
         }
         else
         {
@@ -569,6 +570,13 @@ int main(
             {
                 sub.join();
             }
+
+            for (auto& sub : latency_subscribers)
+            {
+                sub->destroy_user_entities();
+            }
+
+            latency_publisher.destroy_user_entities();
         }
         else
         {

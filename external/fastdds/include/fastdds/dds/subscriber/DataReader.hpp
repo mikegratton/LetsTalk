@@ -17,16 +17,18 @@
  *
  */
 
-#ifndef _FASTDDS_DDS_SUBSCRIBER_DATAREADER_HPP_
-#define _FASTDDS_DDS_SUBSCRIBER_DATAREADER_HPP_
+#ifndef FASTDDS_DDS_SUBSCRIBER__DATAREADER_HPP
+#define FASTDDS_DDS_SUBSCRIBER__DATAREADER_HPP
 
 #include <cstdint>
 #include <vector>
 
 #include <fastdds/dds/builtin/topic/PublicationBuiltinTopicData.hpp>
+#include <fastdds/dds/builtin/topic/SubscriptionBuiltinTopicData.hpp>
 #include <fastdds/dds/core/Entity.hpp>
 #include <fastdds/dds/core/LoanableCollection.hpp>
 #include <fastdds/dds/core/LoanableSequence.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/core/status/BaseStatus.hpp>
 #include <fastdds/dds/core/status/DeadlineMissedStatus.hpp>
 #include <fastdds/dds/core/status/IncompatibleQosStatus.hpp>
@@ -37,14 +39,10 @@
 #include <fastdds/dds/subscriber/SampleInfo.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
-#include <fastrtps/fastrtps_dll.h>
+#include <fastdds/fastdds_dll.hpp>
 
 #include <fastdds/rtps/common/LocatorList.hpp>
-#include <fastdds/rtps/common/Time_t.h>
-
-#include <fastrtps/types/TypesBase.h>
-
-using eprosima::fastrtps::types::ReturnCode_t;
+#include <fastdds/rtps/common/Time_t.hpp>
 
 namespace dds {
 namespace sub {
@@ -55,13 +53,11 @@ class DataReader;
 } // namespace dds
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 struct GUID_t;
 } // namespace rtps
-} // namespace fastrtps
 
-namespace fastdds {
 namespace dds {
 
 class Subscriber;
@@ -117,7 +113,7 @@ public:
      * @return RETCODE_OK is successfully enabled. RETCODE_PRECONDITION_NOT_MET if the Subscriber creating this
      *         DataReader is not enabled.
      */
-    RTPS_DllAPI ReturnCode_t enable() override;
+    FASTDDS_EXPORTED_API ReturnCode_t enable() override;
 
     /**
      * Method to block the current thread until an unread message is available.
@@ -126,20 +122,21 @@ public:
      *
      * @return true if there is new unread message, false if timeout
      */
-    RTPS_DllAPI bool wait_for_unread_message(
-            const fastrtps::Duration_t& timeout);
+    FASTDDS_EXPORTED_API bool wait_for_unread_message(
+            const fastdds::dds::Duration_t& timeout);
 
     /**
      * NOT YET IMPLEMENTED
      *
      * @brief Method to block the current thread until an unread message is available.
      *
-     * @param[in] max_wait Max blocking time for this operation.
-     * @return RETCODE_OK if there is new unread message, ReturnCode_t::RETCODE_TIMEOUT if timeout
+     * @param [in] max_wait Max blocking time for this operation.
+     * @return RETCODE_OK if there is new unread message, RETCODE_TIMEOUT if timeout
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t wait_for_historical_data(
-            const fastrtps::Duration_t& max_wait) const;
+    FASTDDS_EXPORTED_API ReturnCode_t wait_for_historical_data(
+            const fastdds::dds::Duration_t& max_wait) const;
 
 
     /** @name Read or take data methods.
@@ -305,7 +302,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read(
+    FASTDDS_EXPORTED_API ReturnCode_t read(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -329,14 +326,14 @@ public:
      * The samples are accessed with the same semantics as the read operation. If the DataReader has no samples that
      * meet the constraints, the return value will be RETCODE_NO_DATA.
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned.
-     * @param[in]     a_condition     A ReadCondition that returned @c data_values must pass
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned.
+     * @param [in]     a_condition     A ReadCondition that returned @c data_values must pass
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read_w_condition(
+    FASTDDS_EXPORTED_API ReturnCode_t read_w_condition(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples,
@@ -376,7 +373,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read_instance(
+    FASTDDS_EXPORTED_API ReturnCode_t read_instance(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -441,7 +438,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read_next_instance(
+    FASTDDS_EXPORTED_API ReturnCode_t read_next_instance(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -468,18 +465,18 @@ public:
      *
      * If the DataReader has no samples that meet the constraints, the return value will be RETCODE_NO_DATA.
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned. If the special value
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned. If the special value
      *                                @ref LENGTH_UNLIMITED is provided, as many samples will be returned as are
      *                                available, up to the limits described in the documentation for @ref read().
-     * @param[in]     previous_handle The 'next smallest' instance with a value greater than this value that has
+     * @param [in]     previous_handle The 'next smallest' instance with a value greater than this value that has
      *                                available samples will be returned.
-     * @param[in]     a_condition     A ReadCondition that returned @c data_values must pass
+     * @param [in]     a_condition     A ReadCondition that returned @c data_values must pass
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read_next_instance_w_condition(
+    FASTDDS_EXPORTED_API ReturnCode_t read_next_instance_w_condition(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples,
@@ -505,7 +502,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t read_next_sample(
+    FASTDDS_EXPORTED_API ReturnCode_t read_next_sample(
             void* data,
             SampleInfo* info);
 
@@ -540,7 +537,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take(
+    FASTDDS_EXPORTED_API ReturnCode_t take(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -561,15 +558,15 @@ public:
      *
      * If the DataReader has no samples that meet the constraints, the return value will be RETCODE_NO_DATA.
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned. If the special value
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned. If the special value
      *                                @ref LENGTH_UNLIMITED is provided, as many samples will be returned as are.
-     * @param[in]     a_condition     A ReadCondition that returned @c data_values must pass
+     * @param [in]     a_condition     A ReadCondition that returned @c data_values must pass
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take_w_condition(
+    FASTDDS_EXPORTED_API ReturnCode_t take_w_condition(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples,
@@ -589,21 +586,21 @@ public:
      *
      * If the DataReader has no samples that meet the constraints, the operations fails with RETCODE_NO_DATA.
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned. If the special value
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned. If the special value
      *                                @ref LENGTH_UNLIMITED is provided, as many samples will be returned as are
      *                                available, up to the limits described in the documentation for @ref read().
-     * @param[in]     a_handle        The specified instance to return samples for. The method will fail with
+     * @param [in]     a_handle        The specified instance to return samples for. The method will fail with
      *                                RETCODE_BAD_PARAMETER if the handle does not correspond to an existing
      *                                data-object known to the DataReader.
-     * @param[in]     sample_states   Only data samples with @c sample_state matching one of these will be returned.
-     * @param[in]     view_states     Only data samples with @c view_state matching one of these will be returned.
-     * @param[in]     instance_states Only data samples with @c instance_state matching one of these will be returned.
+     * @param [in]     sample_states   Only data samples with @c sample_state matching one of these will be returned.
+     * @param [in]     view_states     Only data samples with @c view_state matching one of these will be returned.
+     * @param [in]     instance_states Only data samples with @c instance_state matching one of these will be returned.
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take_instance(
+    FASTDDS_EXPORTED_API ReturnCode_t take_instance(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -629,20 +626,20 @@ public:
      *
      * If the DataReader has no samples that meet the constraints, the operations fails with RETCODE_NO_DATA.
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned. If the special value
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned. If the special value
      *                                @ref LENGTH_UNLIMITED is provided, as many samples will be returned as are
      *                                available, up to the limits described in the documentation for @ref read().
-     * @param[in]     previous_handle The 'next smallest' instance with a value greater than this value that has
+     * @param [in]     previous_handle The 'next smallest' instance with a value greater than this value that has
      *                                available samples will be returned.
-     * @param[in]     sample_states   Only data samples with @c sample_state matching one of these will be returned.
-     * @param[in]     view_states     Only data samples with @c view_state matching one of these will be returned.
-     * @param[in]     instance_states Only data samples with @c instance_state matching one of these will be returned.
+     * @param [in]     sample_states   Only data samples with @c sample_state matching one of these will be returned.
+     * @param [in]     view_states     Only data samples with @c view_state matching one of these will be returned.
+     * @param [in]     instance_states Only data samples with @c instance_state matching one of these will be returned.
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take_next_instance(
+    FASTDDS_EXPORTED_API ReturnCode_t take_next_instance(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples = LENGTH_UNLIMITED,
@@ -668,18 +665,18 @@ public:
      *
      * If the DataReader has no samples that meet the constraints, the return value will be RETCODE_NO_DATA
      *
-     * @param[in,out] data_values     A LoanableCollection object where the received data samples will be returned.
-     * @param[in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
-     * @param[in]     max_samples     The maximum number of samples to be returned. If the special value
+     * @param [in,out] data_values     A LoanableCollection object where the received data samples will be returned.
+     * @param [in,out] sample_infos    A SampleInfoSeq object where the received sample info will be returned.
+     * @param [in]     max_samples     The maximum number of samples to be returned. If the special value
      *                                @ref LENGTH_UNLIMITED is provided, as many samples will be returned as are
      *                                available, up to the limits described in the documentation for @ref read().
-     * @param[in]     previous_handle The 'next smallest' instance with a value greater than this value that has
+     * @param [in]     previous_handle The 'next smallest' instance with a value greater than this value that has
      *                                available samples will be returned.
-     * @param[in]     a_condition     A ReadCondition that returned @c data_values must pass
+     * @param [in]     a_condition     A ReadCondition that returned @c data_values must pass
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take_next_instance_w_condition(
+    FASTDDS_EXPORTED_API ReturnCode_t take_next_instance_w_condition(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos,
             int32_t max_samples,
@@ -707,7 +704,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t take_next_sample(
+    FASTDDS_EXPORTED_API ReturnCode_t take_next_sample(
             void* data,
             SampleInfo* info);
 
@@ -733,9 +730,9 @@ public:
      *
      * The use of the @ref return_loan operation is only necessary if the read or take calls "loaned" buffers to the
      * application. This only occurs if the @c data_values and @c sample_infos collections had <tt> max_len == 0 </tt>
-     * at the time read or take was called. The application may also examine the @c owns property of the collection to
-     * determine if there is an outstanding loan. However, calling @ref return_loan on a collection that does not have
-     * a loan is safe and has no side effects.
+     * at the time read or take was called. The application may also examine the @c has_ownership property of the
+     * collection to determine if there is an outstanding loan. However, calling @ref return_loan on a collection that
+     * does not have a loan is safe, has no side effects, and returns RETCODE_OK.
      *
      * If the collections had a loan, upon return from return_loan the collections will have <tt> max_len == 0 </tt>.
      *
@@ -746,7 +743,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t return_loan(
+    FASTDDS_EXPORTED_API ReturnCode_t return_loan(
             LoanableCollection& data_values,
             SampleInfoSeq& sample_infos);
 
@@ -760,13 +757,14 @@ public:
      * data-object known to the DataReader. If the implementation is not able to check invalid handles then the result
      * in this situation is unspecified.
      *
-     * @param[in,out] key_holder
-     * @param[in] handle
+     * @param [in,out] key_holder
+     * @param [in] handle
      *
      * @return Any of the standard return codes.
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t get_key_value(
+    FASTDDS_EXPORTED_API ReturnCode_t get_key_value(
             void* key_holder,
             const InstanceHandle_t& handle);
 
@@ -781,17 +779,19 @@ public:
      * @return HANDLE_NIL if @c instance is nullptr.
      * @return HANDLE_NIL if there is no instance on the DataReader's history with the same key as @c instance.
      */
-    RTPS_DllAPI InstanceHandle_t lookup_instance(
+    FASTDDS_EXPORTED_API InstanceHandle_t lookup_instance(
             const void* instance) const;
 
     /**
-     * @brief Returns information about the first untaken sample.
+     * @brief Returns information about the first untaken sample. This method is meant to be called prior to
+     * a read() or take() operation as it does not modify the status condition of the entity.
+     *
      *
      * @param [out] info Pointer to a SampleInfo_t structure to store first untaken sample information.
      *
      * @return RETCODE_OK if sample info was returned. RETCODE_NO_DATA if there is no sample to take.
      */
-    RTPS_DllAPI ReturnCode_t get_first_untaken_info(
+    FASTDDS_EXPORTED_API ReturnCode_t get_first_untaken_info(
             SampleInfo* info);
 
     /**
@@ -801,7 +801,7 @@ public:
      *
      * @return the number of samples on the reader history that have never been read.
      */
-    RTPS_DllAPI uint64_t get_unread_count() const;
+    FASTDDS_EXPORTED_API uint64_t get_unread_count() const;
 
     /**
      * Get the number of samples pending to be read.
@@ -810,7 +810,7 @@ public:
      *
      * @return the number of samples on the reader history that have never been read.
      */
-    RTPS_DllAPI uint64_t get_unread_count(
+    FASTDDS_EXPORTED_API uint64_t get_unread_count(
             bool mark_as_read) const;
 
     /**
@@ -818,42 +818,42 @@ public:
      *
      * @return Associated GUID
      */
-    RTPS_DllAPI const fastrtps::rtps::GUID_t& guid();
+    FASTDDS_EXPORTED_API const fastdds::rtps::GUID_t& guid();
 
     /**
      * Get associated GUID.
      *
      * @return Associated GUID
      */
-    RTPS_DllAPI const fastrtps::rtps::GUID_t& guid() const;
+    FASTDDS_EXPORTED_API const fastdds::rtps::GUID_t& guid() const;
 
     /**
      * @brief Getter for the associated InstanceHandle.
      *
      * @return Copy of the InstanceHandle
      */
-    RTPS_DllAPI InstanceHandle_t get_instance_handle() const;
+    FASTDDS_EXPORTED_API InstanceHandle_t get_instance_handle() const;
 
     /**
      * Getter for the data type.
      *
      * @return TypeSupport associated to the DataReader.
      */
-    RTPS_DllAPI TypeSupport type();
+    FASTDDS_EXPORTED_API TypeSupport type();
 
     /**
      * Get TopicDescription.
      *
      * @return TopicDescription pointer.
      */
-    RTPS_DllAPI const TopicDescription* get_topicdescription() const;
+    FASTDDS_EXPORTED_API const TopicDescription* get_topicdescription() const;
 
     /**
      * @brief Get the requested deadline missed status.
      *
      * @return The deadline missed status.
      */
-    RTPS_DllAPI ReturnCode_t get_requested_deadline_missed_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_requested_deadline_missed_status(
             RequestedDeadlineMissedStatus& status);
 
     /**
@@ -863,7 +863,7 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_requested_incompatible_qos_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_requested_incompatible_qos_status(
             RequestedIncompatibleQosStatus& status);
 
     /**
@@ -874,7 +874,7 @@ public:
      * @return RETCODE_IMMUTABLE_POLICY if any of the Qos cannot be changed, RETCODE_INCONSISTENT_POLICY if the Qos is
      *         not self consistent and RETCODE_OK if the qos is changed correctly.
      */
-    RTPS_DllAPI ReturnCode_t set_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t set_qos(
             const DataReaderQos& qos);
 
     /**
@@ -882,7 +882,7 @@ public:
      *
      * @return Pointer to the DataReaderQos.
      */
-    RTPS_DllAPI const DataReaderQos& get_qos() const;
+    FASTDDS_EXPORTED_API const DataReaderQos& get_qos() const;
 
     /**
      * @brief Getter for the DataReaderQos.
@@ -891,7 +891,7 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t get_qos(
             DataReaderQos& qos) const;
 
     /**
@@ -901,7 +901,7 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t set_listener(
+    FASTDDS_EXPORTED_API ReturnCode_t set_listener(
             DataReaderListener* listener);
 
     /**
@@ -912,7 +912,7 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t set_listener(
+    FASTDDS_EXPORTED_API ReturnCode_t set_listener(
             DataReaderListener* listener,
             const StatusMask& mask);
     /**
@@ -920,10 +920,10 @@ public:
      *
      * @return Pointer to the DataReaderListener
      */
-    RTPS_DllAPI const DataReaderListener* get_listener() const;
+    FASTDDS_EXPORTED_API const DataReaderListener* get_listener() const;
 
     /* TODO
-       RTPS_DllAPI bool get_key_value(
+       FASTDDS_EXPORTED_API bool get_key_value(
             void* data,
             const InstanceHandle_t& handle);
      */
@@ -935,59 +935,61 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_liveliness_changed_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_liveliness_changed_status(
             LivelinessChangedStatus& status) const;
 
 
     /**
      * @brief Get the SAMPLE_LOST communication status
      *
-     * @param[out] status SampleLostStatus object where the status is returned.
+     * @param [out] status SampleLostStatus object where the status is returned.
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_sample_lost_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_sample_lost_status(
             SampleLostStatus& status) const;
 
     /**
      * @brief Get the SAMPLE_REJECTED communication status
      *
-     * @param[out] status SampleRejectedStatus object where the status is returned.
+     * @param [out] status SampleRejectedStatus object where the status is returned.
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_sample_rejected_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_sample_rejected_status(
             SampleRejectedStatus& status) const;
 
     /**
      * @brief Returns the subscription matched status
      *
-     * @param[out] status subscription matched status struct
+     * @param [out] status subscription matched status struct
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_subscription_matched_status(
+    FASTDDS_EXPORTED_API ReturnCode_t get_subscription_matched_status(
             SubscriptionMatchedStatus& status) const;
 
     /**
      * @brief Retrieves in a publication associated with the DataWriter
      *
-     * @param[out] publication_data publication data struct
+     * @param [out] publication_data publication data struct
      * @param publication_handle InstanceHandle_t of the publication
      * @return RETCODE_OK
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t get_matched_publication_data(
-            builtin::PublicationBuiltinTopicData& publication_data,
-            const fastrtps::rtps::InstanceHandle_t& publication_handle) const;
+    FASTDDS_EXPORTED_API ReturnCode_t get_matched_publication_data(
+            PublicationBuiltinTopicData& publication_data,
+            const fastdds::rtps::InstanceHandle_t& publication_handle) const;
 
     /**
      * @brief Fills the given vector with the InstanceHandle_t of matched DataReaders
      *
-     * @param[out] publication_handles Vector where the InstanceHandle_t are returned
+     * @param [out] publication_handles Vector where the InstanceHandle_t are returned
      * @return RETCODE_OK
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t get_matched_publications(
+    FASTDDS_EXPORTED_API ReturnCode_t get_matched_publications(
             std::vector<InstanceHandle_t>& publication_handles) const;
 
     /**
@@ -1000,7 +1002,7 @@ public:
      *
      * @return pointer to the created ReadCondition, nullptr in case of error.
      */
-    RTPS_DllAPI ReadCondition* create_readcondition(
+    FASTDDS_EXPORTED_API ReadCondition* create_readcondition(
             SampleStateMask sample_states,
             ViewStateMask view_states,
             InstanceStateMask instance_states);
@@ -1017,7 +1019,7 @@ public:
      *
      * @return pointer to the created QueryCondition, nullptr in case of error.
      */
-    RTPS_DllAPI QueryCondition* create_querycondition(
+    FASTDDS_EXPORTED_API QueryCondition* create_querycondition(
             SampleStateMask sample_states,
             ViewStateMask view_states,
             InstanceStateMask instance_states,
@@ -1030,14 +1032,14 @@ public:
      * @param a_condition pointer to a ReadCondition belonging to the DataReader
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t delete_readcondition(
+    FASTDDS_EXPORTED_API ReturnCode_t delete_readcondition(
             ReadCondition* a_condition);
 
     /**
      * @brief Getter for the Subscriber
      * @return Subscriber pointer
      */
-    RTPS_DllAPI const Subscriber* get_subscriber() const;
+    FASTDDS_EXPORTED_API const Subscriber* get_subscriber() const;
 
     /**
      * This operation deletes all the entities that were created by means of the “create” operations on the DataReader.
@@ -1048,7 +1050,7 @@ public:
      *
      * @return Any of the standard return codes.
      */
-    RTPS_DllAPI ReturnCode_t delete_contained_entities();
+    FASTDDS_EXPORTED_API ReturnCode_t delete_contained_entities();
 
     /**
      * Checks whether a loaned sample is still valid or is corrupted.
@@ -1060,7 +1062,7 @@ public:
      *
      * @return true if the sample is valid
      */
-    RTPS_DllAPI bool is_sample_valid(
+    FASTDDS_EXPORTED_API bool is_sample_valid(
             const void* data,
             const SampleInfo* info) const;
 
@@ -1072,8 +1074,19 @@ public:
      * @return NOT_ENABLED if the reader has not been enabled.
      * @return OK if a list of locators is returned.
      */
-    RTPS_DllAPI ReturnCode_t get_listening_locators(
+    FASTDDS_EXPORTED_API ReturnCode_t get_listening_locators(
             rtps::LocatorList& locators) const;
+
+    /**
+     * Retrieve the subscription data discovery information.
+     *
+     * @param [out] subscription_data The subscription data discovery information.
+     *
+     * @return NOT_ENABLED if the reader has not been enabled.
+     * @return OK if the subscription data is returned.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_subscription_builtin_topic_data(
+            SubscriptionBuiltinTopicData& subscription_data) const;
 
 protected:
 
@@ -1083,8 +1096,8 @@ protected:
 
 };
 
-} /* namespace dds */
-} /* namespace fastdds */
-} /* namespace eprosima */
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTDDS_DDS_SUBSCRIBER_DATAREADER_HPP_*/
+#endif // FASTDDS_DDS_SUBSCRIBER__DATAREADER_HPP

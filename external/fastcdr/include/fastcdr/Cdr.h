@@ -35,6 +35,7 @@
 #include "exceptions/Exception.h"
 #include "exceptions/NotEnoughMemoryException.h"
 #include "FastBuffer.h"
+#include "xcdr/external.hpp"
 #include "xcdr/MemberId.hpp"
 #include "xcdr/optional.hpp"
 
@@ -265,7 +266,7 @@ public:
     Cdr_DllAPI size_t get_serialized_data_length() const;
 
     /*!
-     * @brief Get the number of bytes needed to align a position to certain data size.
+     * @brief Returns the number of bytes needed to align a position to certain data size.
      * @param current_alignment Position to be aligned.
      * @param data_size Size of next data to process (should be power of two).
      * @return Number of required alignment bytes.
@@ -747,26 +748,17 @@ public:
     Cdr& serialize(
             const std::array<_T, _Size>& array_t)
     {
-        Cdr::state dheader_state(*this);
-
-        if (CdrVersion::XCDRv2 == cdr_version_ && !is_multi_array_primitive(&array_t))
+        if (!is_multi_array_primitive(&array_t))
         {
-            // Serialize DHEADER
-            uint32_t dheader {0};
-            serialize(dheader);
+            Cdr::state dheader_state {allocate_xcdrv2_dheader()};
+
+            serialize_array(array_t.data(), array_t.size());
+
+            set_xcdrv2_dheader(dheader_state);
         }
-
-        serialize_array(array_t.data(), array_t.size());
-
-        if (CdrVersion::XCDRv2 == cdr_version_ && !is_multi_array_primitive(&array_t))
+        else
         {
-            auto offset = offset_;
-            Cdr::state state_after(*this);
-            set_state(dheader_state);
-            size_t dheader = offset - offset_ - (4 + alignment(sizeof(uint32_t)));/* DHEADER */
-            serialize(static_cast<uint32_t>(dheader));
-            set_state(state_after);
-            serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
+            serialize_array(array_t.data(), array_t.size());
         }
 
         return *this;
@@ -783,14 +775,7 @@ public:
     Cdr& serialize(
             const std::vector<_T>& vector_t)
     {
-        Cdr::state dheader_state(*this);
-
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            // Serialize DHEADER
-            uint32_t dheader {0};
-            serialize(dheader);
-        }
+        Cdr::state dheader_state {allocate_xcdrv2_dheader()};
 
         serialize(static_cast<int32_t>(vector_t.size()));
 
@@ -804,16 +789,7 @@ public:
             ex.raise();
         }
 
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            auto offset = offset_;
-            Cdr::state state_after(*this);
-            set_state(dheader_state);
-            size_t dheader = offset - offset_ - (4 + alignment(sizeof(uint32_t)));/* DHEADER */
-            serialize(static_cast<uint32_t>(dheader));
-            set_state(state_after);
-            serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
-        }
+        set_xcdrv2_dheader(dheader_state);
 
         return *this;
     }
@@ -875,14 +851,7 @@ public:
     Cdr& serialize(
             const std::map<_K, _T>& map_t)
     {
-        Cdr::state dheader_state(*this);
-
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            // Serialize DHEADER
-            uint32_t dheader {0};
-            serialize(dheader);
-        }
+        Cdr::state dheader_state {allocate_xcdrv2_dheader()};
 
         serialize(static_cast<int32_t>(map_t.size()));
 
@@ -900,16 +869,7 @@ public:
             ex.raise();
         }
 
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            auto offset = offset_;
-            Cdr::state state_after(*this);
-            set_state(dheader_state);
-            size_t dheader = offset - offset_ - (4 + alignment(sizeof(uint32_t)));/* DHEADER */
-            serialize(static_cast<uint32_t>(dheader));
-            set_state(state_after);
-            serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
-        }
+        set_xcdrv2_dheader(dheader_state);
 
         return *this;
     }
@@ -1271,6 +1231,91 @@ public:
     }
 
     /*!
+     * @brief Encodes an std::vector of primitives as an array.
+     * @param[in] value Reference to a std::vector.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T, typename std::enable_if<std::is_enum<_T>::value ||
+            std::is_arithmetic<_T>::value>::type* = nullptr>
+    Cdr& serialize_array(
+            const std::vector<_T>& value)
+    {
+        serialize_array(value.data(), value.size());
+
+        return *this;
+    }
+
+    /*!
+     * @brief Encodes an std::vector of non-primitives as an array.
+     * @param[in] value Reference to a std::vector.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T, typename std::enable_if<!std::is_enum<_T>::value &&
+            !std::is_arithmetic<_T>::value>::type* = nullptr>
+    Cdr& serialize_array(
+            const std::vector<_T>& value)
+    {
+        Cdr::state dheader_state {allocate_xcdrv2_dheader()};
+
+        serialize_array(value.data(), value.size());
+
+        set_xcdrv2_dheader(dheader_state);
+
+        return *this;
+    }
+
+    /*!
+     * @brief Encodes an std::vector as an array with a different endianness.
+     * @param[in] value Reference to a std::vector.
+     * @param[in] endianness Endianness that will be used in the serialization of this value.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T>
+    Cdr& serialize_array(
+            const std::vector<_T>& value,
+            Endianness endianness)
+    {
+        bool aux_swap = swap_bytes_;
+        swap_bytes_ = (swap_bytes_ && (static_cast<Endianness>(endianness_) == endianness)) ||
+                (!swap_bytes_ && (static_cast<Endianness>(endianness_) != endianness));
+
+        try
+        {
+            serialize_array(value);
+            swap_bytes_ = aux_swap;
+        }
+        catch (exception::Exception& ex)
+        {
+            swap_bytes_ = aux_swap;
+            ex.raise();
+        }
+
+        return *this;
+    }
+
+    /*!
+     * @brief Encodes an std::vector of booleans as an array.
+     * @param[in] value Reference to a std::vector.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    TEMPLATE_SPEC
+    Cdr& serialize_array(
+            const std::vector<bool>& value)
+    {
+        serialize_bool_array(value);
+
+        return *this;
+    }
+
+    /*!
      * @brief This function template serializes a raw sequence of non-primitives
      * @param sequence_t Pointer to the sequence that will be serialized in the buffer.
      * @param num_elements The number of elements contained in the sequence.
@@ -1283,14 +1328,7 @@ public:
             const _T* sequence_t,
             size_t num_elements)
     {
-        Cdr::state dheader_state(*this);
-
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            // Serialize DHEADER
-            uint32_t dheader {0};
-            serialize(dheader);
-        }
+        Cdr::state dheader_state {allocate_xcdrv2_dheader()};
 
         serialize(static_cast<int32_t>(num_elements));
 
@@ -1304,16 +1342,7 @@ public:
             ex.raise();
         }
 
-        if (CdrVersion::XCDRv2 == cdr_version_)
-        {
-            auto offset = offset_;
-            Cdr::state state_after(*this);
-            set_state(dheader_state);
-            size_t dheader = offset - offset_ - (4 + alignment(sizeof(uint32_t)));/* DHEADER */
-            serialize(static_cast<uint32_t>(dheader));
-            set_state(state_after);
-            serialized_member_size_ = SERIALIZED_MEMBER_SIZE;
-        }
+        set_xcdrv2_dheader(dheader_state);
 
         return *this;
     }
@@ -1995,6 +2024,8 @@ public:
 
             deserialize(sequence_length);
 
+            map_t.clear();
+
             try
             {
                 for (uint32_t i = 0; i < sequence_length; ++i)
@@ -2328,6 +2359,120 @@ public:
     Cdr_DllAPI Cdr& deserialize_array(
             bool* bool_t,
             size_t num_elements);
+
+    /*!
+     * @brief Decodes an array of primitives on a std::vector.
+     *
+     * std::vector must have allocated the number of element of the array.
+     *
+     * @param[out] value Reference to the std::vector where the array will be stored after decoding from the buffer.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to decode from a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T, typename std::enable_if<std::is_enum<_T>::value ||
+            std::is_arithmetic<_T>::value>::type* = nullptr>
+    Cdr& deserialize_array(
+            std::vector<_T>& value)
+    {
+        deserialize_array(value.data(), value.size());
+
+        return *this;
+    }
+
+    /*!
+     * @brief Decodes an array of non-primitives on a std::vector.
+     *
+     * std::vector must have allocated the number of element of the array.
+     *
+     * @param[out] value Reference to the std::vector where the array will be stored after decoding from the buffer.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to decode from a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T, typename std::enable_if<!std::is_enum<_T>::value &&
+            !std::is_arithmetic<_T>::value>::type* = nullptr>
+    Cdr& deserialize_array(
+            std::vector<_T>& value)
+    {
+        if (CdrVersion::XCDRv2 == cdr_version_)
+        {
+            uint32_t dheader {0};
+            deserialize(dheader);
+
+            uint32_t count {0};
+            auto offset = offset_;
+            while (offset_ - offset < dheader && count < value.size())
+            {
+                deserialize_array(&value.data()[count], 1);
+                ++count;
+            }
+
+            if (offset_ - offset != dheader)
+            {
+                throw exception::BadParamException("Member size greater than size specified by DHEADER");
+            }
+        }
+        else
+        {
+            return deserialize_array(value.data(), value.size());
+        }
+
+        return *this;
+    }
+
+    /*!
+     * @brief Decodes an array of non-primitives on a std::vector with a different endianness.
+     *
+     * std::vector must have allocated the number of element of the array.
+     *
+     * @param[out] value Reference to the std::vector where the array will be stored after decoding from the buffer.
+     * @param[in] endianness Endianness that will be used in the serialization of this value.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to decode from a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T>
+    Cdr& deserialize_array(
+            std::vector<_T>& value,
+            Endianness endianness)
+    {
+        bool aux_swap = swap_bytes_;
+        swap_bytes_ = (swap_bytes_ && (static_cast<Endianness>(endianness_) == endianness)) ||
+                (!swap_bytes_ && (static_cast<Endianness>(endianness_) != endianness));
+
+        try
+        {
+            deserialize_array(value);
+            swap_bytes_ = aux_swap;
+        }
+        catch (exception::Exception& ex)
+        {
+            swap_bytes_ = aux_swap;
+            ex.raise();
+        }
+
+        return *this;
+    }
+
+    /*!
+     * @brief Decodes an array of booleans on a std::vector.
+     *
+     * std::vector must have allocated the number of element of the array.
+     *
+     * @param[out] value Reference to the std::vector where the array will be stored after decoding from the buffer.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    TEMPLATE_SPEC
+    Cdr& deserialize_array(
+            std::vector<bool>& value)
+    {
+        deserialize_bool_array(value);
+
+        return *this;
+    }
 
     /*!
      * @brief This function template deserializes a raw sequence of non-primitives.
@@ -2677,6 +2822,27 @@ public:
     }
 
     /*!
+     * @brief Encodes an external in the buffer.
+     * @param[in] value A reference to the external which will be encoded in the buffer.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::BadParamException This exception is thrown when external is null.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to encode into a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T>
+    Cdr& serialize(
+            const external<_T>& value)
+    {
+        if (!value)
+        {
+            throw exception::BadParamException("External member is null");
+        }
+
+        serialize(*value);
+        return *this;
+    }
+
+    /*!
      * @brief Tells the encoder the member identifier for the next member to be encoded.
      * @param[in] member_id Member identifier.
      * @return Reference to the eprosima::fastcdr::Cdr object.
@@ -2719,6 +2885,78 @@ public:
         return *this;
     }
 
+    /*!
+     * @brief Decodes an external from the buffer.
+     * @param[out] value A reference to the variable where the external will be stored.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::BadParamException This exception is thrown when the external is locked.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to decode from a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T>
+    Cdr& deserialize(
+            external<_T>& value)
+    {
+        if (value.is_locked())
+        {
+            throw exception::BadParamException("External member is locked");
+        }
+
+        if (!value)
+        {
+            value = external<_T>{new typename external<_T>::type()};
+        }
+
+        deserialize(*value);
+        return *this;
+    }
+
+    /*!
+     * @brief Decodes an optional of an external from the buffer.
+     * @param[out] value A reference to the variable where the optional will be stored.
+     * @return Reference to the eprosima::fastcdr::Cdr object.
+     * @exception exception::BadParamException This exception is thrown when the external is locked.
+     * @exception exception::NotEnoughMemoryException This exception is thrown when trying to decode from a buffer
+     * position that exceeds the internal memory size.
+     */
+    template<class _T>
+    Cdr& deserialize(
+            optional<external<_T>>& value)
+    {
+        if (value.has_value() && value.value().is_locked())
+        {
+            throw exception::BadParamException("External member is locked");
+        }
+
+        bool is_present = true;
+        if (CdrVersion::XCDRv2 == cdr_version_ && EncodingAlgorithmFlag::PL_CDR2 != current_encoding_)
+        {
+            deserialize(is_present);
+        }
+        value.reset(is_present);
+        if (is_present)
+        {
+            deserialize(*value);
+        }
+        return *this;
+    }
+
+    /*!
+     * @brief Encodes an empty DHEADER if the encoding version is XCDRv2.
+     * After serializing the members's type, @ref set_xcdrv2_dheader must be called to set the correct DHEADER value
+     * using the @ref state returned by this function.
+     */
+    Cdr_DllAPI state allocate_xcdrv2_dheader();
+
+    /*!
+     * @brief Uses the @ref state to calculate the member's type size and serialize the value in the previous allocated
+     * DHEADER.
+     *
+     * @param[in] state @ref state used to calculate the member's type size.
+     */
+    Cdr_DllAPI void set_xcdrv2_dheader(
+            const state& state);
+
 private:
 
     Cdr(
@@ -2727,8 +2965,14 @@ private:
     Cdr& operator =(
             const Cdr&) = delete;
 
+    Cdr_DllAPI Cdr& serialize_bool_array(
+            const std::vector<bool>& vector_t);
+
     Cdr_DllAPI Cdr& serialize_bool_sequence(
             const std::vector<bool>& vector_t);
+
+    Cdr_DllAPI Cdr& deserialize_bool_array(
+            std::vector<bool>& vector_t);
 
     Cdr_DllAPI Cdr& deserialize_bool_sequence(
             std::vector<bool>& vector_t);
@@ -2789,7 +3033,8 @@ private:
     }
 
     /*!
-     * @brief This function returns the extra bytes regarding the allignment.
+     * @brief Returns the number of bytes needed to align the current position (having as reference the origin) to
+     * certain data size.
      * @param data_size The size of the data that will be serialized.
      * @return The size needed for the alignment.
      */
@@ -3263,7 +3508,7 @@ private:
     EncodingAlgorithmFlag current_encoding_ {EncodingAlgorithmFlag::PLAIN_CDR2};
 
     //! @brief This attribute stores the option flags when the CDR type is DDS_CDR;
-    std::array<uint8_t, 2> options_ {0};
+    std::array<uint8_t, 2> options_{{0}};
 
     //! @brief The endianness that will be applied over the buffer.
     uint8_t endianness_ {Endianness::LITTLE_ENDIANNESS};
@@ -3289,13 +3534,16 @@ private:
     //! Align for types equal or greater than 64bits.
     size_t align64_ {4};
 
-
+    /*!
+     * When serializing a member's type using XCDRv2, this enumerator is used to inform the type was serialized with a
+     * DHEADER and the algorithm could optimize the XCDRv2 member header.
+     */
     enum SerializedMemberSizeForNextInt
     {
-        NO_SERIALIZED_MEMBER_SIZE,
-        SERIALIZED_MEMBER_SIZE,
-        SERIALIZED_MEMBER_SIZE_4,
-        SERIALIZED_MEMBER_SIZE_8
+        NO_SERIALIZED_MEMBER_SIZE,     //! Default. No serialized member size in a DHEADER.
+        SERIALIZED_MEMBER_SIZE,        //! Serialized member size in a DHEADER.
+        SERIALIZED_MEMBER_SIZE_4,      //! Serialized member size (which is a multiple of 4) in a DHEADER.
+        SERIALIZED_MEMBER_SIZE_8       //! Serialized member size (which is a multiple of 8) in a DHEADER.
     }
     //! Specifies if a DHEADER was serialized. Used to optimize XCDRv2 member headers.
     serialized_member_size_ {NO_SERIALIZED_MEMBER_SIZE};

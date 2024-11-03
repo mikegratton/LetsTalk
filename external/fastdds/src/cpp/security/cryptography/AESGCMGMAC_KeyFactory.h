@@ -19,15 +19,15 @@
 #ifndef _SECURITY_AUTHENTICATION_AESGCMGMAC_KEYFACTORY_H_
 #define _SECURITY_AUTHENTICATION_AESGCMGMAC_KEYFACTORY_H_
 
-#include <fastdds/rtps/security/cryptography/CryptoKeyFactory.h>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
 
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <rtps/security/cryptography/CryptoKeyFactory.h>
 #include <security/cryptography/AESGCMGMAC_Types.h>
 
 #include <memory>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -147,7 +147,7 @@ private:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #endif // _SECURITY_AUTHENTICATION_AESGCMGMAC_KEYFACTORY_H_

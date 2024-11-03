@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+<dds xmlns="http://www.eprosima.com" >
     <profiles>
         <transport_descriptors>
             <!-- TCP sample transport descriptor -->
@@ -51,6 +51,8 @@
                 <calculate_crc>false</calculate_crc>
                 <check_crc>false</check_crc>
                 <enable_tcp_nodelay>false</enable_tcp_nodelay>
+                <non_blocking_send>false</non_blocking_send>
+                <tcp_negotiation_timeout>100</tcp_negotiation_timeout>
             </transport_descriptor>
             <!-- UDP sample transport descriptor. Several options are common with TCP -->
             <transport_descriptor>
@@ -335,6 +337,11 @@
                     <send_buffers>
                         <preallocated_number>113</preallocated_number>
                         <dynamic>true</dynamic>
+                        <network_buffers_config>
+                            <initial>16</initial>
+                            <maximum>0</maximum>
+                            <increment>16</increment>
+                        </network_buffers_config>
                     </send_buffers>
                 </allocation>
             </rtps>
@@ -426,22 +433,22 @@
             </qos>
 
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
 
             <unicastLocatorList>
@@ -610,14 +617,14 @@
             </qos>
 
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>1</sec>
                     <nanosec>856000</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
 
             <unicastLocatorList>
@@ -680,7 +687,7 @@
             </external_unicast_locators>
 
             <ignore_non_matching_locators>true</ignore_non_matching_locators>
-            <expectsInlineQos>true</expectsInlineQos>
+            <expects_inline_qos>true</expects_inline_qos>
             <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
 
             <propertiesPolicy>
@@ -749,6 +756,13 @@
                 <value>TRUE</value>
             </property>
         </consumer>
+
+        <thread_settings>
+            <scheduling_policy>12</scheduling_policy>
+            <priority>12</priority>
+            <affinity>12</affinity>
+            <stack_size>12</stack_size>
+        </thread_settings>
     </log>
 
     <types>
@@ -855,6 +869,14 @@
                 <bit_value name="flag0" position="0"/>
                 <bit_value name="flag1"/>
             </bitmask>
+        </type>
+
+        <type>
+            <struct name="my_keyed_struct">
+                <member name="first" type="int32"/>
+                <member name="second" type="int64"/>
+                <member name="third" type="int32" key="true"/>
+            </struct>
         </type>
     </types>
 

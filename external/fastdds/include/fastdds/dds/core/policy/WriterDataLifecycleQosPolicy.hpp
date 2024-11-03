@@ -16,8 +16,8 @@
  * @file WriterDataLifecycleQosPolicy.hpp
  */
 
-#ifndef _FASTDDS_WRITERDATALIFECYCLEQOSPOLICY_HPP_
-#define _FASTDDS_WRITERDATALIFECYCLEQOSPOLICY_HPP_
+#ifndef FASTDDS_DDS_CORE_POLICY__WRITERDATALIFECYCLEQOSPOLICY_HPP
+#define FASTDDS_DDS_CORE_POLICY__WRITERDATALIFECYCLEQOSPOLICY_HPP
 
 namespace eprosima {
 namespace fastdds {
@@ -41,7 +41,7 @@ public:
     /**
      * @brief Destructor
      */
-    virtual RTPS_DllAPI ~WriterDataLifecycleQosPolicy()
+    virtual FASTDDS_EXPORTED_API ~WriterDataLifecycleQosPolicy()
     {
     }
 
@@ -67,4 +67,4 @@ public:
 } //namespace fastdds
 } //namespace eprosima
 
-#endif // _FASTDDS_WRITERDATALIFECYCLEQOSPOLICY_HPP_
+#endif // FASTDDS_DDS_CORE_POLICY__WRITERDATALIFECYCLEQOSPOLICY_HPP

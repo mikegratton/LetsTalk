@@ -12,20 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
+#include <thread>
 
+#include <fastdds/rtps/common/CDRMessage_t.hpp>
+#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.hpp>
+#include <gtest/gtest.h>
+
+#include "../utils/filter_helpers.hpp"
+#include "BlackboxTests.hpp"
 #include "PubSubReader.hpp"
 #include "PubSubWriter.hpp"
 
-#include <gtest/gtest.h>
-
-#include <fastrtps/utils/TimeConversion.h>
-#include <rtps/transport/test_UDPv4Transport.h>
-
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
-using test_UDPv4Transport = eprosima::fastdds::rtps::test_UDPv4Transport;
-using test_UDPv4TransportDescriptor = eprosima::fastdds::rtps::test_UDPv4TransportDescriptor;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::rtps;
 
 void reliability_disable_heartbeat_piggyback(
         bool disable_heartbeat_piggyback)
@@ -44,9 +43,9 @@ void reliability_disable_heartbeat_piggyback(
                 if (start_reception)
                 {
                     auto old_pos = msg.pos;
-                    EntityId_t writer_id_msg;
                     msg.pos += 4;
-                    CDRMessage::readEntityId(&msg, &writer_id_msg);
+                    EntityId_t writer_id_msg = eprosima::fastdds::helpers::cdr_parse_entity_id(
+                        (char*)&msg.buffer[msg.pos]);
                     if (writer_id == writer_id_msg)
                     {
                         heartbeat_found = true;
@@ -56,8 +55,8 @@ void reliability_disable_heartbeat_piggyback(
                 return false;
             };
 
-    writer.reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
-            .history_kind(eprosima::fastrtps::KEEP_LAST_HISTORY_QOS)
+    writer.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
+            .history_kind(eprosima::fastdds::dds::KEEP_LAST_HISTORY_QOS)
             .history_depth(1)
             .heartbeat_period_seconds(180000)
             .disable_heartbeat_piggyback(disable_heartbeat_piggyback)
@@ -66,8 +65,8 @@ void reliability_disable_heartbeat_piggyback(
             .init();
     writer_id = writer.datawriter_guid().entityId;
 
-    reader.history_kind(eprosima::fastrtps::KEEP_ALL_HISTORY_QOS)
-            .reliability(eprosima::fastrtps::RELIABLE_RELIABILITY_QOS)
+    reader.history_kind(eprosima::fastdds::dds::KEEP_ALL_HISTORY_QOS)
+            .reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS)
             .init();
 
     ASSERT_TRUE(reader.isInitialized());

@@ -1,15 +1,14 @@
-# Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-# This file is subject to the license terms in the LICENSE file
-# found in the top-level directory of this distribution.
+# Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+# SPDX-License-Identifier: Zlib
 
 # root CMakeLists.txt, specifies option and interface library
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 project(FOONATHAN_MEMORY)
 
 set(FOONATHAN_MEMORY_VERSION_MAJOR 0 CACHE STRING "major version of memory" FORCE)
 set(FOONATHAN_MEMORY_VERSION_MINOR 7 CACHE STRING "minor version of memory" FORCE)
-set(FOONATHAN_MEMORY_VERSION_PATCH 2 CACHE STRING "patch version of memory" FORCE)
+set(FOONATHAN_MEMORY_VERSION_PATCH 3 CACHE STRING "patch version of memory" FORCE)
 set(FOONATHAN_MEMORY_VERSION "${FOONATHAN_MEMORY_VERSION_MAJOR}.${FOONATHAN_MEMORY_VERSION_MINOR}.${FOONATHAN_MEMORY_VERSION_PATCH}"
                              CACHE STRING "version of memory" FORCE)
 
@@ -27,7 +26,7 @@ if(UNIX OR VXWORKS)
     set(FOONATHAN_MEMORY_ARCHIVE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
     set(FOONATHAN_MEMORY_FRAMEWORK_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}")
 
-    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/foonathan_memory")
+    set(FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/foonathan_memory/cmake")
     set(FOONATHAN_MEMORY_ADDITIONAL_FILES_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/foonathan_memory")
 elseif(WIN32)
     set(FOONATHAN_MEMORY_INC_INSTALL_DIR "include/foonathan_memory")

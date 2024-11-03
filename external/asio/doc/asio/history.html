@@ -8,6 +8,7 @@
 <link rel="up" href="../index.html" title="Asio">
 <link rel="prev" href="std_executors.html" title="Proposed Standard Executors">
 <link rel="next" href="index.html" title="">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../asio.png"></td></tr></table>
@@ -21,6 +22,804 @@
 </h2></div></div></div>
 <h4>
 <a name="asio.history.h0"></a>
+      <span><a name="asio.history.asio_1_30_2"></a></span><a class="link" href="history.html#asio.history.asio_1_30_2">Asio
+      1.30.2</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">co_spawn</span></code> to correctly
+          propagate exceptions resulting from cancellation to the completion handler.
+        </li>
+<li class="listitem">
+          Added calls to <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">launder</span></code> to fix undefined behaviour in
+          <code class="computeroutput"><span class="identifier">awaitable</span><span class="special">&lt;&gt;</span></code>
+          internal storage.
+        </li>
+<li class="listitem">
+          Added missing handling of the <code class="computeroutput"><span class="identifier">file_base</span><span class="special">::</span><span class="identifier">append</span></code>
+          flag in the Windows implementation of file support.
+        </li>
+<li class="listitem">
+          Updated the socket and descriptor implementations to add more cases where
+          they will fall back to <code class="computeroutput"><span class="identifier">fcntl</span></code>
+          if a call to <code class="computeroutput"><span class="identifier">ioctl</span></code> fails.
+        </li>
+<li class="listitem">
+          Fixed a compile error that occurred when channels and <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">coro</span></code>
+          were both used in the same translation unit.
+        </li>
+<li class="listitem">
+          Added missing CancellationSlot type requirements to documentation.
+        </li>
+<li class="listitem">
+          Minor documentation updates.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h1"></a>
+      <span><a name="asio.history.asio_1_30_1"></a></span><a class="link" href="history.html#asio.history.asio_1_30_1">Asio
+      1.30.1</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Fixed the <code class="computeroutput"><span class="identifier">async_result</span></code>
+          primary template's concept checking to correctly handle lvalue-qualified
+          completion signatures.
+        </li>
+<li class="listitem">
+          Fixed some compile errors that could arise when using the <code class="computeroutput"><span class="identifier">bind_allocator</span></code>, <code class="computeroutput"><span class="identifier">bind_executor</span></code>,
+          <code class="computeroutput"><span class="identifier">bind_immediate_executor</span></code>
+          and <code class="computeroutput"><span class="identifier">bind_cancellation_slot</span></code>
+          completion token adapters to adapt each other.
+        </li>
+<li class="listitem">
+          Changed the <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">ranged_parallel_group</span></code>
+          operation so that it moves the <code class="computeroutput"><span class="identifier">completion_order</span></code>
+          vector when invoking the completion handler.
+        </li>
+<li class="listitem">
+          Fixed the <code class="literal">asio/experimental/parallel_group.hpp</code> header
+          so that it is self-contained.
+        </li>
+<li class="listitem">
+          Fixed some warnings about deprecated implicit copy constructors on <code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">basic_resolver_query</span></code>, <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">strand</span></code>,
+          and <code class="computeroutput"><span class="identifier">coroutine</span></code>.
+        </li>
+<li class="listitem">
+          Updated the version specification used to initialise Winsock.
+        </li>
+<li class="listitem">
+          Fixed the documentation hyperlinks for the deduced return types of asynchronous
+          operations' initiating functions.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h2"></a>
+      <span><a name="asio.history.asio_1_30_0"></a></span><a class="link" href="history.html#asio.history.asio_1_30_0">Asio
+      1.30.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Fixed compatibility between <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>
+          and compilation using <code class="computeroutput"><span class="identifier">ASIO_USE_TS_EXECUTOR_AS_DEFAULT</span></code>.
+        </li>
+<li class="listitem">
+          Fixed a crash that may occur when attempting to access a default-constructed
+          <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>
+          object's associators.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">ssl</span><span class="special">::</span><span class="identifier">stream</span><span class="special">&lt;&gt;</span></code>
+          class's <code class="computeroutput"><span class="identifier">async_handshake</span></code>
+          operation so that it works with a defaulted completion token.
+        </li>
+<li class="listitem">
+          Updated all examples to use C++11 as the minimum language standard.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h3"></a>
+      <span><a name="asio.history.asio_1_29_0"></a></span><a class="link" href="history.html#asio.history.asio_1_29_0">Asio
+      1.29.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Changed to require C++11 as the minimum language standard.
+        </li>
+<li class="listitem">
+          Removed deprecated functionality from the <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">execution</span></code>
+          namespace.
+        </li>
+<li class="listitem">
+          Removed deprecated invocation and allocation hooks.
+        </li>
+<li class="listitem">
+          Added compatibility between Asio's placeholders and <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span></code>.
+        </li>
+<li class="listitem">
+          Added <code class="computeroutput"><span class="identifier">try_send_via_dispatch</span></code>
+          and <code class="computeroutput"><span class="identifier">try_send_n_via_dispatch</span></code>
+          functions to channels.
+        </li>
+<li class="listitem">
+          Improved C++11 support for multi-signature channels.
+        </li>
+<li class="listitem">
+          Fixed compatibility between channel asynchronous operations and <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>.
+        </li>
+<li class="listitem">
+          Added missing equality operators for mixed property types belonging to
+          the same category.
+        </li>
+<li class="listitem">
+          Fixed an issue where <code class="computeroutput"><span class="identifier">spawn</span></code>-based
+          stackful coroutines would terminate the program when used with asynchronous
+          operations that have a completion signature starting with <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code>.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h4"></a>
+      <span><a name="asio.history.asio_1_28_2"></a></span><a class="link" href="history.html#asio.history.asio_1_28_2">Asio
+      1.28.2</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Fixed the completion token adapters <code class="computeroutput"><span class="identifier">bind_allocator</span></code>,
+          <code class="computeroutput"><span class="identifier">bind_cancellation_slot</span></code>
+          and <code class="computeroutput"><span class="identifier">bind_immediate_executor</span></code>
+          to not require a <code class="computeroutput"><span class="identifier">return_type</span></code>
+          type alias in the adapted <code class="computeroutput"><span class="identifier">async_result</span></code>
+          specialisation.
+        </li>
+<li class="listitem">
+          Fixed a potental crash due to an object lifetime issue in the <code class="computeroutput"><span class="identifier">co_spawn</span></code> operation's cancellation support.
+        </li>
+<li class="listitem">
+          Enabled compiler-supported thread locals on more target platforms, using
+          the <code class="computeroutput"><span class="keyword">thread_local</span></code> keyword if
+          available.
+        </li>
+<li class="listitem">
+          Fixed the documentation of the per-operation cancellation behaviour for
+          <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">co_composed</span></code> to correctly state that terminal
+          cancellation is enabled by default.
+        </li>
+<li class="listitem">
+          Documented the per-operation cancellation behaviour of <code class="computeroutput"><span class="identifier">async_compose</span></code>.
+        </li>
+<li class="listitem">
+          Added <code class="computeroutput"><span class="identifier">bind_immediate_executor</span></code>
+          to the <code class="computeroutput"><span class="identifier">Completion</span> <span class="identifier">Token</span>
+          <span class="identifier">Adapters</span></code> overview.
+        </li>
+<li class="listitem">
+          Added an example illustrating how to use an <code class="computeroutput"><span class="identifier">experimental</span>
+          <span class="identifier">channel</span></code> for mutual exclusion
+          between cooperating asynchronous actors.
+        </li>
+<li class="listitem">
+          Added an example showing how to write a minimal completion executor.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h5"></a>
+      <span><a name="asio.history.asio_1_28_1"></a></span><a class="link" href="history.html#asio.history.asio_1_28_1">Asio
+      1.28.1</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Added missing compatibility with <code class="computeroutput"><span class="identifier">associated_immediate_executor</span></code>
+          to <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>.
+        </li>
+<li class="listitem">
+          Fixed a null pointer dereference that occurs when using <code class="computeroutput"><span class="identifier">query</span></code>,
+          <code class="computeroutput"><span class="identifier">require</span></code> or <code class="computeroutput"><span class="identifier">prefer</span></code> with an empty <code class="computeroutput"><span class="identifier">any_executor</span></code>.
+        </li>
+<li class="listitem">
+          Added a workaround in <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">coro</span></code>
+          for a spurious syntax error when compiling with MSVC.
+        </li>
+<li class="listitem">
+          Fixed an integer truncation issue in per-operation cancellation, when using
+          the reactor backend on 64-bit Windows.
+        </li>
+<li class="listitem">
+          Added a compile-time check for a minimum Linux kernel version of 5.10,
+          when <code class="literal">io_uring</code> support is enabled.
+        </li>
+<li class="listitem">
+          Fixed a compile error in the converting move constructors for <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">basic_channel</span></code> and <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">basic_concurrent_channel</span></code>.
+        </li>
+<li class="listitem">
+          Fixed a memory leak on some <code class="computeroutput"><span class="identifier">signal_set</span></code>
+          error handling code paths.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">bad_address_cast</span></code>
+          to not use a deprecated implicit copy constructor.
+        </li>
+<li class="listitem">
+          Fixed a copy/paste error in the <code class="computeroutput"><span class="identifier">dev_poll_reactor</span></code>
+          backend.
+        </li>
+<li class="listitem">
+          Fixed the <code class="literal">io_uring</code> backend to ensure the internal timeout
+          operations, used to implement <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">run_for</span></code>
+          and <code class="computeroutput"><span class="identifier">io_context</span><span class="special">::</span><span class="identifier">run_until</span></code>, are cleaned up correctly.
+        </li>
+<li class="listitem">
+          Eliminated some duplicated state in the <code class="computeroutput"><span class="identifier">co_spawn</span></code>
+          implementation's entry point, reducing memory consumption.
+        </li>
+<li class="listitem">
+          Added c++14 echo examples to boostify script.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h6"></a>
+      <span><a name="asio.history.asio_1_28_0"></a></span><a class="link" href="history.html#asio.history.asio_1_28_0">Asio
+      1.28.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Added missing handler tracking source location support to <code class="computeroutput"><span class="identifier">awaitable</span><span class="special">&lt;&gt;</span></code>-based
+          coroutine's ability to <code class="computeroutput"><span class="identifier">co_await</span></code>
+          asynchronous operations packaged as function objects.
+        </li>
+<li class="listitem">
+          Add missing handler tracking source location support to <code class="computeroutput"><span class="identifier">co_composed</span></code>.
+        </li>
+<li class="listitem">
+          Fixed suppression of spurious 'potential null dereference' warnings, to
+          work with older compilers.
+        </li>
+<li class="listitem">
+          Fixed a bug where passing the deprecated <code class="computeroutput"><span class="identifier">const_buffers_1</span></code>
+          and <code class="computeroutput"><span class="identifier">mutable_buffers_1</span></code> types
+          to <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">()</span></code>
+          would result in the contiguous iterator overloads being incorrectly chosen.
+        </li>
+<li class="listitem">
+          Disabled the runtime Windows version test unless targeting older Windows
+          versions.
+        </li>
+<li class="listitem">
+          Fixed compatibility between buffered stream wrappers and move-constructible
+          streams, such as <code class="computeroutput"><span class="identifier">ssl</span><span class="special">::</span><span class="identifier">stream</span><span class="special">&lt;&gt;</span></code>.
+        </li>
+<li class="listitem">
+          Marked <code class="computeroutput"><span class="identifier">ip</span><span class="special">::</span><span class="identifier">address_v4</span><span class="special">::</span><span class="identifier">to_ulong</span></code> as deprecated in the documentation.
+        </li>
+<li class="listitem">
+          Fixed shadowed variable warnings.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">basic_socket_acceptor</span><span class="special">::</span><span class="identifier">async_accept</span></code>
+          concept requirement checking to be compatible with lambdas that have a
+          deduced return type.
+        </li>
+<li class="listitem">
+          Fixed a feature detection macro used in <code class="computeroutput"><span class="identifier">use_future</span></code>'s
+          compatibility traits.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">as_tuple</span></code> compatibility
+          with legacy completion tokens.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">redirect_error</span></code> compatibility
+          with new completion tokens.
+        </li>
+<li class="listitem">
+          Fixed a potential, Windows-specific program termination due to exceptions
+          that should have been allowed to escape from a destructor.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">this_coro</span></code> to prevent
+          inadvertent <code class="computeroutput"><span class="identifier">co_await</span></code> of
+          boolean expressions.
+        </li>
+<li class="listitem">
+          Fixed result handling in <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">use_coro</span></code>
+          implementation.
+        </li>
+<li class="listitem">
+          Fixed variadic template emulation for <code class="computeroutput"><span class="identifier">is_async_operation</span></code>
+          and <code class="computeroutput"><span class="identifier">completion_signature_of</span></code>.
+        </li>
+<li class="listitem">
+          Fixed incorrect reuse of a moved-from result in <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">promise</span></code>.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">coro</span></code> use with custom allocators.
+        </li>
+<li class="listitem">
+          Fixed clean up of internal I/O object structures when using <code class="literal">io_uring</code>.
+        </li>
+<li class="listitem">
+          Use cached offset when seeking a file with seek_cur on Windows.
+        </li>
+<li class="listitem">
+          Added immediate completion to asynchronous operation requirements.
+        </li>
+<li class="listitem">
+          Added <code class="computeroutput"><span class="identifier">any_completion_handler</span><span class="special">&lt;&gt;</span></code>, <code class="computeroutput"><span class="identifier">co_composed</span></code>,
+          and immediate completion support to the documentation overview.
+        </li>
+<li class="listitem">
+          Added buffer literals to the documentation.
+        </li>
+<li class="listitem">
+          Added a link to the <a href="https://github.com/chriskohlhoff/asio-debugger-extensions" target="_top">Asio
+          debugger extensions</a> repository.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h7"></a>
+      <span><a name="asio.history.asio_1_27_0"></a></span><a class="link" href="history.html#asio.history.asio_1_27_0">Asio
+      1.27.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+<p class="simpara">
+          Added the ability to customise the execution of a completion handler when
+          an operation completes immediately. This change adds the <code class="computeroutput"><span class="identifier">associated_immediate_executor</span></code> associator
+          trait, <code class="computeroutput"><span class="identifier">bind_immediate_executor</span></code>
+          function, and <code class="computeroutput"><span class="identifier">immediate_executor_binder</span></code>
+          adapter. When a supported operation completes immediately (that is, within
+          the initiating function) the associated immmediate executor is obtained,
+          and the completion handler is delivered through that executor as if by
+          using <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">dispatch</span></code> on that executor. By default,
+          the immediate executor delivers the completion handler as if using <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">post</span></code> via the operation's I/O executor.
+          For example, to allow a recursive call to the completion handler of an
+          <code class="computeroutput"><span class="identifier">async_read_some</span></code> operation,
+          we may specify that immediate completion is delivered via a <code class="computeroutput"><span class="identifier">system_executor</span></code>:<br>
+        </p>
+<pre class="programlisting"><span class="identifier">my_socket</span><span class="special">.</span><span class="identifier">async_read_some</span><span class="special">(</span><span class="identifier">my_buffer</span><span class="special">,</span>
+    <span class="identifier">bind_immediate_executor</span><span class="special">(</span>
+      <span class="identifier">system_executor</span><span class="special">(),</span>
+      <span class="special">[](</span><span class="identifier">error_code</span> <span class="identifier">e</span><span class="special">,</span> <span class="identifier">size_t</span> <span class="identifier">n</span><span class="special">)</span>
+      <span class="special">{</span>
+        <span class="comment">// ...</span>
+      <span class="special">}</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+</pre>
+<p class="simpara">
+          <br> Immediate execution is currently supported for asynchronous operations
+          on reactor-based sockets and descriptors, and for asynchronous operations
+          on channels.
+        </p>
+</li>
+<li class="listitem">
+<p class="simpara">
+          Added user-defined literals for buffer types. The <code class="computeroutput"><span class="identifier">_buf</span></code>
+          literal suffix, defined in namespace <code class="computeroutput"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer_literals</span></code>,
+          may be used to create const_buffer objects from string, binary integer,
+          and hexadecimal integer literals. These buffer literals may be arbitrarily
+          long. For example:<br>
+        </p>
+<pre class="programlisting">  using namespace asio::buffer_literals;
+
+  asio::const_buffer b1 = "hello"_buf;
+  asio::const_buffer b2 = 0xdeadbeef_buf;
+  asio::const_buffer b3 = 0x01234567'89abcdef'01234567'89abcdef_buf;
+  asio::const_buffer b4 = 0b1010101011001100_buf;
+  </pre>
+<p class="simpara">
+          <br> The memory associated with a buffer literal is valid for the lifetime
+          of the program. This means that the buffer can be safely used with asynchronous
+          operations:<br>
+        </p>
+<pre class="programlisting"><span class="identifier">async_write</span><span class="special">(</span><span class="identifier">my_socket</span><span class="special">,</span> <span class="string">"hello"</span><span class="identifier">_buf</span><span class="special">,</span> <span class="identifier">my_handler</span><span class="special">);</span>
+</pre>
+<p class="simpara">
+          <br>
+        </p>
+</li>
+<li class="listitem">
+          Added a new protocol type <code class="computeroutput"><span class="identifier">local</span><span class="special">::</span><span class="identifier">seq_packet_protocol</span></code>
+          to represent <code class="computeroutput"><span class="identifier">AF_UNIX</span></code> with
+          <code class="computeroutput"><span class="identifier">SOCK_SEQPACKET</span></code>.
+        </li>
+<li class="listitem">
+<p class="simpara">
+          Exposed <code class="computeroutput"><span class="identifier">sigaction</span><span class="special">()</span></code>
+          flags via optional argument to <code class="computeroutput"><span class="identifier">signal_set</span><span class="special">::</span><span class="identifier">add</span></code>.
+          When registering a signal, it is now possible to pass flags that specify
+          the behaviour associated with the signal. These flags are specified as
+          an enum type in a new class, signal_set_base, and are passed to the underlying
+          <code class="computeroutput"><span class="identifier">sigaction</span><span class="special">()</span></code>
+          call. For example:<br>
+        </p>
+<pre class="programlisting"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">signal_set</span> <span class="identifier">sigs</span><span class="special">(</span><span class="identifier">my_io_context</span><span class="special">);</span>
+<span class="identifier">sigs</span><span class="special">.</span><span class="identifier">add</span><span class="special">(</span><span class="identifier">SIGINT</span><span class="special">,</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">signal_set</span><span class="special">::</span><span class="identifier">flags</span><span class="special">::</span><span class="identifier">restart</span><span class="special">);</span>
+</pre>
+<p class="simpara">
+          <br> Specifying flags other than <code class="computeroutput"><span class="identifier">flags</span><span class="special">::</span><span class="identifier">dont_care</span></code>
+          will fail unless <code class="computeroutput"><span class="identifier">sigaction</span><span class="special">()</span></code> is supported by the target operating
+          system. Since signal registration is global, conflicting flags (multiple
+          registrations that pass differing flags other than <code class="computeroutput"><span class="identifier">flags</span><span class="special">::</span><span class="identifier">dont_care</span></code>)
+          will also result in an error.
+        </p>
+</li>
+<li class="listitem">
+          Change <code class="computeroutput"><span class="identifier">allocator_binder</span></code>,
+          <code class="computeroutput"><span class="identifier">executor_binder</span></code>, and <code class="computeroutput"><span class="identifier">cancellation_slot_binder</span></code> to support detection
+          of unspecialised associators.
+        </li>
+<li class="listitem">
+          Fixed ambiguity in <code class="computeroutput"><span class="identifier">associated_cancellation_slot</span><span class="special">&lt;</span><span class="identifier">reference_wrapper</span><span class="special">&gt;::</span><span class="identifier">get</span><span class="special">()</span></code>.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">awaitable</span></code> handling
+          for completion signatures containing <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">exception_ptr</span></code>.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">channel</span></code> <code class="computeroutput"><span class="identifier">try_send</span></code>
+          failure after a <code class="computeroutput"><span class="identifier">cancel</span></code>.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">thread_pool</span><span class="special">::</span><span class="identifier">join</span><span class="special">()</span></code>
+          deadlock when the pool has no internal threads.
+        </li>
+<li class="listitem">
+          Fixed pipe <code class="computeroutput"><span class="identifier">release</span><span class="special">()</span></code>
+          when using <code class="literal">io_uring</code>.
+        </li>
+<li class="listitem">
+          Fixed a data initialisation issue in the <code class="literal">io_uring</code> backend.
+        </li>
+<li class="listitem">
+          Fixed a dangling reference issue in the execution context overload of
+          <code class="computeroutput"><span class="identifier">get_associated_executor</span></code>.
+        </li>
+<li class="listitem">
+          Ensured buffered messages can still be received when an <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">channel</span></code>
+          is closed.
+        </li>
+<li class="listitem">
+          Fixed the <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>
+          assignment operator to work correctly.
+        </li>
+<li class="listitem">
+          Constrained the constructor of the move-only class template <code class="computeroutput"><span class="identifier">any_completion_handler</span></code> to prevent accidental
+          copying
+        </li>
+<li class="listitem">
+          Suppressed spurious 'potential null dereference' warnings.
+        </li>
+<li class="listitem">
+          Changed to use <code class="computeroutput"><span class="identifier">uint64_t</span></code>
+          for OpenSSL options, to match OpenSSL 3.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">deferred</span></code> interoperability
+          with multiple completion signatures.
+        </li>
+<li class="listitem">
+          Fixed channels to support C++11 and later. Note that for C++11 and C++14,
+          support is limited to channels with a single completion signature, or channels
+          with a void() signature (plus the error signature added by the channel
+          traits).
+        </li>
+<li class="listitem">
+          Added <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>
+          to the documentation.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h8"></a>
+      <span><a name="asio.history.asio_1_26_0"></a></span><a class="link" href="history.html#asio.history.asio_1_26_0">Asio
+      1.26.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">spawn</span></code> and <code class="computeroutput"><span class="identifier">co_spawn</span></code> implementations to dispatch
+          cancellation handlers on the correct executor. When a completion handler
+          uses a specified (i.e. non-default) associated executor, cancellation handlers
+          are dispatched to the executor that was passed to <code class="computeroutput"><span class="identifier">spawn</span><span class="special">()</span></code> or <code class="computeroutput"><span class="identifier">co_spawn</span><span class="special">()</span></code>.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">spawn</span></code> to ensure the
+          completion handler is dispatched through the correct executor.
+        </li>
+<li class="listitem">
+          Changed to use <code class="computeroutput"><span class="identifier">snprintf</span></code>
+          rather than <code class="computeroutput"><span class="identifier">sprintf</span></code> on
+          latest Xcode, to address deprecation warnings.
+        </li>
+<li class="listitem">
+          Fixed compatibility between <code class="computeroutput"><span class="identifier">co_spawn</span></code>
+          and <code class="computeroutput"><span class="identifier">any_completion_handler</span></code>.
+        </li>
+<li class="listitem">
+          Fixed the arguments passed to <code class="computeroutput"><span class="identifier">select_reactor</span><span class="special">::</span><span class="identifier">run</span></code>
+          when it is run on an internal thread.
+        </li>
+<li class="listitem">
+          Fixed compilation errors when <code class="computeroutput"><span class="special">(</span><span class="identifier">BOOST_</span><span class="special">)</span><span class="identifier">ASIO_DISABLE_SMALL_BLOCK_RECYCLING</span></code> is
+          defined.
+        </li>
+<li class="listitem">
+          Updated detection of C++20 coroutine support on clang 14 and later. This
+          includes the ability to use coroutines with libstdc++.
+        </li>
+<li class="listitem">
+          Changed standard library feature detection to always enable <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">invoke_result</span></code> when targeting C++17 or
+          later.
+        </li>
+<li class="listitem">
+          Fixed detection of return type deduction with MSVC.
+        </li>
+<li class="listitem">
+          Added a missing include in <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">coro</span></code>
+          implementation.
+        </li>
+<li class="listitem">
+          Updated the asynchronous operation requirements to relax the requirements
+          on the associated executor.
+        </li>
+<li class="listitem">
+          Added <code class="literal">io_uring</code> to the implementation notes.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h9"></a>
+      <span><a name="asio.history.asio_1_25_0"></a></span><a class="link" href="history.html#asio.history.asio_1_25_0">Asio
+      1.25.0</a>
+    </h4>
+<div class="itemizedlist"><ul class="itemizedlist" type="disc">
+<li class="listitem">
+<p class="simpara">
+          Added the <code class="computeroutput"><span class="identifier">consign</span></code> completion
+          token adapter, which can be used to attach additional values to a completion
+          handler. This is typically used to keep at least one copy of an object,
+          such as a smart pointer, alive until the completion handler is called.
+          For example:<br>
+        </p>
+<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">timer1</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">make_shared</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">steady_timer</span><span class="special">&gt;(</span><span class="identifier">my_io_context</span><span class="special">);</span>
+<span class="identifier">timer1</span><span class="special">-&gt;</span><span class="identifier">expires_after</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">seconds</span><span class="special">(</span><span class="number">1</span><span class="special">));</span>
+<span class="identifier">timer1</span><span class="special">-&gt;</span><span class="identifier">async_wait</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">consign</span><span class="special">(</span>
+      <span class="special">[](</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span> <span class="identifier">ec</span><span class="special">)</span>
+      <span class="special">{</span>
+        <span class="comment">// ...</span>
+      <span class="special">},</span>
+      <span class="identifier">timer1</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+</pre>
+<p class="simpara">
+          <br>
+        </p>
+</li>
+<li class="listitem">
+<p class="simpara">
+          Added <code class="computeroutput"><span class="identifier">any_completion_handler</span><span class="special">&lt;&gt;</span></code>, which can be used to type-erase
+          completion handlers. A typical use case is to enable separate compilation
+          of asynchronous operation implementations. For example:<br>
+        </p>
+<pre class="programlisting"><span class="comment">// Header file:</span>
+
+<span class="keyword">void</span> <span class="identifier">async_sleep_impl</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">any_completion_handler</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">)&gt;</span> <span class="identifier">handler</span><span class="special">,</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">any_io_executor</span> <span class="identifier">ex</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">nanoseconds</span> <span class="identifier">duration</span><span class="special">);</span>
+
+<span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">CompletionToken</span><span class="special">&gt;</span>
+<span class="keyword">inline</span> <span class="keyword">auto</span> <span class="identifier">async_sleep</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">any_io_executor</span> <span class="identifier">ex</span><span class="special">,</span>
+    <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">nanoseconds</span> <span class="identifier">duration</span><span class="special">,</span> <span class="identifier">CompletionToken</span><span class="special">&amp;&amp;</span> <span class="identifier">token</span><span class="special">)</span>
+<span class="special">{</span>
+  <span class="keyword">return</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">async_initiate</span><span class="special">&lt;</span>
+    <span class="identifier">CompletionToken</span><span class="special">,</span> <span class="keyword">void</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">)&gt;(</span>
+      <span class="identifier">async_sleep_impl</span><span class="special">,</span> <span class="identifier">token</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">ex</span><span class="special">),</span> <span class="identifier">duration</span><span class="special">);</span>
+<span class="special">}</span>
+
+<span class="comment">// Separately compiled source file:</span>
+
+<span class="keyword">void</span> <span class="identifier">async_sleep_impl</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">any_completion_handler</span><span class="special">&lt;</span><span class="keyword">void</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">)&gt;</span> <span class="identifier">handler</span><span class="special">,</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">any_io_executor</span> <span class="identifier">ex</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">chrono</span><span class="special">::</span><span class="identifier">nanoseconds</span> <span class="identifier">duration</span><span class="special">)</span>
+<span class="special">{</span>
+  <span class="keyword">auto</span> <span class="identifier">timer</span> <span class="special">=</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">make_shared</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">steady_timer</span><span class="special">&gt;(</span><span class="identifier">ex</span><span class="special">,</span> <span class="identifier">duration</span><span class="special">);</span>
+  <span class="identifier">timer</span><span class="special">-&gt;</span><span class="identifier">async_wait</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">consign</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">handler</span><span class="special">),</span> <span class="identifier">timer</span><span class="special">));</span>
+<span class="special">}</span>
+</pre>
+<p class="simpara">
+          <br>
+        </p>
+</li>
+<li class="listitem">
+<p class="simpara">
+          Added <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">co_composed</span></code> which facilitates a lightweight
+          implementation of user-defined asynchronous operations using C++20 coroutines.
+          The following example illustrates a simple asynchronous operation that
+          implements an echo protocol in terms of a coroutine:<br>
+        </p>
+<pre class="programlisting"><span class="keyword">template</span> <span class="special">&lt;</span><span class="keyword">typename</span> <span class="identifier">CompletionToken</span><span class="special">&gt;</span>
+<span class="keyword">auto</span> <span class="identifier">async_echo</span><span class="special">(</span><span class="identifier">tcp</span><span class="special">::</span><span class="identifier">socket</span><span class="special">&amp;</span> <span class="identifier">socket</span><span class="special">,</span>
+    <span class="identifier">CompletionToken</span><span class="special">&amp;&amp;</span> <span class="identifier">token</span><span class="special">)</span>
+<span class="special">{</span>
+  <span class="keyword">return</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">async_initiate</span><span class="special">&lt;</span>
+    <span class="identifier">CompletionToken</span><span class="special">,</span> <span class="keyword">void</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">)&gt;(</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">co_composed</span><span class="special">&lt;</span>
+        <span class="keyword">void</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">)&gt;(</span>
+          <span class="special">[](</span><span class="keyword">auto</span> <span class="identifier">state</span><span class="special">,</span> <span class="identifier">tcp</span><span class="special">::</span><span class="identifier">socket</span><span class="special">&amp;</span> <span class="identifier">socket</span><span class="special">)</span> <span class="special">-&gt;</span> <span class="keyword">void</span>
+          <span class="special">{</span>
+            <span class="keyword">try</span>
+            <span class="special">{</span>
+              <span class="identifier">state</span><span class="special">.</span><span class="identifier">throw_if_cancelled</span><span class="special">(</span><span class="keyword">true</span><span class="special">);</span>
+              <span class="identifier">state</span><span class="special">.</span><span class="identifier">reset_cancellation_state</span><span class="special">(</span>
+                <span class="identifier">asio</span><span class="special">::</span><span class="identifier">enable_terminal_cancellation</span><span class="special">());</span>
+
+              <span class="keyword">for</span> <span class="special">(;;)</span>
+              <span class="special">{</span>
+                <span class="keyword">char</span> <span class="identifier">data</span><span class="special">[</span><span class="number">1024</span><span class="special">];</span>
+                <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">n</span> <span class="special">=</span> <span class="identifier">co_await</span> <span class="identifier">socket</span><span class="special">.</span><span class="identifier">async_read_some</span><span class="special">(</span>
+                    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">data</span><span class="special">),</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span><span class="special">);</span>
+
+                <span class="identifier">co_await</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">async_write</span><span class="special">(</span><span class="identifier">socket</span><span class="special">,</span>
+                    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">data</span><span class="special">,</span> <span class="identifier">n</span><span class="special">),</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span><span class="special">);</span>
+              <span class="special">}</span>
+            <span class="special">}</span>
+            <span class="keyword">catch</span> <span class="special">(</span><span class="keyword">const</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">system_error</span><span class="special">&amp;</span> <span class="identifier">e</span><span class="special">)</span>
+            <span class="special">{</span>
+              <span class="identifier">co_return</span> <span class="special">{</span><span class="identifier">e</span><span class="special">.</span><span class="identifier">code</span><span class="special">()};</span>
+            <span class="special">}</span>
+          <span class="special">},</span> <span class="identifier">socket</span><span class="special">),</span>
+      <span class="identifier">token</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">ref</span><span class="special">(</span><span class="identifier">socket</span><span class="special">));</span>
+<span class="special">}</span>
+</pre>
+<p class="simpara">
+          <br>
+        </p>
+</li>
+<li class="listitem">
+<p class="simpara">
+          Add range-based experimental::make_parallel_group() overloads that may
+          be used to launch a dynamically-sized set of asynchronous operations, where
+          all operations are the same type. For example:<br>
+        </p>
+<pre class="programlisting"><span class="keyword">using</span> <span class="identifier">op_type</span> <span class="special">=</span> <span class="keyword">decltype</span><span class="special">(</span>
+    <span class="identifier">socket1</span><span class="special">.</span><span class="identifier">async_read_some</span><span class="special">(</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">data1</span><span class="special">),</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+
+<span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">op_type</span><span class="special">&gt;</span> <span class="identifier">ops</span><span class="special">;</span>
+<span class="identifier">ops</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span>
+    <span class="identifier">socket1</span><span class="special">.</span><span class="identifier">async_read_some</span><span class="special">(</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">data1</span><span class="special">),</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+<span class="identifier">ops</span><span class="special">.</span><span class="identifier">push_back</span><span class="special">(</span>
+    <span class="identifier">socket2</span><span class="special">.</span><span class="identifier">async_read_some</span><span class="special">(</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">data2</span><span class="special">),</span>
+      <span class="identifier">asio</span><span class="special">::</span><span class="identifier">deferred</span>
+    <span class="special">)</span>
+  <span class="special">);</span>
+
+<span class="identifier">asio</span><span class="special">::</span><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">make_parallel_group</span><span class="special">(</span><span class="identifier">ops</span><span class="special">).</span><span class="identifier">async_wait</span><span class="special">(</span>
+    <span class="identifier">asio</span><span class="special">::</span><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">wait_for_all</span><span class="special">(),</span>
+    <span class="special">[](</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span><span class="special">&gt;</span> <span class="identifier">completion_order</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&gt;</span> <span class="identifier">e</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">vector</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span><span class="special">&gt;</span> <span class="identifier">n</span>
+      <span class="special">)</span>
+    <span class="special">{</span>
+      <span class="keyword">for</span> <span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">i</span> <span class="special">=</span> <span class="number">0</span><span class="special">;</span> <span class="identifier">i</span> <span class="special">&lt;</span> <span class="identifier">completion_order</span><span class="special">.</span><span class="identifier">size</span><span class="special">();</span> <span class="special">++</span><span class="identifier">i</span><span class="special">)</span>
+      <span class="special">{</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="identifier">idx</span> <span class="special">=</span> <span class="identifier">completion_order</span><span class="special">[</span><span class="identifier">i</span><span class="special">];</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="string">"socket "</span> <span class="special">&lt;&lt;</span> <span class="identifier">idx</span> <span class="special">&lt;&lt;</span> <span class="string">" finished: "</span><span class="special">;</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">cout</span> <span class="special">&lt;&lt;</span> <span class="identifier">e</span><span class="special">[</span><span class="identifier">idx</span><span class="special">]</span> <span class="special">&lt;&lt;</span> <span class="string">", "</span> <span class="special">&lt;&lt;</span> <span class="identifier">n</span><span class="special">[</span><span class="identifier">idx</span><span class="special">]</span> <span class="special">&lt;&lt;</span> <span class="string">"\n"</span><span class="special">;</span>
+      <span class="special">}</span>
+    <span class="special">}</span>
+  <span class="special">);</span>
+</pre>
+<p class="simpara">
+          <br> Thanks go to Klemens Morgenstern for supplying part of this implementation.
+        </p>
+</li>
+<li class="listitem">
+          Added <code class="computeroutput"><span class="identifier">any_completion_executor</span></code>,
+          a type-erased wrappers for executors that are associated with completion
+          handlers.
+        </li>
+<li class="listitem">
+          Added missing <code class="computeroutput"><span class="identifier">context</span></code> query
+          to use_future's executor.
+        </li>
+<li class="listitem">
+          Added nothrow constructor overloads to <code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">any_executor</span><span class="special">&lt;&gt;</span></code> and <code class="computeroutput"><span class="identifier">any_io_executor</span></code>.
+        </li>
+<li class="listitem">
+          Optimised representation of empty <code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">any_executor</span></code>
+          objects to improve the performance of copy and move operations.
+        </li>
+<li class="listitem">
+          Added an <code class="computeroutput"><span class="identifier">associated_cancellation_slot</span></code>
+          specialisation for <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">reference_wrapper</span></code>.
+        </li>
+<li class="listitem">
+          Changed I/O objects to return their executors by const reference.
+        </li>
+<li class="listitem">
+          Changed associated to use deduced return types for all two-argument <code class="computeroutput"><span class="identifier">get</span></code> functions.
+        </li>
+<li class="listitem">
+          Fixed <code class="computeroutput"><span class="identifier">spawn</span></code> implementation
+          to catch unhandled exceptions and rethrow them outside of the spawned "thread".
+        </li>
+<li class="listitem">
+          Fixed cleanup of of terminal-state <code class="computeroutput"><span class="identifier">spawn</span></code>
+          "thread" objects.
+        </li>
+<li class="listitem">
+          Changed semantics of <code class="computeroutput"><span class="identifier">dispatch</span></code>
+          to mean the executor is used as-is. An execution context's default executor
+          is imbued with the possibly-blocking property.
+        </li>
+<li class="listitem">
+          Deprecated the <code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">execute</span></code>
+          customisation point. Use <code class="computeroutput"><span class="identifier">execute</span></code>
+          as a member function.
+        </li>
+<li class="listitem">
+          Deprecated the concepts, traits, functions and customisation points related
+          to senders and receivers.
+        </li>
+<li class="listitem">
+          Added a C++11 <code class="computeroutput"><span class="identifier">parallel_group</span></code>
+          example.
+        </li>
+<li class="listitem">
+          Fixed example code to not use the deprecated conversion of a resolve result
+          to an endpoint.
+        </li>
+<li class="listitem">
+          Fixed an ambiguity in <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">channel_traits</span></code>
+          specialisations.
+        </li>
+<li class="listitem">
+          Added a specialised channel implementation for the for <code class="computeroutput"><span class="identifier">R</span><span class="special">(</span><span class="identifier">error_code</span><span class="special">)</span></code> signature.
+        </li>
+<li class="listitem">
+          Made <code class="computeroutput"><span class="identifier">cancelled</span><span class="special">()</span></code>
+          public on the <code class="computeroutput"><span class="identifier">async_compose</span></code>
+          'self' object.
+        </li>
+<li class="listitem">
+          Added io_executor_type and get_io_executor to the <code class="computeroutput"><span class="identifier">async_compose</span></code>
+          'self' object.
+        </li>
+<li class="listitem">
+          Fixed implementation of <code class="computeroutput"><span class="identifier">release</span><span class="special">()</span></code> for Windows overlapped handles.
+        </li>
+<li class="listitem">
+          Enabled deferred awaiting for <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">coro</span></code>,
+          regularised <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">use_coro</span></code>,
+          and fixed allocator handling. This means that <code class="computeroutput"><span class="identifier">use_coro</span></code>
+          does not return a coro object, just like use_awaitable does, i.e. it's
+          an overhead that buys us type erasure. Allocators can now be set for <code class="computeroutput"><span class="identifier">coro</span></code> by including <code class="computeroutput"><span class="identifier">allocator_arg</span></code>
+          in the coro signature.
+        </li>
+<li class="listitem">
+          Cleaned up <code class="computeroutput"><span class="identifier">experimental</span><span class="special">::</span><span class="identifier">promise</span></code>
+          and made it an asynchronous operation object.
+        </li>
+<li class="listitem">
+          Constrained <code class="computeroutput"><span class="identifier">post</span></code>/<code class="computeroutput"><span class="identifier">defer</span></code> overloads on ability to require
+          <code class="computeroutput"><span class="identifier">blocking</span><span class="special">.</span><span class="identifier">never</span></code>.
+        </li>
+<li class="listitem">
+          Changed descriptor implementation to fall back to <code class="computeroutput"><span class="identifier">fcntl</span></code>
+          if <code class="computeroutput"><span class="identifier">ioctl</span></code> fails with <code class="computeroutput"><span class="identifier">ENOTTY</span></code> when setting non-blocking mode.
+        </li>
+</ul></div>
+<h4>
+<a name="asio.history.h10"></a>
       <span><a name="asio.history.asio_1_24_0"></a></span><a class="link" href="history.html#asio.history.asio_1_24_0">Asio
       1.24.0</a>
     </h4>
@@ -71,7 +870,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h1"></a>
+<a name="asio.history.h11"></a>
       <span><a name="asio.history.asio_1_23_0"></a></span><a class="link" href="history.html#asio.history.asio_1_23_0">Asio
       1.23.0</a>
     </h4>
@@ -306,7 +1105,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h2"></a>
+<a name="asio.history.h12"></a>
       <span><a name="asio.history.asio_1_22_2"></a></span><a class="link" href="history.html#asio.history.asio_1_22_2">Asio
       1.22.2</a>
     </h4>
@@ -361,7 +1160,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h3"></a>
+<a name="asio.history.h13"></a>
       <span><a name="asio.history.asio_1_22_1"></a></span><a class="link" href="history.html#asio.history.asio_1_22_1">Asio
       1.22.1</a>
     </h4>
@@ -551,7 +1350,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h4"></a>
+<a name="asio.history.h14"></a>
       <span><a name="asio.history.asio_1_22_0"></a></span><a class="link" href="history.html#asio.history.asio_1_22_0">Asio
       1.22.0</a>
     </h4>
@@ -614,7 +1413,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h5"></a>
+<a name="asio.history.h15"></a>
       <span><a name="asio.history.asio_1_21_0"></a></span><a class="link" href="history.html#asio.history.asio_1_21_0">Asio
       1.21.0</a>
     </h4>
@@ -827,7 +1626,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h6"></a>
+<a name="asio.history.h16"></a>
       <span><a name="asio.history.asio_1_20_0"></a></span><a class="link" href="history.html#asio.history.asio_1_20_0">Asio
       1.20.0</a>
     </h4>
@@ -855,7 +1654,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h7"></a>
+<a name="asio.history.h17"></a>
       <span><a name="asio.history.asio_1_19_2"></a></span><a class="link" href="history.html#asio.history.asio_1_19_2">Asio
       1.19.2</a>
     </h4>
@@ -917,7 +1716,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h8"></a>
+<a name="asio.history.h18"></a>
       <span><a name="asio.history.asio_1_19_1"></a></span><a class="link" href="history.html#asio.history.asio_1_19_1">Asio
       1.19.1</a>
     </h4>
@@ -956,7 +1755,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h9"></a>
+<a name="asio.history.h19"></a>
       <span><a name="asio.history.asio_1_19_0"></a></span><a class="link" href="history.html#asio.history.asio_1_19_0">Asio
       1.19.0</a>
     </h4>
@@ -1489,7 +2288,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h10"></a>
+<a name="asio.history.h20"></a>
       <span><a name="asio.history.asio_1_18_2"></a></span><a class="link" href="history.html#asio.history.asio_1_18_2">Asio
       1.18.2</a>
     </h4>
@@ -1558,7 +2357,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h11"></a>
+<a name="asio.history.h21"></a>
       <span><a name="asio.history.asio_1_18_1"></a></span><a class="link" href="history.html#asio.history.asio_1_18_1">Asio
       1.18.1</a>
     </h4>
@@ -1688,7 +2487,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h12"></a>
+<a name="asio.history.h22"></a>
       <span><a name="asio.history.asio_1_18_0"></a></span><a class="link" href="history.html#asio.history.asio_1_18_0">Asio
       1.18.0</a>
     </h4>
@@ -1792,7 +2591,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h13"></a>
+<a name="asio.history.h23"></a>
       <span><a name="asio.history.asio_1_17_0"></a></span><a class="link" href="history.html#asio.history.asio_1_17_0">Asio
       1.17.0</a>
     </h4>
@@ -2065,7 +2864,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h14"></a>
+<a name="asio.history.h24"></a>
       <span><a name="asio.history.asio_1_16_1"></a></span><a class="link" href="history.html#asio.history.asio_1_16_1">Asio
       1.16.1</a>
     </h4>
@@ -2158,7 +2957,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h15"></a>
+<a name="asio.history.h25"></a>
       <span><a name="asio.history.asio_1_16_0"></a></span><a class="link" href="history.html#asio.history.asio_1_16_0">Asio
       1.16.0</a>
     </h4>
@@ -2330,7 +3129,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h16"></a>
+<a name="asio.history.h26"></a>
       <span><a name="asio.history.asio_1_14_1"></a></span><a class="link" href="history.html#asio.history.asio_1_14_1">Asio
       1.14.1</a>
     </h4>
@@ -2380,7 +3179,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h17"></a>
+<a name="asio.history.h27"></a>
       <span><a name="asio.history.asio_1_14_0"></a></span><a class="link" href="history.html#asio.history.asio_1_14_0">Asio
       1.14.0</a>
     </h4>
@@ -2404,7 +3203,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h18"></a>
+<a name="asio.history.h28"></a>
       <span><a name="asio.history.asio_1_13_0"></a></span><a class="link" href="history.html#asio.history.asio_1_13_0">Asio
       1.13.0</a>
     </h4>
@@ -2733,7 +3532,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h19"></a>
+<a name="asio.history.h29"></a>
       <span><a name="asio.history.asio_1_12_2"></a></span><a class="link" href="history.html#asio.history.asio_1_12_2">Asio
       1.12.2</a>
     </h4>
@@ -2806,7 +3605,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h20"></a>
+<a name="asio.history.h30"></a>
       <span><a name="asio.history.asio_1_12_1"></a></span><a class="link" href="history.html#asio.history.asio_1_12_1">Asio
       1.12.1</a>
     </h4>
@@ -2932,7 +3731,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h21"></a>
+<a name="asio.history.h31"></a>
       <span><a name="asio.history.asio_1_12_0"></a></span><a class="link" href="history.html#asio.history.asio_1_12_0">Asio
       1.12.0</a>
     </h4>
@@ -2971,7 +3770,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h22"></a>
+<a name="asio.history.h32"></a>
       <span><a name="asio.history.asio_1_11_0"></a></span><a class="link" href="history.html#asio.history.asio_1_11_0">Asio
       1.11.0</a>
     </h4>
@@ -3197,7 +3996,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h23"></a>
+<a name="asio.history.h33"></a>
       <span><a name="asio.history.asio_1_10_5"></a></span><a class="link" href="history.html#asio.history.asio_1_10_5">Asio
       1.10.5</a>
     </h4>
@@ -3240,7 +4039,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h24"></a>
+<a name="asio.history.h34"></a>
       <span><a name="asio.history.asio_1_10_4"></a></span><a class="link" href="history.html#asio.history.asio_1_10_4">Asio
       1.10.4</a>
     </h4>
@@ -3262,7 +4061,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h25"></a>
+<a name="asio.history.h35"></a>
       <span><a name="asio.history.asio_1_10_3"></a></span><a class="link" href="history.html#asio.history.asio_1_10_3">Asio
       1.10.3</a>
     </h4>
@@ -3296,7 +4095,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h26"></a>
+<a name="asio.history.h36"></a>
       <span><a name="asio.history.asio_1_10_2"></a></span><a class="link" href="history.html#asio.history.asio_1_10_2">Asio
       1.10.2</a>
     </h4>
@@ -3374,7 +4173,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h27"></a>
+<a name="asio.history.h37"></a>
       <span><a name="asio.history.asio_1_10_1"></a></span><a class="link" href="history.html#asio.history.asio_1_10_1">Asio
       1.10.1</a>
     </h4>
@@ -3510,7 +4309,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h28"></a>
+<a name="asio.history.h38"></a>
       <span><a name="asio.history.asio_1_10_0"></a></span><a class="link" href="history.html#asio.history.asio_1_10_0">Asio
       1.10.0</a>
     </h4>
@@ -3676,7 +4475,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h29"></a>
+<a name="asio.history.h39"></a>
       <span><a name="asio.history.asio_1_8_3"></a></span><a class="link" href="history.html#asio.history.asio_1_8_3">Asio
       1.8.3</a>
     </h4>
@@ -3716,7 +4515,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h30"></a>
+<a name="asio.history.h40"></a>
       <span><a name="asio.history.asio_1_8_2"></a></span><a class="link" href="history.html#asio.history.asio_1_8_2">Asio
       1.8.2</a>
     </h4>
@@ -3758,7 +4557,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h31"></a>
+<a name="asio.history.h41"></a>
       <span><a name="asio.history.asio_1_8_1"></a></span><a class="link" href="history.html#asio.history.asio_1_8_1">Asio
       1.8.1</a>
     </h4>
@@ -3795,7 +4594,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h32"></a>
+<a name="asio.history.h42"></a>
       <span><a name="asio.history.asio_1_8_0"></a></span><a class="link" href="history.html#asio.history.asio_1_8_0">Asio
       1.8.0</a>
     </h4>
@@ -3843,7 +4642,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h33"></a>
+<a name="asio.history.h43"></a>
       <span><a name="asio.history.asio_1_6_1"></a></span><a class="link" href="history.html#asio.history.asio_1_6_1">Asio
       1.6.1</a>
     </h4>
@@ -3936,7 +4735,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h34"></a>
+<a name="asio.history.h44"></a>
       <span><a name="asio.history.asio_1_6_0"></a></span><a class="link" href="history.html#asio.history.asio_1_6_0">Asio
       1.6.0</a>
     </h4>
@@ -3980,7 +4779,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h35"></a>
+<a name="asio.history.h45"></a>
       <span><a name="asio.history.asio_1_5_3"></a></span><a class="link" href="history.html#asio.history.asio_1_5_3">Asio
       1.5.3</a>
     </h4>
@@ -4014,7 +4813,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h36"></a>
+<a name="asio.history.h46"></a>
       <span><a name="asio.history.asio_1_5_2"></a></span><a class="link" href="history.html#asio.history.asio_1_5_2">Asio
       1.5.2</a>
     </h4>
@@ -4080,7 +4879,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h37"></a>
+<a name="asio.history.h47"></a>
       <span><a name="asio.history.asio_1_5_1"></a></span><a class="link" href="history.html#asio.history.asio_1_5_1">Asio
       1.5.1</a>
     </h4>
@@ -4125,7 +4924,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h38"></a>
+<a name="asio.history.h48"></a>
       <span><a name="asio.history.asio_1_5_0"></a></span><a class="link" href="history.html#asio.history.asio_1_5_0">Asio
       1.5.0</a>
     </h4>
@@ -4278,7 +5077,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h39"></a>
+<a name="asio.history.h49"></a>
       <span><a name="asio.history.asio_1_4_8"></a></span><a class="link" href="history.html#asio.history.asio_1_4_8">Asio
       1.4.8</a>
     </h4>
@@ -4293,7 +5092,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h40"></a>
+<a name="asio.history.h50"></a>
       <span><a name="asio.history.asio_1_4_7"></a></span><a class="link" href="history.html#asio.history.asio_1_4_7">Asio
       1.4.7</a>
     </h4>
@@ -4372,7 +5171,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h41"></a>
+<a name="asio.history.h51"></a>
       <span><a name="asio.history.asio_1_4_6"></a></span><a class="link" href="history.html#asio.history.asio_1_4_6">Asio
       1.4.6</a>
     </h4>
@@ -4442,7 +5241,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h42"></a>
+<a name="asio.history.h52"></a>
       <span><a name="asio.history.asio_1_4_5"></a></span><a class="link" href="history.html#asio.history.asio_1_4_5">Asio
       1.4.5</a>
     </h4>
@@ -4508,7 +5307,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h43"></a>
+<a name="asio.history.h53"></a>
       <span><a name="asio.history.asio_1_4_4"></a></span><a class="link" href="history.html#asio.history.asio_1_4_4">Asio
       1.4.4</a>
     </h4>
@@ -4571,7 +5370,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h44"></a>
+<a name="asio.history.h54"></a>
       <span><a name="asio.history.asio_1_4_3"></a></span><a class="link" href="history.html#asio.history.asio_1_4_3">Asio
       1.4.3</a>
     </h4>
@@ -4626,7 +5425,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h45"></a>
+<a name="asio.history.h55"></a>
       <span><a name="asio.history.asio_1_4_2"></a></span><a class="link" href="history.html#asio.history.asio_1_4_2">Asio
       1.4.2</a>
     </h4>
@@ -4676,7 +5475,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h46"></a>
+<a name="asio.history.h56"></a>
       <span><a name="asio.history.asio_1_4_1"></a></span><a class="link" href="history.html#asio.history.asio_1_4_1">Asio
       1.4.1</a>
     </h4>
@@ -4703,7 +5502,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h47"></a>
+<a name="asio.history.h57"></a>
       <span><a name="asio.history.asio_1_4_0"></a></span><a class="link" href="history.html#asio.history.asio_1_4_0">Asio
       1.4.0</a>
     </h4>
@@ -4741,7 +5540,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h48"></a>
+<a name="asio.history.h58"></a>
       <span><a name="asio.history.asio_1_2_0"></a></span><a class="link" href="history.html#asio.history.asio_1_2_0">Asio
       1.2.0</a>
     </h4>
@@ -4794,7 +5593,7 @@
         </li>
 </ul></div>
 <h4>
-<a name="asio.history.h49"></a>
+<a name="asio.history.h59"></a>
       <span><a name="asio.history.asio_1_0_0"></a></span><a class="link" href="history.html#asio.history.asio_1_0_0">Asio
       1.0.0</a>
     </h4>
@@ -4802,14 +5601,11 @@
       First stable release of Asio.
     </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="std_executors.html"><img src="../prev.png" alt="Prev"></a><a accesskey="u" href="../index.html"><img src="../up.png" alt="Up"></a><a accesskey="h" href="../index.html"><img src="../home.png" alt="Home"></a><a accesskey="n" href="index.html"><img src="../next.png" alt="Next"></a>

@@ -17,16 +17,14 @@
  *
  */
 
-#ifndef _FASTDDS_GUARD_CONDITION_HPP_
-#define _FASTDDS_GUARD_CONDITION_HPP_
+#ifndef FASTDDS_DDS_CORE_CONDITION__GUARDCONDITION_HPP
+#define FASTDDS_DDS_CORE_CONDITION__GUARDCONDITION_HPP
 
 #include <atomic>
 
 #include <fastdds/dds/core/condition/Condition.hpp>
-#include <fastrtps/fastrtps_dll.h>
-#include <fastrtps/types/TypesBase.h>
-
-using eprosima::fastrtps::types::ReturnCode_t;
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/fastdds_dll.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -45,18 +43,18 @@ class GuardCondition : public Condition
 {
 public:
 
-    RTPS_DllAPI GuardCondition();
+    FASTDDS_EXPORTED_API GuardCondition();
 
-    RTPS_DllAPI ~GuardCondition();
+    FASTDDS_EXPORTED_API ~GuardCondition();
 
-    RTPS_DllAPI bool get_trigger_value() const override;
+    FASTDDS_EXPORTED_API bool get_trigger_value() const override;
 
     /**
      * @brief Set the trigger_value
      * @param value new value for trigger
      * @return RETURN_OK
      */
-    RTPS_DllAPI ReturnCode_t set_trigger_value(
+    FASTDDS_EXPORTED_API ReturnCode_t set_trigger_value(
             bool value);
 
 private:
@@ -69,4 +67,4 @@ private:
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_GUARD_CONDITION_HPP_
+#endif // FASTDDS_DDS_CORE_CONDITION__GUARDCONDITION_HPP

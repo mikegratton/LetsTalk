@@ -8,6 +8,7 @@
 <link rel="up" href="../dispatch.html" title="dispatch">
 <link rel="prev" href="../dispatch.html" title="dispatch">
 <link rel="next" href="overload2.html" title="dispatch (2 of 3 overloads)">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
@@ -25,7 +26,7 @@
         </p>
 <pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
     <span class="keyword">typename</span> <a class="link" href="../NullaryToken.html" title="Nullary token requirements">NullaryToken</a><span class="special">&gt;</span>
-<a class="link" href="../asynchronous_operations.html#asio.reference.asynchronous_operations.automatic_deduction_of_initiating_function_return_type"><span class="emphasis"><em>DEDUCED</em></span></a> <span class="identifier">dispatch</span><span class="special">(</span>
+<span class="keyword">auto</span> <span class="identifier">dispatch</span><span class="special">(</span>
     <span class="identifier">NullaryToken</span> <span class="special">&amp;&amp;</span> <span class="identifier">token</span><span class="special">);</span>
 </pre>
 <p>
@@ -78,36 +79,35 @@
               Obtains the handler's associated executor object <code class="computeroutput"><span class="identifier">ex</span></code>
               of type <code class="computeroutput"><span class="identifier">Ex</span></code> by performing
             </p>
-<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">ex</span> <span class="special">=</span> <span class="identifier">get_associated_executor</span><span class="special">(</span><span class="identifier">handler</span><span class="special">);</span>
-</pre>
+<p class="simpara">
+              auto ex = get_associated_executor(handler);
+            </p>
 </li>
 <li class="listitem">
 <p class="simpara">
               Obtains the handler's associated allocator object <code class="computeroutput"><span class="identifier">alloc</span></code>
               by performing
             </p>
-<pre class="programlisting"><span class="keyword">auto</span> <span class="identifier">alloc</span> <span class="special">=</span> <span class="identifier">get_associated_allocator</span><span class="special">(</span><span class="identifier">handler</span><span class="special">);</span>
-</pre>
+<p class="simpara">
+              auto alloc = get_associated_allocator(handler);
+            </p>
 </li>
 <li class="listitem">
 <p class="simpara">
               If <code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span><span class="identifier">Ex</span><span class="special">&gt;::</span><span class="identifier">value</span></code> is true, performs
             </p>
-<pre class="programlisting"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">execute</span><span class="special">(</span>
-    <span class="identifier">prefer</span><span class="special">(</span><span class="identifier">ex</span><span class="special">,</span>
-      <span class="identifier">execution</span><span class="special">::</span><span class="identifier">blocking</span><span class="special">.</span><span class="identifier">possibly</span><span class="special">,</span>
-      <span class="identifier">execution</span><span class="special">::</span><span class="identifier">allocator</span><span class="special">(</span><span class="identifier">alloc</span><span class="special">)),</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">forward</span><span class="special">&lt;</span><span class="identifier">CompletionHandler</span><span class="special">&gt;(</span><span class="identifier">completion_handler</span><span class="special">));</span>
-</pre>
+<p class="simpara">
+              prefer(ex, execution::allocator(alloc)).execute( std::forward&lt;CompletionHandler&gt;(completion_handler));
+            </p>
 </li>
 <li class="listitem">
 <p class="simpara">
               If <code class="computeroutput"><span class="identifier">execution</span><span class="special">::</span><span class="identifier">is_executor</span><span class="special">&lt;</span><span class="identifier">Ex</span><span class="special">&gt;::</span><span class="identifier">value</span></code> is false, performs
             </p>
-<pre class="programlisting"><span class="identifier">ex</span><span class="special">.</span><span class="identifier">dispatch</span><span class="special">(</span>
-    <span class="identifier">std</span><span class="special">::</span><span class="identifier">forward</span><span class="special">&lt;</span><span class="identifier">CompletionHandler</span><span class="special">&gt;(</span><span class="identifier">completion_handler</span><span class="special">),</span>
-    <span class="identifier">alloc</span><span class="special">);</span>
-</pre>
+<p class="simpara">
+              ex.dispatch( std::forward&lt;CompletionHandler&gt;(completion_handler),
+              alloc);
+            </p>
 </li>
 </ul></div>
 <h6>
@@ -118,14 +118,11 @@
 <pre class="programlisting"><span class="keyword">void</span><span class="special">()</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../dispatch.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../dispatch.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="overload2.html"><img src="../../../next.png" alt="Next"></a>

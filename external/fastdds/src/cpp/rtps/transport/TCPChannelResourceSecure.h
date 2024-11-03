@@ -54,19 +54,26 @@ public:
     void disconnect() override;
 
     uint32_t read(
-            fastrtps::rtps::octet* buffer,
+            octet* buffer,
             std::size_t size,
             asio::error_code& ec) override;
 
     size_t send(
-            const fastrtps::rtps::octet* header,
+            const octet* header,
             size_t header_size,
-            const fastrtps::rtps::octet* data,
-            size_t size,
+            const std::vector<NetworkBuffer>& buffers,
+            uint32_t total_bytes,
             asio::error_code& ec) override;
 
+    // Throwing asio calls
     asio::ip::tcp::endpoint remote_endpoint() const override;
     asio::ip::tcp::endpoint local_endpoint() const override;
+
+    // Non-throwing asio calls
+    asio::ip::tcp::endpoint remote_endpoint(
+            asio::error_code& ec) const override;
+    asio::ip::tcp::endpoint local_endpoint(
+            asio::error_code& ec) const override;
 
     void set_options(
             const TCPTransportDescriptor* options) override;

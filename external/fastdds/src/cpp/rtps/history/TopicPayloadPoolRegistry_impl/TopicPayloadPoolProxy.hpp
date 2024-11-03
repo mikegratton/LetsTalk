@@ -16,14 +16,14 @@
  * @file TopicPayloadPoolProxy.hpp
  */
 
-#ifndef RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL_TOPICPAYLOADPOOLPROXY_HPP
-#define RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL_TOPICPAYLOADPOOLPROXY_HPP
+#ifndef FASTDDS_RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL__TOPICPAYLOADPOOLPROXY_HPP
+#define FASTDDS_RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL__TOPICPAYLOADPOOLPROXY_HPP
 
 #include <memory>
 #include <string>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace detail {
 
@@ -57,23 +57,22 @@ public:
 
     bool get_payload(
             uint32_t size,
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        return inner_pool_->get_payload(size, cache_change);
+        return inner_pool_->get_payload(size, payload);
     }
 
     bool get_payload(
-            SerializedPayload_t& data,
-            IPayloadPool*& data_owner,
-            CacheChange_t& cache_change) override
+            const SerializedPayload_t& data,
+            SerializedPayload_t& payload) override
     {
-        return inner_pool_->get_payload(data, data_owner, cache_change);
+        return inner_pool_->get_payload(data, payload);
     }
 
     bool release_payload(
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        return inner_pool_->release_payload(cache_change);
+        return inner_pool_->release_payload(payload);
     }
 
     bool reserve_history(
@@ -110,7 +109,7 @@ private:
 
 }  // namespace detail
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
-#endif  // RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL_TOPICPAYLOADPOOLPROXY_HPP
+#endif  // FASTDDS_RTPS_HISTORY_TOPICPAYLOADPOOLREGISTRY_IMPL__TOPICPAYLOADPOOLPROXY_HPP

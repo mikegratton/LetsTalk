@@ -41,22 +41,21 @@
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TopicDescription.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
-#include <fastdds/rtps/attributes/RTPSParticipantAttributes.h>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.hpp>
 #include <fastdds/rtps/common/EntityId_t.hpp>
 #include <fastdds/rtps/common/GuidPrefix_t.hpp>
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastdds/rtps/transport/UDPv4TransportDescriptor.h>
+#include <fastdds/rtps/common/Time_t.hpp>
+#include <fastdds/rtps/transport/UDPv4TransportDescriptor.hpp>
 #include <fastdds/statistics/dds/domain/DomainParticipant.hpp>
 #include <fastdds/statistics/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/statistics/dds/subscriber/qos/DataReaderQos.hpp>
 #include <fastdds/statistics/topic_names.hpp>
-#include <fastrtps/types/TypesBase.h>
 
-#include "../types/HelloWorld.h"
-#include "../types/HelloWorldPubSubTypes.h"
-#include "../types/statistics/types.h"
-#include "../types/statistics/typesPubSubTypes.h"
+#include "../types/HelloWorld.hpp"
+#include "../types/HelloWorldPubSubTypes.hpp"
+#include "../types/statistics/types.hpp"
+#include "../types/statistics/typesPubSubTypes.hpp"
 #include "BlackboxTests.hpp"
 #include "PubSubReader.hpp"
 #include "PubSubWriter.hpp"
@@ -65,7 +64,6 @@
 
 using namespace eprosima::fastdds;
 using namespace eprosima::fastdds::dds;
-using namespace eprosima::fastrtps::types;
 
 struct GenericType
 {
@@ -79,7 +77,7 @@ static DataReader* enable_statistics(
 {
     auto qos = statistics::dds::STATISTICS_DATAWRITER_QOS;
     qos.history().depth = 10;
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant->enable_statistics_datawriter(
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, participant->enable_statistics_datawriter(
                 topic_name, qos));
 
     auto topic_desc = participant->lookup_topicdescription(topic_name);
@@ -94,8 +92,8 @@ static void disable_statistics(
         DataReader* reader,
         const std::string& topic_name)
 {
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, subscriber->delete_datareader(reader));
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK, participant->disable_statistics_datawriter(topic_name));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, subscriber->delete_datareader(reader));
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK, participant->disable_statistics_datawriter(topic_name));
 }
 
 static void wait_statistics(
@@ -120,7 +118,7 @@ static void wait_statistics(
         LoanableSequence<GenericType> data_seq;
         SampleInfoSeq info_seq;
 
-        if (ReturnCode_t::RETCODE_OK == reader->take(data_seq, info_seq))
+        if (eprosima::fastdds::dds::RETCODE_OK == reader->take(data_seq, info_seq))
         {
             total_samples += info_seq.length();
             reader->return_loan(data_seq, info_seq);
@@ -154,7 +152,7 @@ void test_discovery_topic_physical_data(
         std::string xml_profile =
                 "\
             <?xml version=\"1.0\" encoding=\"utf-8\"?>\
-            <dds xmlns=\"http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles\">\
+            <dds xmlns=\"http://www.eprosima.com\">\
                 <profiles>\
                     <participant profile_name=\"statistics_participant\" is_default_profile=\"true\">\
                         <rtps>\
@@ -194,9 +192,9 @@ void test_discovery_topic_physical_data(
 
     // Avoid discovery of participants external to the test
     pqos.wire_protocol().builtin.discovery_config.ignoreParticipantFlags =
-            static_cast<eprosima::fastrtps::rtps::ParticipantFilteringFlags_t>(
-        eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_HOST |
-        eprosima::fastrtps::rtps::ParticipantFilteringFlags_t::FILTER_DIFFERENT_PROCESS);
+            static_cast<eprosima::fastdds::rtps::ParticipantFilteringFlags>(
+        eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_HOST |
+        eprosima::fastdds::rtps::ParticipantFilteringFlags::FILTER_DIFFERENT_PROCESS);
 
     // Configure physical properties according to test case
     switch (test_kind)
@@ -226,7 +224,7 @@ void test_discovery_topic_physical_data(
     ASSERT_NE(nullptr, statistics_p1);
     Publisher* publisher_p1 = p1->create_publisher(PUBLISHER_QOS_DEFAULT);
     ASSERT_NE(nullptr, publisher_p1);
-    EXPECT_EQ(ReturnCode_t::RETCODE_OK,
+    EXPECT_EQ(eprosima::fastdds::dds::RETCODE_OK,
             statistics_p1->enable_statistics_datawriter(statistics::DISCOVERY_TOPIC,
             statistics::dds::STATISTICS_DATAWRITER_QOS));
 
@@ -246,11 +244,11 @@ void test_discovery_topic_physical_data(
     EXPECT_NE(nullptr, discovery_data_reader);
 
     // Get the second participant's physical properties
-    const std::string* p2_host = eprosima::fastrtps::rtps::PropertyPolicyHelper::find_property(
+    const std::string* p2_host = eprosima::fastdds::rtps::PropertyPolicyHelper::find_property(
         p2->get_qos().properties(), parameter_policy_physical_data_host);
-    const std::string* p2_user = eprosima::fastrtps::rtps::PropertyPolicyHelper::find_property(
+    const std::string* p2_user = eprosima::fastdds::rtps::PropertyPolicyHelper::find_property(
         p2->get_qos().properties(), parameter_policy_physical_data_user);
-    const std::string* p2_process = eprosima::fastrtps::rtps::PropertyPolicyHelper::find_property(
+    const std::string* p2_process = eprosima::fastdds::rtps::PropertyPolicyHelper::find_property(
         p2->get_qos().properties(), parameter_policy_physical_data_process);
 
     // Verify that the second participant's physical properties are set according to specification
@@ -301,16 +299,16 @@ void test_discovery_topic_physical_data(
     /* Create waitset for the DataReader */
     WaitSet waitset;
     StatusCondition& condition = discovery_data_reader->get_statuscondition();
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, condition.set_enabled_statuses(StatusMask::data_available()));
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, condition.set_enabled_statuses(StatusMask::data_available()));
     ASSERT_EQ(false, condition.get_trigger_value());
     waitset.attach_condition(condition);
 
     ConditionSeq triggered_conditions;
-    waitset.wait(triggered_conditions, eprosima::fastrtps::c_TimeInfinite);
+    waitset.wait(triggered_conditions, eprosima::fastdds::dds::c_TimeInfinite);
 
     auto to_guid_prefix = [](const statistics::detail::GuidPrefix_s& prefix)
             {
-                eprosima::fastrtps::rtps::GuidPrefix_t guid_prefix;
+                eprosima::fastdds::rtps::GuidPrefix_t guid_prefix;
                 for (size_t i = 0; i < prefix.value().size(); i++)
                 {
                     guid_prefix.value[i] = prefix.value()[i];
@@ -320,7 +318,7 @@ void test_discovery_topic_physical_data(
 
     auto to_entity_id = [](const statistics::detail::EntityId_s& id)
             {
-                eprosima::fastrtps::rtps::EntityId_t entity_id;
+                eprosima::fastdds::rtps::EntityId_t entity_id;
                 for (size_t i = 0; i < id.value().size(); i++)
                 {
                     entity_id.value[i] = id.value()[i];
@@ -331,18 +329,18 @@ void test_discovery_topic_physical_data(
     LoanableSequence<statistics::DiscoveryTime> discovery_time_seq;
     SampleInfoSeq info_seq;
 
-    while (ReturnCode_t::RETCODE_OK == discovery_data_reader->take(discovery_time_seq, info_seq))
+    while (eprosima::fastdds::dds::RETCODE_OK == discovery_data_reader->take(discovery_time_seq, info_seq))
     {
         for (LoanableSequence<statistics::DiscoveryTime>::size_type n = 0; n < info_seq.length(); n++)
         {
             if (info_seq[n].valid_data)
             {
                 /* Get discovery information from the sample */
-                eprosima::fastrtps::rtps::GuidPrefix_t local_prefix = to_guid_prefix(
+                eprosima::fastdds::rtps::GuidPrefix_t local_prefix = to_guid_prefix(
                     discovery_time_seq[n].local_participant_guid().guidPrefix());
-                eprosima::fastrtps::rtps::GuidPrefix_t remote_prefix = to_guid_prefix(
+                eprosima::fastdds::rtps::GuidPrefix_t remote_prefix = to_guid_prefix(
                     discovery_time_seq[n].remote_entity_guid().guidPrefix());
-                eprosima::fastrtps::rtps::EntityId_t remote_entity_id = to_entity_id(
+                eprosima::fastdds::rtps::EntityId_t remote_entity_id = to_entity_id(
                     discovery_time_seq[n].remote_entity_guid().entityId());
 
                 /* Validate discovery sample */
@@ -416,9 +414,9 @@ TEST(DDSStatistics, simple_statistics_datareaders)
     auto depth = static_cast<int32_t>(num_samples);
 
     // Reader should be reliable so ACKNACK messages are generated (and accounted)
-    data_reader.reliability(RELIABLE_RELIABILITY_QOS).history_depth(depth).init();
+    data_reader.reliability(eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS).history_depth(depth).init();
     // Enforce synchronous writer to force RTPS_SENT to have at least num_samples
-    data_writer.asynchronously(SYNCHRONOUS_PUBLISH_MODE).history_depth(depth).init();
+    data_writer.asynchronously(eprosima::fastdds::dds::SYNCHRONOUS_PUBLISH_MODE).history_depth(depth).init();
 
     // Ensure discovery traffic is not included on statistics
     data_reader.wait_discovery();
@@ -612,8 +610,8 @@ TEST(DDSStatistics, statistics_with_partition_on_user)
     auto user_pub_1 = p1->create_publisher(pub_qos);
 
     // We enable the participants
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, p1->enable());
-    ASSERT_EQ(ReturnCode_t::RETCODE_OK, p2->enable());
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, p1->enable());
+    ASSERT_EQ(eprosima::fastdds::dds::RETCODE_OK, p2->enable());
 
     auto statistics_p1 = statistics::dds::DomainParticipant::narrow(p1);
     auto statistics_p2 = statistics::dds::DomainParticipant::narrow(p2);
@@ -684,5 +682,99 @@ TEST(DDSStatistics, discovery_topic_physical_data_delete_physical_properties)
 {
 #ifdef FASTDDS_STATISTICS
     test_discovery_topic_physical_data(DiscoveryTopicPhysicalDataTest::NO_PHYSICAL_DATA);
+#endif // FASTDDS_STATISTICS
+}
+
+class CustomStatisticsParticipantSubscriber : public PubSubReader<HelloWorldPubSubType>
+{
+public:
+
+    CustomStatisticsParticipantSubscriber(
+            const std::string& topic_name)
+        : PubSubReader<HelloWorldPubSubType>(topic_name)
+    {
+    }
+
+    void destroy() override
+    {
+        participant_->delete_contained_entities();
+        DomainParticipantFactory::get_instance()->delete_participant(participant_);
+        participant_ = nullptr;
+    }
+
+};
+
+// Regression test for #20816. When an application is terminated with delete_contained_entities()
+// it has to properly finish. The test creates a number of participants with some of them sharing the same topic.
+// Each participant asynchronously sends and receive a number of samples. In the readers, when a minumm number of samples
+// is received the destroy() method is called (abruptly). The test checks that the application finishes successfully
+TEST(DDSStatistics, correct_deletion_upon_delete_contained_entities)
+{
+#ifdef FASTDDS_STATISTICS
+
+    //! Set environment variable and create participant using Qos set by code
+    const char* value = "HISTORY_LATENCY_TOPIC;NETWORK_LATENCY_TOPIC;"
+            "PUBLICATION_THROUGHPUT_TOPIC;SUBSCRIPTION_THROUGHPUT_TOPIC;RTPS_SENT_TOPIC;"
+            "RTPS_LOST_TOPIC;HEARTBEAT_COUNT_TOPIC;ACKNACK_COUNT_TOPIC;NACKFRAG_COUNT_TOPIC;"
+            "GAP_COUNT_TOPIC;DATA_COUNT_TOPIC;RESENT_DATAS_TOPIC;SAMPLE_DATAS_TOPIC;"
+            "PDP_PACKETS_TOPIC;EDP_PACKETS_TOPIC;DISCOVERY_TOPIC;PHYSICAL_DATA_TOPIC;";
+
+    #ifdef _WIN32
+    ASSERT_EQ(0, _putenv_s("FASTDDS_STATISTICS", value));
+    #else
+    ASSERT_EQ(0, setenv("FASTDDS_STATISTICS", value, 1));
+    #endif // ifdef _WIN32
+
+    size_t n_participants = 5;
+    size_t n_participants_same_topic = 2;
+
+    std::vector<std::shared_ptr<PubSubWriter<HelloWorldPubSubType>>> writers;
+    std::vector<std::shared_ptr<CustomStatisticsParticipantSubscriber>> readers;
+
+    readers.reserve(n_participants);
+    writers.reserve(n_participants);
+
+    std::vector<std::shared_ptr<std::thread>> threads;
+    threads.reserve(2 * n_participants);
+
+    for (size_t i = 0; i < n_participants; ++i)
+    {
+        size_t topic_number = (i < n_participants_same_topic) ? 0 : i;
+
+        auto writer = std::make_shared<PubSubWriter<HelloWorldPubSubType>>(TEST_TOPIC_NAME + std::to_string(
+                            topic_number));
+        auto reader =
+                std::make_shared<CustomStatisticsParticipantSubscriber>(TEST_TOPIC_NAME + std::to_string(topic_number));
+
+        std::shared_ptr<std::list<HelloWorld>> data = std::make_shared<std::list<HelloWorld>>(default_helloworld_data_generator(
+                            10));
+
+        threads.emplace_back(std::make_shared<std::thread>([reader, data]()
+                {
+                    reader->init();
+                    ASSERT_TRUE(reader->isInitialized());
+                    reader->startReception(data->size());
+                    reader->block_for_at_least(3);
+                    reader->destroy();
+                }));
+
+        threads.emplace_back(std::make_shared<std::thread>([writer, data]()
+                {
+                    writer->init();
+                    ASSERT_TRUE(writer->isInitialized());
+                    writer->wait_discovery();
+                    writer->send(*data, 10);
+                    writer->destroy();
+                }));
+
+        writers.push_back(writer);
+        readers.push_back(reader);
+    }
+
+    for (auto& thread : threads)
+    {
+        thread->join();
+    }
+
 #endif // FASTDDS_STATISTICS
 }

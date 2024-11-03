@@ -12,19 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <fastrtps/xmlparser/XMLParser.h>
+#include <fastdds/dds/core/policy/QosPolicies.hpp>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
+#include <fastdds/rtps/transport/PortBasedTransportDescriptor.hpp>
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
+#include <xmlparser/XMLParser.h>
 
-using eprosima::fastrtps::xmlparser::XMLP_ret;
-using eprosima::fastrtps::xmlparser::XMLParser;
-using eprosima::fastrtps::xmlparser::DataNode;
-using eprosima::fastrtps::xmlparser::BaseNode;
-using eprosima::fastrtps::xmlparser::sp_transport_t;
-using eprosima::fastrtps::xmlparser::up_participant_t;
-using eprosima::fastrtps::xmlparser::up_node_participant_t;
-using eprosima::fastrtps::xmlparser::node_participant_t;
+using namespace eprosima::fastdds;
+using namespace eprosima::fastdds::dds;
+using namespace eprosima::fastdds::rtps;
+
+using eprosima::fastdds::xmlparser::XMLP_ret;
+using eprosima::fastdds::xmlparser::XMLParser;
+using eprosima::fastdds::xmlparser::DataNode;
+using eprosima::fastdds::xmlparser::BaseNode;
+using eprosima::fastdds::xmlparser::sp_transport_t;
+using eprosima::fastdds::xmlparser::up_participant_t;
+using eprosima::fastdds::xmlparser::up_node_participant_t;
+using eprosima::fastdds::xmlparser::node_participant_t;
 
 // Class to test protected methods
 class XMLParserTest : public XMLParser
@@ -57,7 +63,7 @@ public:
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<ParticipantAttributes>& participant_node)
+            DataNode<xmlparser::ParticipantAttributes>& participant_node)
     {
         return fillDataNode(p_profile, participant_node);
     }
@@ -80,7 +86,7 @@ public:
 
     static XMLP_ret getXMLSubscriberAttributes_wrapper(
             tinyxml2::XMLElement* elem,
-            SubscriberAttributes& subscriber,
+            xmlparser::SubscriberAttributes& subscriber,
             uint8_t ident)
     {
         return getXMLSubscriberAttributes(elem, subscriber, ident);
@@ -134,20 +140,21 @@ public:
         return getXMLPropertiesPolicy(elem, propertiesPolicy, ident);
     }
 
-    static XMLP_ret getXMLRemoteServer_wrapper(
-            tinyxml2::XMLElement* elem,
-            RemoteServerAttributes& attr,
-            uint8_t ident)
-    {
-        return getXMLRemoteServer(elem, attr, ident);
-    }
-
     static XMLP_ret getXMLTransports_wrapper(
             tinyxml2::XMLElement* elem,
-            std::vector<std::shared_ptr<TransportDescriptorInterface>>& transports,
+            std::vector<std::shared_ptr<eprosima::fastdds::rtps::TransportDescriptorInterface>>& transports,
             uint8_t ident)
     {
         return getXMLTransports(elem, transports, ident);
+    }
+
+    static XMLP_ret getXMLBuiltinTransports_wrapper(
+            tinyxml2::XMLElement* elem,
+            eprosima::fastdds::rtps::BuiltinTransports* bt,
+            uint8_t ident,
+            eprosima::fastdds::rtps::BuiltinTransportsOptions* bt_opts = nullptr)
+    {
+        return getXMLBuiltinTransports(elem, bt, bt_opts, ident);
     }
 
     static XMLP_ret getXMLguidPrefix_wrapper(
@@ -160,7 +167,7 @@ public:
 
     static XMLP_ret getXMLDuration_wrapper(
             tinyxml2::XMLElement* elem,
-            Duration_t& duration,
+            dds::Duration_t& duration,
             uint8_t ident)
     {
         return getXMLDuration(elem, duration, ident);
@@ -172,14 +179,6 @@ public:
             uint8_t ident)
     {
         return getXMLString(elem, s, ident);
-    }
-
-    static XMLP_ret getXMLList_wrapper(
-            tinyxml2::XMLElement* elem,
-            eprosima::fastdds::rtps::RemoteServerList_t& list,
-            uint8_t ident)
-    {
-        return getXMLList(elem, list, ident);
     }
 
     static XMLP_ret getXMLBool_wrapper(
@@ -214,6 +213,14 @@ public:
         return getXMLUint(elem, ui16, ident);
     }
 
+    static XMLP_ret getXMLUint_wrapper(
+            tinyxml2::XMLElement* elem,
+            uint64_t* ui64,
+            uint8_t ident)
+    {
+        return getXMLUint(elem, ui64, ident);
+    }
+
     static XMLP_ret getXMLBuiltinAttributes_wrapper(
             tinyxml2::XMLElement* elem,
             BuiltinAttributes& builtin,
@@ -222,25 +229,17 @@ public:
         return getXMLBuiltinAttributes(elem, builtin, ident);
     }
 
-    static XMLP_ret getXMLTypeLookupSettings_wrapper(
+    static XMLP_ret getXMLFlowControllerDescriptorList_wrapper(
             tinyxml2::XMLElement* elem,
-            TypeLookupSettings& settings,
+            FlowControllerDescriptorList& flow_controller_descriptors,
             uint8_t ident)
     {
-        return getXMLTypeLookupSettings(elem, settings, ident);
-    }
-
-    static XMLP_ret getXMLThroughputController_wrapper(
-            tinyxml2::XMLElement* elem,
-            ThroughputControllerDescriptor& throughputController,
-            uint8_t ident)
-    {
-        return getXMLThroughputController(elem, throughputController, ident);
+        return getXMLFlowControllerDescriptorList(elem, flow_controller_descriptors, ident);
     }
 
     static XMLP_ret getXMLTopicAttributes_wrapper(
             tinyxml2::XMLElement* elem,
-            TopicAttributes& topic,
+            xmlparser::TopicAttributes& topic,
             uint8_t ident)
     {
         return getXMLTopicAttributes(elem, topic, ident);
@@ -336,7 +335,7 @@ public:
 
     static XMLP_ret getXMLPublisherAttributes_wrapper(
             tinyxml2::XMLElement* elem,
-            PublisherAttributes& publisher,
+            xmlparser::PublisherAttributes& publisher,
             uint8_t ident)
     {
         return getXMLPublisherAttributes(elem, publisher, ident);
@@ -392,7 +391,7 @@ public:
 
     static XMLP_ret getXMLEnum_wrapper(
             tinyxml2::XMLElement* elem,
-            IntraprocessDeliveryType* e,
+            eprosima::fastdds::IntraprocessDeliveryType* e,
             uint8_t ident)
     {
         return getXMLEnum(elem, e, ident);
@@ -400,7 +399,7 @@ public:
 
     static XMLP_ret getXMLEnum_wrapper(
             tinyxml2::XMLElement* elem,
-            DiscoveryProtocol_t* e,
+            DiscoveryProtocol* e,
             uint8_t ident)
     {
         return getXMLEnum(elem, e, ident);
@@ -408,7 +407,7 @@ public:
 
     static XMLP_ret getXMLEnum_wrapper(
             tinyxml2::XMLElement* elem,
-            ParticipantFilteringFlags_t* e,
+            ParticipantFilteringFlags* e,
             uint8_t ident)
     {
         return getXMLEnum(elem, e, ident);
@@ -450,7 +449,7 @@ public:
 
     static XMLP_ret parseXMLCommonTCPTransportData_wrapper(
             tinyxml2::XMLElement* p_root,
-            eprosima::fastrtps::xmlparser::sp_transport_t p_transport)
+            eprosima::fastdds::xmlparser::sp_transport_t p_transport)
     {
         return parseXMLCommonTCPTransportData(p_root, p_transport);
     }
@@ -475,7 +474,7 @@ public:
 
     static XMLP_ret parseXML_wrapper(
             tinyxml2::XMLDocument& xmlDoc,
-            eprosima::fastrtps::xmlparser::up_base_node_t& root)
+            eprosima::fastdds::xmlparser::up_base_node_t& root)
     {
         return parseXML(xmlDoc, root);
     }
@@ -489,9 +488,16 @@ public:
 
     static XMLP_ret parse_tls_config_wrapper(
             tinyxml2::XMLElement* p_root,
-            eprosima::fastrtps::xmlparser::sp_transport_t tcp_transport)
+            eprosima::fastdds::xmlparser::sp_transport_t tcp_transport)
     {
         return parse_tls_config(p_root, tcp_transport);
+    }
+
+    static XMLP_ret parseXMLReceptionThreads_wrapper(
+            tinyxml2::XMLElement& p_root,
+            eprosima::fastdds::rtps::PortBasedTransportDescriptor::ReceptionThreadsConfigMap& reception_threads)
+    {
+        return parseXMLReceptionThreads(p_root, reception_threads);
     }
 
     static XMLP_ret parseXMLLibrarySettings_wrapper(
@@ -502,35 +508,35 @@ public:
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<PublisherAttributes>& publisher_node)
+            DataNode<xmlparser::PublisherAttributes>& publisher_node)
     {
         return fillDataNode(p_profile, publisher_node);
     }
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<SubscriberAttributes>& subscriber_node)
+            DataNode<xmlparser::SubscriberAttributes>& subscriber_node)
     {
         return fillDataNode(p_profile, subscriber_node);
     }
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<TopicAttributes>& topic_node)
+            DataNode<xmlparser::TopicAttributes>& topic_node)
     {
         return fillDataNode(p_profile, topic_node);
     }
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<RequesterAttributes>& requester_node)
+            DataNode<xmlparser::RequesterAttributes>& requester_node)
     {
         return fillDataNode(p_profile, requester_node);
     }
 
     static XMLP_ret fillDataNode_wrapper(
             tinyxml2::XMLElement* p_profile,
-            DataNode<ReplierAttributes>& replier_node)
+            DataNode<xmlparser::ReplierAttributes>& replier_node)
     {
         return fillDataNode(p_profile, replier_node);
     }
@@ -575,6 +581,28 @@ public:
             BaseNode& rootNode)
     {
         return parseXMLTopicData(p_root, rootNode);
+    }
+
+    static XMLP_ret getXMLThreadSettings_wrapper(
+            tinyxml2::XMLElement* p_root,
+            eprosima::fastdds::rtps::ThreadSettings& thread_settings)
+    {
+        return getXMLThreadSettings(*p_root, thread_settings);
+    }
+
+    static XMLP_ret getXMLThreadSettingsWithPort_wrapper(
+            tinyxml2::XMLElement* p_root,
+            eprosima::fastdds::rtps::ThreadSettings& thread_settings,
+            uint32_t& port)
+    {
+        return getXMLThreadSettingsWithPort(*p_root, thread_settings, port);
+    }
+
+    static XMLP_ret getXMLEntityFactoryQos_wrapper(
+            tinyxml2::XMLElement* p_root,
+            eprosima::fastdds::dds::EntityFactoryQosPolicy& entity_factory)
+    {
+        return getXMLEntityFactoryQos(*p_root, entity_factory);
     }
 
 };

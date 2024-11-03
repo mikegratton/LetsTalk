@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-#include <fastdds/rtps/common/CacheChange.h>
+#include <fastdds/rtps/common/CacheChange.hpp>
 
 #include <rtps/history/BasicPayloadPool.hpp>
 #include <rtps/history/CacheChangePool.h>
@@ -22,7 +22,7 @@
 
 #include <tuple>
 
-using namespace eprosima::fastrtps::rtps;
+using namespace eprosima::fastdds::rtps;
 using namespace ::testing;
 using namespace std;
 
@@ -68,7 +68,7 @@ protected:
             return false;
         }
 
-        if (!payload_pool_->get_payload(data_size, *change))
+        if (!payload_pool_->get_payload(data_size, change->serializedPayload))
         {
             change_pool_->release_cache(change);
             return false;
@@ -80,7 +80,7 @@ protected:
     void release_cache(
             CacheChange_t*& change)
     {
-        payload_pool_->release_payload(*change);
+        payload_pool_->release_payload(change->serializedPayload);
         change_pool_->release_cache(change);
     }
 
@@ -164,6 +164,7 @@ TEST_P(BasicPoolsTest, change_reset_on_release)
     ASSERT_FALSE(ch->isRead);
     ASSERT_EQ(ch->sourceTimestamp.seconds(), 0);
     ASSERT_EQ(ch->sourceTimestamp.fraction(), 0U);
+    ASSERT_EQ(ch->vendor_id, c_VendorId_Unknown);
 
     // Modify cache change
     ch->kind = NOT_ALIVE_DISPOSED;
@@ -180,6 +181,7 @@ TEST_P(BasicPoolsTest, change_reset_on_release)
     ch->isRead = true;
     ch->sourceTimestamp.seconds(1);
     ch->sourceTimestamp.fraction(1);
+    ch->vendor_id = c_VendorId_eProsima;
 
     release_cache(ch);
 
@@ -200,6 +202,7 @@ TEST_P(BasicPoolsTest, change_reset_on_release)
         ASSERT_FALSE(ch->isRead);
         ASSERT_EQ(ch->sourceTimestamp.seconds(), 0);
         ASSERT_EQ(ch->sourceTimestamp.fraction(), 0U);
+        ASSERT_EQ(ch->vendor_id, c_VendorId_Unknown);
     }
 }
 

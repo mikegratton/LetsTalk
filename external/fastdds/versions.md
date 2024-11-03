@@ -1,6 +1,158 @@
 Forthcoming
 -----------
 
+
+Version v3.1.0
+--------------
+
+* Allow `PERSISTENT_DURABILITY` behaving as `TRANSIENT_DURABILITY`. Fallback to `TRANSIENT_LOCAL_DURABILITY` if no persistence guid is set.
+* Fix DomainParticipantQos equality operator by using the new `DomainParticipantQos::compare_flow_controllers`.
+* Add new XML QoS overloads for ``DomainParticipant``, ``DataWriter`` and ``DataReader``:
+  * ``get_X_qos_from_xml`` (without profile name)
+  * ``get_X_qos_from_xml`` (profile name given)
+  * ``get_default_X_qos_from_xml``
+* Add complete support for dynamic network interfaces.
+
+Version v3.0.0
+--------------
+
+* Rename project to `fastdds`.
+* Rename environment variable to `FASTDDS_DEFAULT_PROFILES_FILE` and rename default XML profiles file to `FASTDDS_DEFAULT_PROFILES`.
+* Remove API marked as deprecated.
+* Removed deprecated FastRTPS API tests.
+* Removed no longer supported `FASTRTPS_API_TESTS` CMake options.
+* RTPS layer APIs refactor:
+  * RTPSReader, ReaderListener, ReaderAttributes:
+    * Several methods that were meant for internal use have been removed from public API
+    * All public methods now have `snake_case` names
+    * All public attributes now have `snake_case` names
+  * RTPSWriter, WriterListener, WriterAttributes, WriterHistory:
+    * The responsibility of managing both the `CacheChange` and `Payload` pools has been moved to the `WriterHistory`.
+    * Several methods that were meant for internal use have been removed from public API
+    * All public methods now have `snake_case` names
+    * All public attributes now have `snake_case` names
+  * RTPSParticipant:
+    * Some methods changed to `snake_case`: `register_reader`, `register_writer`, `update_reader`, `update_writer`.
+	* Register methods take a `TopicDescription` instead of `TopicAttributes`.
+	* Update methods no longer take `TopicAttributes`.
+  * Endpoint creation fails if the `EntityId` is inconsistent with the topic kind.
+* Discovery callbacks refactor:
+  * on_participant_discovery now receives a `ParticipantDiscoveryStatus` and a `ParticipantBuiltinTopicData` instead of a `ParticipantDiscoveryInfo`
+  * on_data_reader_discovery now receives a `ReaderDiscoveryStatus` and a `SubscriptionBuiltinTopicData` instead of a `ReaderDiscoveryInfo`
+  * on_data_writer_discovery now receives a `WriterDiscoveryStatus` and a `PublicationBuiltinTopicData` instead of a `WriterDiscoveryInfo`
+* New methods to get local discovery information:
+  * `DataWriter::get_publication_builtin_topic_data`
+  * `DataReader::get_subscription_builtin_topic_data`
+* Public API that is no longer public:
+  * XML Parser API no longer public.
+  * ReaderProxyData
+  * ReaderDiscoveryInfo
+  * WriterProxyData
+  * WriterDiscoveryInfo
+  * ParticiantProxyData
+  * ParticiantDiscoveryInfo
+  * ParticipantAttributes
+  * ReplierAttributes
+  * RequesterAttributes
+  * PublisherAttributes
+  * SubscriberAttributes
+  * TopicAttributes
+  * All discovery implementation related API
+  * ProxyPool
+  * Semaphore
+  * MessageReceiver
+  * BuiltinProtocols
+  * Liveliness implementation related API
+  * shared_mutex
+  * StringMatching
+  * TimeConversion
+  * TypeLookupService
+  * DBQueue
+  * UnitsParser
+  * ReaderLocator
+  * ReaderProxy
+  * ChangeForReader
+  * ServerAttributes
+* Public API headers .h have been renamed to .hpp
+* Added create participant methods that use environment XML profile for participant configuration.
+* New TypeObjectRegistry class to register/query TypeObjects/TypeIdentifiers.
+* New TypeObjectUtils class providing API to build and register TypeObjects/TypeIdentifiers.
+* Refactor Dynamic Language Binding API according to OMG XTypes v1.3 specification.
+* Refactor ReturnCode complying with OMG DDS specification.
+* Calling `DataReader::return_loan` returns `ReturnCode_t::RETCODE_OK` both for empty sequences and for sequences that were not loaned.
+* Refactor examples:
+  * Hello world example with wait-sets and environment XML profiles.
+  * X-Types example with dynamic type discovery and Hello world example compatibility.
+  * Configuration example that condenses multiple QoS examples. Multiple configurations allowed through argument parsing.
+  * Custom content filter example with lower and upper bounds for data based on the index.
+  * Custom payload pool example that uses a user-defined payload pool instead of the default
+  * Delivery mechanisms example with SHM, UDP, TCP, data-sharing and intra-process mechanisms.
+  * Discovery server example.
+  * Flow Controller example with `FlowControllersQos` and property settings.
+  * Request-reply example to showcase RPC paradigms over Fast DDS.
+  * Security example with environment XML profiles.
+  * Static EDP discovery example to avoid EDP meta-traffic.
+  * Topic instances example, compatible with _ShapesDemo_ app.
+  * RTPS example to show the creation of entities in the RTPS layer.
+* Removed `TypeConsistencyQos` from DataReader, and included `TypeConsistencyEnforcementQosPolicy` and `DataRepresentationQosPolicy`
+* Added new `flow_controller_descriptor_list` XML configuration, remove `ThroughtputController`.
+* Migrate `#define`s within `BuiltinEndpoints.hpp` to namespaced `constexpr` variables.
+* Make `StdoutErrConsumer` the default log consumer.
+* IPayloadPool refactor:
+  * `payload_owner` moved from `CacheChange_t` to `SerializedPayload_t`.
+  * `SerializedPayload_t` copies are now forbidden.
+  * Refactor of `get_payload` methods.
+* Use `PID_DOMAIN_ID` during PDP.
+* Creation of RTPS messages refactor:
+  * New Gather-send method is now used by default, avoiding an extra copy during the creation of the RTPS message.
+  * New attribute in `SendBuffersAllocationAttributes` to configure allocation of `NetworkBuffer` vector.
+  * `SenderResource` and Transport APIs now receive a collection of `NetworkBuffer` on their `send` method.
+* Migrate fastrtps namespace to fastdds
+* Migrate fastrtps `ResourceManagement` API from `rtps/resources` to `rtps/attributes`.
+* `const` qualify all data related inputs in DataWriter APIs
+* New `DomainParticipantExtendedQos` that includes both `DomainId` and `DomainParticipantQos` (extends `DomainParticipantFactory` API).
+* Make Blackbox tests not include any private API.
+* Remove all the private API include from Blackbox tests.
+* Discovery Server refactor:
+  * Clients and Servers no longer need a known GUID to connect between them.
+  * Servers are now configured specifying a LocatorList, instead of a RemoteServerAttributes list.
+  * Servers connect through a mesh topology. For a new server to join the topology, it must be connected to any server in it.
+  * Servers only redirect discovery information of their direct clients.
+  * Remote Discovery servers connection list can now be updated and modified at runtime without restrictions.
+  * Fast DDS CLI has been updated to allow the creation of servers without GUID.
+  * Servers are responsible of answering TypeLookupRequests of others servers when working with X-Types.
+  * Backup server is not compatible with X-Types.
+* Refactor in XML Parser to return DynamicTypeBuilder instead of DynamicType
+* Setting vendor_id in the received CacheChange_t for Data and DataFrag.
+* Added new DynamicData to JSON serializer (`json_serialize`).
+* Added new DynamicType to IDL serializer (`idl_serialize`).
+* DDS implementation of `eprosima::fastdds::Time_t` moved to `eprosima::fastdds::dds::Time_t`.
+* `TopicDataType::auto_fill_type_information` has been removed in favor of `fastdds.type_propagation` participant property.
+* Add new custom pid PID_PRODUCT_VERSION.
+* SHM locator kind is now linked to Fast DDS' major version.
+
+Version 2.14.0
+--------------
+
+* Added authentication handshake properties.
+* Added methods OpenOutputChannels and CloseOutputChannels to TransportInterface with LocatorSelectorEntry argument.
+* Added `netmask_filter`, `allowlist` and `blocklist` transport configuration options.
+* Added extra configuration options for the builitin transports.
+* Limit the amount of listening ports for TCP servers to 1.
+
+Version 2.13.0
+--------------
+
+* Added monitor service feature.
+* Enable configuration of thread setting for all threads.
+* Added the possibility to define a listening port equal to 0 in TCP Transport
+* Added support for TCP to Fast DDS CLI and environment variable
+* Enable Discovery Server example through TCP.
+* Define a discovery server' super client by environment variable.
+* Added the possibility to define interfaces in the whitelist by interface name.
+* Added configuration of builtin transports through DomainParticipantQos, environment variable and XML.
+* Enable support for DataRepresentationQos to select the CDR encoding.
+
 Version 2.12.0
 --------------
 
@@ -9,12 +161,12 @@ Version 2.12.0
 * Exposed custom payload pool on DDS endpoints declaration
 * Processing environment variables on XML text
 * Upgrade to support Fast CDR v2.0.0.
-  Default encoding is XCDRv1 to maintain interoperability with previous Fast-DDS versions.
+  Default encoding is XCDRv1 to maintain interoperability with previous Fast DDS versions.
   Some concerns:
     - Data type source code generated with Fast DDS-Gen v2 should be regenerated using Fast DDS-Gen v3.
     - **API break**. Changed a `MEMBER_INVALID` identifier from a `#define` to a `constexpr`.
       Although this is not a new major version, using a `#define` is a bad conduct which was decided to be changed.
-      Note that new `constexpr` is inside namespace `eprosima::fastrtps::types`.
+      Note that new `constexpr` is inside namespace `eprosima::fastdds::types`.
 
 Version 2.11.0
 --------------
@@ -107,7 +259,7 @@ Version 2.6.0
 * Allow modifying the remote server locator in runtime.
 * Add physical information in DATA[p] using properties
 * Extension of `DISCOVERY_TOPIC` to include physical information about the discovered entity (ABI break)
-* Added methods getting `fastrtps::Time_t` as parameters instead of `fastrtps::rtps::Time_t` (API extension, API
+* Added methods getting `fastdds::Time_t` as parameters instead of `fastdds::rtps::Time_t` (API extension, API
   deprecations).
 * Changed signature of eprosima::fastdds::dds::DataWriter::dispose_w_timestamp (ABI break).
 * Added method getting `std::vector<InstanceHandle_t>&` instead of `std::vector<InstanceHandle_t*>&` (API extension, API
@@ -148,7 +300,7 @@ Version 2.3.0
 * Added support for unique network flows
 * Added reception_timestamp to `eprosima::fastdds::dds::SampleInfo` (ABI break)
 * Added `eprosima::fastdds::dds::DataReader::get_unread_count` (ABI break)
-* Refactor `eprosima::fastrtps::type::ReturnCode_t`. Now the constant global objects are no longer available (ABI break)
+* Refactor `eprosima::fastdds::type::ReturnCode_t`. Now the constant global objects are no longer available (ABI break)
 * Performance tests refactored to use DDS-PIM high-level API
 
 Version 2.2.0
@@ -241,16 +393,16 @@ Version 2.0.0
 This release has the following **API breaks**:
 
 * eClock API, which was deprecated on v1.9.1, has been removed
-* `eprosima::fastrtps::rtps::RTPSDomain::createParticipant` methods now have an additional first argument `domain_id`
-* Data member `domainId` has been removed from `eprosima::fastrtps::rtps::RTPSParticipantAttributes` and added to
-  `eprosima::fastrtps::ParticipantAttributes`
+* `eprosima::fastdds::rtps::RTPSDomain::createParticipant` methods now have an additional first argument `domain_id`
+* Data member `domainId` has been removed from `eprosima::fastdds::rtps::RTPSParticipantAttributes` and added to
+  `eprosima::fastdds::ParticipantAttributes`
 
 Users should also be aware of the following **deprecation announcement**:
 
-* All classes inside the namespace `eprosima::fastrtps` should be considered deprecated.
+* All classes inside the namespace `eprosima::fastdds` should be considered deprecated.
   Equivalent functionality is offered through namespace `eprosima::fastdds`.
-* Namespaces beneath `eprosima::fastrtps` are not included in this deprecation, i.e.
-  `eprosima::fastrtps::rtps` can still be used)
+* Namespaces beneath `eprosima::fastdds` are not included in this deprecation, i.e.
+  `eprosima::fastdds::rtps` can still be used)
 
 This release adds the following **features**:
 

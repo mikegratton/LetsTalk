@@ -12,17 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "../../../logging/mock/MockConsumer.h"
-#include "mock/MockEntity.hpp"
-#include <fastdds/dds/log/Log.hpp>
+#include <thread>
+
 #include <gtest/gtest.h>
 
 #include <fastdds/dds/core/condition/Condition.hpp>
 #include <fastdds/dds/core/condition/GuardCondition.hpp>
 #include <fastdds/dds/core/condition/StatusCondition.hpp>
 #include <fastdds/dds/core/condition/WaitSet.hpp>
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/common/Time_t.hpp>
+
+#include "../../../logging/mock/MockConsumer.h"
+#include "mock/MockEntity.hpp"
 
 using namespace eprosima::fastdds::dds;
 using namespace std;
@@ -103,7 +105,7 @@ TEST_F(EntityTests, entity_enable)
     Entity entity;
 
     ASSERT_FALSE(entity.is_enabled());
-    ASSERT_EQ(entity.enable(), eprosima::fastrtps::types::ReturnCode_t::RETCODE_OK);
+    ASSERT_EQ(entity.enable(), RETCODE_OK);
     ASSERT_TRUE(entity.is_enabled());
     entity.close();
     ASSERT_FALSE(entity.is_enabled());

@@ -16,15 +16,16 @@
  * @file DataSharingPayloadPool.hpp
  */
 
-#ifndef RTPS_HISTORY_DATASHARINGPAYLOADPOOL_HPP
-#define RTPS_HISTORY_DATASHARINGPAYLOADPOOL_HPP
+#ifndef FASTDDS_RTPS_DATASHARING__DATASHARINGPAYLOADPOOL_HPP
+#define FASTDDS_RTPS_DATASHARING__DATASHARINGPAYLOADPOOL_HPP
 
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/common/CacheChange.hpp>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
 #include <rtps/history/PoolConfig.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class DataSharingPayloadPool : public IPayloadPool
@@ -38,38 +39,33 @@ public:
 
     bool get_payload(
             uint32_t size,
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        cache_change.serializedPayload.data = new octet[size];
-        cache_change.serializedPayload.max_size = size;
-        cache_change.serializedPayload.length = size;
-        cache_change.payload_owner(this);
+        payload.data = new octet[size];
+        payload.max_size = size;
+        payload.length = size;
+        payload.payload_owner = this;
         return true;
     }
 
     bool get_payload(
-            SerializedPayload_t& data,
-            IPayloadPool*& data_owner,
-            CacheChange_t& cache_change) override
+            const SerializedPayload_t& data,
+            SerializedPayload_t& payload) override
     {
-        cache_change.serializedPayload.data = data.data;
-        cache_change.serializedPayload.max_size = data.max_size;
-        cache_change.serializedPayload.length = data.length;
-        cache_change.payload_owner(this);
-        if (data_owner == nullptr)
-        {
-            data_owner = this;
-        }
+        payload.data = data.data;
+        payload.max_size = data.max_size;
+        payload.length = data.length;
+        payload.payload_owner = this;
         return true;
     }
 
     bool release_payload(
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        delete[] cache_change.serializedPayload.data;
-        cache_change.serializedPayload.max_size = 0;
-        cache_change.serializedPayload.length = 0;
-        cache_change.payload_owner(nullptr);
+        delete[] payload.data;
+        payload.max_size = 0;
+        payload.length = 0;
+        payload.payload_owner = nullptr;
         return true;
     }
 
@@ -79,6 +75,15 @@ public:
     {
         writer_guid_ = writer_guid;
         return true;
+    }
+
+    virtual bool init_shared_memory(
+            const RTPSWriter* /*writer*/,
+            const std::string& /*shared_dir*/)
+    {
+        // Default implementation is NOP
+        // will be overriden by children if needed
+        return false;
     }
 
     static std::shared_ptr<DataSharingPayloadPool> get_reader_pool(
@@ -117,7 +122,7 @@ public:
     bool get_next_unread_payload(
             CacheChange_t& cache_change)
     {
-        return get_payload(1, cache_change);
+        return get_payload(1, cache_change.serializedPayload);
     }
 
     uint32_t advance(
@@ -167,7 +172,7 @@ protected:
 
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
-#endif  // RTPS_HISTORY_DATASHARINGPAYLOADPOOL_HPP
+#endif  // FASTDDS_RTPS_DATASHARING__DATASHARINGPAYLOADPOOL_HPP

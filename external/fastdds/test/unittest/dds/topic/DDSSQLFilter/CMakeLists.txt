@@ -20,11 +20,19 @@ file(GLOB DDSSQLFILTER_SOURCES
     )
 
 file(GLOB DDSSQLFILTER_LIB_SOURCES
-    ${PROJECT_SOURCE_DIR}/src/cpp/dynamic-types/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/SerializedPayload.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/md5.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/utils/string_convert.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
     )
 
@@ -39,25 +47,25 @@ add_executable(DDSSQLFilterTests
     ${DDSSQLFILTER_LIB_SOURCES}
     )
 target_compile_definitions(DDSSQLFilterTests PRIVATE
+    BOOST_ASIO_STANDALONE
+    ASIO_STANDALONE
     $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
     $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
     )
 target_include_directories(DDSSQLFilterTests PRIVATE
+    ${Asio_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/test/mock/dds/DomainParticipantFactory/
+    ${PROJECT_SOURCE_DIR}/test/mock/rtps/RTPSDomainImpl/
     ${PROJECT_SOURCE_DIR}/include ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp
     ${PROJECT_SOURCE_DIR}/thirdparty/taocpp-pegtl
     )
-target_link_libraries(DDSSQLFilterTests fastcdr foonathan_memory
+target_link_libraries(DDSSQLFilterTests
+    fastcdr
+    fastdds::xtypes::dynamic-types::impl
+    fastdds::xtypes::type-representation
+    foonathan_memory
     GTest::gmock
-    ${CMAKE_DL_LIBS})
-add_gtest(DDSSQLFilterTests SOURCES ${DDSSQLFILTERTEST_SOURCES})
-
-# Tests with specific timeout
-if (GTEST_INDIVIDUAL)
-    # This test does not exist unless it is compiled with GTEST_INDIVIDUAL
-    set_tests_properties("DDSSQLFilterValueTests.test_filtered_value" PROPERTIES TIMEOUT 500)
-endif ()
-
-if(ANDROID)
-    set_property(TARGET DDSSQLFilterTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+    ${CMAKE_DL_LIBS}
+    )
+gtest_discover_tests(DDSSQLFilterTests)

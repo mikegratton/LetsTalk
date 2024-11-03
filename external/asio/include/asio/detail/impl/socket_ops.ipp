@@ -2,7 +2,7 @@
 // detail/impl/socket_ops.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2022 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2024 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -339,7 +339,25 @@ int close(socket_type s, state_type& state,
         ::fcntl(s, F_SETFL, flags & ~O_NONBLOCK);
 # else // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
       ioctl_arg_type arg = 0;
+#  if defined(ENOTTY) || defined(ENOTCAPABLE)
+      result = ::ioctl(s, FIONBIO, &arg);
+      get_last_error(ec, result < 0);
+      if (false
+#   if defined(ENOTTY)
+          || ec.value() == ENOTTY
+#   endif // defined(ENOTTY)
+#   if defined(ENOTCAPABLE)
+          || ec.value() == ENOTCAPABLE
+#   endif // defined(ENOTCAPABLE)
+        )
+      {
+        int flags = ::fcntl(s, F_GETFL, 0);
+        if (flags >= 0)
+          ::fcntl(s, F_SETFL, flags & ~O_NONBLOCK);
+      }
+#  else // defined(ENOTTY) || defined(ENOTCAPABLE)
       ::ioctl(s, FIONBIO, &arg);
+#  endif // defined(ENOTTY) || defined(ENOTCAPABLE)
 # endif // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
 #endif // defined(ASIO_WINDOWS) || defined(__CYGWIN__)
       state &= ~non_blocking;
@@ -378,11 +396,31 @@ bool set_user_non_blocking(socket_type s,
     result = ::fcntl(s, F_SETFL, flag);
     get_last_error(ec, result < 0);
   }
-#else
+#else // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
   ioctl_arg_type arg = (value ? 1 : 0);
   int result = ::ioctl(s, FIONBIO, &arg);
   get_last_error(ec, result < 0);
-#endif
+# if defined(ENOTTY) || defined(ENOTCAPABLE)
+  if (false
+#  if defined(ENOTTY)
+      || ec.value() == ENOTTY
+#  endif // defined(ENOTTY)
+#  if defined(ENOTCAPABLE)
+      || ec.value() == ENOTCAPABLE
+#  endif // defined(ENOTCAPABLE)
+    )
+  {
+    result = ::fcntl(s, F_GETFL, 0);
+    get_last_error(ec, result < 0);
+    if (result >= 0)
+    {
+      int flag = (value ? (result | O_NONBLOCK) : (result & ~O_NONBLOCK));
+      result = ::fcntl(s, F_SETFL, flag);
+      get_last_error(ec, result < 0);
+    }
+  }
+# endif // defined(ENOTTY) || defined(ENOTCAPABLE)
+#endif // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
 
   if (result >= 0)
   {
@@ -432,11 +470,31 @@ bool set_internal_non_blocking(socket_type s,
     result = ::fcntl(s, F_SETFL, flag);
     get_last_error(ec, result < 0);
   }
-#else
+#else // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
   ioctl_arg_type arg = (value ? 1 : 0);
   int result = ::ioctl(s, FIONBIO, &arg);
   get_last_error(ec, result < 0);
-#endif
+# if defined(ENOTTY) || defined(ENOTCAPABLE)
+  if (false
+#  if defined(ENOTTY)
+      || ec.value() == ENOTTY
+#  endif // defined(ENOTTY)
+#  if defined(ENOTCAPABLE)
+      || ec.value() == ENOTCAPABLE
+#  endif // defined(ENOTCAPABLE)
+    )
+  {
+    result = ::fcntl(s, F_GETFL, 0);
+    get_last_error(ec, result < 0);
+    if (result >= 0)
+    {
+      int flag = (value ? (result | O_NONBLOCK) : (result & ~O_NONBLOCK));
+      result = ::fcntl(s, F_SETFL, flag);
+      get_last_error(ec, result < 0);
+    }
+  }
+# endif // defined(ENOTTY) || defined(ENOTCAPABLE)
+#endif // defined(__SYMBIAN32__) || defined(__EMSCRIPTEN__)
 
   if (result >= 0)
   {
@@ -2519,7 +2577,11 @@ const char* inet_ntop(int af, const void* src, char* dest, size_t length,
         && ((ipv6_address->s6_addr[1] & 0x0f) == 0x02));
     if ((!is_link_local && !is_multicast_link_local)
         || if_indextoname(static_cast<unsigned>(scope_id), if_name + 1) == 0)
+#if defined(ASIO_HAS_SNPRINTF)
+      snprintf(if_name + 1, sizeof(if_name) - 1, "%lu", scope_id);
+#else // defined(ASIO_HAS_SNPRINTF)
       sprintf(if_name + 1, "%lu", scope_id);
+#endif // defined(ASIO_HAS_SNPRINTF)
     strcat(dest, if_name);
   }
   return result;
@@ -3627,7 +3689,9 @@ inline asio::error_code getnameinfo_emulation(
       {
         return ec = asio::error::no_buffer_space;
       }
-#if defined(ASIO_HAS_SECURE_RTL)
+#if defined(ASIO_HAS_SNPRINTF)
+      snprintf(serv, servlen, "%u", ntohs(port));
+#elif defined(ASIO_HAS_SECURE_RTL)
       sprintf_s(serv, servlen, "%u", ntohs(port));
 #else // defined(ASIO_HAS_SECURE_RTL)
       sprintf(serv, "%u", ntohs(port));
@@ -3650,7 +3714,9 @@ inline asio::error_code getnameinfo_emulation(
         {
           return ec = asio::error::no_buffer_space;
         }
-#if defined(ASIO_HAS_SECURE_RTL)
+#if defined(ASIO_HAS_SNPRINTF)
+        snprintf(serv, servlen, "%u", ntohs(port));
+#elif defined(ASIO_HAS_SECURE_RTL)
         sprintf_s(serv, servlen, "%u", ntohs(port));
 #else // defined(ASIO_HAS_SECURE_RTL)
         sprintf(serv, "%u", ntohs(port));

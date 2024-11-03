@@ -21,15 +21,16 @@
 #define OPENSSL_API_COMPAT 10101
 
 #include <security/authentication/PKIDH.h>
-#include <security/authentication/PKIIdentityHandle.h>
-#include <fastdds/rtps/security/logging/Logging.h>
-#include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/messages/CDRMessage.h>
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
 
 #include <openssl/opensslv.h>
 
 #include <fastdds/core/policy/ParameterList.hpp>
+#include <fastdds/dds/log/Log.hpp>
+
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/security/logging/Logging.h>
+#include <rtps/messages/CDRMessage.hpp>
+#include <security/authentication/PKIIdentityHandle.h>
 
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 #define IS_OPENSSL_1_1 1
@@ -60,9 +61,11 @@
 #define LOCATION " (" __FILE__ ":" S2(__LINE__) ")"
 #define _SecurityException_(str) SecurityException(std::string(str) + LOCATION)
 
-using namespace eprosima::fastrtps;
-using namespace eprosima::fastrtps::rtps;
-using namespace eprosima::fastrtps::rtps::security;
+namespace eprosima {
+namespace fastdds {
+namespace rtps {
+
+using namespace security;
 
 using ParameterList = eprosima::fastdds::dds::ParameterList;
 
@@ -2587,3 +2590,7 @@ bool PKIDH::check_guid_comes_from(
     return adjusted == original;
 
 }
+
+} // namespace rtps
+} // namespace fastdds
+} // namespace eprosima

@@ -14,19 +14,17 @@
 
 #include <rtps/transport/TCPChannelResourceSecure.h>
 
-#include <future>
 #include <chrono>
+#include <future>
+#include <thread>
 
-#include <fastrtps/utils/IPLocator.h>
+#include <fastdds/utils/IPLocator.hpp>
 #include <rtps/transport/TCPTransportInterface.h>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-using Locator_t = fastrtps::rtps::Locator_t;
-using IPLocator = fastrtps::rtps::IPLocator;
-using octet = fastrtps::rtps::octet;
 using Log = fastdds::dds::Log;
 
 using namespace asio;
@@ -201,20 +199,28 @@ uint32_t TCPChannelResourceSecure::read(
 size_t TCPChannelResourceSecure::send(
         const octet* header,
         size_t header_size,
-        const octet* data,
-        size_t size,
+        const std::vector<NetworkBuffer>& buffers,
+        uint32_t total_bytes,
         asio::error_code& ec)
 {
     size_t bytes_sent = 0;
 
     if (eConnecting < connection_status_)
     {
-        std::vector<asio::const_buffer> buffers;
+        if (parent_->configuration()->non_blocking_send &&
+                !check_socket_send_buffer(header_size + total_bytes,
+                secure_socket_->lowest_layer().native_handle()))
+        {
+            return 0;
+        }
+
+        // Use a list of const_buffers to send the message
+        std::vector<asio::const_buffer> asio_buffers;
         if (header_size > 0)
         {
-            buffers.push_back(asio::buffer(header, header_size));
+            asio_buffers.push_back(asio::buffer(header, header_size));
         }
-        buffers.push_back(asio::buffer(data, size));
+        asio_buffers.insert(asio_buffers.end(), buffers.begin(), buffers.end());
 
         // Work around meanwhile
         std::promise<size_t> write_bytes_promise;
@@ -225,7 +231,7 @@ size_t TCPChannelResourceSecure::send(
                 {
                     if (socket->lowest_layer().is_open())
                     {
-                        size_t bytes_transferred = asio::write(*socket, buffers, ec);
+                        size_t bytes_transferred = asio::write(*socket, asio_buffers, ec);
                         if (!ec)
                         {
                             write_bytes_promise.set_value(bytes_transferred);
@@ -257,12 +263,22 @@ asio::ip::tcp::endpoint TCPChannelResourceSecure::local_endpoint() const
     return secure_socket_->lowest_layer().local_endpoint();
 }
 
+asio::ip::tcp::endpoint TCPChannelResourceSecure::remote_endpoint(
+        asio::error_code& ec) const
+{
+    return secure_socket_->lowest_layer().remote_endpoint(ec);
+}
+
+asio::ip::tcp::endpoint TCPChannelResourceSecure::local_endpoint(
+        asio::error_code& ec) const
+{
+    return secure_socket_->lowest_layer().local_endpoint(ec);
+}
+
 void TCPChannelResourceSecure::set_options(
         const TCPTransportDescriptor* options)
 {
-    secure_socket_->lowest_layer().set_option(socket_base::receive_buffer_size(options->receiveBufferSize));
-    secure_socket_->lowest_layer().set_option(socket_base::send_buffer_size(options->sendBufferSize));
-    secure_socket_->lowest_layer().set_option(ip::tcp::no_delay(options->enable_tcp_nodelay));
+    TCPChannelResource::set_socket_options(secure_socket_->lowest_layer(), options);
 }
 
 void TCPChannelResourceSecure::set_tls_verify_mode(
@@ -327,5 +343,5 @@ void TCPChannelResourceSecure::shutdown(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

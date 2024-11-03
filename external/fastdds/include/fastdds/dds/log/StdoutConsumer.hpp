@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef _FASTDDS_DDS_LOG_STDOUTCONSUMER_HPP_
-#define _FASTDDS_DDS_LOG_STDOUTCONSUMER_HPP_
+#ifndef FASTDDS_DDS_LOG__STDOUTCONSUMER_HPP
+#define FASTDDS_DDS_LOG__STDOUTCONSUMER_HPP
 
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/log/OStreamConsumer.hpp>
@@ -34,7 +34,7 @@ private:
      * Called by Log consume to get the correct stream
      * @param Log::Entry to consume.
      */
-    RTPS_DllAPI virtual std::ostream& get_stream(
+    FASTDDS_EXPORTED_API virtual std::ostream& get_stream(
             const Log::Entry& entry) override;
 };
 
@@ -42,4 +42,4 @@ private:
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // ifndef _FASTDDS_DDS_LOG_STDOUTCONSUMER_HPP_
+#endif // FASTDDS_DDS_LOG__STDOUTCONSUMER_HPP

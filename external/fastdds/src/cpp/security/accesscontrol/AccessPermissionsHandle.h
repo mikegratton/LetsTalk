@@ -18,18 +18,18 @@
 #ifndef __SECURITY_ACCESSCONTROL_ACCESSPERMISSIONSHANDLE_H__
 #define __SECURITY_ACCESSCONTROL_ACCESSPERMISSIONSHANDLE_H__
 
-#include <fastdds/rtps/security/common/Handle.h>
-#include <fastdds/rtps/common/Token.h>
+#include <fastdds/rtps/common/Token.hpp>
+#include <fastdds/rtps/attributes/EndpointSecurityAttributes.hpp>
+#include <rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
+#include <rtps/security/common/Handle.h>
 #include <security/accesscontrol/PermissionsTypes.h>
-#include <fastdds/rtps/security/accesscontrol/ParticipantSecurityAttributes.h>
-#include <fastdds/rtps/security/accesscontrol/EndpointSecurityAttributes.h>
 
 #include <openssl/x509.h>
 #include <string>
 #include <map>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -70,7 +70,7 @@ typedef HandleImpl<AccessPermissions, Permissions> AccessPermissionsHandle;
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
 #endif // __SECURITY_ACCESSCONTROL_ACCESSPERMISSIONSHANDLE_H__

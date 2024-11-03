@@ -26,9 +26,9 @@
 #include <fastdds/dds/topic/TypeSupport.hpp>
 
 #include <fastdds/rtps/builtin/data/ContentFilterProperty.hpp>
-#include <fastdds/rtps/common/Guid.h>
+#include <fastdds/rtps/common/Guid.hpp>
 
-#include <fastrtps/utils/collections/ResourceLimitedContainerConfig.hpp>
+#include <fastdds/utils/collections/ResourceLimitedContainerConfig.hpp>
 
 #include <foonathan/memory/container.hpp>
 #include <foonathan/memory/memory_pool.hpp>
@@ -54,7 +54,7 @@ namespace dds {
 class ReaderFilterCollection
 {
     using reader_filter_map_helper =
-            utilities::collections::map_size_helper<fastrtps::rtps::GUID_t, ReaderFilterInformation>;
+            utilities::collections::map_size_helper<fastdds::rtps::GUID_t, ReaderFilterInformation>;
 
 public:
 
@@ -64,7 +64,7 @@ public:
      * @param allocation  Allocation configuration for reader filtering information.
      */
     explicit ReaderFilterCollection(
-            const fastrtps::ResourceLimitedContainerConfig& allocation)
+            const fastdds::ResourceLimitedContainerConfig& allocation)
         : reader_filter_allocator_(
             reader_filter_map_helper::node_size,
             reader_filter_map_helper::min_pool_size<pool_allocator_t>(allocation.initial))
@@ -103,7 +103,7 @@ public:
      */
     void update_filter_info(
             DataWriterFilteredChange& change,
-            const fastrtps::rtps::SampleIdentity& related_sample_identity) const
+            const fastdds::rtps::SampleIdentity& related_sample_identity) const
     {
         change.filtered_out_readers.clear();
 
@@ -133,13 +133,17 @@ public:
                         // Copy the signature
                         std::copy(entry.filter_signature.begin(), entry.filter_signature.end(), signature);
 
-                        // Evaluate filter and update filtered_out_readers
-                        bool filter_result = entry.filter->evaluate(change.serializedPayload, info, it->first);
-                        if (!filter_result)
+                        // Only evaluate filter on ALIVE changes, as UNREGISTERED and DISPOSED are always relevant
+                        bool filter_result = true;
+                        if (fastdds::rtps::ALIVE == change.kind)
                         {
-                            change.filtered_out_readers.emplace_back(it->first);
+                            // Evaluate filter and update filtered_out_readers
+                            filter_result = entry.filter->evaluate(change.serializedPayload, info, it->first);
+                            if (!filter_result)
+                            {
+                                change.filtered_out_readers.emplace_back(it->first);
+                            }
                         }
-
                         return filter_result;
                     };
 
@@ -177,7 +181,7 @@ public:
      * @param [in] guid  GUID of the reader to remove.
      */
     void remove_reader(
-            const fastrtps::rtps::GUID_t& guid)
+            const fastdds::rtps::GUID_t& guid)
     {
         auto it = reader_filters_.find(guid);
         if (it != reader_filters_.end())
@@ -197,7 +201,7 @@ public:
      * @param [in] topic        Topic on which the writer calling this method is writing.
      */
     void process_reader_filter_info(
-            const fastrtps::rtps::GUID_t& guid,
+            const fastdds::rtps::GUID_t& guid,
             const rtps::ContentFilterProperty& filter_info,
             DomainParticipantImpl* participant,
             Topic* topic)
@@ -309,7 +313,7 @@ private:
             filter_parameters,
             new_filter);
 
-        if (ReturnCode_t::RETCODE_OK != ret)
+        if (RETCODE_OK != ret)
         {
             return false;
         }
@@ -331,7 +335,7 @@ private:
 
     pool_allocator_t reader_filter_allocator_;
 
-    foonathan::memory::map<fastrtps::rtps::GUID_t, ReaderFilterInformation, pool_allocator_t> reader_filters_;
+    foonathan::memory::map<fastdds::rtps::GUID_t, ReaderFilterInformation, pool_allocator_t> reader_filters_;
 
     std::size_t max_filters_;
 };

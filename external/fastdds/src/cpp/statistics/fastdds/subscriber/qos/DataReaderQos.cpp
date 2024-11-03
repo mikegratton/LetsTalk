@@ -19,7 +19,7 @@
 #include <fastdds/statistics/dds/subscriber/qos/DataReaderQos.hpp>
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
-#include <fastdds/rtps/resources/ResourceManagement.h>
+#include <fastdds/rtps/attributes/ResourceManagement.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -35,7 +35,20 @@ DataReaderQos::DataReaderQos()
     history().depth = 100;
     // Setting history memory policy to PREALLOCATED_WITH_REALLOC_MEMORY_MODE allows for future type
     // extension with backwards compatibility
-    endpoint().history_memory_policy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+    endpoint().history_memory_policy = eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+}
+
+MonitorServiceDataReaderQos::MonitorServiceDataReaderQos()
+{
+    /* Specific implementation for MonitorServiceDataReaderQos */
+    reliability().kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+    durability().kind = eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
+    history().kind = eprosima::fastdds::dds::KEEP_LAST_HISTORY_QOS;
+    history().depth = 1;
+
+    resource_limits().max_instances = 1500;
+    resource_limits().max_samples = 1600;
+    resource_limits().max_samples_per_instance = 1;
 }
 
 } // dds

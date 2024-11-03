@@ -20,9 +20,9 @@
 
 #include <string>
 
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
-#include <fastrtps/types/TypesBase.h>
 
 #include <statistics/fastdds/domain/DomainParticipantImpl.hpp>
 
@@ -31,7 +31,7 @@ namespace fastdds {
 namespace statistics {
 namespace dds {
 
-ReturnCode_t DomainParticipant::enable_statistics_datawriter(
+fastdds::dds::ReturnCode_t DomainParticipant::enable_statistics_datawriter(
         const std::string& topic_name,
         const eprosima::fastdds::dds::DataWriterQos& dwqos)
 {
@@ -39,13 +39,13 @@ ReturnCode_t DomainParticipant::enable_statistics_datawriter(
     (void) topic_name;
     (void) dwqos;
 
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
 #else
     return static_cast<DomainParticipantImpl*>(impl_)->enable_statistics_datawriter(topic_name, dwqos);
 #endif // FASTDDS_STATISTICS
 }
 
-ReturnCode_t DomainParticipant::enable_statistics_datawriter_with_profile(
+fastdds::dds::ReturnCode_t DomainParticipant::enable_statistics_datawriter_with_profile(
         const std::string& profile_name,
         const std::string& topic_name)
 {
@@ -53,20 +53,20 @@ ReturnCode_t DomainParticipant::enable_statistics_datawriter_with_profile(
     (void) profile_name;
     (void) topic_name;
 
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
 #else
     return static_cast<DomainParticipantImpl*>(impl_)->enable_statistics_datawriter_with_profile(profile_name,
                    topic_name);
 #endif // FASTDDS_STATISTICS
 }
 
-ReturnCode_t DomainParticipant::disable_statistics_datawriter(
+fastdds::dds::ReturnCode_t DomainParticipant::disable_statistics_datawriter(
         const std::string& topic_name)
 {
 #ifndef FASTDDS_STATISTICS
     (void) topic_name;
 
-    return ReturnCode_t::RETCODE_UNSUPPORTED;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
 #else
     return static_cast<DomainParticipantImpl*>(impl_)->disable_statistics_datawriter(topic_name);
 #endif // FASTDDS_STATISTICS
@@ -91,6 +91,63 @@ const DomainParticipant* DomainParticipant::narrow(
 #else
     (void)domain_participant;
     return nullptr;
+#endif // FASTDDS_STATISTICS
+}
+
+fastdds::dds::ReturnCode_t DomainParticipant::enable_monitor_service()
+{
+#ifdef FASTDDS_STATISTICS
+    return static_cast<DomainParticipantImpl*>(impl_)->enable_monitor_service();
+#else
+    return fastdds::dds::RETCODE_UNSUPPORTED;
+#endif // FASTDDS_STATISTICS
+}
+
+fastdds::dds::ReturnCode_t DomainParticipant::disable_monitor_service()
+{
+#ifdef FASTDDS_STATISTICS
+    return static_cast<DomainParticipantImpl*>(impl_)->disable_monitor_service();
+#else
+    return fastdds::dds::RETCODE_UNSUPPORTED;
+#endif // FASTDDS_STATISTICS
+}
+
+fastdds::dds::ReturnCode_t DomainParticipant::fill_discovery_data_from_cdr_message(
+        fastdds::rtps::ParticipantBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+#ifdef FASTDDS_STATISTICS
+    return static_cast<DomainParticipantImpl*>(impl_)->fill_discovery_data_from_cdr_message(data, msg);
+#else
+    (void)data;
+    (void)msg;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
+#endif // FASTDDS_STATISTICS
+}
+
+fastdds::dds::ReturnCode_t DomainParticipant::fill_discovery_data_from_cdr_message(
+        fastdds::dds::PublicationBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+#ifdef FASTDDS_STATISTICS
+    return static_cast<DomainParticipantImpl*>(impl_)->fill_discovery_data_from_cdr_message(data, msg);
+#else
+    (void)data;
+    (void)msg;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
+#endif // FASTDDS_STATISTICS
+}
+
+fastdds::dds::ReturnCode_t DomainParticipant::fill_discovery_data_from_cdr_message(
+        fastdds::dds::SubscriptionBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+#ifdef FASTDDS_STATISTICS
+    return static_cast<DomainParticipantImpl*>(impl_)->fill_discovery_data_from_cdr_message(data, msg);
+#else
+    (void)data;
+    (void)msg;
+    return fastdds::dds::RETCODE_UNSUPPORTED;
 #endif // FASTDDS_STATISTICS
 }
 

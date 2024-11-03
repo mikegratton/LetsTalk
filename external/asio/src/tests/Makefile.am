@@ -12,11 +12,15 @@ endif
 SUBDIRS = properties
 
 check_PROGRAMS = \
+	unit/any_completion_executor \
+	unit/any_completion_handler \
+	unit/any_io_executor \
 	unit/append \
 	unit/as_tuple \
 	unit/associated_allocator \
 	unit/associated_cancellation_slot \
 	unit/associated_executor \
+	unit/associated_immediate_executor \
 	unit/associator \
 	unit/async_result \
 	unit/awaitable \
@@ -39,6 +43,7 @@ check_PROGRAMS = \
 	unit/bind_allocator \
 	unit/bind_cancellation_slot \
 	unit/bind_executor \
+	unit/bind_immediate_executor \
 	unit/buffered_read_stream \
 	unit/buffered_stream \
 	unit/buffered_write_stream \
@@ -53,6 +58,7 @@ check_PROGRAMS = \
 	unit/compose \
 	unit/connect \
 	unit/connect_pipe \
+	unit/consign \
 	unit/coroutine \
 	unit/deadline_timer \
 	unit/defer \
@@ -63,27 +69,13 @@ check_PROGRAMS = \
 	unit/execution/any_executor \
 	unit/execution/blocking \
 	unit/execution/blocking_adaptation \
-	unit/execution/bulk_execute \
-	unit/execution/bulk_guarantee \
-	unit/execution/connect \
 	unit/execution/context_as \
-	unit/execution/execute \
 	unit/execution/executor \
 	unit/execution/invocable_archetype \
 	unit/execution/mapping \
-	unit/execution/operation_state \
 	unit/execution/outstanding_work \
 	unit/execution/prefer_only \
-	unit/execution/receiver \
 	unit/execution/relationship \
-	unit/execution/schedule \
-	unit/execution/scheduler \
-	unit/execution/sender \
-	unit/execution/set_done \
-	unit/execution/set_error \
-	unit/execution/set_value \
-	unit/execution/start \
-	unit/execution/submit \
 	unit/execution_context \
 	unit/executor \
 	unit/executor_work_guard \
@@ -123,6 +115,7 @@ check_PROGRAMS = \
 	unit/local/basic_endpoint \
 	unit/local/connect_pair \
 	unit/local/datagram_protocol \
+	unit/local/seq_packet_protocol \
 	unit/local/stream_protocol \
 	unit/packaged_task \
 	unit/placeholders \
@@ -144,6 +137,7 @@ check_PROGRAMS = \
 	unit/serial_port \
 	unit/serial_port_base \
 	unit/signal_set \
+	unit/signal_set_base \
 	unit/socket_base \
 	unit/static_thread_pool \
 	unit/steady_timer \
@@ -192,13 +186,14 @@ noinst_PROGRAMS = \
 	performance/server
 endif
 
-if HAVE_CXX17
+if HAVE_CXX11
 check_PROGRAMS += \
 	unit/experimental/basic_channel \
 	unit/experimental/basic_concurrent_channel \
 	unit/experimental/channel \
 	unit/experimental/channel_traits \
-	unit/experimental/concurrent_channel
+	unit/experimental/concurrent_channel \
+	unit/experimental/parallel_group
 endif
 
 if HAVE_CXX20
@@ -208,6 +203,8 @@ check_PROGRAMS += \
 if HAVE_COROUTINES
 check_PROGRAMS += \
 	unit/experimental/awaitable_operators \
+	unit/experimental/co_composed \
+	unit/experimental/coro/allocator \
 	unit/experimental/coro/cancel \
 	unit/experimental/coro/co_spawn \
 	unit/experimental/coro/exception \
@@ -231,11 +228,15 @@ check_PROGRAMS += \
 endif
 
 TESTS = \
+	unit/any_completion_executor \
+	unit/any_completion_handler \
+	unit/any_io_executor \
 	unit/append \
 	unit/as_tuple \
 	unit/associated_allocator \
 	unit/associated_cancellation_slot \
 	unit/associated_executor \
+	unit/associated_immediate_executor \
 	unit/associator \
 	unit/async_result \
 	unit/awaitable \
@@ -258,6 +259,7 @@ TESTS = \
 	unit/bind_allocator \
 	unit/bind_cancellation_slot \
 	unit/bind_executor \
+	unit/bind_immediate_executor \
 	unit/buffered_read_stream \
 	unit/buffered_stream \
 	unit/buffered_write_stream \
@@ -272,6 +274,7 @@ TESTS = \
 	unit/compose \
 	unit/connect \
 	unit/connect_pipe \
+	unit/consign \
 	unit/deadline_timer \
 	unit/defer \
 	unit/deferred \
@@ -281,27 +284,13 @@ TESTS = \
 	unit/execution/any_executor \
 	unit/execution/blocking \
 	unit/execution/blocking_adaptation \
-	unit/execution/bulk_execute \
-	unit/execution/bulk_guarantee \
-	unit/execution/connect \
 	unit/execution/context_as \
-	unit/execution/execute \
 	unit/execution/executor \
 	unit/execution/invocable_archetype \
 	unit/execution/mapping \
-	unit/execution/operation_state \
 	unit/execution/outstanding_work \
 	unit/execution/prefer_only \
-	unit/execution/receiver \
 	unit/execution/relationship \
-	unit/execution/schedule \
-	unit/execution/scheduler \
-	unit/execution/sender \
-	unit/execution/set_done \
-	unit/execution/set_error \
-	unit/execution/set_value \
-	unit/execution/start \
-	unit/execution/submit \
 	unit/execution_context \
 	unit/executor \
 	unit/executor_work_guard \
@@ -336,6 +325,7 @@ TESTS = \
 	unit/local/basic_endpoint \
 	unit/local/connect_pair \
 	unit/local/datagram_protocol \
+	unit/local/seq_packet_protocol \
 	unit/local/stream_protocol \
 	unit/packaged_task \
 	unit/placeholders \
@@ -357,6 +347,7 @@ TESTS = \
 	unit/serial_port \
 	unit/serial_port_base \
 	unit/signal_set \
+	unit/signal_set_base \
 	unit/socket_base \
 	unit/static_thread_pool \
 	unit/steady_timer \
@@ -395,13 +386,14 @@ TESTS = \
 	unit/write \
 	unit/write_at
 
-if HAVE_CXX17
+if HAVE_CXX11
 TESTS += \
 	unit/experimental/basic_channel \
 	unit/experimental/basic_concurrent_channel \
 	unit/experimental/channel \
 	unit/experimental/channel_traits \
-	unit/experimental/concurrent_channel
+	unit/experimental/concurrent_channel \
+	unit/experimental/parallel_group
 endif
 
 if HAVE_CXX20
@@ -411,6 +403,8 @@ TESTS += \
 if HAVE_COROUTINES
 TESTS += \
 	unit/experimental/awaitable_operators \
+	unit/experimental/co_composed \
+	unit/experimental/coro/allocator \
 	unit/experimental/coro/cancel \
 	unit/experimental/coro/co_spawn \
 	unit/experimental/coro/exception \
@@ -448,11 +442,15 @@ performance_client_SOURCES = performance/client.cpp
 performance_server_SOURCES = performance/server.cpp
 endif
 
+unit_any_completion_executor_SOURCES = unit/any_completion_executor.cpp
+unit_any_completion_handler_SOURCES = unit/any_completion_handler.cpp
+unit_any_io_executor_SOURCES = unit/any_io_executor.cpp
 unit_append_SOURCES = unit/append.cpp
 unit_as_tuple_SOURCES = unit/as_tuple.cpp
 unit_associated_allocator_SOURCES = unit/associated_allocator.cpp
 unit_associated_cancellation_slot_SOURCES = unit/associated_cancellation_slot.cpp
 unit_associated_executor_SOURCES = unit/associated_executor.cpp
+unit_associated_immediate_executor_SOURCES = unit/associated_immediate_executor.cpp
 unit_associator_SOURCES = unit/associator.cpp
 unit_async_result_SOURCES = unit/async_result.cpp
 unit_awaitable_SOURCES = unit/awaitable.cpp
@@ -475,6 +473,7 @@ unit_basic_writable_pipe_SOURCES = unit/basic_writable_pipe.cpp
 unit_bind_allocator_SOURCES = unit/bind_allocator.cpp
 unit_bind_cancellation_slot_SOURCES = unit/bind_cancellation_slot.cpp
 unit_bind_executor_SOURCES = unit/bind_executor.cpp
+unit_bind_immediate_executor_SOURCES = unit/bind_immediate_executor.cpp
 unit_buffer_SOURCES = unit/buffer.cpp
 unit_buffer_registration_SOURCES = unit/buffer_registration.cpp
 unit_buffers_iterator_SOURCES = unit/buffers_iterator.cpp
@@ -489,6 +488,7 @@ unit_completion_condition_SOURCES = unit/completion_condition.cpp
 unit_compose_SOURCES = unit/compose.cpp
 unit_connect_SOURCES = unit/connect.cpp
 unit_connect_pipe_SOURCES = unit/connect_pipe.cpp
+unit_consign_SOURCES = unit/consign.cpp
 unit_coroutine_SOURCES = unit/coroutine.cpp
 unit_deadline_timer_SOURCES = unit/deadline_timer.cpp
 unit_defer_SOURCES = unit/defer.cpp
@@ -499,27 +499,13 @@ unit_error_SOURCES = unit/error.cpp
 unit_execution_any_executor_SOURCES = unit/execution/any_executor.cpp
 unit_execution_blocking_SOURCES = unit/execution/blocking.cpp
 unit_execution_blocking_adaptation_SOURCES = unit/execution/blocking_adaptation.cpp
-unit_execution_bulk_execute_SOURCES = unit/execution/bulk_execute.cpp
-unit_execution_bulk_guarantee_SOURCES = unit/execution/bulk_guarantee.cpp
-unit_execution_connect_SOURCES = unit/execution/connect.cpp
 unit_execution_context_as_SOURCES = unit/execution/context_as.cpp
-unit_execution_execute_SOURCES = unit/execution/execute.cpp
 unit_execution_executor_SOURCES = unit/execution/executor.cpp
 unit_execution_invocable_archetype_SOURCES = unit/execution/invocable_archetype.cpp
 unit_execution_mapping_SOURCES = unit/execution/mapping.cpp
 unit_execution_outstanding_work_SOURCES = unit/execution/outstanding_work.cpp
-unit_execution_operation_state_SOURCES = unit/execution/operation_state.cpp
 unit_execution_prefer_only_SOURCES = unit/execution/prefer_only.cpp
-unit_execution_receiver_SOURCES = unit/execution/receiver.cpp
 unit_execution_relationship_SOURCES = unit/execution/relationship.cpp
-unit_execution_schedule_SOURCES = unit/execution/schedule.cpp
-unit_execution_scheduler_SOURCES = unit/execution/scheduler.cpp
-unit_execution_sender_SOURCES = unit/execution/sender.cpp
-unit_execution_set_done_SOURCES = unit/execution/set_done.cpp
-unit_execution_set_error_SOURCES = unit/execution/set_error.cpp
-unit_execution_set_value_SOURCES = unit/execution/set_value.cpp
-unit_execution_start_SOURCES = unit/execution/start.cpp
-unit_execution_submit_SOURCES = unit/execution/submit.cpp
 unit_execution_context_SOURCES = unit/execution_context.cpp
 unit_executor_SOURCES = unit/executor.cpp
 unit_executor_work_guard_SOURCES = unit/executor_work_guard.cpp
@@ -559,6 +545,7 @@ unit_is_write_buffered_SOURCES = unit/is_write_buffered.cpp
 unit_local_basic_endpoint_SOURCES = unit/local/basic_endpoint.cpp
 unit_local_connect_pair_SOURCES = unit/local/connect_pair.cpp
 unit_local_datagram_protocol_SOURCES = unit/local/datagram_protocol.cpp
+unit_local_seq_packet_protocol_SOURCES = unit/local/seq_packet_protocol.cpp
 unit_local_stream_protocol_SOURCES = unit/local/stream_protocol.cpp
 unit_packaged_task_SOURCES = unit/packaged_task.cpp
 unit_placeholders_SOURCES = unit/placeholders.cpp
@@ -580,6 +567,7 @@ unit_registered_buffer_SOURCES = unit/registered_buffer.cpp
 unit_serial_port_SOURCES = unit/serial_port.cpp
 unit_serial_port_base_SOURCES = unit/serial_port_base.cpp
 unit_signal_set_SOURCES = unit/signal_set.cpp
+unit_signal_set_base_SOURCES = unit/signal_set_base.cpp
 unit_socket_base_SOURCES = unit/socket_base.cpp
 unit_static_thread_pool_SOURCES = unit/static_thread_pool.cpp
 unit_steady_timer_SOURCES = unit/steady_timer.cpp
@@ -618,12 +606,13 @@ unit_writable_pipe_SOURCES = unit/writable_pipe.cpp
 unit_write_SOURCES = unit/write.cpp
 unit_write_at_SOURCES = unit/write_at.cpp
 
-if HAVE_CXX17
+if HAVE_CXX11
 unit_experimental_basic_channel_SOURCES = unit/experimental/basic_channel.cpp
 unit_experimental_basic_concurrent_channel_SOURCES = unit/experimental/basic_concurrent_channel.cpp
 unit_experimental_channel_SOURCES = unit/experimental/channel.cpp
 unit_experimental_channel_traits_SOURCES = unit/experimental/channel_traits.cpp
 unit_experimental_concurrent_channel_SOURCES = unit/experimental/concurrent_channel.cpp
+unit_experimental_parallel_group_SOURCES = unit/experimental/parallel_group.cpp
 endif
 
 if HAVE_CXX20
@@ -631,6 +620,8 @@ unit_experimental_promise_SOURCES = unit/experimental/promise.cpp
 
 if HAVE_COROUTINES
 unit_experimental_awaitable_operators_SOURCES = unit/experimental/awaitable_operators.cpp
+unit_experimental_co_composed_SOURCES = unit/experimental/co_composed.cpp
+unit_experimental_coro_allocator_SOURCES = unit/experimental/coro/allocator.cpp
 unit_experimental_coro_cancel_SOURCES = unit/experimental/coro/cancel.cpp
 unit_experimental_coro_co_spawn_SOURCES = unit/experimental/coro/co_spawn.cpp
 unit_experimental_coro_exception_SOURCES = unit/experimental/coro/exception.cpp

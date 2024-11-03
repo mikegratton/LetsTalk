@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="utf-8"  ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com">
     <profiles>
+        <domainparticipant_factory profile_name="factory">
+            <qos>
+                <entity_factory>
+                    <autoenable_created_entities>true</autoenable_created_entities>
+                </entity_factory>
+                <shm_watchdog_thread>
+                    <scheduling_policy>-1</scheduling_policy>
+                    <priority>0</priority>
+                    <affinity>0</affinity>
+                    <stack_size>-1</stack_size>
+                </shm_watchdog_thread>
+                <file_watch_threads>
+                    <scheduling_policy>-1</scheduling_policy>
+                    <priority>0</priority>
+                    <affinity>0</affinity>
+                    <stack_size>-1</stack_size>
+                </file_watch_threads>
+            </qos>
+        </domainparticipant_factory>
         <participant profile_name="test_participant_profile" is_default_profile="true">
             <domainId>123</domainId>
             <rtps>
@@ -27,6 +46,11 @@
                     <send_buffers>
                         <preallocated_number>127</preallocated_number>
                         <dynamic>true</dynamic>
+                        <network_buffers_config>
+                            <initial>10</initial>
+                            <maximum>127</maximum>
+                            <increment>10</increment>
+                        </network_buffers_config>
                     </send_buffers>
                 </allocation>
                 <defaultUnicastLocatorList>
@@ -127,10 +151,6 @@
                     <readerPayloadSize>1000</readerPayloadSize>
                     <writerPayloadSize>2000</writerPayloadSize>
                     <mutation_tries>55</mutation_tries>
-                    <typelookup_config>
-                        <use_client>true</use_client>
-                        <use_server>true</use_server>
-                    </typelookup_config>
                 </builtin>
                 <port>
                     <portBase>12</portBase>
@@ -143,10 +163,59 @@
                 </port>
                 <participantID>9898</participantID>
                 <useBuiltinTransports>true</useBuiltinTransports>
+                <netmask_filter>ON</netmask_filter>
                 <name>test_name</name>
                 <userData>
                     <value>56.30.0.ce</value>
                 </userData>
+                <builtin_controllers_sender_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </builtin_controllers_sender_thread>
+                <timed_events_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </timed_events_thread>
+                <discovery_server_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </discovery_server_thread>
+                <typelookup_service_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </typelookup_service_thread>
+                <builtin_transports_reception_threads>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </builtin_transports_reception_threads>
+                <security_log_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </security_log_thread>
+                <flow_controller_descriptor_list>
+                    <flow_controller_descriptor>
+                        <name>test_flow_controller</name>
+                        <scheduler>HIGH_PRIORITY</scheduler>
+                        <max_bytes_per_period>2048</max_bytes_per_period>
+                        <period_ms>45</period_ms>
+                        <sender_thread>
+                            <affinity>15</affinity>
+                            <stack_size>1048576</stack_size>
+                        </sender_thread>
+                    </flow_controller_descriptor>
+                </flow_controller_descriptor_list>
             </rtps>
         </participant>
 
@@ -192,6 +261,7 @@
                 </partition>
                 <publishMode>
                     <kind>ASYNCHRONOUS</kind>
+                    <flow_controller_name>test_flow_controller</flow_controller_name>
                 </publishMode>
                 <userData>
                     <value>56.30.0.1</value>
@@ -204,22 +274,22 @@
                 </groupData>
             </qos>
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>11</sec>
                     <nanosec>32</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>121</sec>
                     <nanosec>332</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -321,14 +391,14 @@
                 </groupData>
             </qos>
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>18</sec>
                     <nanosec>81</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -368,7 +438,7 @@
                     <port>2001</port>
                 </udpv4>
             </external_unicast_locators>
-            <expectsInlineQos>true</expectsInlineQos>
+            <expects_inline_qos>true</expects_inline_qos>
             <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
             <userDefinedID>13</userDefinedID>
             <entityID>31</entityID>
@@ -384,6 +454,48 @@
                 <depth>1001</depth>
             </historyQos>
         </topic>
+        <replier profile_name="test_replier_profile"
+                 service_name="service_name"
+                 request_type="request_type"
+                 reply_type="reply_type">
+            <request_topic_name>request_topic_name</request_topic_name>
+            <reply_topic_name>reply_topic_name</reply_topic_name>
+            <data_writer>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_writer>
+            <data_reader>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_reader>
+        </replier>
+        <requester profile_name="test_requester_profile"
+                service_name="service_name"
+                request_type="request_type"
+                reply_type="reply_type">
+            <request_topic_name>request_topic_name</request_topic_name>
+            <reply_topic_name>reply_topic_name</reply_topic_name>
+            <data_writer>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_writer>
+            <data_reader>
+                <qos>
+                    <liveliness>
+                        <kind>MANUAL_BY_TOPIC</kind>
+                    </liveliness>
+                </qos>
+            </data_reader>
+        </requester>
     </profiles>
     <library_settings>
         <intraprocess_delivery>FULL</intraprocess_delivery>

@@ -16,21 +16,22 @@
  * @file MockAuthenticationPlugin.h
  */
 
-#ifndef _SECURITY_MOCKAUTHENTICATIONPLUGIN_H_
-#define _SECURITY_MOCKAUTHENTICATIONPLUGIN_H_
+#ifndef FASTDDS_RTPS_SECURITY__MOCKAUTHENTICATIONPLUGIN_H
+#define FASTDDS_RTPS_SECURITY__MOCKAUTHENTICATIONPLUGIN_H
 
 // TODO(Ricardo) Change when GMock supports r-values.
 
-#include <fastrtps/rtps/security/authentication/Authentication.h>
-#include <security/authentication/PKIIdentityHandle.h>
-
 #include <gmock/gmock.h>
+
+#include <rtps/security/authentication/Authentication.h>
+
+#include <security/authentication/PKIIdentityHandle.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4373)
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -180,9 +181,9 @@ public:
 
 } // namespace security
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 #pragma warning(pop)
 
-#endif // _SECURITY_MOCKAUTHENTICATIONPLUGIN_H_
+#endif // FASTDDS_RTPS_SECURITY__MOCKAUTHENTICATIONPLUGIN_H

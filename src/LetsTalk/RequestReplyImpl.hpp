@@ -51,7 +51,7 @@ class ServiceProvider : public efd::DataReaderListener, ActiveObject {
         if (nullptr == i_reader) { return; }
         Req data;
         efd::SampleInfo info;
-        while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
+        while (efd::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
             if (info.valid_data) {
                 Guid relatedId = toLetsTalkGuid(info.sample_identity);
                 LT_LOG << m_serviceName << ": Request " << relatedId << " received\n";

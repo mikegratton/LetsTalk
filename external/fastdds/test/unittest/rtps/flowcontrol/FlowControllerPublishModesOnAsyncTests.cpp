@@ -1,4 +1,22 @@
+// Copyright 2023 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include "FlowControllerPublishModesTests.hpp"
+
+#include <thread>
+
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
 
 using namespace eprosima::fastdds::rtps;
 using namespace testing;
@@ -7,18 +25,18 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
 {
     FlowControllerDescriptor flow_controller_descr;
     FlowControllerImpl<FlowControllerAsyncPublishMode, TypeParam> async(nullptr,
-            &flow_controller_descr);
+            &flow_controller_descr, 0, ThreadSettings{});
     async.init();
 
     // Instantiate writers.
-    eprosima::fastrtps::rtps::RTPSWriter writer1;
-    eprosima::fastrtps::rtps::RTPSWriter writer2;
+    BaseWriter writer1;
+    BaseWriter writer2;
 
     // Initialize callback to get info.
     auto send_functor = [&](
-        eprosima::fastrtps::rtps::CacheChange_t* change,
-        eprosima::fastrtps::rtps::RTPSMessageGroup&,
-        eprosima::fastrtps::rtps::LocatorSelectorSender&,
+        CacheChange_t* change,
+        RTPSMessageGroup&,
+        LocatorSelectorSender&,
         const std::chrono::time_point<std::chrono::steady_clock>&)
             {
                 this->last_thread_delivering_sample = std::this_thread::get_id();
@@ -32,16 +50,16 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Register writers.
     async.register_writer(&writer1);
 
-    eprosima::fastrtps::rtps::CacheChange_t change_writer1;
+    CacheChange_t change_writer1;
     INIT_CACHE_CHANGE(change_writer1, writer1, 1);
 
-    eprosima::fastrtps::rtps::CacheChange_t change_writer2;
+    CacheChange_t change_writer2;
     INIT_CACHE_CHANGE(change_writer2, writer2, 1);
 
     // Testing add_new_sample. Writer will be able to deliver it.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -53,10 +71,10 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Testing add_new_sample. Writer will not be able to deliver it.
     auto& fail_call = EXPECT_CALL(writer1,
                     deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-                    WillOnce(Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED));
+                    WillOnce(Return(DeliveryRetCode::NOT_DELIVERED));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).After(fail_call).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -68,7 +86,7 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Testing add_old_sample. Writer will be able to deliver it.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer1));
     writer1.getMutex().unlock();
@@ -79,8 +97,8 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Testing add_old_sample. Writer will not be able to deliver it.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(Return(DeliveryRetCode::NOT_DELIVERED)).
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer1));
     writer1.getMutex().unlock();
@@ -89,59 +107,59 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     this->changes_delivered.clear();
 
     // Testing add_old_sample with a change already enqueued.
-    change_writer1.writer_info.previous = (eprosima::fastrtps::rtps::CacheChange_t*)1;
-    change_writer1.writer_info.next = (eprosima::fastrtps::rtps::CacheChange_t*)1;
+    change_writer1.writer_info.previous = (CacheChange_t*)1;
+    change_writer1.writer_info.next = (CacheChange_t*)1;
 
     // Send 10 samples using add_new_sample.
     INIT_CACHE_CHANGE(change_writer1, writer1, 1);
     INIT_CACHE_CHANGE(change_writer2, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer3;
+    CacheChange_t change_writer3;
     INIT_CACHE_CHANGE(change_writer3, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer4;
+    CacheChange_t change_writer4;
     INIT_CACHE_CHANGE(change_writer4, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer5;
+    CacheChange_t change_writer5;
     INIT_CACHE_CHANGE(change_writer5, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer6;
+    CacheChange_t change_writer6;
     INIT_CACHE_CHANGE(change_writer6, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer7;
+    CacheChange_t change_writer7;
     INIT_CACHE_CHANGE(change_writer7, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer8;
+    CacheChange_t change_writer8;
     INIT_CACHE_CHANGE(change_writer8, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer9;
+    CacheChange_t change_writer9;
     INIT_CACHE_CHANGE(change_writer9, writer1, 1);
-    eprosima::fastrtps::rtps::CacheChange_t change_writer10;
+    CacheChange_t change_writer10;
     INIT_CACHE_CHANGE(change_writer10, writer1, 1);
 
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer2, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer3, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer4, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer5, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer6, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer7, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer8, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer9, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer10, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -171,34 +189,34 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Send 10 samples using add_old_sample.
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer1, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer2, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer3, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer4, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer5, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer6, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer7, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer8, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer9, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     EXPECT_CALL(writer1,
             deliver_sample_nts(&change_writer10, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED)));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED)));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer1));
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer2));
@@ -218,8 +236,8 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Remove changes after add_new_sample.
     EXPECT_CALL(writer1,
             deliver_sample_nts(_, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED))).
-            WillRepeatedly(Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED))).
+            WillRepeatedly(Return(DeliveryRetCode::NOT_DELIVERED));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_new_sample(&writer1, &change_writer1,
             std::chrono::steady_clock::now() + std::chrono::hours(24)));
@@ -316,8 +334,8 @@ TYPED_TEST(FlowControllerPublishModes, async_publish_mode)
     // Remove changes after add_old_sample.
     EXPECT_CALL(writer1,
             deliver_sample_nts(_, _, Ref(writer1.async_locator_selector_), _)).
-            WillOnce(DoAll(send_functor, Return(eprosima::fastrtps::rtps::DeliveryRetCode::DELIVERED))).
-            WillRepeatedly(Return(eprosima::fastrtps::rtps::DeliveryRetCode::NOT_DELIVERED));
+            WillOnce(DoAll(send_functor, Return(DeliveryRetCode::DELIVERED))).
+            WillRepeatedly(Return(DeliveryRetCode::NOT_DELIVERED));
     writer1.getMutex().lock();
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer1));
     ASSERT_TRUE(async.add_old_sample(&writer1, &change_writer2));

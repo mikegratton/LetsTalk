@@ -12,13 +12,21 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-#ifndef _FASTDDS_DDS_LOG_LOG_HPP_
-#define _FASTDDS_DDS_LOG_LOG_HPP_
+
+/**
+ * @file Log.hpp
+ *
+ */
+
+#ifndef FASTDDS_DDS_LOG__LOG_HPP
+#define FASTDDS_DDS_LOG__LOG_HPP
 
 #include <functional>
 #include <memory>
+
 #include <gmock/gmock.h>
+
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
 
 /**
  * eProsima log mock.
@@ -82,6 +90,13 @@ public:
         ClearConsumersFunc();
     }
 
+    static std::function<void()> SetThreadConfigFunc;
+    static void SetThreadConfig(
+            rtps::ThreadSettings&)
+    {
+        SetThreadConfigFunc();
+    }
+
 };
 
 using ::testing::_;
@@ -100,10 +115,12 @@ public:
     MOCK_METHOD1(RegisterConsumer, void(std::unique_ptr<LogConsumer>&));
 
     MOCK_METHOD0(ClearConsumers, void());
+
+    MOCK_METHOD(void, SetThreadConfig, ());
 };
 
 } // namespace dds
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // _FASTDDS_DDS_LOG_LOG_HPP_
+#endif // FASTDDS_DDS_LOG__LOG_HPP

@@ -2,8 +2,8 @@
 #include <iostream>
 
 #include "doctest.h"
-#include "idl/Big.h"
-#include "idl/BigJsonSupport.h"
+#include "idl/Big.hpp"
+#include "idl/BigJsonSupport.hpp"
 
 TEST_CASE("BigJson")
 {
@@ -18,8 +18,8 @@ TEST_CASE("BigJson")
     big.bool_thing(true);
     std::vector<int> data;
     big.two_face().y(data);
-    big.enum_thing(modname::Second);
-    big.bitset_thing().a(2);
+    big.enum_thing(modname::Discriminator::Second);
+    big.bitset_thing().a = 2;
     std::string text = modname::BigToJson(big);
     std::cout << text << "\n";
     CHECK(text.size() == strlen(text.c_str()));

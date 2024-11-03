@@ -14,21 +14,18 @@
 
 #include <stdlib.h>
 
-#include <gtest/gtest.h>
-
-#include "BlackboxTests.hpp"
-#include "PubSubReader.hpp"
-
 #include <fastdds/dds/domain/DomainParticipant.hpp>
 #include <fastdds/dds/domain/DomainParticipantFactory.hpp>
 #include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
 #include <fastdds/statistics/dds/domain/DomainParticipant.hpp>
 #include <fastdds/statistics/topic_names.hpp>
-#include <fastrtps/types/TypesBase.h>
-#include <statistics/fastdds/domain/DomainParticipantImpl.hpp>
-#include <statistics/types/types.h>
-#include <statistics/types/typesPubSubTypes.h>
+#include <gtest/gtest.h>
+
+#include "../types/statistics/types.hpp"
+#include "../types/statistics/typesPubSubTypes.hpp"
+#include "BlackboxTests.hpp"
+#include "PubSubReader.hpp"
 
 class WriterReaderDataTest : public eprosima::fastdds::statistics::WriterReaderData
 {
@@ -263,20 +260,28 @@ TEST(StatisticsDomainParticipant, CreateParticipant)
     // Create TypeSupports
     eprosima::fastdds::dds::TypeSupport history_latency_type(
         new eprosima::fastdds::statistics::WriterReaderDataPubSubType);
+    history_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport network_latency_type(
         new eprosima::fastdds::statistics::Locator2LocatorDataPubSubType);
+    network_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport throughput_type(
         new eprosima::fastdds::statistics::EntityDataPubSubType);
+    throughput_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport rtps_traffic_type(
         new eprosima::fastdds::statistics::Entity2LocatorTrafficPubSubType);
+    rtps_traffic_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport count_type(
         new eprosima::fastdds::statistics::EntityCountPubSubType);
+    count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport discovery_type(
         new eprosima::fastdds::statistics::DiscoveryTimePubSubType);
+    discovery_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport sample_identity_count_type(
         new eprosima::fastdds::statistics::SampleIdentityCountPubSubType);
+    sample_identity_count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport physical_data_type(
         new eprosima::fastdds::statistics::PhysicalDataPubSubType);
+    physical_data_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport null_type(nullptr);
 
     // Create statistics DataReaders
@@ -302,9 +307,9 @@ TEST(StatisticsDomainParticipant, CreateParticipant)
     // 1. Set environment variable and create participant using Qos set by code
     const char* value = "HISTORY_LATENCY_TOPIC;NETWORK_LATENCY_TOPIC;RTPS_LOST_TOPIC;RTPS_SENT_TOPIC;GAP_COUNT_TOPIC";
 #ifdef _WIN32
-    ASSERT_EQ(0, _putenv_s(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, value));
+    ASSERT_EQ(0, _putenv_s("FASTDDS_STATISTICS", value));
 #else
-    ASSERT_EQ(0, setenv(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, value, 1));
+    ASSERT_EQ(0, setenv("FASTDDS_STATISTICS", value, 1));
 #endif // ifdef _WIN32
 
     // There is no problem if some topic name is repeated.
@@ -352,9 +357,9 @@ TEST(StatisticsDomainParticipant, CreateParticipant)
     // Otherwise each domainParticipant (each DataReader is launched in its own domainParticipant) will also enable
     // the statistics DataWriters set with the environment variable.
 #ifdef _WIN32
-    ASSERT_EQ(0, _putenv_s(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, ""));
+    ASSERT_EQ(0, _putenv_s("FASTDDS_STATISTICS", ""));
 #else
-    ASSERT_EQ(0, unsetenv(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE));
+    ASSERT_EQ(0, unsetenv("FASTDDS_STATISTICS"));
 #endif // ifdef _WIN32
 
     // Check that the statistics DataWriters has been created by matching a corresponding DataReader on those topics
@@ -416,7 +421,7 @@ TEST(StatisticsDomainParticipant, CreateParticipant)
     physical_data_reader.destroy();
 
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant),
-            eprosima::fastrtps::types::ReturnCode_t::RETCODE_OK);
+            eprosima::fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }
 
@@ -439,20 +444,28 @@ TEST(StatisticsDomainParticipant, CreateParticipantUsingXML)
     // Create TypeSupports
     eprosima::fastdds::dds::TypeSupport history_latency_type(
         new eprosima::fastdds::statistics::WriterReaderDataPubSubType);
+    history_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport network_latency_type(
         new eprosima::fastdds::statistics::Locator2LocatorDataPubSubType);
+    network_latency_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport throughput_type(
         new eprosima::fastdds::statistics::EntityDataPubSubType);
+    throughput_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport rtps_traffic_type(
         new eprosima::fastdds::statistics::Entity2LocatorTrafficPubSubType);
+    rtps_traffic_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport count_type(
         new eprosima::fastdds::statistics::EntityCountPubSubType);
+    count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport discovery_type(
         new eprosima::fastdds::statistics::DiscoveryTimePubSubType);
+    discovery_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport sample_identity_count_type(
         new eprosima::fastdds::statistics::SampleIdentityCountPubSubType);
+    sample_identity_count_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport physical_data_type(
         new eprosima::fastdds::statistics::PhysicalDataPubSubType);
+    physical_data_type->register_type_object_representation();
     eprosima::fastdds::dds::TypeSupport null_type(nullptr);
 
     // Create statistics DataReaders
@@ -476,9 +489,9 @@ TEST(StatisticsDomainParticipant, CreateParticipantUsingXML)
     // 1. Set environment variable and create participant using Qos set by code
     const char* value = "PUBLICATION_THROUGHPUT_TOPIC;HEARTBEAT_COUNT_TOPIC;RESENT_DATAS_TOPIC;ACKNACK_COUNT_TOPIC";
 #ifdef _WIN32
-    ASSERT_EQ(0, _putenv_s(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, value));
+    ASSERT_EQ(0, _putenv_s("FASTDDS_STATISTICS", value));
 #else
-    ASSERT_EQ(0, setenv(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, value, 1));
+    ASSERT_EQ(0, setenv("FASTDDS_STATISTICS", value, 1));
 #endif // ifdef _WIN32
 
     // Load XML profiles
@@ -523,9 +536,9 @@ TEST(StatisticsDomainParticipant, CreateParticipantUsingXML)
     // Otherwise each domainParticipant (each DataReader is launched in its own domainParticipant) will also enable
     // the statistics DataWriters set with the environment variable.
 #ifdef _WIN32
-    ASSERT_EQ(0, _putenv_s(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE, ""));
+    ASSERT_EQ(0, _putenv_s("FASTDDS_STATISTICS", ""));
 #else
-    ASSERT_EQ(0, unsetenv(eprosima::fastdds::statistics::dds::FASTDDS_STATISTICS_ENVIRONMENT_VARIABLE));
+    ASSERT_EQ(0, unsetenv("FASTDDS_STATISTICS"));
 #endif // ifdef _WIN32
 
     // Check that the statistics DataWriters has been created by matching a corresponding DataReader on those topics
@@ -585,6 +598,6 @@ TEST(StatisticsDomainParticipant, CreateParticipantUsingXML)
     sample_datas_reader.destroy();
 
     EXPECT_EQ(eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant),
-            eprosima::fastrtps::types::ReturnCode_t::RETCODE_OK);
+            eprosima::fastdds::dds::RETCODE_OK);
 #endif // FASTDDS_STATISTICS
 }

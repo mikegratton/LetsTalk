@@ -45,6 +45,7 @@ find_program(ddsgen fastddsgen
     )
 find_path(stgpath JsonSupportHeader.stg 
     PATHS
+        ${PROJECT_SOURCE_DIR}/resources
         ${PROJECT_SOURCE_DIR}/external/fastddsgen
         ${CompileIdl_location}/../../../share/LetsTalk
         ${CompileIdl_location}/../../share/LetsTalk
@@ -52,21 +53,24 @@ find_path(stgpath JsonSupportHeader.stg
         /usr/local/share/LetsTalk
         /usr/share/LetsTalk    
 )
-set(idl_options -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR})
+
+set(idl_options -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR}/fastdds)
 
 foreach(idl ${idl_SOURCE})
     get_filename_component(ddsgen_dir ${ddsgen} DIRECTORY)
     get_filename_component(stem ${idl} NAME_WE)
     get_filename_component(idl_abs ${idl} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-    set(idl_output ${idl_ABS_PATH}/${stem}.h;${idl_ABS_PATH}/${stem}.cxx)
+    set(idl_output ${idl_ABS_PATH}/${stem}.hpp ${idl_ABS_PATH}/${stem}CdrAux.cxx)
     if (idl_JSON)
         set(json_source ${stem}JsonSupport.cxx)
-        set(json_header ${stem}JsonSupport.h)
+        set(json_header ${stem}JsonSupport.hpp)
         set(idl_json_options  -extrastg ${stgpath}/JsonSupportHeader.stg ${json_header} -extrastg ${stgpath}/JsonSupportSource.stg ${json_source})        
         list(APPEND idl_output ${idl_ABS_PATH}/${json_source})
     endif()
     add_custom_command(OUTPUT ${idl_output}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/fastdds
         COMMAND ${ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${idl_json_options} ${ddsgen_include} ${idl_abs}
+        COMMAND ${CMAKE_COMMAND} -E rename ${idl_ABS_PATH}/${stem}CdrAux.ipp ${idl_ABS_PATH}/${stem}CdrAux.cxx
         DEPENDS ${idl_abs}
         COMMENT " Compiling idl ${idl_abs}"
     )
@@ -85,9 +89,11 @@ endif()
 target_link_libraries(${name} PUBLIC fastcdr)
 target_include_directories(${name}
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-    $<INSTALL_INTERFACE:include/${name}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include/${name}>
 )
+#If there are no cpp files, we need to ensure that the dummy library has a language
+set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
 endmacro()
 
 set(CompileIdl_location ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")

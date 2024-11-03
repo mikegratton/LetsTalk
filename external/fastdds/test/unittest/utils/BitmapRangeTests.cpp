@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <cstdint>
-#include <fastrtps/utils/fixed_size_bitmap.hpp>
+#include <fastdds/utils/fixed_size_bitmap.hpp>
 #include <gtest/gtest.h>
 
 #include <algorithm>
@@ -22,7 +22,7 @@
 
 using namespace std;
 using ValueType = uint32_t;
-using TestType = eprosima::fastrtps::BitmapRange<ValueType>;
+using TestType = eprosima::fastdds::BitmapRange<ValueType>;
 
 template<class T>
 struct BitmapRangeExposer : T
@@ -461,7 +461,7 @@ TEST_F(BitmapRangeTests, serialization)
 
     num_bits = 20u;
     num_longs = 1u;
-    bitmap.fill(std::numeric_limits<uint32_t>::max());
+    bitmap.fill((std::numeric_limits<uint32_t>::max)());
     uut.bitmap_set(num_bits, bitmap.data());
     uut.bitmap_get(num_bits, bitmap, num_longs);
     EXPECT_EQ(num_bits, 20u);
@@ -474,14 +474,14 @@ TEST_F(BitmapRangeTests, serialization)
     do
     {
         uint32_t test_bits = test_longs * sizeof(value_type) * 8;
-        bitmap.fill(std::numeric_limits<uint32_t>::max());
+        bitmap.fill((std::numeric_limits<uint32_t>::max)());
         uut.bitmap_set(test_bits, bitmap.data());
         uut.bitmap_get(num_bits, bitmap, num_longs);
         EXPECT_EQ(num_bits, test_bits);
         EXPECT_EQ(num_longs, test_longs);
 
         // use a vector as result pattern
-        std::vector<value_type> pattern(test_longs, std::numeric_limits<uint32_t>::max());
+        std::vector<value_type> pattern(test_longs, (std::numeric_limits<uint32_t>::max)());
         pattern.resize(bitmap.max_size(), 0);
         EXPECT_TRUE(std::equal(bitmap.begin(), bitmap.end(), pattern.begin()));
     }

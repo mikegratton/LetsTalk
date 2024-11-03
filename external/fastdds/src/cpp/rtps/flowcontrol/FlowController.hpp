@@ -4,16 +4,11 @@
 #include <chrono>
 
 namespace eprosima {
-
-namespace fastrtps {
-namespace rtps {
-class RTPSWriter;
-struct CacheChange_t;
-} // namespace rtps
-} // namespace fastrtps
-
 namespace fastdds {
 namespace rtps {
+
+class BaseWriter;
+struct CacheChange_t;
 
 /*!
  * Interface used by writers to control the usage of network bandwidth.
@@ -38,7 +33,7 @@ public:
      * @param writer Pointer to the writer to be registered. Cannot be nullptr.
      */
     virtual void register_writer(
-            fastrtps::rtps::RTPSWriter* writer) = 0;
+            BaseWriter* writer) = 0;
 
     /*!
      * Unregister a writer.
@@ -47,12 +42,12 @@ public:
      * @param writer Pointer to the writer to be unregistered. Cannot be nullptr.
      */
     virtual void unregister_writer(
-            fastrtps::rtps::RTPSWriter* writer) = 0;
+            BaseWriter* writer) = 0;
 
     /*!
      * Adds a CacheChange_t to be managed by this object.
      * The CacheChange_t has to be a new one, that is, it should have just been added to the writer's history before this call.
-     * This method should be called by RTPSWriter::unsent_change_added_to_history().
+     * This method should be called by BaseWriter::unsent_change_added_to_history().
      *
      * @param Pointer to the writer that owns the added CacheChange_t. Cannot be nullptr.
      * @param change Pointer to the new CacheChange_t to be managed by this object. Cannot be nullptr.
@@ -60,8 +55,8 @@ public:
      * @return true if the sample could be added. false otherwise.
      */
     virtual bool add_new_sample(
-            fastrtps::rtps::RTPSWriter* writer,
-            fastrtps::rtps::CacheChange_t* change,
+            BaseWriter* writer,
+            CacheChange_t* change,
             const std::chrono::time_point<std::chrono::steady_clock>& max_blocking_time) = 0;
 
     /*!
@@ -74,19 +69,19 @@ public:
      * @return true if the sample could be added. false otherwise.
      */
     virtual bool add_old_sample(
-            fastrtps::rtps::RTPSWriter* writer,
-            fastrtps::rtps::CacheChange_t* change) = 0;
+            BaseWriter* writer,
+            CacheChange_t* change) = 0;
 
     /*!
      * If the CacheChange_t is currently managed by this object, remove it.
      * This method should be called whenever a CacheChange_t is removed from the writer's history.
      *
-     * @param[in] change Pointer to the change which should be removed if it is currently managed by this object.
-     * @param[in] max_blocking_time Maximum time this method has to complete the task.
+     * @param [in] change Pointer to the change which should be removed if it is currently managed by this object.
+     * @param [in] max_blocking_time Maximum time this method has to complete the task.
      * @return true if the sample could be removed. false otherwise.
      */
     virtual bool remove_change(
-            fastrtps::rtps::CacheChange_t* change,
+            CacheChange_t* change,
             const std::chrono::time_point<std::chrono::steady_clock>& max_blocking_time) = 0;
 
     /*!

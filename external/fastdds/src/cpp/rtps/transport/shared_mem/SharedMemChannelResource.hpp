@@ -15,12 +15,14 @@
 #ifndef _FASTDDS_SHAREDMEM_CHANNEL_RESOURCE_
 #define _FASTDDS_SHAREDMEM_CHANNEL_RESOURCE_
 
-#include <fastdds/rtps/messages/MessageReceiver.h>
-#include <fastrtps/rtps/common/Locator.h>
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
 
+#include <rtps/messages/MessageReceiver.h>
 #include <rtps/transport/shared_mem/SharedMemManager.hpp>
 #include <rtps/transport/shared_mem/SharedMemTransport.h>
 #include <rtps/transport/ChannelResource.h>
+#include <utils/threading.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -37,7 +39,9 @@ public:
             const Locator& locator,
             TransportReceiverInterface* receiver,
             const std::string& dump_file,
-            bool should_init_thread = true)
+            const ThreadSettings& dump_thr_config,
+            bool should_init_thread,
+            const ThreadSettings& thr_config)
         : ChannelResource()
         , message_receiver_(receiver)
         , listener_(listener)
@@ -49,13 +53,13 @@ public:
             auto packets_file_consumer = std::unique_ptr<SHMPacketFileConsumer>(
                 new SHMPacketFileConsumer(dump_file));
 
-            packet_logger_ = std::make_shared<PacketsLog<SHMPacketFileConsumer>>();
+            packet_logger_ = std::make_shared<PacketsLog<SHMPacketFileConsumer>>(locator.port, dump_thr_config);
             packet_logger_->RegisterConsumer(std::move(packets_file_consumer));
         }
 
         if (should_init_thread)
         {
-            init_thread(locator);
+            init_thread(locator, thr_config);
         }
     }
 
@@ -109,7 +113,7 @@ public:
         }
         catch (const std::exception& e)
         {
-            EPROSIMA_LOG_WARNING(RTPS_MSG_IN, e.what());
+            EPROSIMA_LOG_WARNING(RTPS_TRANSPORT_SHM, e.what());
         }
     }
 
@@ -144,13 +148,13 @@ private:
             if (message_receiver() != nullptr)
             {
                 message_receiver()->OnDataReceived(
-                    static_cast<fastrtps::rtps::octet*>(message->data()),
+                    static_cast<fastdds::rtps::octet*>(message->data()),
                     message->size(),
                     input_locator, remote_locator);
             }
             else if (alive())
             {
-                EPROSIMA_LOG_WARNING(RTPS_MSG_IN, "Received Message, but no receiver attached");
+                EPROSIMA_LOG_WARNING(RTPS_TRANSPORT_SHM, "Received Message, but no receiver attached");
             }
 
             // Forces message release before waiting for the next
@@ -164,9 +168,14 @@ private:
 protected:
 
     void init_thread(
-            const Locator& locator)
+            const Locator& locator,
+            const ThreadSettings& thr_config)
     {
-        this->thread(std::thread(&SharedMemChannelResource::perform_listen_operation, this, locator));
+        auto fn = [this, locator]()
+                {
+                    perform_listen_operation(locator);
+                };
+        this->thread(create_thread(fn, thr_config, "dds.shm.%u", locator.port));
     }
 
     /**
@@ -184,8 +193,9 @@ protected:
         catch (const std::exception& error)
         {
             (void)error;
-            EPROSIMA_LOG_WARNING(RTPS_MSG_OUT, "Error receiving data: " << error.what() << " - " << message_receiver()
-                                                                        << " (" << this << ")");
+            EPROSIMA_LOG_WARNING(RTPS_TRANSPORT_SHM,
+                    "Error receiving data: " << error.what() << " - " << message_receiver()
+                                             << " (" << this << ")");
             return nullptr;
         }
     }

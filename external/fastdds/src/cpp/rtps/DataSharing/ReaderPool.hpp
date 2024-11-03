@@ -16,18 +16,18 @@
  * @file ReaderPool.hpp
  */
 
-#ifndef RTPS_DATASHARING_READERPOOL_HPP
-#define RTPS_DATASHARING_READERPOOL_HPP
+#ifndef FASTDDS_RTPS_DATASHARING__READERPOOL_HPP
+#define FASTDDS_RTPS_DATASHARING__READERPOOL_HPP
 
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastdds/rtps/resources/ResourceManagement.h>
+#include <fastdds/rtps/attributes/ResourceManagement.hpp>
+#include <fastdds/rtps/common/CacheChange.hpp>
 #include <fastdds/dds/log/Log.hpp>
 #include <rtps/DataSharing/DataSharingPayloadPool.hpp>
 
 #include <memory>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class ReaderPool : public DataSharingPayloadPool
@@ -44,41 +44,57 @@ public:
 
     bool get_payload(
             uint32_t /*size*/,
-            CacheChange_t& /*cache_change*/) override
+            SerializedPayload_t& /*payload*/) override
     {
         // Only WriterPool can return new payloads
         return false;
     }
 
     bool get_payload(
-            SerializedPayload_t& data,
-            IPayloadPool*& data_owner,
-            CacheChange_t& cache_change) override
+            const SerializedPayload_t& data,
+            SerializedPayload_t& payload) override
     {
-        if (data_owner == this)
+        if (data.payload_owner == this)
         {
-            cache_change.serializedPayload.data = data.data;
-            cache_change.serializedPayload.length = data.length;
-            cache_change.serializedPayload.max_size = data.length;
-            cache_change.payload_owner(this);
+            payload.data = data.data;
+            payload.length = data.length;
+            payload.max_size = data.length;
+            payload.payload_owner = this;
             return true;
         }
+        return false;
+    }
 
-        // If owner is not this, then it must be an intraprocess datasharing writer
-        assert(nullptr != dynamic_cast<DataSharingPayloadPool*>(data_owner));
-        PayloadNode* payload = PayloadNode::get_from_data(data.data);
+    /**
+     * Prepares and fills the change in the datasharing protocol.
+     *
+     * If the payload is not owned by this pool, it is assumed to be an intraprocess writer and the
+     * change is direclty read from the shared history.
+     *
+     * @param data The serialized payload data to be used.
+     * @param cache_change The cache change to be prepared.
+     */
+    void get_datasharing_change(
+            SerializedPayload_t& data,
+            CacheChange_t& cache_change)
+    {
+        if (!get_payload(data, cache_change.serializedPayload))
+        {
+            // If owner is not this, then it must be an intraprocess datasharing writer
+            assert(nullptr != dynamic_cast<DataSharingPayloadPool*>(data.payload_owner));
+            PayloadNode* payload = PayloadNode::get_from_data(data.data);
 
-        // No need to check validity, on intraprocess there is no override of payloads
-        read_from_shared_history(cache_change, payload);
-        return true;
+            // No need to check validity, on intraprocess there is no override of payloads
+            read_from_shared_history(cache_change, payload);
+        }
     }
 
     bool release_payload(
-            CacheChange_t& cache_change) override
+            SerializedPayload_t& payload) override
     {
-        assert(cache_change.payload_owner() == this);
+        assert(payload.payload_owner == this);
 
-        return DataSharingPayloadPool::release_payload(cache_change);
+        return DataSharingPayloadPool::release_payload(payload);
     }
 
     template <typename T>
@@ -132,13 +148,15 @@ public:
         {
             CacheChange_t ch;
             SequenceNumber_t last_sequence = c_SequenceNumber_Unknown;
-            get_next_unread_payload(ch, last_sequence);
-            while (ch.sequenceNumber != SequenceNumber_t::unknown())
+            uint64_t current_end = end();
+            get_next_unread_payload(ch, last_sequence, current_end);
+            while (ch.sequenceNumber != SequenceNumber_t::unknown() || next_payload_ != current_end)
             {
+                current_end = end();
                 advance(next_payload_);
-                get_next_unread_payload(ch, last_sequence);
+                get_next_unread_payload(ch, last_sequence, current_end);
             }
-            assert(next_payload_ == end());
+            assert(next_payload_ == current_end);
         }
 
         return true;
@@ -212,7 +230,7 @@ public:
         // Reset the data (may cause errors later on)
         cache_change.sequenceNumber = c_SequenceNumber_Unknown;
         cache_change.serializedPayload.data = nullptr;
-        cache_change.payload_owner(nullptr);
+        cache_change.serializedPayload.payload_owner = nullptr;
     }
 
     bool read_from_shared_history(
@@ -239,7 +257,7 @@ public:
             return false;
         }
 
-        cache_change.payload_owner(this);
+        cache_change.serializedPayload.payload_owner = this;
         return true;
     }
 
@@ -282,13 +300,15 @@ protected:
 
 private:
 
+    using DataSharingPayloadPool::init_shared_memory;
+
     bool is_volatile_;              //< Whether the reader is volatile or not
     uint64_t next_payload_;         //< Index of the next history position to read
     SequenceNumber_t last_sn_;      //< Sequence number of the last read payload
 };
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
-#endif  // RTPS_DATASHARING_DATASHARINGPAYLOADPOOLIMPL_READERPOOL_HPP
+#endif  // FASTDDS_RTPS_DATASHARING__READERPOOL_HPP

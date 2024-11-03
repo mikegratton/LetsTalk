@@ -15,14 +15,14 @@
 #ifndef _RTPS_TRANSPORT_CHAININGSENDERRESOURCE_HPP_
 #define _RTPS_TRANSPORT_CHAININGSENDERRESOURCE_HPP_
 
-#include <fastdds/rtps/transport/ChainingTransport.h>
-#include <fastdds/rtps/transport/SenderResource.h>
+#include <fastdds/rtps/transport/ChainingTransport.hpp>
+#include <fastdds/rtps/transport/SenderResource.hpp>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-class ChainingSenderResource : public fastrtps::rtps::SenderResource
+class ChainingSenderResource : public SenderResource
 {
 public:
 
@@ -39,21 +39,33 @@ public:
                     // low_sender_resources_ makes its clean up on destruction.
                 };
 
-        send_lambda_ = [this, &transport](
-            const fastrtps::rtps::octet* data,
-            uint32_t dataSize,
-            fastrtps::rtps::LocatorsIterator* destination_locators_begin,
-            fastrtps::rtps::LocatorsIterator* destination_locators_end,
+        send_buffers_lambda_ = [this, &transport](
+            const std::vector<NetworkBuffer>& buffers,
+            uint32_t total_bytes,
+            LocatorsIterator* destination_locators_begin,
+            LocatorsIterator* destination_locators_end,
             const std::chrono::steady_clock::time_point& timeout) -> bool
                 {
                     if (low_sender_resource_)
                     {
-                        return transport.send(low_sender_resource_.get(), data, dataSize,
+                        return transport.send(low_sender_resource_.get(), buffers, total_bytes,
                                        destination_locators_begin, destination_locators_end, timeout);
                     }
 
                     return false;
                 };
+    }
+
+    SenderResource* lower_sender_cast()
+    {
+        SenderResource* lower_sender_cast = nullptr;
+
+        if (low_sender_resource_)
+        {
+            lower_sender_cast = static_cast<SenderResource*>(low_sender_resource_.get());
+        }
+
+        return lower_sender_cast;
     }
 
     virtual ~ChainingSenderResource()
@@ -78,7 +90,7 @@ private:
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 #endif // _RTPS_TRANSPORT_CHAININGSENDERRESOURCE_HPP_

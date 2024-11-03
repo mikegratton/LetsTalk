@@ -3,29 +3,32 @@
 #include <memory>
 
 #include "LetsTalk.hpp"
+#include "fastdds/rtps/builtin/data/ParticipantBuiltinTopicData.hpp"
 namespace lt {
 namespace detail {
 
 ParticipantLogger::ParticipantLogger(std::weak_ptr<Participant> i_participant)
-    : m_participant(i_participant), m_callback([](efd::DomainParticipant*, efr::ParticipantDiscoveryInfo&&) {})
+    : m_participant(i_participant), m_callback([](efd::DomainParticipant*, efr::ParticipantBuiltinTopicData const&) {})
 {
 }
 
 void ParticipantLogger::on_participant_discovery(efd::DomainParticipant* i_participant,
-                                                 efr::ParticipantDiscoveryInfo&& i_info)
+                                                 efr::ParticipantDiscoveryStatus status,
+                                                 efr::ParticipantBuiltinTopicData const& i_info,
+                                                 bool& should_be_ignored)
 {
-    if (i_info.status == efr::ParticipantDiscoveryInfo::DISCOVERED_PARTICIPANT) {
-        LT_LOG << i_participant << " discovered participant \"" << i_info.info.m_participantName << "\"\n";
-        bool isLocal = i_info.info.m_guid.is_on_same_host_as(i_participant->guid());
+    if (status == efr::ParticipantDiscoveryStatus::DISCOVERED_PARTICIPANT) {
+        LT_LOG << i_participant << " discovered participant \"" << i_info.participant_name << "\"\n";
+        bool isLocal = i_info.guid.is_on_same_host_as(i_participant->guid());
         if (s_IGNORE_NONLOCAL && !isLocal) {
-            LT_LOG << i_participant << " ignored remote participant \"" << i_info.info.m_participantName << "\"\n";
-            i_participant->ignore_participant(i_info.info.m_key);
+            LT_LOG << i_participant << " ignored remote participant \"" << i_info.participant_name << "\"\n";
+            i_participant->ignore_participant(i_participant->get_instance_handle());
         }
-        m_callback(i_participant, std::move(i_info));
-    } else if (i_info.status == efr::ParticipantDiscoveryInfo::CHANGED_QOS_PARTICIPANT) {
-        LT_LOG << i_participant << " saw participant \"" << i_info.info.m_participantName << "\" change qos\n";
+        m_callback(i_participant, i_info);
+    } else if (status == efr::ParticipantDiscoveryStatus::CHANGED_QOS_PARTICIPANT) {
+        LT_LOG << i_participant << " saw participant \"" << i_info.participant_name << "\" change qos\n";
     } else {
-        LT_LOG << i_participant << " lost participant \"" << i_info.info.m_participantName << "\"\n";
+        LT_LOG << i_participant << " lost participant \"" << i_info.participant_name << "\"\n";
     }
 }
 

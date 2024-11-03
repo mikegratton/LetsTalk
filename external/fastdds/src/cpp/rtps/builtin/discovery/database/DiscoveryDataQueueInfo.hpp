@@ -17,9 +17,8 @@
  *
  */
 
-#include <fastdds/rtps/common/CacheChange.h>
-#include <fastrtps/utils/fixed_size_string.hpp>
-#include <fastdds/rtps/common/Guid.h>
+#include <fastdds/rtps/common/CacheChange.hpp>
+#include <fastdds/rtps/common/Guid.hpp>
 
 #include <rtps/builtin/discovery/database/DiscoveryParticipantChangeData.hpp>
 
@@ -34,7 +33,7 @@ class DiscoveryDataQueueInfo
 public:
 
     DiscoveryDataQueueInfo(
-            eprosima::fastrtps::rtps::CacheChange_t* change)
+            CacheChange_t* change)
         : change_(change)
     {
     }
@@ -43,14 +42,14 @@ public:
     {
     }
 
-    eprosima::fastrtps::rtps::CacheChange_t* change()
+    CacheChange_t* change()
     {
         return change_;
     }
 
 protected:
 
-    eprosima::fastrtps::rtps::CacheChange_t* change_;
+    CacheChange_t* change_;
 
 };
 
@@ -59,7 +58,7 @@ class DiscoveryPDPDataQueueInfo : public DiscoveryDataQueueInfo
 public:
 
     DiscoveryPDPDataQueueInfo(
-            eprosima::fastrtps::rtps::CacheChange_t* change,
+            CacheChange_t* change,
             const DiscoveryParticipantChangeData& participant_change_data)
         : DiscoveryDataQueueInfo(change)
         , participant_change_data_(participant_change_data)
@@ -86,8 +85,8 @@ class DiscoveryEDPDataQueueInfo : public DiscoveryDataQueueInfo
 public:
 
     DiscoveryEDPDataQueueInfo(
-            eprosima::fastrtps::rtps::CacheChange_t* change,
-            const eprosima::fastrtps::string_255& topic)
+            CacheChange_t* change,
+            const eprosima::fastcdr::string_255& topic)
         : DiscoveryDataQueueInfo(change)
         , topic_(topic)
     {
@@ -97,14 +96,14 @@ public:
     {
     }
 
-    eprosima::fastrtps::string_255 topic()
+    eprosima::fastcdr::string_255 topic()
     {
         return topic_;
     }
 
 private:
 
-    const eprosima::fastrtps::string_255 topic_;
+    const eprosima::fastcdr::string_255 topic_;
 
 };
 

@@ -1,6 +1,5 @@
-# Copyright (C) 2015-2021 Müller <jonathanmueller.dev@gmail.com>
-# This file is subject to the license terms in the LICENSE file
-# found in the top-level directory of this distribution.
+# Copyright (C) 2015-2023 Jonathan Müller and foonathan/memory contributors
+# SPDX-License-Identifier: Zlib
 
 # builds actual library
 
@@ -49,7 +48,7 @@ set(header
         ${header_path}/threading.hpp
         ${header_path}/tracking.hpp
         ${header_path}/virtual_memory.hpp
-        ${header_path}/detail/container_node_sizes_impl.hpp)
+        ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
 
 set(src
         detail/align.cpp
@@ -76,8 +75,10 @@ set(src
 # configure config file
 configure_file("config.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp")
 
-# generate container_node_sizes.hpp
-# get_container_node_sizes(${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+# generate container_node_sizes.hpp if necessary
+if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+    get_container_node_sizes(${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp)
+endif()
 
 add_library(foonathan_memory ${detail_header} ${header} ${src})
 target_include_directories(foonathan_memory PUBLIC $<BUILD_INTERFACE:${FOONATHAN_MEMORY_SOURCE_DIR}/include/> # for client in subdirectory
@@ -127,10 +128,7 @@ write_basic_package_version_file(${version_file}
                                  COMPATIBILITY AnyNewerVersion)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/)
-# install(FILES ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/container_node_sizes_impl.hpp DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)
 install(FILES ${header}                                   DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory)
 install(FILES ${detail_header}                            DESTINATION ${FOONATHAN_MEMORY_INC_INSTALL_DIR}/foonathan/memory/detail)
 install(FILES ${version_file}                             DESTINATION ${FOONATHAN_MEMORY_CMAKE_CONFIG_INSTALL_DIR})
-
-
-export(TARGETS foonathan_memory FILE ${PROJECT_BINARY_DIR}/cmake/config/foonathan_memoryTargets.cmake)

@@ -12,13 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "BlackboxTests.hpp"
-
 #if HAVE_SQLITE3
-
-#include "PubSubReader.hpp"
-#include "PubSubWriter.hpp"
-
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -26,10 +20,15 @@
 #include <sstream>
 #include <thread>
 
+#include <fastdds/dds/domain/DomainParticipantFactory.hpp>
+#include <fastdds/LibrarySettings.hpp>
 #include <gtest/gtest.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
 
-using namespace eprosima::fastrtps::rtps;
+#include "BlackboxTests.hpp"
+#include "PubSubReader.hpp"
+#include "PubSubWriter.hpp"
+
+using namespace eprosima::fastdds::rtps;
 using namespace eprosima::fastdds::dds;
 
 enum communication_type
@@ -45,13 +44,13 @@ protected:
 
     void SetUp() override
     {
-        eprosima::fastrtps::LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
                 library_settings.intraprocess_delivery =
-                        eprosima::fastrtps::IntraprocessDeliveryType::INTRAPROCESS_FULL;
-                eprosima::fastrtps::xmlparser::XMLProfileManager::library_settings(library_settings);
+                        eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_FULL;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = true;
@@ -76,12 +75,12 @@ protected:
 
     void TearDown() override
     {
-        eprosima::fastrtps::LibrarySettingsAttributes library_settings;
+        eprosima::fastdds::LibrarySettings library_settings;
         switch (GetParam())
         {
             case INTRAPROCESS:
-                library_settings.intraprocess_delivery = eprosima::fastrtps::IntraprocessDeliveryType::INTRAPROCESS_OFF;
-                eprosima::fastrtps::xmlparser::XMLProfileManager::library_settings(library_settings);
+                library_settings.intraprocess_delivery = eprosima::fastdds::IntraprocessDeliveryType::INTRAPROCESS_OFF;
+                eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->set_library_settings(library_settings);
                 break;
             case DATASHARING:
                 enable_datasharing = false;
@@ -262,14 +261,14 @@ TEST_P(PersistenceGuid, SetPersistenceGuidByXML)
                                 </reliability>                                                    \
                             </qos>                                                                \
                             <times>                                                               \
-                                <heartbeatPeriod>                                                 \
+                                <heartbeat_period>                                                 \
                                     <sec>0</sec>                                                  \
                                     <nanosec>100000000</nanosec>                                  \
-                                </heartbeatPeriod>                                                \
-                                <nackResponseDelay>                                               \
+                                </heartbeat_period>                                                \
+                                <nack_response_delay>                                               \
                                     <sec>0</sec>                                                  \
                                     <nanosec>100000000</nanosec>                                  \
-                                </nackResponseDelay>                                              \
+                                </nack_response_delay>                                              \
                             </times>                                                              \
                             <historyMemoryPolicy>PREALLOCATED</historyMemoryPolicy>               \
                             <propertiesPolicy>                                                    \
@@ -292,10 +291,10 @@ TEST_P(PersistenceGuid, SetPersistenceGuidByXML)
                             </qos>                                                                \
                             <historyMemoryPolicy>PREALLOCATED</historyMemoryPolicy>               \
                             <times>                                                               \
-                                <heartbeatResponseDelay>                                          \
+                                <heartbeat_response_delay>                                          \
                                     <sec>0</sec>                                                  \
                                     <nanosec>100000000</nanosec>                                  \
-                                </heartbeatResponseDelay>                                         \
+                                </heartbeat_response_delay>                                         \
                             </times>                                                              \
                             <propertiesPolicy>                                                    \
                                 <properties>                                                      \

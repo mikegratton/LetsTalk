@@ -16,55 +16,47 @@
  * @file DataWriterImpl.hpp
  */
 
-#ifndef _FASTRTPS_DATAWRITERIMPL_HPP_
-#define _FASTRTPS_DATAWRITERIMPL_HPP_
+#ifndef _FASTDDS_DATAWRITERIMPL_HPP_
+#define _FASTDDS_DATAWRITERIMPL_HPP_
 
 #include <memory>
 
+#include <fastdds/dds/builtin/topic/PublicationBuiltinTopicData.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/core/status/BaseStatus.hpp>
+#include <fastdds/dds/core/status/DeadlineMissedStatus.hpp>
 #include <fastdds/dds/core/status/IncompatibleQosStatus.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/DataWriterListener.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-
-#include <fastdds/rtps/attributes/WriterAttributes.h>
+#include <fastdds/rtps/attributes/WriterAttributes.hpp>
+#include <fastdds/rtps/common/Guid.hpp>
 #include <fastdds/rtps/common/LocatorList.hpp>
-#include <fastdds/rtps/common/Guid.h>
-#include <fastdds/rtps/common/WriteParams.h>
-#include <fastdds/rtps/history/IChangePool.h>
-#include <fastdds/rtps/history/IPayloadPool.h>
+#include <fastdds/rtps/common/SerializedPayload.hpp>
+#include <fastdds/rtps/common/WriteParams.hpp>
+#include <fastdds/rtps/history/IChangePool.hpp>
+#include <fastdds/rtps/history/IPayloadPool.hpp>
 #include <fastdds/rtps/interfaces/IReaderDataFilter.hpp>
-#include <fastdds/rtps/writer/WriterListener.h>
-
-#include <fastrtps/qos/DeadlineMissedStatus.h>
-#include <fastrtps/qos/LivelinessLostStatus.h>
-
-#include <fastrtps/types/TypesBase.h>
+#include <fastdds/rtps/writer/WriterListener.hpp>
 
 #include <fastdds/publisher/DataWriterHistory.hpp>
 #include <fastdds/publisher/filtering/ReaderFilterCollection.hpp>
-
-#include <rtps/common/PayloadInfo_t.hpp>
-#include <rtps/history/ITopicPayloadPool.h>
 #include <rtps/DataSharing/DataSharingPayloadPool.hpp>
-
-using eprosima::fastrtps::types::ReturnCode_t;
+#include <rtps/history/ITopicPayloadPool.h>
+#include <rtps/history/PoolConfig.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
+class BaseWriter;
 class RTPSWriter;
 class RTPSParticipant;
 class TimedEvent;
 
 } // namespace rtps
-
-} // namespace fastrtps
-
-namespace fastdds {
 
 #ifdef FASTDDS_STATISTICS
 namespace statistics {
@@ -87,8 +79,8 @@ class Publisher;
 class DataWriterImpl : protected rtps::IReaderDataFilter
 {
     using LoanInitializationKind = DataWriter::LoanInitializationKind;
-    using PayloadInfo_t = eprosima::fastrtps::rtps::detail::PayloadInfo_t;
-    using CacheChange_t = eprosima::fastrtps::rtps::CacheChange_t;
+    using SerializedPayload_t = eprosima::fastdds::rtps::SerializedPayload_t;
+    using CacheChange_t = eprosima::fastdds::rtps::CacheChange_t;
     class LoanCollection;
 
 protected:
@@ -109,14 +101,14 @@ protected:
             Topic* topic,
             const DataWriterQos& qos,
             DataWriterListener* listener = nullptr,
-            std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool = nullptr);
+            std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool = nullptr);
 
     DataWriterImpl(
             PublisherImpl* p,
             TypeSupport type,
             Topic* topic,
             const DataWriterQos& qos,
-            const fastrtps::rtps::EntityId_t& entity_id,
+            const fastdds::rtps::EntityId_t& entity_id,
             DataWriterListener* listener = nullptr);
 
 public:
@@ -127,9 +119,9 @@ public:
      * Enable this object.
      * The required lower layer entities will be created.
      *
-     * @pre This method has not previously returned ReturnCode_t::RETCODE_OK
+     * @pre This method has not previously returned RETCODE_OK
      *
-     * @return ReturnCode_t::RETCODE_OK if all the lower layer entities have been correctly created.
+     * @return RETCODE_OK if all the lower layer entities have been correctly created.
      * @return Other standard return codes on error.
      */
     virtual ReturnCode_t enable();
@@ -137,8 +129,8 @@ public:
     /**
      * Check if the preconditions to delete this object are met.
      *
-     * @return ReturnCode_t::RETCODE_PRECONDITION_NOT_MET if the preconditions to delete this object are not met.
-     * @return ReturnCode_t::RETCODE_OK if it is safe to delete this object.
+     * @return RETCODE_PRECONDITION_NOT_MET if the preconditions to delete this object are not met.
+     * @return RETCODE_OK if it is safe to delete this object.
      */
     ReturnCode_t check_delete_preconditions();
 
@@ -148,9 +140,9 @@ public:
      * @param [out] sample          Pointer to the sample on the internal pool.
      * @param [in]  initialization  How to initialize the loaned sample.
      *
-     * @return ReturnCode_t::RETCODE_ILLEGAL_OPERATION when the type does not support loans.
-     * @return ReturnCode_t::RETCODE_OUT_OF_RESOURCES if the pool has been exhausted.
-     * @return ReturnCode_t::RETCODE_OK if a pointer to a sample is successfully obtained.
+     * @return RETCODE_ILLEGAL_OPERATION when the type does not support loans.
+     * @return RETCODE_OUT_OF_RESOURCES if the pool has been exhausted.
+     * @return RETCODE_OK if a pointer to a sample is successfully obtained.
      */
     ReturnCode_t loan_sample(
             void*& sample,
@@ -161,9 +153,9 @@ public:
      *
      * @param [in,out] sample  Pointer to the previously loaned sample.
      *
-     * @return ReturnCode_t::RETCODE_ILLEGAL_OPERATION when the type does not support loans.
-     * @return ReturnCode_t::RETCODE_BAD_PARAMETER if the pointer does not correspond to a loaned sample.
-     * @return ReturnCode_t::RETCODE_OK if the loan is successfully discarded.
+     * @return RETCODE_ILLEGAL_OPERATION when the type does not support loans.
+     * @return RETCODE_BAD_PARAMETER if the pointer does not correspond to a loaned sample.
+     * @return RETCODE_OK if the loan is successfully discarded.
      */
     ReturnCode_t discard_loan(
             void*& sample);
@@ -173,10 +165,10 @@ public:
      *
      * @param data Pointer to the data.
      *
-     * @return true if data is correctly delivered to the lower layers, false otherwise.
+     * @return any of the standard return codes.
      */
-    bool write(
-            void* data);
+    ReturnCode_t write(
+            const void* const data);
 
     /**
      * Write data with params to the topic.
@@ -184,85 +176,85 @@ public:
      * @param data Pointer to the data.
      * @param params Extra write parameters.
      *
-     * @return true if data is correctly delivered to the lower layers, false otherwise.
+     * @return any of the standard return codes.
      */
-    bool write(
-            void* data,
-            fastrtps::rtps::WriteParams& params);
+    ReturnCode_t write(
+            const void* const data,
+            fastdds::rtps::WriteParams& params);
 
     /**
      * @brief Implementation of the DDS `write` operation.
      *
-     * @param[in] data    Pointer to the data to publish.
-     * @param[in] handle  Handle of the instance to update. The special value @c HANDLE_NIL can be used to indicate
+     * @param [in] data    Pointer to the data to publish.
+     * @param [in] handle  Handle of the instance to update. The special value @c HANDLE_NIL can be used to indicate
      *                    that the instance should be automatically calculated.
      *
      * @return any of the standard return codes.
      */
     ReturnCode_t write(
-            void* data,
+            const void* const data,
             const InstanceHandle_t& handle);
 
     /**
      * @brief Implementation of the DDS `write_w_timestamp` operation.
      *
-     * @param[in] data        Pointer to the data to publish.
-     * @param[in] handle      Handle of the instance to update. The special value @c HANDLE_NIL can be used to indicate
+     * @param [in] data        Pointer to the data to publish.
+     * @param [in] handle      Handle of the instance to update. The special value @c HANDLE_NIL can be used to indicate
      *                        that the instance should be automatically calculated.
-     * @param[in] timestamp   Timestamp to associate to the sample info of the published data.
+     * @param [in] timestamp   Timestamp to associate to the sample info of the published data.
      *
      * @return any of the standard return codes.
      */
     ReturnCode_t write_w_timestamp(
-            void* data,
+            const void* const data,
             const InstanceHandle_t& handle,
-            const fastrtps::Time_t& timestamp);
+            const fastdds::dds::Time_t& timestamp);
 
     /**
      * @brief Implementation of the DDS `register_instance` operation.
      * It deduces the instance's key and tries to get resources in the DataWriterHistory.
      *
-     * @param[in] instance Sample used to get the instance's key.
+     * @param [in] instance Sample used to get the instance's key.
      *
      * @return Handle containing the instance's key.
      * This handle could be used in successive `write` or `dispose` operations.
      * In case of error, HANDLE_NIL will be returned.
      */
     InstanceHandle_t register_instance(
-            void* instance);
+            const void* const instance);
 
     /**
      * @brief Implementation of the DDS `register_instance_w_timestamp` operation.
      * It deduces the instance's key and tries to get resources in the DataWriterHistory.
      *
-     * @param[in] instance Sample used to get the instance's key.
-     * @param[in] timestamp Timestamp to set on the instance registration operation.
+     * @param [in] instance Sample used to get the instance's key.
+     * @param [in] timestamp Timestamp to set on the instance registration operation.
      *
      * @return Handle containing the instance's key.
      * This handle could be used in successive `write` or `dispose` operations.
      * In case of error, HANDLE_NIL will be returned.
      */
     InstanceHandle_t register_instance_w_timestamp(
-            void* instance,
-            const fastrtps::Time_t& timestamp);
+            const void* const instance,
+            const fastdds::dds::Time_t& timestamp);
 
     /**
      * @brief Implementation of the DDS `unregister_instance` and `dispose` operations.
      * It sends a CacheChange_t with a kind that depends on the `dispose` parameter and
      * `writer_data_lifecycle` QoS.
      *
-     * @param[in] instance  Sample used to deduce instance's key in case of `handle` parameter is HANDLE_NIL.
-     * @param[in] handle    Instance's key to be unregistered or disposed.
-     * @param[in] dispose   If `dispose` is `false`, a CacheChange_t with kind set to NOT_ALIVE_UNREGISTERED is sent,
+     * @param [in] instance  Sample used to deduce instance's key in case of `handle` parameter is HANDLE_NIL.
+     * @param [in] handle    Instance's key to be unregistered or disposed.
+     * @param [in] dispose   If `dispose` is `false`, a CacheChange_t with kind set to NOT_ALIVE_UNREGISTERED is sent,
      *                      or if `writer_data_lifecycle.autodispose_unregistered_instances` is `true` then it is sent
      *                      with kind set to NOT_ALIVE_DISPOSED_UNREGISTERED.
      *                      If `dispose` is `true`, a CacheChange_t with kind set to NOT_ALIVE_DISPOSED is sent.
      *
      * @return Returns the operation's result.
-     * If the operation finishes successfully, ReturnCode_t::RETCODE_OK is returned.
+     * If the operation finishes successfully, RETCODE_OK is returned.
      */
     ReturnCode_t unregister_instance(
-            void* instance,
+            const void* const instance,
             const InstanceHandle_t& handle,
             bool dispose = false);
 
@@ -271,28 +263,28 @@ public:
      * It sends a CacheChange_t with a kind that depends on the `dispose` parameter and
      * `writer_data_lifecycle` QoS.
      *
-     * @param[in] instance  Sample used to deduce instance's key in case of `handle` parameter is HANDLE_NIL.
-     * @param[in] handle    Instance's key to be unregistered or disposed.
-     * @param[in] timestamp Source timestamp to set on the CacheChange_t being sent.
-     * @param[in] dispose   If `dispose` is `false`, a CacheChange_t with kind set to NOT_ALIVE_UNREGISTERED is sent,
+     * @param [in] instance  Sample used to deduce instance's key in case of `handle` parameter is HANDLE_NIL.
+     * @param [in] handle    Instance's key to be unregistered or disposed.
+     * @param [in] timestamp Source timestamp to set on the CacheChange_t being sent.
+     * @param [in] dispose   If `dispose` is `false`, a CacheChange_t with kind set to NOT_ALIVE_UNREGISTERED is sent,
      *                      or if `writer_data_lifecycle.autodispose_unregistered_instances` is `true` then it is sent
      *                      with kind set to NOT_ALIVE_DISPOSED_UNREGISTERED.
      *                      If `dispose` is `true`, a CacheChange_t with kind set to NOT_ALIVE_DISPOSED is sent.
      *
      * @return Returns the operation's result.
-     * If the operation finishes successfully, ReturnCode_t::RETCODE_OK is returned.
+     * If the operation finishes successfully, RETCODE_OK is returned.
      */
     ReturnCode_t unregister_instance_w_timestamp(
-            void* instance,
+            const void* const instance,
             const InstanceHandle_t& handle,
-            const fastrtps::Time_t& timestamp,
+            const fastdds::dds::Time_t& timestamp,
             bool dispose = false);
 
     /**
      *
      * @return
      */
-    const fastrtps::rtps::GUID_t& guid() const;
+    const fastdds::rtps::GUID_t& guid() const;
 
     InstanceHandle_t get_instance_handle() const;
 
@@ -306,18 +298,18 @@ public:
     }
 
     ReturnCode_t wait_for_acknowledgments(
-            const fastrtps::Duration_t& max_wait);
+            const fastdds::dds::Duration_t& max_wait);
 
     ReturnCode_t wait_for_acknowledgments(
-            void* instance,
+            const void* const instance,
             const InstanceHandle_t& handle,
-            const fastrtps::Duration_t& max_wait);
+            const fastdds::dds::Duration_t& max_wait);
 
     ReturnCode_t get_publication_matched_status(
             PublicationMatchedStatus& status);
 
     ReturnCode_t get_offered_deadline_missed_status(
-            fastrtps::OfferedDeadlineMissedStatus& status);
+            OfferedDeadlineMissedStatus& status);
 
     ReturnCode_t get_offered_incompatible_qos_status(
             OfferedIncompatibleQosStatus& status);
@@ -343,8 +335,8 @@ public:
      * data-object known to the DataWriter. If the implementation is not able to check invalid handles then the result
      * in this situation is unspecified.
      *
-     * @param[in,out] key_holder  Sample where the key fields will be returned.
-     * @param[in] handle          Handle to the instance to retrieve the key values from.
+     * @param [in,out] key_holder  Sample where the key fields will be returned.
+     * @param [in] handle          Handle to the instance to retrieve the key values from.
      *
      * @return Any of the standard return codes.
      */
@@ -364,8 +356,8 @@ public:
 
     /**
      * Removes all changes from the History.
-     * @param[out] removed Number of removed elements
-     * @return ReturnCode_t::RETCODE_OK if correct, ReturnCode_t::RETCODE_ERROR if not.
+     * @param [out] removed Number of removed elements
+     * @return RETCODE_OK if correct, RETCODE_ERROR if not.
      */
     ReturnCode_t clear_history(
             size_t* removed);
@@ -389,16 +381,27 @@ public:
     void filter_is_being_removed(
             const char* filter_class_name);
 
+    /**
+     * Retrieve the publication data discovery information.
+     *
+     * @param [out] publication_data The publication data discovery information.
+     *
+     * @return NOT_ENABLED if the writer has not been enabled.
+     * @return OK if the publication data is returned.
+     */
+    ReturnCode_t get_publication_builtin_topic_data(
+            PublicationBuiltinTopicData& publication_data) const;
+
 protected:
 
-    using IChangePool = eprosima::fastrtps::rtps::IChangePool;
-    using IPayloadPool = eprosima::fastrtps::rtps::IPayloadPool;
-    using ITopicPayloadPool = eprosima::fastrtps::rtps::ITopicPayloadPool;
+    using IChangePool = eprosima::fastdds::rtps::IChangePool;
+    using IPayloadPool = eprosima::fastdds::rtps::IPayloadPool;
+    using ITopicPayloadPool = eprosima::fastdds::rtps::ITopicPayloadPool;
 
     PublisherImpl* publisher_ = nullptr;
 
-    //! Pointer to the associated Data Writer.
-    fastrtps::rtps::RTPSWriter* writer_ = nullptr;
+    //! Pointer to the associated RTPS Writer.
+    fastdds::rtps::BaseWriter* writer_ = nullptr;
 
     //! Pointer to the TopicDataType object.
     TypeSupport type_;
@@ -410,11 +413,14 @@ protected:
     //! DataWriterListener
     DataWriterListener* listener_ = nullptr;
 
+    //! Mutex to protect listener_
+    std::mutex listener_mutex_;
+
     //!History
-    DataWriterHistory history_;
+    std::unique_ptr<DataWriterHistory> history_;
 
     //!Listener to capture the events of the Writer
-    class InnerDataWriterListener : public fastrtps::rtps::WriterListener
+    class InnerDataWriterListener : public fastdds::rtps::WriterListener
     {
     public:
 
@@ -428,34 +434,39 @@ protected:
         {
         }
 
-        void onWriterMatched(
-                fastrtps::rtps::RTPSWriter* writer,
-                const fastdds::dds::PublicationMatchedStatus& info) override;
+        void on_writer_matched(
+                fastdds::rtps::RTPSWriter* writer,
+                const fastdds::rtps::MatchingInfo& info) override;
 
         void on_offered_incompatible_qos(
-                fastrtps::rtps::RTPSWriter* writer,
+                fastdds::rtps::RTPSWriter* writer,
                 fastdds::dds::PolicyMask qos) override;
 
-        void onWriterChangeReceivedByAll(
-                fastrtps::rtps::RTPSWriter* writer,
-                fastrtps::rtps::CacheChange_t* change) override;
+        void on_writer_change_received_by_all(
+                fastdds::rtps::RTPSWriter* writer,
+                fastdds::rtps::CacheChange_t* change) override;
 
         void on_liveliness_lost(
-                fastrtps::rtps::RTPSWriter* writer,
-                const fastrtps::LivelinessLostStatus& status) override;
+                fastdds::rtps::RTPSWriter* writer,
+                const LivelinessLostStatus& status) override;
 
         void on_reader_discovery(
-                fastrtps::rtps::RTPSWriter* writer,
-                fastrtps::rtps::ReaderDiscoveryInfo::DISCOVERY_STATUS reason,
-                const fastrtps::rtps::GUID_t& reader_guid,
-                const fastrtps::rtps::ReaderProxyData* reader_info) override;
+                fastdds::rtps::RTPSWriter* writer,
+                fastdds::rtps::ReaderDiscoveryStatus reason,
+                const fastdds::rtps::GUID_t& reader_guid,
+                const fastdds::rtps::SubscriptionBuiltinTopicData* reader_info) override;
+
+#ifdef FASTDDS_STATISTICS
+        void notify_status_observer(
+                const uint32_t& status_id);
+#endif //FASTDDS_STATISTICS
 
         DataWriterImpl* data_writer_;
     }
     writer_listener_;
 
     //! A timer used to check for deadlines
-    fastrtps::rtps::TimedEvent* deadline_timer_ = nullptr;
+    fastdds::rtps::TimedEvent* deadline_timer_ = nullptr;
 
     //! Deadline duration in microseconds
     std::chrono::duration<double, std::ratio<1, 1000000>> deadline_duration_us_;
@@ -476,7 +487,7 @@ protected:
     OfferedIncompatibleQosStatus offered_incompatible_qos_status_;
 
     //! A timed callback to remove expired samples for lifespan QoS
-    fastrtps::rtps::TimedEvent* lifespan_timer_ = nullptr;
+    fastdds::rtps::TimedEvent* lifespan_timer_ = nullptr;
 
     //! The lifespan duration, in microseconds
     std::chrono::duration<double, std::ratio<1, 1000000>> lifespan_duration_us_;
@@ -487,30 +498,34 @@ protected:
 
     uint32_t fixed_payload_size_ = 0u;
 
+    rtps::PoolConfig pool_config_ {};
+
     std::shared_ptr<IPayloadPool> payload_pool_;
 
     bool is_custom_payload_pool_ = false;
 
     std::unique_ptr<LoanCollection> loans_;
 
-    fastrtps::rtps::GUID_t guid_;
+    fastdds::rtps::GUID_t guid_;
 
     std::unique_ptr<ReaderFilterCollection> reader_filters_;
 
+    DataRepresentationId_t data_representation_ {DEFAULT_DATA_REPRESENTATION};
+
     ReturnCode_t check_write_preconditions(
-            void* data,
+            const void* const data,
             const InstanceHandle_t& handle,
             InstanceHandle_t& instance_handle);
 
     ReturnCode_t check_instance_preconditions(
-            void* data,
+            const void* const data,
             const InstanceHandle_t& handle,
             InstanceHandle_t& instance_handle);
 
     InstanceHandle_t do_register_instance(
-            void* key,
+            const void* const key,
             const InstanceHandle_t instance_handle,
-            fastrtps::rtps::WriteParams& wparams);
+            fastdds::rtps::WriteParams& wparams);
 
     /**
      *
@@ -519,8 +534,8 @@ protected:
      * @return
      */
     ReturnCode_t create_new_change(
-            fastrtps::rtps::ChangeKind_t kind,
-            void* data);
+            fastdds::rtps::ChangeKind_t kind,
+            const void* const data);
 
     /**
      *
@@ -530,9 +545,9 @@ protected:
      * @return
      */
     ReturnCode_t create_new_change_with_params(
-            fastrtps::rtps::ChangeKind_t kind,
-            void* data,
-            fastrtps::rtps::WriteParams& wparams);
+            fastdds::rtps::ChangeKind_t kind,
+            const void* const data,
+            fastdds::rtps::WriteParams& wparams);
 
     /**
      *
@@ -543,9 +558,9 @@ protected:
      * @return
      */
     ReturnCode_t create_new_change_with_params(
-            fastrtps::rtps::ChangeKind_t kind,
-            void* data,
-            fastrtps::rtps::WriteParams& wparams,
+            fastdds::rtps::ChangeKind_t kind,
+            const void* const data,
+            fastdds::rtps::WriteParams& wparams,
             const InstanceHandle_t& handle);
 
     /**
@@ -555,7 +570,7 @@ protected:
     bool remove_min_seq_change();
 
     void update_publication_matched_status(
-            const PublicationMatchedStatus& status);
+            const fastdds::rtps::MatchingInfo& status);
 
     /**
      * @brief A method called when an instance misses the deadline
@@ -573,24 +588,19 @@ protected:
     bool lifespan_expired();
 
     ReturnCode_t check_new_change_preconditions(
-            fastrtps::rtps::ChangeKind_t change_kind,
-            void* data);
+            fastdds::rtps::ChangeKind_t change_kind,
+            const void* const data);
 
     ReturnCode_t perform_create_new_change(
-            fastrtps::rtps::ChangeKind_t change_kind,
-            void* data,
-            fastrtps::rtps::WriteParams& wparams,
+            fastdds::rtps::ChangeKind_t change_kind,
+            const void* const data,
+            fastdds::rtps::WriteParams& wparams,
             const InstanceHandle_t& handle);
-
-    static fastrtps::TopicAttributes get_topic_attributes(
-            const DataWriterQos& qos,
-            const Topic& topic,
-            const TypeSupport& type);
 
     static void set_qos(
             DataWriterQos& to,
             const DataWriterQos& from,
-            bool is_default);
+            bool update_immutable);
 
     /**
      * Extends the check_qos() call, including the check for
@@ -631,11 +641,11 @@ protected:
     /*!
      * @brief Updates liveliness lost status.
      *
-     * @param[in] liveliness_lost_status Liveliness lost status coming from RTPS layer.
+     * @param [in] liveliness_lost_status Liveliness lost status coming from RTPS layer.
      * @return Current liveliness lost status.
      */
     LivelinessLostStatus& update_liveliness_lost_status(
-            const fastrtps::LivelinessLostStatus& liveliness_lost_status);
+            const LivelinessLostStatus& liveliness_lost_status);
 
     /**
      * Returns the most appropriate listener to handle the callback for the given status,
@@ -645,8 +655,8 @@ protected:
             const StatusMask& status);
 
     void set_fragment_size_on_change(
-            fastrtps::rtps::WriteParams& wparams,
-            fastrtps::rtps::CacheChange_t* ch,
+            fastdds::rtps::WriteParams& wparams,
+            fastdds::rtps::CacheChange_t* ch,
             const uint32_t& high_mark_for_frag);
 
     std::shared_ptr<IChangePool> get_change_pool() const;
@@ -656,45 +666,20 @@ protected:
     bool release_payload_pool();
 
     ReturnCode_t check_datasharing_compatible(
-            const fastrtps::rtps::WriterAttributes& writer_attributes,
+            const fastdds::rtps::WriterAttributes& writer_attributes,
             bool& is_datasharing_compatible) const;
 
-    template<typename SizeFunctor>
     bool get_free_payload_from_pool(
-            const SizeFunctor& size_getter,
-            PayloadInfo_t& payload)
-    {
-        CacheChange_t change;
-        if (!payload_pool_)
-        {
-            return false;
-        }
-
-        uint32_t size = fixed_payload_size_ ? fixed_payload_size_ : size_getter();
-        if (!payload_pool_->get_payload(size, change))
-        {
-            return false;
-        }
-
-        payload.move_from_change(change);
-        return true;
-    }
-
-    void return_payload_to_pool(
-            PayloadInfo_t& payload)
-    {
-        CacheChange_t change;
-        payload.move_into_change(change);
-        payload_pool_->release_payload(change);
-    }
+            uint32_t size,
+            SerializedPayload_t& payload);
 
     bool add_loan(
-            void* data,
-            PayloadInfo_t& payload);
+            const void* const data,
+            SerializedPayload_t& payload);
 
     bool check_and_remove_loan(
-            void* data,
-            PayloadInfo_t& payload);
+            const void* const data,
+            SerializedPayload_t& payload);
 
     /**
      * Remove internal filtering information about a reader.
@@ -703,7 +688,7 @@ protected:
      * @param reader_guid  GUID of the reader that has been unmatched.
      */
     void remove_reader_filter(
-            const fastrtps::rtps::GUID_t& reader_guid);
+            const fastdds::rtps::GUID_t& reader_guid);
 
     /**
      * Process filtering information for a reader.
@@ -713,12 +698,21 @@ protected:
      * @param reader_info  The reader's discovery information.
      */
     void process_reader_filter_info(
-            const fastrtps::rtps::GUID_t& reader_guid,
-            const fastrtps::rtps::ReaderProxyData& reader_info);
+            const fastdds::rtps::GUID_t& reader_guid,
+            const fastdds::rtps::SubscriptionBuiltinTopicData& reader_info);
 
     bool is_relevant(
-            const fastrtps::rtps::CacheChange_t& change,
-            const fastrtps::rtps::GUID_t& reader_guid) const override;
+            const fastdds::rtps::CacheChange_t& change,
+            const fastdds::rtps::GUID_t& reader_guid) const override;
+
+private:
+
+    void create_history(
+            const std::shared_ptr<IPayloadPool>& payload_pool,
+            const std::shared_ptr<IChangePool>& change_pool);
+
+    DataWriterQos get_datawriter_qos_from_settings(
+            const DataWriterQos& qos);
 
 };
 
@@ -726,4 +720,4 @@ protected:
 } /* namespace fastdds */
 } /* namespace eprosima */
 
-#endif //_FASTRTPS_DATAWRITERIMPL_HPP_
+#endif //_FASTDDS_DATAWRITERIMPL_HPP_

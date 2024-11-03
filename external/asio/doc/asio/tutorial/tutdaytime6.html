@@ -8,6 +8,7 @@
 <link rel="up" href="../tutorial.html" title="Tutorial">
 <link rel="prev" href="tutdaytime5/src.html" title="Source listing for Daytime.5">
 <link rel="next" href="tutdaytime6/src.html" title="Source listing for Daytime.6">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -72,14 +73,13 @@
         will cause the application to listen in the background for a new request.
         When such a request is received, the <a class="link" href="../reference/io_context.html" title="io_context">io_context</a>
         object will invoke the <code class="computeroutput"><span class="identifier">handle_receive</span><span class="special">()</span></code> function with two arguments: a value of
-        type <a class="link" href="../reference/error_code.html" title="error_code">error_code</a> indicating
-        whether the operation succeeded or failed, and a <code class="computeroutput"><span class="identifier">size_t</span></code>
-        value <code class="computeroutput"><span class="identifier">bytes_transferred</span></code> specifying
-        the number of bytes received.
+        type std::error_code indicating whether the operation succeeded or failed,
+        and a <code class="computeroutput"><span class="identifier">size_t</span></code> value <code class="computeroutput"><span class="identifier">bytes_transferred</span></code> specifying the number
+        of bytes received.
       </p>
 <pre class="programlisting">    <span class="identifier">socket_</span><span class="special">.</span><span class="identifier">async_receive_from</span><span class="special">(</span>
         <span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(</span><span class="identifier">recv_buffer_</span><span class="special">),</span> <span class="identifier">remote_endpoint_</span><span class="special">,</span>
-        <span class="identifier">boost</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">udp_server</span><span class="special">::</span><span class="identifier">handle_receive</span><span class="special">,</span> <span class="keyword">this</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">udp_server</span><span class="special">::</span><span class="identifier">handle_receive</span><span class="special">,</span> <span class="keyword">this</span><span class="special">,</span>
           <span class="identifier">asio</span><span class="special">::</span><span class="identifier">placeholders</span><span class="special">::</span><span class="identifier">error</span><span class="special">,</span>
           <span class="identifier">asio</span><span class="special">::</span><span class="identifier">placeholders</span><span class="special">::</span><span class="identifier">bytes_transferred</span><span class="special">));</span>
   <span class="special">}</span>
@@ -87,7 +87,7 @@
 <p>
         The function <code class="computeroutput"><span class="identifier">handle_receive</span><span class="special">()</span></code> will service the client request.
       </p>
-<pre class="programlisting">  <span class="keyword">void</span> <span class="identifier">handle_receive</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;</span> <span class="identifier">error</span><span class="special">,</span>
+<pre class="programlisting">  <span class="keyword">void</span> <span class="identifier">handle_receive</span><span class="special">(</span><span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;</span> <span class="identifier">error</span><span class="special">,</span>
       <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="comment">/*bytes_transferred*/</span><span class="special">)</span>
   <span class="special">{</span>
 </pre>
@@ -105,7 +105,7 @@
 <p>
         Determine what we are going to send.
       </p>
-<pre class="programlisting">      <span class="identifier">boost</span><span class="special">::</span><span class="identifier">shared_ptr</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="identifier">message</span><span class="special">(</span>
+<pre class="programlisting">      <span class="identifier">std</span><span class="special">::</span><span class="identifier">shared_ptr</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="identifier">message</span><span class="special">(</span>
           <span class="keyword">new</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">(</span><span class="identifier">make_daytime_string</span><span class="special">()));</span>
 </pre>
 <p>
@@ -113,12 +113,12 @@
         to serve the data to the client.
       </p>
 <pre class="programlisting">      <span class="identifier">socket_</span><span class="special">.</span><span class="identifier">async_send_to</span><span class="special">(</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">buffer</span><span class="special">(*</span><span class="identifier">message</span><span class="special">),</span> <span class="identifier">remote_endpoint_</span><span class="special">,</span>
-          <span class="identifier">boost</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">udp_server</span><span class="special">::</span><span class="identifier">handle_send</span><span class="special">,</span> <span class="keyword">this</span><span class="special">,</span> <span class="identifier">message</span><span class="special">,</span>
+          <span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span><span class="special">(&amp;</span><span class="identifier">udp_server</span><span class="special">::</span><span class="identifier">handle_send</span><span class="special">,</span> <span class="keyword">this</span><span class="special">,</span> <span class="identifier">message</span><span class="special">,</span>
             <span class="identifier">asio</span><span class="special">::</span><span class="identifier">placeholders</span><span class="special">::</span><span class="identifier">error</span><span class="special">,</span>
             <span class="identifier">asio</span><span class="special">::</span><span class="identifier">placeholders</span><span class="special">::</span><span class="identifier">bytes_transferred</span><span class="special">));</span>
 </pre>
 <p>
-        When initiating the asynchronous operation, and if using <a class="link" href="boost_bind.html" title="boost::bind">boost::bind</a>,
+        When initiating the asynchronous operation, and if using <code class="computeroutput"><span class="identifier">std</span><span class="special">::</span><span class="identifier">bind</span></code>,
         you must specify only the arguments that match the handler's parameter list.
         In this program, both of the argument placeholders (asio::placeholders::error
         and asio::placeholders::bytes_transferred) could potentially have been removed.
@@ -139,15 +139,15 @@
         The function <code class="computeroutput"><span class="identifier">handle_send</span><span class="special">()</span></code> is invoked after the service request has
         been completed.
       </p>
-<pre class="programlisting">  <span class="keyword">void</span> <span class="identifier">handle_send</span><span class="special">(</span><span class="identifier">boost</span><span class="special">::</span><span class="identifier">shared_ptr</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="comment">/*message*/</span><span class="special">,</span>
-      <span class="keyword">const</span> <span class="identifier">asio</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;</span> <span class="comment">/*error*/</span><span class="special">,</span>
+<pre class="programlisting">  <span class="keyword">void</span> <span class="identifier">handle_send</span><span class="special">(</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">shared_ptr</span><span class="special">&lt;</span><span class="identifier">std</span><span class="special">::</span><span class="identifier">string</span><span class="special">&gt;</span> <span class="comment">/*message*/</span><span class="special">,</span>
+      <span class="keyword">const</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">error_code</span><span class="special">&amp;</span> <span class="comment">/*error*/</span><span class="special">,</span>
       <span class="identifier">std</span><span class="special">::</span><span class="identifier">size_t</span> <span class="comment">/*bytes_transferred*/</span><span class="special">)</span>
   <span class="special">{</span>
   <span class="special">}</span>
 
   <span class="identifier">udp</span><span class="special">::</span><span class="identifier">socket</span> <span class="identifier">socket_</span><span class="special">;</span>
   <span class="identifier">udp</span><span class="special">::</span><span class="identifier">endpoint</span> <span class="identifier">remote_endpoint_</span><span class="special">;</span>
-  <span class="identifier">boost</span><span class="special">::</span><span class="identifier">array</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;</span> <span class="identifier">recv_buffer_</span><span class="special">;</span>
+  <span class="identifier">std</span><span class="special">::</span><span class="identifier">array</span><span class="special">&lt;</span><span class="keyword">char</span><span class="special">,</span> <span class="number">1</span><span class="special">&gt;</span> <span class="identifier">recv_buffer_</span><span class="special">;</span>
 <span class="special">};</span>
 </pre>
 <p>
@@ -165,14 +165,11 @@
         asynchronous server</a>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="tutdaytime5/src.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../tutorial.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="tutdaytime6/src.html"><img src="../../next.png" alt="Next"></a>

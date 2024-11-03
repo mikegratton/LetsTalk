@@ -15,14 +15,13 @@
 #ifndef UTILS_HOST_HPP_
 #define UTILS_HOST_HPP_
 
-#include <fastdds/rtps/common/Locator.h>
-
-#include <fastrtps/utils/md5.h>
-#include <fastrtps/utils/IPFinder.h>
-
 #include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/common/LocatorList.hpp>
+#include <fastdds/utils/IPFinder.hpp>
+#include <fastdds/utils/md5.hpp>
 
 namespace eprosima {
+
 
 /**
  * This singleton generates a host_id based on system interfaces
@@ -67,7 +66,7 @@ public:
 
         if (loc.size() > 0)
         {
-            MD5 md5;
+            fastdds::MD5 md5;
             for (auto& l : loc)
             {
                 md5.update(l.address, sizeof(l.address));
@@ -100,15 +99,15 @@ private:
     {
         // Compute the host id
         fastdds::rtps::LocatorList loc;
-        fastrtps::rtps::IPFinder::getIP4Address(&loc);
+        fastdds::rtps::IPFinder::getIP4Address(&loc);
         id_ = compute_id(loc);
 
         // Compute the MAC id
-        std::vector<fastrtps::rtps::IPFinder::info_MAC> macs;
-        if (fastrtps::rtps::IPFinder::getAllMACAddress(&macs) &&
+        std::vector<fastdds::rtps::IPFinder::info_MAC> macs;
+        if (fastdds::rtps::IPFinder::getAllMACAddress(&macs) &&
                 macs.size() > 0)
         {
-            MD5 md5;
+            fastdds::MD5 md5;
             for (auto& m : macs)
             {
                 md5.update(m.address, sizeof(m.address));

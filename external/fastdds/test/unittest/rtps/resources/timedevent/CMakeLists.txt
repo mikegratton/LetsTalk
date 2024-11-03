@@ -14,16 +14,21 @@
 
 set(TIMEDEVENTTESTS_SOURCE mock/MockEvent.cpp
     TimedEventTests.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEventImpl.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEvent.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/ResourceEvent.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/utils/TimedConditionVariable.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/Log.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/OStreamConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutConsumer.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/log/StdoutErrConsumer.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/fastdds/core/Time_t.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/LocatorWithMask.cpp
     ${PROJECT_SOURCE_DIR}/src/cpp/rtps/common/Time_t.cpp
-    ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp)
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/netmask_filter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/network/utils/network.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/ResourceEvent.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEvent.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/resources/TimedEventImpl.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetmaskFilterKind.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterface.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/rtps/transport/network/NetworkInterfaceWithFilter.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPFinder.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/IPLocator.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/SystemInfo.cpp
+    ${PROJECT_SOURCE_DIR}/src/cpp/utils/TimedConditionVariable.cpp)
 
 if(WIN32)
     add_definitions(-D_WIN32_WINNT=0x0601)
@@ -50,9 +55,10 @@ target_include_directories(TimedEventTests PRIVATE
     ${PROJECT_BINARY_DIR}/include
     ${PROJECT_SOURCE_DIR}/src/cpp
     )
-target_link_libraries(TimedEventTests GTest::gtest ${CMAKE_DL_LIBS})
-add_gtest(TimedEventTests SOURCES ${TIMEDEVENTTESTS_SOURCE})
-
-if(ANDROID)
-    set_property(TARGET TimedEventTests PROPERTY CROSSCOMPILING_EMULATOR "adb;shell;cd;${CMAKE_CURRENT_BINARY_DIR};&&")
-endif()
+target_link_libraries(TimedEventTests
+    fastcdr
+    fastdds::log
+    GTest::gtest
+    ${CMAKE_DL_LIBS}
+    )
+gtest_discover_tests(TimedEventTests)

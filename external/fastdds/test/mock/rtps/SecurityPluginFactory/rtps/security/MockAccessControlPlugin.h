@@ -16,18 +16,17 @@
  * @file MockAccessControlPlugin.h
  */
 
-#ifndef _SECURITY_MOCKACCESSCONTROLPLUGIN_H_
-#define _SECURITY_MOCKACCESSCONTROLPLUGIN_H_
+#ifndef FASTDDS_RTPS_SECURITY__MOCKACCESSCONTROLPLUGIN_H
+#define FASTDDS_RTPS_SECURITY__MOCKACCESSCONTROLPLUGIN_H
 
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
-#include <fastdds/rtps/builtin/data/ParticipantProxyData.h>
-
-#include <fastdds/rtps/security/accesscontrol/AccessControl.h>
+#include <rtps/builtin/data/ParticipantProxyData.hpp>
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/security/accesscontrol/AccessControl.h>
 #include <gmock/gmock.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 namespace security {
 
@@ -37,6 +36,7 @@ public:
 
     using AccessPermissionsHandle = HandleImpl<AccessPermissions, MockAccessControlPlugin>;
 
+    // *INDENT-OFF* Uncrustify makes a mess with MOCK_METHOD macros
     MOCK_METHOD(PermissionsHandle*, validate_local_permissions, (
                 Authentication & auth_plugin,
                 const IdentityHandle& identity,
@@ -45,7 +45,7 @@ public:
                 SecurityException & exception), (override));
 
     MOCK_METHOD(bool, get_permissions_token, (
-                PermissionsToken * *permissions_token,
+                PermissionsToken** permissions_token,
                 const PermissionsHandle& handle,
                 SecurityException & exception), (override));
 
@@ -54,7 +54,7 @@ public:
                 SecurityException & exception), (override));
 
     MOCK_METHOD(bool, get_permissions_credential_token, (
-                PermissionsCredentialToken * *permissions_credential_token,
+                PermissionsCredentialToken** permissions_credential_token,
                 const PermissionsHandle& handle,
                 SecurityException & exception), (override));
 
@@ -127,6 +127,7 @@ public:
                 const std::vector<std::string>& partitions,
                 EndpointSecurityAttributes & attributes,
                 SecurityException & exception), (override));
+    // *INDENT-ON*
 
     PermissionsHandle* get_permissions_handle(
             SecurityException&) override
@@ -146,7 +147,7 @@ public:
 
 } //namespace security
 } //namespace rtps
-} //namespace fastrtps
+} //namespace fastdds
 } //namespace eprosima
 
-#endif // _SECURITY_MOCKACCESSCONTROLPLUGIN_H_
+#endif // FASTDDS_RTPS_SECURITY__MOCKACCESSCONTROLPLUGIN_H

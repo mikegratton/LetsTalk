@@ -13,85 +13,27 @@
 // limitations under the License.
 
 #include <chrono>
+#include <thread>
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <thread>
 
 #define TEST_FRIENDS \
     FRIEND_TEST(WriterProxyAcknackTests, AcknackBackoff);
 
-#include <rtps/reader/WriterProxy.h>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+
+#include <rtps/builtin/data/WriterProxyData.hpp>
 #include <rtps/participant/RTPSParticipantImpl.h>
-#include <fastrtps/rtps/reader/RTPSReader.h>
-#include <fastrtps/rtps/reader/StatefulReader.h>
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
-#include <fastrtps/rtps/resources/TimedEvent.h>
-
+#include <rtps/reader/StatefulReader.hpp>
+#include <rtps/reader/WriterProxy.h>
 #include <rtps/reader/WriterProxy.cpp>
-// Make SequenceNumberSet_t compatible with GMock macros
+#include <rtps/resources/TimedEvent.h>
 
-namespace testing {
-namespace internal {
-using namespace eprosima::fastrtps::rtps;
-
-template<>
-bool AnyEq::operator ()(
-        const SequenceNumberSet_t& a,
-        const SequenceNumberSet_t& b) const
-{
-    // remember that using SequenceNumberSet_t = BitmapRange<SequenceNumber_t, SequenceNumberDiff, 256>;
-    // see test\unittest\utils\BitmapRangeTests.cpp method TestResult::Check
-
-    if (a.empty() && b.empty())
-    {
-        return true;
-    }
-
-    if (a.base() == b.base())
-    {
-        uint32_t num_bits[2];
-        uint32_t num_longs[2];
-        SequenceNumberSet_t::bitmap_type bitmap[2];
-
-        a.bitmap_get(num_bits[0], bitmap[0], num_longs[0]);
-        b.bitmap_get(num_bits[1], bitmap[1], num_longs[1]);
-
-        if (num_bits[0] != num_bits[1] || num_longs[0] != num_longs[1])
-        {
-            return false;
-        }
-        return std::equal(bitmap[0].cbegin(), bitmap[0].cbegin() + num_longs[0], bitmap[1].cbegin());
-    }
-    else
-    {
-        bool equal = true;
-
-        a.for_each([&b, &equal](const SequenceNumber_t& e)
-                {
-                    equal &= b.is_set(e);
-                });
-
-        if (!equal)
-        {
-            return false;
-        }
-
-        b.for_each([&a, &equal](const SequenceNumber_t& e)
-                {
-                    equal &= a.is_set(e);
-                });
-
-        return equal;
-    }
-}
-
-} // namespace internal
-} // namespace testing
-
-
+#include "../../common/operators.hpp"
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 TEST(WriterProxyAcknackTests, AcknackBackoff)
@@ -108,13 +50,13 @@ TEST(WriterProxyAcknackTests, AcknackBackoff)
     SequenceNumberSet_t t1(SequenceNumber_t(0, 0));
     EXPECT_CALL(readerMock, simp_send_acknack(t1)).Times(2u);
     EXPECT_EQ ( wproxy.initial_acknack_->getIntervalMilliSec(),
-            readerMock.getTimes().initialAcknackDelay.to_ns() / 1000000);
+            readerMock.getTimes().initial_acknack_delay.to_ns() / 1000000);
     wproxy.perform_initial_ack_nack();
     EXPECT_EQ ( wproxy.initial_acknack_->getIntervalMilliSec(),
-            readerMock.getTimes().initialAcknackDelay.to_ns() * 2 / 1000000);
+            readerMock.getTimes().initial_acknack_delay.to_ns() * 2 / 1000000);
     wproxy.perform_initial_ack_nack();
     EXPECT_EQ ( wproxy.initial_acknack_->getIntervalMilliSec(),
-            readerMock.getTimes().initialAcknackDelay.to_ns() * 4 / 1000000);
+            readerMock.getTimes().initial_acknack_delay.to_ns() * 4 / 1000000);
 
     // Simulate heartbeat reception and check if the delay cannot be updated again
     bool assert_liveliness = false;
@@ -132,15 +74,15 @@ TEST(WriterProxyAcknackTests, AcknackBackoff)
         current_sample_lost);
 
     EXPECT_EQ ( wproxy.initial_acknack_->getIntervalMilliSec(),
-            readerMock.getTimes().initialAcknackDelay.to_ns() * 4 / 1000000);
+            readerMock.getTimes().initial_acknack_delay.to_ns() * 4 / 1000000);
     wproxy.perform_initial_ack_nack();
     EXPECT_EQ ( wproxy.initial_acknack_->getIntervalMilliSec(),
-            readerMock.getTimes().initialAcknackDelay.to_ns() * 4 / 1000000);
+            readerMock.getTimes().initial_acknack_delay.to_ns() * 4 / 1000000);
 
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
 int main(

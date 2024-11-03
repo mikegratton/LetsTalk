@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com">
     <profiles>
 
         <participant profile_name="test_participant_profile" is_default_profile="true">
@@ -105,10 +105,6 @@
                             </udpv4>
                         </locator>
                     </initialPeersList>
-                    <typelookup_config>
-                        <use_client>true</use_client>
-                        <use_server>true</use_server>
-                    </typelookup_config>
                 </builtin>
                 <port>
                     <portBase>12</portBase>
@@ -120,12 +116,58 @@
                     <offsetd3>456</offsetd3>
                 </port>
                 <participantID>9898</participantID>
-                <throughputController>
-                    <bytesPerPeriod>2048</bytesPerPeriod>
-                    <periodMillisecs>45</periodMillisecs>
-                </throughputController>
+                <flow_controller_descriptor_list>
+                    <flow_controller_descriptor>
+                        <name>test_flow_controller</name>
+                        <max_bytes_per_period>2048</max_bytes_per_period>
+                        <period_ms>45</period_ms>
+                        <scheduler>FIFO</scheduler>
+                        <sender_thread>
+                            <scheduling_policy>12</scheduling_policy>
+                            <priority>12</priority>
+                            <affinity>12</affinity>
+                            <stack_size>12</stack_size>
+                        </sender_thread>
+                    </flow_controller_descriptor>
+                </flow_controller_descriptor_list>
                 <useBuiltinTransports>true</useBuiltinTransports>
                 <name>test_name</name>
+                <builtin_controllers_sender_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </builtin_controllers_sender_thread>
+                <timed_events_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </timed_events_thread>
+                <discovery_server_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </discovery_server_thread>
+                <typelookup_service_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </typelookup_service_thread>
+                <builtin_transports_reception_threads>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </builtin_transports_reception_threads>
+                <security_log_thread>
+                    <scheduling_policy>12</scheduling_policy>
+                    <priority>12</priority>
+                    <affinity>12</affinity>
+                    <stack_size>12</stack_size>
+                </security_log_thread>
             </rtps>
         </participant>
 
@@ -177,22 +219,22 @@
                 </publishMode>
             </qos>
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>11</sec>
                     <nanosec>32</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>121</sec>
                     <nanosec>332</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -225,10 +267,6 @@
                     </udpv4>
                 </locator>
             </multicastLocatorList>
-            <throughputController>
-                <bytesPerPeriod>9236</bytesPerPeriod>
-                <periodMillisecs>234</periodMillisecs>
-            </throughputController>
             <historyMemoryPolicy>DYNAMIC</historyMemoryPolicy>
             <userDefinedID>67</userDefinedID>
             <entityID>87</entityID>
@@ -286,14 +324,14 @@
                 </partition>
             </qos>
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>0</sec>
                     <nanosec>0</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>18</sec>
                     <nanosec>81</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -326,7 +364,7 @@
                     </udpv4>
                 </locator>
             </multicastLocatorList>
-            <expectsInlineQos>true</expectsInlineQos>
+            <expects_inline_qos>true</expects_inline_qos>
             <historyMemoryPolicy>PREALLOCATED_WITH_REALLOC</historyMemoryPolicy>
             <userDefinedID>13</userDefinedID>
             <entityID>31</entityID>

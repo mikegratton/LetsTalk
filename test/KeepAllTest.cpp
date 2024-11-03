@@ -13,10 +13,9 @@
 #include "fastdds/dds/domain/qos/DomainParticipantQos.hpp"
 #include "fastdds/dds/subscriber/DataReaderListener.hpp"
 #include "fastdds/dds/subscriber/qos/SubscriberQos.hpp"
-#include "idl/HelloWorld.h"
+#include "idl/HelloWorld.hpp"
 
 namespace efd = eprosima::fastdds::dds;
-namespace efr = eprosima::fastrtps::rtps;
 
 std::atomic<int> recCount = 0;
 
@@ -25,7 +24,7 @@ class Listener : public efd::DataReaderListener {
     {
         HelloWorld data;
         efd::SampleInfo info;
-        while (ReturnCode_t::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
+        while (efd::RETCODE_OK == i_reader->take_next_sample(&data, &info)) {
             if (info.valid_data) {
                 recCount++;
                 std::cout << data.index() << ": " << data.message() << "\n";

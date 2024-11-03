@@ -15,26 +15,27 @@
 #ifndef _TEST_RTPS_RESOURCES_TIMEDEVENT_MOCKEVENT_H_
 #define  _TEST_RTPS_RESOURCES_TIMEDEVENT_MOCKEVENT_H_
 
-#include <fastrtps/rtps/resources/TimedEvent.h>
-
 #include <atomic>
 #include <condition_variable>
-#include <asio.hpp>
 #include <thread>
+
+#include <asio.hpp>
+
+#include <rtps/resources/TimedEvent.h>
 
 class MockEvent
 {
 public:
 
     MockEvent(
-            eprosima::fastrtps::rtps::ResourceEvent& service,
+            eprosima::fastdds::rtps::ResourceEvent& service,
             double milliseconds,
             bool autorestart,
             std::function<void()> inner_callback = {});
 
     virtual ~MockEvent();
 
-    eprosima::fastrtps::rtps::TimedEvent& event()
+    eprosima::fastdds::rtps::TimedEvent& event()
     {
         return event_;
     }
@@ -57,7 +58,7 @@ private:
     std::condition_variable sem_cond_;
     bool autorestart_;
     std::function<void()> inner_callback_;
-    eprosima::fastrtps::rtps::TimedEvent event_;
+    eprosima::fastdds::rtps::TimedEvent event_;
 };
 
 #endif // _TEST_RTPS_RESOURCES_TIMEDEVENT_MOCKEVENT_H_

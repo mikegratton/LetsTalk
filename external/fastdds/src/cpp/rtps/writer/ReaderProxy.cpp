@@ -17,27 +17,27 @@
  *
  */
 
-
-#include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/history/WriterHistory.h>
-#include <fastdds/rtps/writer/ReaderProxy.h>
-#include <fastdds/rtps/writer/StatefulWriter.h>
-#include <fastdds/rtps/resources/TimedEvent.h>
-#include <fastrtps/utils/TimeConversion.h>
-#include <fastdds/rtps/common/LocatorListComparisons.hpp>
-
-#include <rtps/participant/RTPSParticipantImpl.h>
-#include <rtps/history/HistoryAttributesExtension.hpp>
-
-#include "rtps/messages/RTPSGapBuilder.hpp"
-#include <rtps/DataSharing/DataSharingNotifier.hpp>
+#include <rtps/writer/ReaderProxy.hpp>
 
 #include <mutex>
 #include <cassert>
 #include <algorithm>
 
+#include <fastdds/dds/log/Log.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
+#include <fastdds/rtps/common/LocatorListComparisons.hpp>
+
+#include <rtps/DataSharing/DataSharingNotifier.hpp>
+#include <rtps/history/HistoryAttributesExtension.hpp>
+#include <rtps/messages/RTPSGapBuilder.hpp>
+#include <rtps/participant/RTPSParticipantImpl.h>
+#include <rtps/resources/TimedEvent.h>
+#include <rtps/writer/StatefulWriter.hpp>
+#include <utils/TimeConversion.hpp>
+
+
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 ReaderProxy::ReaderProxy(
@@ -53,27 +53,31 @@ ReaderProxy::ReaderProxy(
     , is_reliable_(false)
     , disable_positive_acks_(false)
     , writer_(writer)
-    , changes_for_reader_(resource_limits_from_history(writer->mp_history->m_att, 0))
+    , changes_for_reader_(resource_limits_from_history(writer->get_history()->m_att, 0))
     , nack_supression_event_(nullptr)
     , initial_heartbeat_event_(nullptr)
     , timers_enabled_(false)
-    , last_acknack_count_(0)
+    , next_expected_acknack_count_(0)
     , last_nackfrag_count_(0)
 {
-    nack_supression_event_ = new TimedEvent(writer_->getRTPSParticipant()->getEventResource(),
-                    [&]() -> bool
-                    {
-                        writer_->perform_nack_supression(guid());
-                        return false;
-                    },
-                    TimeConv::Time_t2MilliSecondsDouble(times.nackSupressionDuration));
+    auto participant = writer_->get_participant_impl();
+    if (nullptr != participant)
+    {
+        nack_supression_event_ = new TimedEvent(participant->getEventResource(),
+                        [&]() -> bool
+                        {
+                            writer_->perform_nack_supression(guid());
+                            return false;
+                        },
+                        fastdds::rtps::TimeConv::Time_t2MilliSecondsDouble(times.nack_supression_duration));
 
-    initial_heartbeat_event_ = new TimedEvent(writer_->getRTPSParticipant()->getEventResource(),
-                    [&]() -> bool
-                    {
-                        writer_->intraprocess_heartbeat(this);
-                        return false;
-                    }, 0);
+        initial_heartbeat_event_ = new TimedEvent(participant->getEventResource(),
+                        [&]() -> bool
+                        {
+                            writer_->intraprocess_heartbeat(this);
+                            return false;
+                        }, 0);
+    }
 
     stop();
 }
@@ -121,7 +125,7 @@ void ReaderProxy::start(
     is_active_ = true;
     durability_kind_ = reader_attributes.m_qos.m_durability.durabilityKind();
     expects_inline_qos_ = reader_attributes.m_expectsInlineQos;
-    is_reliable_ = reader_attributes.m_qos.m_reliability.kind != BEST_EFFORT_RELIABILITY_QOS;
+    is_reliable_ = reader_attributes.m_qos.m_reliability.kind != dds::BEST_EFFORT_RELIABILITY_QOS;
     disable_positive_acks_ = reader_attributes.disable_positive_acks();
     if (durability_kind_ == DurabilityKind_t::VOLATILE)
     {
@@ -135,7 +139,7 @@ void ReaderProxy::start(
     }
 
     timers_enabled_.store(is_remote_and_reliable());
-    if (is_local_reader())
+    if (is_local_reader() && initial_heartbeat_event_)
     {
         initial_heartbeat_event_->restart_timer();
     }
@@ -148,7 +152,7 @@ bool ReaderProxy::update(
 {
     durability_kind_ = reader_attributes.m_qos.m_durability.durabilityKind();
     expects_inline_qos_ = reader_attributes.m_expectsInlineQos;
-    is_reliable_ = reader_attributes.m_qos.m_reliability.kind != BEST_EFFORT_RELIABILITY_QOS;
+    is_reliable_ = reader_attributes.m_qos.m_reliability.kind != dds::BEST_EFFORT_RELIABILITY_QOS;
     disable_positive_acks_ = reader_attributes.disable_positive_acks();
 
     locator_info_.update(
@@ -166,24 +170,30 @@ void ReaderProxy::stop()
     disable_timers();
 
     changes_for_reader_.clear();
-    last_acknack_count_ = 0;
+    next_expected_acknack_count_ = 0;
     last_nackfrag_count_ = 0;
     changes_low_mark_ = SequenceNumber_t();
 }
 
 void ReaderProxy::disable_timers()
 {
-    if (timers_enabled_.exchange(false))
+    if (timers_enabled_.exchange(false) && nack_supression_event_)
     {
         nack_supression_event_->cancel_timer();
     }
-    initial_heartbeat_event_->cancel_timer();
+    if (initial_heartbeat_event_)
+    {
+        initial_heartbeat_event_->cancel_timer();
+    }
 }
 
 void ReaderProxy::update_nack_supression_interval(
-        const Duration_t& interval)
+        const dds::Duration_t& interval)
 {
-    nack_supression_event_->update_interval(interval);
+    if (nack_supression_event_)
+    {
+        nack_supression_event_->update_interval(interval);
+    }
 }
 
 void ReaderProxy::add_change(
@@ -191,7 +201,7 @@ void ReaderProxy::add_change(
         bool is_relevant,
         bool restart_nack_supression)
 {
-    if (restart_nack_supression && timers_enabled_.load())
+    if (restart_nack_supression && timers_enabled_.load() && nack_supression_event_)
     {
         nack_supression_event_->restart_timer();
     }
@@ -205,7 +215,7 @@ void ReaderProxy::add_change(
         bool restart_nack_supression,
         const std::chrono::time_point<std::chrono::steady_clock>& max_blocking_time)
 {
-    if (restart_nack_supression && timers_enabled_)
+    if (restart_nack_supression && timers_enabled_ && nack_supression_event_)
     {
         nack_supression_event_->restart_timer(max_blocking_time);
     }
@@ -378,7 +388,7 @@ void ReaderProxy::acked_changes_set(
                     if (current_sequence <= changes_low_mark_)
                     {
                         CacheChange_t* change = nullptr;
-                        if (writer_->mp_history->get_change(current_sequence, writer_->getGuid(), &change))
+                        if (writer_->get_history()->get_change(current_sequence, writer_->getGuid(), &change))
                         {
                             should_sort = true;
                             ChangeForReader_t cr(change);
@@ -459,7 +469,7 @@ void ReaderProxy::from_unsent_to_status(
     // It will use acked_changes_set().
     assert(is_reliable_);
 
-    if (restart_nack_supression && is_remote_and_reliable())
+    if (restart_nack_supression && is_remote_and_reliable() && nack_supression_event_)
     {
         assert(timers_enabled_.load());
         nack_supression_event_->restart_timer();
@@ -702,5 +712,5 @@ bool ReaderProxy::has_been_delivered(
 }
 
 }   // namespace rtps
-}   // namespace fastrtps
+}   // namespace fastdds
 }   // namespace eprosima

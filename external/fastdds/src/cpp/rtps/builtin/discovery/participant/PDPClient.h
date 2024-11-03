@@ -21,19 +21,16 @@
 #define _FASTDDS_RTPS_PDPCLIENT_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#include <fastdds/rtps/builtin/discovery/participant/PDP.h>
-#include <fastdds/rtps/messages/RTPSMessageGroup.h>
-
-#include <rtps/builtin/discovery/participant/timedevent/DSClientEvent.h>
-
+#include <rtps/attributes/ServerAttributes.hpp>
 #include <rtps/builtin/discovery/participant/DS/DiscoveryServerPDPEndpoints.hpp>
 #include <rtps/builtin/discovery/participant/DS/DiscoveryServerPDPEndpointsSecure.hpp>
+#include <rtps/builtin/discovery/participant/PDP.h>
+#include <rtps/builtin/discovery/participant/timedevent/DSClientEvent.h>
+#include <rtps/messages/RTPSMessageGroup.hpp>
 
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
-
-using namespace fastrtps::rtps;
 
 class StatefulWriter;
 class StatefulReader;
@@ -114,8 +111,8 @@ public:
      */
     void announceParticipantState(
             bool new_change,
-            bool dispose = false,
-            WriteParams& wparams = WriteParams::WRITE_PARAM_DEFAULT) override;
+            bool dispose,
+            WriteParams& wparams) override;
 
     /**
      * These methods wouldn't be needed under perfect server operation
@@ -139,7 +136,7 @@ public:
      */
     bool remove_remote_participant(
             const GUID_t& participant_guid,
-            ParticipantDiscoveryInfo::DISCOVERY_STATUS reason) override;
+            ParticipantDiscoveryStatus reason) override;
 
 #if HAVE_SECURITY
     bool pairing_remote_writer_with_local_reader_after_security(
@@ -155,6 +152,12 @@ public:
      * Update the list of remote servers
      */
     void update_remote_servers_list();
+
+    /**
+     * Get the list of remote servers to which the client is already connected.
+     * @return A reference to the list of RemoteServerAttributes
+     */
+    const fastdds::rtps::RemoteServerList_t& connected_servers();
 
 protected:
 
@@ -177,6 +180,8 @@ protected:
             const eprosima::fastdds::rtps::RemoteServerAttributes& server_att);
 
 private:
+
+    using PDP::announceParticipantState;
 
     /**
      * Manually match the local PDP reader with the PDP writer of a given server. The function is
@@ -255,6 +260,9 @@ private:
 
     //! flag to know this client must use super client participant type
     bool _super_client;
+
+    //! List of real connected servers
+    std::list<eprosima::fastdds::rtps::RemoteServerAttributes> connected_servers_;
 };
 
 } /* namespace rtps */

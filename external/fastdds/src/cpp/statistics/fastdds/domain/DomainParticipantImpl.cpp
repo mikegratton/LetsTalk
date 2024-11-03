@@ -18,47 +18,47 @@
 
 #include <statistics/fastdds/domain/DomainParticipantImpl.hpp>
 
-#include <string>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <asio.hpp>
+
+#include <fastdds/core/policy/QosPolicyUtils.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/publisher/DataWriter.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
+#include <fastdds/dds/topic/qos/TopicQos.hpp>
 #include <fastdds/dds/topic/Topic.hpp>
 #include <fastdds/dds/topic/TopicDescription.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/dds/topic/qos/TopicQos.hpp>
-#include <fastdds/rtps/attributes/PropertyPolicy.h>
-#include <fastdds/rtps/participant/RTPSParticipant.h>
+#include <fastdds/rtps/attributes/PropertyPolicy.hpp>
+#include <fastdds/rtps/participant/RTPSParticipant.hpp>
 #include <fastdds/statistics/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/statistics/topic_names.hpp>
 
-#include <fastdds/core/policy/QosPolicyUtils.hpp>
 #include <fastdds/publisher/DataWriterImpl.hpp>
+#include <fastdds/utils/QosConverters.hpp>
 #include <statistics/fastdds/publisher/PublisherImpl.hpp>
 #include <statistics/fastdds/subscriber/SubscriberImpl.hpp>
 #include <statistics/rtps/GuidUtils.hpp>
-#include <statistics/types/types.h>
-#include <statistics/types/typesPubSubTypes.h>
+#include <statistics/types/types.hpp>
+#include <statistics/types/typesPubSubTypes.hpp>
 #include <utils/SystemInfo.hpp>
-
-#include <fastrtps/attributes/PublisherAttributes.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-#include <fastrtps/xmlparser/XMLParserCommon.h>
-#include <fastdds/utils/QosConverters.hpp>
+#include <xmlparser/attributes/PublisherAttributes.hpp>
+#include <xmlparser/XMLParserCommon.h>
+#include <xmlparser/XMLProfileManager.h>
 
 namespace eprosima {
 namespace fastdds {
 namespace statistics {
 namespace dds {
 
-using fastrtps::xmlparser::XMLProfileManager;
-using fastrtps::xmlparser::XMLP_ret;
-using fastrtps::xmlparser::DEFAULT_STATISTICS_DATAWRITER_PROFILE;
-using fastrtps::PublisherAttributes;
+using xmlparser::XMLProfileManager;
+using xmlparser::XMLP_ret;
+using xmlparser::DEFAULT_STATISTICS_DATAWRITER_PROFILE;
 
 constexpr const char* HISTORY_LATENCY_TOPIC_ALIAS = "HISTORY_LATENCY_TOPIC";
 constexpr const char* NETWORK_LATENCY_TOPIC_ALIAS = "NETWORK_LATENCY_TOPIC";
@@ -77,38 +77,39 @@ constexpr const char* EDP_PACKETS_TOPIC_ALIAS = "EDP_PACKETS_TOPIC";
 constexpr const char* DISCOVERY_TOPIC_ALIAS = "DISCOVERY_TOPIC";
 constexpr const char* SAMPLE_DATAS_TOPIC_ALIAS = "SAMPLE_DATAS_TOPIC";
 constexpr const char* PHYSICAL_DATA_TOPIC_ALIAS = "PHYSICAL_DATA_TOPIC";
+constexpr const char* MONITOR_SERVICE_TOPIC_ALIAS = "MONITOR_SERVICE_TOPIC";
 
 static constexpr uint32_t participant_statistics_mask =
-        EventKindBits::RTPS_SENT | EventKindBits::RTPS_LOST | EventKindBits::NETWORK_LATENCY |
-        EventKindBits::EDP_PACKETS | EventKindBits::PDP_PACKETS |
-        EventKindBits::PHYSICAL_DATA | EventKindBits::DISCOVERED_ENTITY;
+        EventKind::RTPS_SENT | EventKind::RTPS_LOST | EventKind::NETWORK_LATENCY |
+        EventKind::EDP_PACKETS | EventKind::PDP_PACKETS |
+        EventKind::PHYSICAL_DATA | EventKind::DISCOVERED_ENTITY;
 
 struct ValidEntry
 {
     const char* alias;
     const char* name;
-    EventKind event_kind;
+    uint32_t event_kind;
 };
 
 static const ValidEntry valid_entries[] =
 {
-    {HISTORY_LATENCY_TOPIC_ALIAS,         HISTORY_LATENCY_TOPIC,         HISTORY2HISTORY_LATENCY},
-    {NETWORK_LATENCY_TOPIC_ALIAS,         NETWORK_LATENCY_TOPIC,         NETWORK_LATENCY},
-    {PUBLICATION_THROUGHPUT_TOPIC_ALIAS,  PUBLICATION_THROUGHPUT_TOPIC,  PUBLICATION_THROUGHPUT},
-    {SUBSCRIPTION_THROUGHPUT_TOPIC_ALIAS, SUBSCRIPTION_THROUGHPUT_TOPIC, SUBSCRIPTION_THROUGHPUT},
-    {RTPS_SENT_TOPIC_ALIAS,               RTPS_SENT_TOPIC,               RTPS_SENT},
-    {RTPS_LOST_TOPIC_ALIAS,               RTPS_LOST_TOPIC,               RTPS_LOST},
-    {RESENT_DATAS_TOPIC_ALIAS,            RESENT_DATAS_TOPIC,            RESENT_DATAS},
-    {HEARTBEAT_COUNT_TOPIC_ALIAS,         HEARTBEAT_COUNT_TOPIC,         HEARTBEAT_COUNT},
-    {ACKNACK_COUNT_TOPIC_ALIAS,           ACKNACK_COUNT_TOPIC,           ACKNACK_COUNT},
-    {NACKFRAG_COUNT_TOPIC_ALIAS,          NACKFRAG_COUNT_TOPIC,          NACKFRAG_COUNT},
-    {GAP_COUNT_TOPIC_ALIAS,               GAP_COUNT_TOPIC,               GAP_COUNT},
-    {DATA_COUNT_TOPIC_ALIAS,              DATA_COUNT_TOPIC,              DATA_COUNT},
-    {PDP_PACKETS_TOPIC_ALIAS,             PDP_PACKETS_TOPIC,             PDP_PACKETS},
-    {EDP_PACKETS_TOPIC_ALIAS,             EDP_PACKETS_TOPIC,             EDP_PACKETS},
-    {DISCOVERY_TOPIC_ALIAS,               DISCOVERY_TOPIC,               DISCOVERED_ENTITY},
-    {SAMPLE_DATAS_TOPIC_ALIAS,            SAMPLE_DATAS_TOPIC,            SAMPLE_DATAS},
-    {PHYSICAL_DATA_TOPIC_ALIAS,           PHYSICAL_DATA_TOPIC,           PHYSICAL_DATA}
+    {HISTORY_LATENCY_TOPIC_ALIAS,         HISTORY_LATENCY_TOPIC,         EventKind::HISTORY2HISTORY_LATENCY},
+    {NETWORK_LATENCY_TOPIC_ALIAS,         NETWORK_LATENCY_TOPIC,         EventKind::NETWORK_LATENCY},
+    {PUBLICATION_THROUGHPUT_TOPIC_ALIAS,  PUBLICATION_THROUGHPUT_TOPIC,  EventKind::PUBLICATION_THROUGHPUT},
+    {SUBSCRIPTION_THROUGHPUT_TOPIC_ALIAS, SUBSCRIPTION_THROUGHPUT_TOPIC, EventKind::SUBSCRIPTION_THROUGHPUT},
+    {RTPS_SENT_TOPIC_ALIAS,               RTPS_SENT_TOPIC,               EventKind::RTPS_SENT},
+    {RTPS_LOST_TOPIC_ALIAS,               RTPS_LOST_TOPIC,               EventKind::RTPS_LOST},
+    {RESENT_DATAS_TOPIC_ALIAS,            RESENT_DATAS_TOPIC,            EventKind::RESENT_DATAS},
+    {HEARTBEAT_COUNT_TOPIC_ALIAS,         HEARTBEAT_COUNT_TOPIC,         EventKind::HEARTBEAT_COUNT},
+    {ACKNACK_COUNT_TOPIC_ALIAS,           ACKNACK_COUNT_TOPIC,           EventKind::ACKNACK_COUNT},
+    {NACKFRAG_COUNT_TOPIC_ALIAS,          NACKFRAG_COUNT_TOPIC,          EventKind::NACKFRAG_COUNT},
+    {GAP_COUNT_TOPIC_ALIAS,               GAP_COUNT_TOPIC,               EventKind::GAP_COUNT},
+    {DATA_COUNT_TOPIC_ALIAS,              DATA_COUNT_TOPIC,              EventKind::DATA_COUNT},
+    {PDP_PACKETS_TOPIC_ALIAS,             PDP_PACKETS_TOPIC,             EventKind::PDP_PACKETS},
+    {EDP_PACKETS_TOPIC_ALIAS,             EDP_PACKETS_TOPIC,             EventKind::EDP_PACKETS},
+    {DISCOVERY_TOPIC_ALIAS,               DISCOVERY_TOPIC,               EventKind::DISCOVERED_ENTITY},
+    {SAMPLE_DATAS_TOPIC_ALIAS,            SAMPLE_DATAS_TOPIC,            EventKind::SAMPLE_DATAS},
+    {PHYSICAL_DATA_TOPIC_ALIAS,           PHYSICAL_DATA_TOPIC,           EventKind::PHYSICAL_DATA}
 };
 
 ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
@@ -116,15 +117,15 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
         const efd::DataWriterQos& dwqos)
 {
     std::string use_topic_name;
-    EventKind event_kind;
+    uint32_t event_kind;
     if (!transform_and_check_topic_name(topic_name, use_topic_name, event_kind))
     {
-        return ReturnCode_t::RETCODE_BAD_PARAMETER;
+        return efd::RETCODE_BAD_PARAMETER;
     }
 
-    if (!efd::DataWriterImpl::check_qos(dwqos))
+    if (efd::RETCODE_OK != efd::DataWriterImpl::check_qos(dwqos))
     {
-        return ReturnCode_t::RETCODE_INCONSISTENT_POLICY;
+        return efd::RETCODE_INCONSISTENT_POLICY;
     }
 
     // Register type and topic
@@ -134,7 +135,7 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
         // Check if the statistics DataWriter already exists and create statistics DataWriter if it does not.
         if (nullptr == builtin_publisher_->lookup_datawriter(use_topic_name))
         {
-            fastrtps::rtps::EntityId_t entity_id;
+            fastdds::rtps::EntityId_t entity_id;
             set_statistics_entity_id(event_kind, entity_id);
             efd::TypeSupport type = participant_->find_type(topic->get_type_name());
             auto writer_impl = builtin_publisher_impl_->create_datawriter_impl(type, topic, dwqos, entity_id);
@@ -146,7 +147,7 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
                 // Remove topic and type
                 delete_topic_and_type(use_topic_name);
                 EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT, topic_name << " DataWriter creation has failed");
-                return ReturnCode_t::RETCODE_ERROR;
+                return efd::RETCODE_ERROR;
             }
 
             if (PHYSICAL_DATA_TOPIC == use_topic_name)
@@ -155,7 +156,7 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
                 notification.participant_guid(*reinterpret_cast<const detail::GUID_s*>(&guid()));
                 notification.host(asio::ip::host_name() + ":" + std::to_string(efd::utils::default_domain_id()));
                 std::string username;
-                if (ReturnCode_t::RETCODE_OK == SystemInfo::get_username(username))
+                if (efd::RETCODE_OK == SystemInfo::get_username(username))
                 {
                     notification.user(username);
                 }
@@ -172,9 +173,9 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter(
                 rtps_participant_->set_enabled_statistics_writers_mask(statistics_listener_->enabled_writers_mask());
             }
         }
-        return ReturnCode_t::RETCODE_OK;
+        return efd::RETCODE_OK;
     }
-    return ReturnCode_t::RETCODE_ERROR;
+    return efd::RETCODE_ERROR;
 }
 
 ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter_with_profile(
@@ -182,23 +183,23 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter_with_profile(
         const std::string& topic_name)
 {
     DataWriterQos datawriter_qos;
-    PublisherAttributes attr;
+    xmlparser::PublisherAttributes attr;
     if (XMLP_ret::XML_OK == XMLProfileManager::fillPublisherAttributes(profile_name, attr, false))
     {
         efd::utils::set_qos_from_attributes(datawriter_qos, attr);
 
         ReturnCode_t ret = enable_statistics_datawriter(topic_name, datawriter_qos);
-        // case RETCODE_ERROR is checked and logged in enable_statistics_datawriter.
-        // case RETCODE_INCONSISTENT_POLICY could happen if profile defined in XML is inconsistent.
-        // case RETCODE_UNSUPPORTED cannot happen because this method is only called if FASTDDS_STATISTICS
+        // case efd::RETCODE_ERROR is checked and logged in enable_statistics_datawriter.
+        // case efd::RETCODE_INCONSISTENT_POLICY could happen if profile defined in XML is inconsistent.
+        // case efd::RETCODE_UNSUPPORTED cannot happen because this method is only called if FASTDDS_STATISTICS
         // CMake option is enabled
-        if (ret == ReturnCode_t::RETCODE_INCONSISTENT_POLICY)
+        if (ret == efd::RETCODE_INCONSISTENT_POLICY)
         {
             EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
                     "Statistics DataWriter QoS from profile name " << profile_name << " are not consistent/compatible");
         }
-        assert(ret != ReturnCode_t::RETCODE_UNSUPPORTED);
-        if (ret == ReturnCode_t::RETCODE_BAD_PARAMETER)
+        assert(ret != efd::RETCODE_UNSUPPORTED);
+        if (ret == efd::RETCODE_BAD_PARAMETER)
         {
             EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
                     "Profile name " << profile_name << " is not a valid statistics topic name/alias");
@@ -207,18 +208,18 @@ ReturnCode_t DomainParticipantImpl::enable_statistics_datawriter_with_profile(
     }
     EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
             "Profile name " << profile_name << " has not been found");
-    return ReturnCode_t::RETCODE_ERROR;
+    return efd::RETCODE_ERROR;
 }
 
 ReturnCode_t DomainParticipantImpl::disable_statistics_datawriter(
         const std::string& topic_name)
 {
-    ReturnCode_t ret = ReturnCode_t::RETCODE_OK;
+    ReturnCode_t ret = efd::RETCODE_OK;
     std::string use_topic_name;
-    EventKind event_kind;
+    uint32_t event_kind;
     if (!transform_and_check_topic_name(topic_name, use_topic_name, event_kind))
     {
-        return ReturnCode_t::RETCODE_BAD_PARAMETER;
+        return efd::RETCODE_BAD_PARAMETER;
     }
 
     // Delete statistics DataWriter
@@ -231,18 +232,18 @@ ReturnCode_t DomainParticipantImpl::disable_statistics_datawriter(
         rtps_participant_->set_enabled_statistics_writers_mask(statistics_listener_->enabled_writers_mask());
 
         // Delete the DataWriter
-        if (ReturnCode_t::RETCODE_OK != builtin_publisher_->delete_datawriter(writer))
+        if (efd::RETCODE_OK != builtin_publisher_->delete_datawriter(writer))
         {
             // Restore writer on listener before returning the error
             statistics_listener_->set_datawriter(event_kind, writer);
             rtps_participant_->set_enabled_statistics_writers_mask(statistics_listener_->enabled_writers_mask());
-            ret = ReturnCode_t::RETCODE_ERROR;
+            ret = efd::RETCODE_ERROR;
         }
 
         // Deregister type and delete topic
         if (!delete_topic_and_type(use_topic_name))
         {
-            ret = ReturnCode_t::RETCODE_ERROR;
+            ret = efd::RETCODE_ERROR;
         }
     }
     return ret;
@@ -252,10 +253,24 @@ ReturnCode_t DomainParticipantImpl::enable()
 {
     ReturnCode_t ret = efd::DomainParticipantImpl::enable();
 
-    if (ReturnCode_t::RETCODE_OK == ret)
+    if (efd::RETCODE_OK == ret)
     {
         rtps_participant_->add_statistics_listener(statistics_listener_, participant_statistics_mask);
         create_statistics_builtin_entities();
+
+        if (!rtps_participant_->is_monitor_service_created())
+        {
+            auto enable_ms_property_value = fastdds::rtps::PropertyPolicyHelper::find_property(
+                qos_.properties(), fastdds::dds::parameter_enable_monitor_service);
+
+            if (nullptr != enable_ms_property_value && *enable_ms_property_value == "true")
+            {
+                if (enable_monitor_service() != efd::RETCODE_OK)
+                {
+                    EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT, "Could not enable the Monitor Service");
+                }
+            }
+        }
     }
 
     return ret;
@@ -272,12 +287,78 @@ void DomainParticipantImpl::disable()
 
 ReturnCode_t DomainParticipantImpl::delete_contained_entities()
 {
-    ReturnCode_t ret = efd::DomainParticipantImpl::delete_contained_entities();
+    delete_statistics_builtin_entities();
+    return efd::DomainParticipantImpl::delete_contained_entities();
+}
 
-    if (ret == ReturnCode_t::RETCODE_OK)
+ReturnCode_t DomainParticipantImpl::enable_monitor_service()
+{
+    ReturnCode_t ret = efd::RETCODE_OK;
+
+    if (!rtps_participant_->is_monitor_service_created())
     {
-        builtin_publisher_impl_ = nullptr;
-        builtin_publisher_ = nullptr;
+        status_observer_.store(rtps_participant_->create_monitor_service(*this));
+    }
+
+    if (!rtps_participant_->enable_monitor_service() ||
+            nullptr == status_observer_)
+    {
+        ret = efd::RETCODE_ERROR;
+    }
+
+    return ret;
+}
+
+ReturnCode_t DomainParticipantImpl::disable_monitor_service()
+{
+    ReturnCode_t ret = efd::RETCODE_OK;
+
+    if (!rtps_participant_->is_monitor_service_created() ||
+            !rtps_participant_->disable_monitor_service())
+    {
+        ret = efd::RETCODE_NOT_ENABLED;
+    }
+
+    return ret;
+}
+
+ReturnCode_t DomainParticipantImpl::fill_discovery_data_from_cdr_message(
+        fastdds::rtps::ParticipantBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+    ReturnCode_t ret{efd::RETCODE_OK};
+
+    if (!get_rtps_participant()->fill_discovery_data_from_cdr_message(data, msg))
+    {
+        ret = efd::RETCODE_ERROR;
+    }
+
+    return ret;
+}
+
+ReturnCode_t DomainParticipantImpl::fill_discovery_data_from_cdr_message(
+        fastdds::dds::PublicationBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+    ReturnCode_t ret{efd::RETCODE_OK};
+
+    if (!get_rtps_participant()->fill_discovery_data_from_cdr_message(data, msg))
+    {
+        ret = efd::RETCODE_ERROR;
+    }
+
+    return ret;
+}
+
+ReturnCode_t DomainParticipantImpl::fill_discovery_data_from_cdr_message(
+        fastdds::dds::SubscriptionBuiltinTopicData& data,
+        const fastdds::statistics::MonitorServiceStatusData& msg)
+{
+    ReturnCode_t ret{efd::RETCODE_OK};
+
+    if (!get_rtps_participant()->fill_discovery_data_from_cdr_message(data, msg))
+    {
+        ret = efd::RETCODE_ERROR;
     }
 
     return ret;
@@ -309,7 +390,7 @@ void DomainParticipantImpl::create_statistics_builtin_entities()
 
     // Enable statistics datawriters
     // 1. Find fastdds_statistics PropertyPolicyQos
-    const std::string* property_topic_list = eprosima::fastrtps::rtps::PropertyPolicyHelper::find_property(
+    const std::string* property_topic_list = eprosima::fastdds::rtps::PropertyPolicyHelper::find_property(
         get_qos().properties(), "fastdds.statistics");
 
     if (nullptr != property_topic_list)
@@ -335,8 +416,18 @@ void DomainParticipantImpl::enable_statistics_builtin_datawriters(
     std::string topic;
     while (std::getline(topics, topic, ';'))
     {
+        if (MONITOR_SERVICE_TOPIC_ALIAS == topic)
+        {
+            if (!rtps_participant_->is_monitor_service_created() &&
+                    enable_monitor_service() != efd::RETCODE_OK)
+            {
+                EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT, "Could not enable the Monitor Service");
+            }
+            continue;
+        }
+
         DataWriterQos datawriter_qos;
-        PublisherAttributes attr;
+        xmlparser::PublisherAttributes attr;
         if (XMLP_ret::XML_OK == XMLProfileManager::fillPublisherAttributes(topic, attr, false))
         {
             efd::utils::set_qos_from_attributes(datawriter_qos, attr);
@@ -348,17 +439,17 @@ void DomainParticipantImpl::enable_statistics_builtin_datawriters(
         }
 
         ReturnCode_t ret = enable_statistics_datawriter(topic, datawriter_qos);
-        // case RETCODE_ERROR is checked and logged in enable_statistics_datawriter.
-        // case RETCODE_INCONSISTENT_POLICY could happen if profile defined in XML is inconsistent.
-        // case RETCODE_UNSUPPORTED cannot happen because this method is only called if FASTDDS_STATISTICS
+        // case efd::RETCODE_ERROR is checked and logged in enable_statistics_datawriter.
+        // case efd::RETCODE_INCONSISTENT_POLICY could happen if profile defined in XML is inconsistent.
+        // case efd::RETCODE_UNSUPPORTED cannot happen because this method is only called if FASTDDS_STATISTICS
         // CMake option is enabled
-        if (ret == ReturnCode_t::RETCODE_INCONSISTENT_POLICY)
+        if (ret == efd::RETCODE_INCONSISTENT_POLICY)
         {
             EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
                     "Statistics DataWriter QoS from topic " << topic << " are not consistent/compatible");
         }
-        assert(ret != ReturnCode_t::RETCODE_UNSUPPORTED);
-        if (ret == ReturnCode_t::RETCODE_BAD_PARAMETER)
+        assert(ret != efd::RETCODE_UNSUPPORTED);
+        if (ret == efd::RETCODE_BAD_PARAMETER)
         {
             EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
                     "Topic " << topic << " is not a valid statistics topic name/alias");
@@ -402,7 +493,7 @@ bool DomainParticipantImpl::is_statistics_topic_name(
 bool DomainParticipantImpl::transform_and_check_topic_name(
         const std::string& topic_name_or_alias,
         std::string& topic_name,
-        EventKind& event_kind) noexcept
+        uint32_t& event_kind) noexcept
 {
     for (const ValidEntry& entry : valid_entries)
     {
@@ -425,21 +516,25 @@ bool DomainParticipantImpl::register_statistics_type_and_topic(
     if (HISTORY_LATENCY_TOPIC == topic_name)
     {
         efd::TypeSupport history_latency_type(new WriterReaderDataPubSubType);
+        history_latency_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, history_latency_type);
     }
     else if (NETWORK_LATENCY_TOPIC == topic_name)
     {
         efd::TypeSupport network_latency_type(new Locator2LocatorDataPubSubType);
+        network_latency_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, network_latency_type);
     }
     else if (PUBLICATION_THROUGHPUT_TOPIC == topic_name || SUBSCRIPTION_THROUGHPUT_TOPIC == topic_name)
     {
         efd::TypeSupport throughput_type(new EntityDataPubSubType);
+        throughput_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, throughput_type);
     }
     else if (RTPS_SENT_TOPIC == topic_name || RTPS_LOST_TOPIC == topic_name)
     {
         efd::TypeSupport rtps_traffic_type(new Entity2LocatorTrafficPubSubType);
+        rtps_traffic_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, rtps_traffic_type);
     }
     else if (RESENT_DATAS_TOPIC == topic_name || HEARTBEAT_COUNT_TOPIC == topic_name ||
@@ -447,21 +542,25 @@ bool DomainParticipantImpl::register_statistics_type_and_topic(
             DATA_COUNT_TOPIC == topic_name || PDP_PACKETS_TOPIC == topic_name || EDP_PACKETS_TOPIC == topic_name)
     {
         efd::TypeSupport count_type(new EntityCountPubSubType);
+        count_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, count_type);
     }
     else if (DISCOVERY_TOPIC == topic_name)
     {
         efd::TypeSupport discovery_type(new DiscoveryTimePubSubType);
+        discovery_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, discovery_type);
     }
     else if (SAMPLE_DATAS_TOPIC == topic_name)
     {
         efd::TypeSupport sample_identity_count_type(new SampleIdentityCountPubSubType);
+        sample_identity_count_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, sample_identity_count_type);
     }
     else if (PHYSICAL_DATA_TOPIC == topic_name)
     {
         efd::TypeSupport physical_data_type(new PhysicalDataPubSubType);
+        physical_data_type->register_type_object_representation();
         return_code = find_or_create_topic_and_type(topic, topic_name, physical_data_type);
     }
     return return_code;
@@ -476,10 +575,10 @@ bool DomainParticipantImpl::find_or_create_topic_and_type(
     efd::TopicDescription* topic_desc = lookup_topicdescription(topic_name);
     if (nullptr != topic_desc)
     {
-        if (topic_desc->get_type_name() != type->getName())
+        if (topic_desc->get_type_name() != type->get_name())
         {
             EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
-                    topic_name << " is not using expected type " << type->getName() <<
+                    topic_name << " is not using expected type " << type->get_name() <<
                     " and is using instead type " << topic_desc->get_type_name());
             return false;
         }
@@ -492,14 +591,14 @@ bool DomainParticipantImpl::find_or_create_topic_and_type(
     }
     else
     {
-        if (ReturnCode_t::RETCODE_PRECONDITION_NOT_MET == register_type(type, type->getName()))
+        if (efd::RETCODE_PRECONDITION_NOT_MET == register_type(type, type->get_name()))
         {
             // No log because it is already logged within register_type
             return false;
         }
         // Create topic. No need to check return pointer. It fails if the topic already exists, if the QoS is
         // inconsistent or if the type is not registered.
-        *topic = create_topic(topic_name, type->getName(), efd::TOPIC_QOS_DEFAULT);
+        *topic = create_topic(topic_name, type->get_name(), efd::TOPIC_QOS_DEFAULT);
     }
     assert(nullptr != *topic);
     return true;
@@ -514,7 +613,7 @@ bool DomainParticipantImpl::delete_topic_and_type(
     std::string type_name = topic->get_type_name();
     // delete_topic can fail if the topic is referenced by any other entity. This case could happen even if
     // it should not. It also fails if topic is a nullptr (dynamic_cast failure).
-    if (ReturnCode_t::RETCODE_OK != delete_topic(topic))
+    if (efd::RETCODE_OK != delete_topic(topic))
     {
         return false;
     }
@@ -522,6 +621,45 @@ bool DomainParticipantImpl::delete_topic_and_type(
     // expected) and if the type_name is empty (which is not going to happen).
     unregister_type(type_name);
     return true;
+}
+
+bool DomainParticipantImpl::get_monitoring_status(
+        const fastdds::rtps::GUID_t& entity_guid,
+        eprosima::fastdds::statistics::MonitorServiceData& status)
+{
+    ReturnCode_t ret = efd::RETCODE_ERROR;
+
+    if (entity_guid.entityId.is_reader())
+    {
+        std::lock_guard<std::mutex> lock(mtx_subs_);
+        for (auto& sub : subscribers_)
+        {
+            if (sub.second->get_monitoring_status(status, entity_guid))
+            {
+                ret = efd::RETCODE_OK;
+                break;
+            }
+        }
+    }
+    else if (entity_guid.entityId.is_writer())
+    {
+        std::lock_guard<std::mutex> lock(mtx_pubs_);
+        for (auto& pub : publishers_)
+        {
+            if (pub.second->get_monitoring_status(status, entity_guid))
+            {
+                ret = efd::RETCODE_OK;
+                break;
+            }
+        }
+    }
+    else
+    {
+        EPROSIMA_LOG_ERROR(STATISTICS_DOMAIN_PARTICIPANT,
+                "Unknown entity type to get the status from " << entity_guid.entityId);
+    }
+
+    return (ret == efd::RETCODE_OK);
 }
 
 } // dds

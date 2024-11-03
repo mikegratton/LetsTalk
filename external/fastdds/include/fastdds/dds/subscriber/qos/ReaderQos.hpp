@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef _FASTDDS_DDS_QOS_READERQOS_HPP_
-#define _FASTDDS_DDS_QOS_READERQOS_HPP_
+#ifndef FASTDDS_DDS_SUBSCRIBER_QOS__READERQOS_HPP
+#define FASTDDS_DDS_SUBSCRIBER_QOS__READERQOS_HPP
 
 #include <fastdds/dds/core/policy/QosPolicies.hpp>
 
@@ -31,17 +31,17 @@ namespace dds {
  * Although these values can be set and are transmitted
  * during the Endpoint Discovery Protocol, not all of the behaviour associated with them has been implemented in the library.
  * Please consult each of them to check for implementation details and default values.
- * @ingroup FASTRTPS_ATTRIBUTES_MODULE
+ * @ingroup FASTDDS_QOS_MODULE
  */
 class ReaderQos
 {
 public:
 
-    RTPS_DllAPI ReaderQos()
+    FASTDDS_EXPORTED_API ReaderQos()
     {
     }
 
-    RTPS_DllAPI virtual ~ReaderQos()
+    FASTDDS_EXPORTED_API virtual ~ReaderQos()
     {
     }
 
@@ -131,7 +131,7 @@ public:
      * @param readerqos Reference from a ReaderQos object.
      * @param first_time Boolean indicating whether is the first time (If not some parameters cannot be set).
      */
-    RTPS_DllAPI void setQos(
+    FASTDDS_EXPORTED_API void setQos(
             const ReaderQos& readerqos,
             bool first_time);
 
@@ -139,14 +139,14 @@ public:
      * Check if the Qos values are compatible between each other.
      * @return True if correct.
      */
-    RTPS_DllAPI bool checkQos() const;
+    FASTDDS_EXPORTED_API bool checkQos() const;
 
     /**
      * Check if the Qos can be update with the values provided. This method DOES NOT update anything.
      * @param qos Reference to the new qos.
      * @return True if they can be updated.
      */
-    RTPS_DllAPI bool canQosBeUpdated(
+    FASTDDS_EXPORTED_API bool canQosBeUpdated(
             const ReaderQos& qos) const;
 
     void clear();
@@ -156,4 +156,4 @@ public:
 } //namespace fastdds
 } //namespace eprosima
 
-#endif // _FASTDDS_DDS_QOS_READERQOS_HPP_
+#endif // FASTDDS_DDS_SUBSCRIBER_QOS__READERQOS_HPP

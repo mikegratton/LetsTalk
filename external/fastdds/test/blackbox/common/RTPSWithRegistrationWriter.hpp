@@ -30,17 +30,18 @@
 #include <gtest/gtest.h>
 
 #include <fastdds/dds/publisher/qos/WriterQos.hpp>
-#include <fastdds/rtps/attributes/HistoryAttributes.h>
-#include <fastdds/rtps/attributes/RTPSParticipantAttributes.h>
-#include <fastdds/rtps/attributes/WriterAttributes.h>
-#include <fastdds/rtps/history/WriterHistory.h>
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.hpp>
+#include <fastdds/rtps/attributes/WriterAttributes.hpp>
+#include <fastdds/rtps/builtin/data/PublicationBuiltinTopicData.hpp>
+#include <fastdds/rtps/builtin/data/TopicDescription.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
 #include <fastdds/rtps/interfaces/IReaderDataFilter.hpp>
-#include <fastdds/rtps/participant/RTPSParticipant.h>
-#include <fastdds/rtps/RTPSDomain.h>
-#include <fastdds/rtps/transport/TransportDescriptorInterface.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
-#include <fastdds/rtps/writer/WriterListener.h>
-#include <fastrtps/attributes/TopicAttributes.h>
+#include <fastdds/rtps/participant/RTPSParticipant.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <fastdds/rtps/transport/TransportDescriptorInterface.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
+#include <fastdds/rtps/writer/WriterListener.hpp>
 
 template<class TypeSupport>
 class RTPSWithRegistrationWriter
@@ -51,14 +52,14 @@ public:
     typedef typename type_support::type type;
 
     using OnReaderDiscoveryFunctor = std::function <void (
-                        eprosima::fastrtps::rtps::ReaderDiscoveryInfo::DISCOVERY_STATUS,
-                        const eprosima::fastrtps::rtps::GUID_t&,
-                        const eprosima::fastrtps::rtps::ReaderProxyData*
+                        eprosima::fastdds::rtps::ReaderDiscoveryStatus,
+                        const eprosima::fastdds::rtps::GUID_t&,
+                        const eprosima::fastdds::rtps::SubscriptionBuiltinTopicData*
                         )>;
 
 private:
 
-    class Listener : public eprosima::fastrtps::rtps::WriterListener
+    class Listener : public eprosima::fastdds::rtps::WriterListener
     {
     public:
 
@@ -72,25 +73,25 @@ private:
         {
         }
 
-        void onWriterMatched(
-                eprosima::fastrtps::rtps::RTPSWriter* /*writer*/,
-                eprosima::fastrtps::rtps::MatchingInfo& info) override
+        void on_writer_matched(
+                eprosima::fastdds::rtps::RTPSWriter* /*writer*/,
+                const eprosima::fastdds::rtps::MatchingInfo& info) override
         {
-            if (info.status == eprosima::fastrtps::rtps::MATCHED_MATCHING)
+            if (info.status == eprosima::fastdds::rtps::MATCHED_MATCHING)
             {
                 writer_.matched();
             }
-            else if (info.status == eprosima::fastrtps::rtps::REMOVED_MATCHING)
+            else if (info.status == eprosima::fastdds::rtps::REMOVED_MATCHING)
             {
                 writer_.unmatched();
             }
         }
 
         void on_reader_discovery(
-                eprosima::fastrtps::rtps::RTPSWriter* writer,
-                eprosima::fastrtps::rtps::ReaderDiscoveryInfo::DISCOVERY_STATUS reason,
-                const eprosima::fastrtps::rtps::GUID_t& reader_guid,
-                const eprosima::fastrtps::rtps::ReaderProxyData* reader_info) override
+                eprosima::fastdds::rtps::RTPSWriter* writer,
+                eprosima::fastdds::rtps::ReaderDiscoveryStatus reason,
+                const eprosima::fastdds::rtps::GUID_t& reader_guid,
+                const eprosima::fastdds::rtps::SubscriptionBuiltinTopicData* reader_info) override
         {
             writer_.on_reader_discovery(writer, reason, reader_guid, reader_info);
         }
@@ -115,7 +116,7 @@ public:
 
     RTPSWithRegistrationWriter(
             const std::string& topic_name,
-            eprosima::fastrtps::rtps::RTPSParticipant* participant)
+            eprosima::fastdds::rtps::RTPSParticipant* participant)
         : listener_(*this)
         , participant_(participant)
         , destroy_participant_(nullptr == participant)
@@ -124,21 +125,33 @@ public:
         , initialized_(false)
         , matched_(0)
     {
-        topic_attr_.topicDataType = type_.getName();
+        pub_builtin_data_.type_name = type_.get_name();
         // Generate topic name
         std::ostringstream t;
         t << topic_name << "_" << asio::ip::host_name() << "_" << GET_PID();
-        topic_attr_.topicName = t.str();
+        pub_builtin_data_.topic_name = t.str();
+
+        // The tests are assuming a default durability of TRANSIENT_LOCAL, which is not the default mandated by the DDS standard.
+        pub_builtin_data_.durability.kind = eprosima::fastdds::dds::TRANSIENT_LOCAL_DURABILITY_QOS;
 
         // By default, heartbeat period and nack response delay are 100 milliseconds.
-        writer_attr_.times.heartbeatPeriod.seconds = 0;
-        writer_attr_.times.heartbeatPeriod.nanosec = 100000000;
-        writer_attr_.times.nackResponseDelay.seconds = 0;
-        writer_attr_.times.nackResponseDelay.nanosec = 100000000;
+        writer_attr_.times.heartbeat_period.seconds = 0;
+        writer_attr_.times.heartbeat_period.nanosec = 100000000;
+        writer_attr_.times.nack_response_delay.seconds = 0;
+        writer_attr_.times.nack_response_delay.nanosec = 100000000;
 
         participant_attr_.builtin.discovery_config.discoveryProtocol =
-                eprosima::fastrtps::rtps::DiscoveryProtocol::SIMPLE;
+                eprosima::fastdds::rtps::DiscoveryProtocol::SIMPLE;
         participant_attr_.builtin.use_WriterLivelinessProtocol = true;
+
+        if (type_.is_compute_key_provided)
+        {
+            writer_attr_.endpoint.topicKind = eprosima::fastdds::rtps::WITH_KEY;
+        }
+        else
+        {
+            writer_attr_.endpoint.topicKind = eprosima::fastdds::rtps::NO_KEY;
+        }
     }
 
     virtual ~RTPSWithRegistrationWriter()
@@ -153,24 +166,31 @@ public:
         //Create participant
         if (nullptr == participant_)
         {
-            participant_ = eprosima::fastrtps::rtps::RTPSDomain::createParticipant(
+            participant_ = eprosima::fastdds::rtps::RTPSDomain::createParticipant(
                 static_cast<uint32_t>(GET_PID()) % 230, participant_attr_);
         }
         ASSERT_NE(participant_, nullptr);
 
         //Create writerhistory
-        hattr_.payloadMaxSize = type_.m_typeSize;
-        history_ = new eprosima::fastrtps::rtps::WriterHistory(hattr_);
-
-        //Create writer
+        hattr_.payloadMaxSize = type_.max_serialized_type_size;
         if (has_payload_pool_)
         {
-            writer_ = eprosima::fastrtps::rtps::RTPSDomain::createRTPSWriter(
-                participant_, writer_attr_, payload_pool_, history_, &listener_);
+            history_ = new eprosima::fastdds::rtps::WriterHistory(hattr_, payload_pool_);
         }
         else
         {
-            writer_ = eprosima::fastrtps::rtps::RTPSDomain::createRTPSWriter(
+            history_ = new eprosima::fastdds::rtps::WriterHistory(hattr_);
+        }
+
+        //Create writer
+        if (custom_entity_id_ != eprosima::fastdds::rtps::c_EntityId_Unknown)
+        {
+            writer_ = eprosima::fastdds::rtps::RTPSDomain::createRTPSWriter(
+                participant_, custom_entity_id_, writer_attr_, history_, &listener_);
+        }
+        else
+        {
+            writer_ = eprosima::fastdds::rtps::RTPSDomain::createRTPSWriter(
                 participant_, writer_attr_, history_, &listener_);
         }
 
@@ -179,7 +199,10 @@ public:
             return;
         }
 
-        ASSERT_EQ(participant_->registerWriter(writer_, topic_attr_, writer_qos_), true);
+        eprosima::fastdds::rtps::TopicDescription topic_desc;
+        topic_desc.type_name = type_.get_name();
+        topic_desc.topic_name = pub_builtin_data_.topic_name;
+        ASSERT_EQ(participant_->register_writer(writer_, topic_desc, writer_qos_), true);
 
         initialized_ = true;
     }
@@ -191,14 +214,14 @@ public:
             return;
         }
 
-        ASSERT_TRUE(participant_->updateWriter(writer_, topic_attr_, writer_qos_));
+        ASSERT_TRUE(participant_->update_writer(writer_, writer_qos_));
     }
 
     void destroy()
     {
         if (destroy_participant_ && participant_ != nullptr)
         {
-            eprosima::fastrtps::rtps::RTPSDomain::removeRTPSParticipant(participant_);
+            eprosima::fastdds::rtps::RTPSDomain::removeRTPSParticipant(participant_);
         }
         if (history_ != nullptr)
         {
@@ -224,7 +247,12 @@ public:
 
         while (it != msgs.end())
         {
-            eprosima::fastrtps::rtps::CacheChange_t* ch = writer_->new_change(*it, eprosima::fastrtps::rtps::ALIVE);
+            eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastdds::rtps::DEFAULT_XCDR_VERSION);
+            size_t current_alignment{ 0 };
+            uint32_t cdr_size = static_cast<uint32_t>(
+                calculator.calculate_serialized_size(*it, current_alignment));
+            eprosima::fastdds::rtps::CacheChange_t* ch = history_->create_change(
+                cdr_size, eprosima::fastdds::rtps::ALIVE);
 
             eprosima::fastcdr::FastBuffer buffer((char*)ch->serializedPayload.data, ch->serializedPayload.max_size);
             eprosima::fastcdr::Cdr cdr(buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
@@ -244,10 +272,14 @@ public:
         }
     }
 
-    eprosima::fastrtps::rtps::CacheChange_t* send_sample(
+    eprosima::fastdds::rtps::CacheChange_t* send_sample(
             type& msg)
     {
-        eprosima::fastrtps::rtps::CacheChange_t* ch = writer_->new_change(msg, eprosima::fastrtps::rtps::ALIVE);
+        eprosima::fastcdr::CdrSizeCalculator calculator(eprosima::fastdds::rtps::DEFAULT_XCDR_VERSION);
+        size_t current_alignment{ 0 };
+        uint32_t cdr_size = static_cast<uint32_t>(calculator.calculate_serialized_size(msg, current_alignment));
+        eprosima::fastdds::rtps::CacheChange_t* ch = history_->create_change(
+            cdr_size, eprosima::fastdds::rtps::ALIVE);
 
         eprosima::fastcdr::FastBuffer buffer((char*)ch->serializedPayload.data, ch->serializedPayload.max_size);
         eprosima::fastcdr::Cdr cdr(buffer, eprosima::fastcdr::Cdr::DEFAULT_ENDIAN,
@@ -267,7 +299,7 @@ public:
     }
 
     bool remove_change (
-            const eprosima::fastrtps::rtps::SequenceNumber_t& sequence_number)
+            const eprosima::fastdds::rtps::SequenceNumber_t& sequence_number)
     {
         return history_->remove_change(sequence_number);
     }
@@ -340,10 +372,10 @@ public:
     bool waitForAllAcked(
             const std::chrono::duration<_Rep, _Period>& max_wait)
     {
-        eprosima::fastrtps::Duration_t timeout;
+        eprosima::fastdds::dds::Duration_t timeout;
         if (max_wait == std::chrono::seconds::zero())
         {
-            timeout = eprosima::fastrtps::c_TimeInfinite;
+            timeout = eprosima::fastdds::dds::c_TimeInfinite;
         }
         else
         {
@@ -358,7 +390,7 @@ public:
 
     /*** Function to change QoS ***/
     RTPSWithRegistrationWriter& payload_pool(
-            const std::shared_ptr<eprosima::fastrtps::rtps::IPayloadPool>& pool)
+            const std::shared_ptr<eprosima::fastdds::rtps::IPayloadPool>& pool)
     {
         payload_pool_ = pool;
         has_payload_pool_ = true;
@@ -366,52 +398,44 @@ public:
     }
 
     RTPSWithRegistrationWriter& memoryMode(
-            const eprosima::fastrtps::rtps::MemoryManagementPolicy_t memoryPolicy)
+            const eprosima::fastdds::rtps::MemoryManagementPolicy_t memoryPolicy)
     {
         hattr_.memoryPolicy = memoryPolicy;
         return *this;
     }
 
     RTPSWithRegistrationWriter& reliability(
-            const eprosima::fastrtps::rtps::ReliabilityKind_t kind)
+            const eprosima::fastdds::rtps::ReliabilityKind_t kind)
     {
         writer_attr_.endpoint.reliabilityKind = kind;
 
-        if (kind == eprosima::fastrtps::rtps::ReliabilityKind_t::BEST_EFFORT)
+        if (kind == eprosima::fastdds::rtps::ReliabilityKind_t::BEST_EFFORT)
         {
-            writer_qos_.m_reliability.kind = eprosima::fastrtps::BEST_EFFORT_RELIABILITY_QOS;
+            writer_qos_.m_reliability.kind = eprosima::fastdds::dds::BEST_EFFORT_RELIABILITY_QOS;
         }
         else
         {
-            writer_qos_.m_reliability.kind = eprosima::fastrtps::RELIABLE_RELIABILITY_QOS;
+            writer_qos_.m_reliability.kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
         }
+        pub_builtin_data_.reliability = writer_qos_.m_reliability;
 
         return *this;
     }
 
     RTPSWithRegistrationWriter& durability(
-            const eprosima::fastrtps::rtps::DurabilityKind_t kind)
+            const eprosima::fastdds::rtps::DurabilityKind_t kind)
     {
         writer_attr_.endpoint.durabilityKind = kind;
         writer_qos_.m_durability.durabilityKind(kind);
+        pub_builtin_data_.durability = writer_qos_.m_durability;
 
         return *this;
     }
 
     RTPSWithRegistrationWriter& asynchronously(
-            const eprosima::fastrtps::rtps::RTPSWriterPublishMode mode)
+            const eprosima::fastdds::rtps::RTPSWriterPublishMode mode)
     {
         writer_attr_.mode = mode;
-
-        return *this;
-    }
-
-    RTPSWithRegistrationWriter& add_throughput_controller_descriptor_to_pparams(
-            uint32_t bytesPerPeriod,
-            uint32_t periodInMs)
-    {
-        eprosima::fastrtps::rtps::ThroughputControllerDescriptor descriptor {bytesPerPeriod, periodInMs};
-        writer_attr_.throughputController = descriptor;
 
         return *this;
     }
@@ -419,14 +443,14 @@ public:
     RTPSWithRegistrationWriter& heartbeat_period_seconds(
             int32_t sec)
     {
-        writer_attr_.times.heartbeatPeriod.seconds = sec;
+        writer_attr_.times.heartbeat_period.seconds = sec;
         return *this;
     }
 
     RTPSWithRegistrationWriter& heartbeat_period_nanosec(
             uint32_t nanosec)
     {
-        writer_attr_.times.heartbeatPeriod.nanosec = nanosec;
+        writer_attr_.times.heartbeat_period.nanosec = nanosec;
         return *this;
     }
 
@@ -439,8 +463,8 @@ public:
     }
 
     RTPSWithRegistrationWriter& persistence_guid_att(
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guidPrefix,
-            const eprosima::fastrtps::rtps::EntityId_t& entityId)
+            const eprosima::fastdds::rtps::GuidPrefix_t& guidPrefix,
+            const eprosima::fastdds::rtps::EntityId_t& entityId)
     {
         writer_attr_.endpoint.persistence_guid.guidPrefix = guidPrefix;
         writer_attr_.endpoint.persistence_guid.entityId = entityId;
@@ -448,9 +472,24 @@ public:
     }
 
 #if HAVE_SQLITE3
+    RTPSWithRegistrationWriter& make_transient(
+            const std::string& filename,
+            const eprosima::fastdds::rtps::GuidPrefix_t& guidPrefix)
+    {
+        writer_attr_.endpoint.persistence_guid.guidPrefix = guidPrefix;
+        writer_attr_.endpoint.persistence_guid.entityId = 0xAAAAAAAA;
+
+        std::cout << "Initializing transient WRITER " << writer_attr_.endpoint.persistence_guid
+                  << " with file " << filename << std::endl;
+
+        return durability(eprosima::fastdds::rtps::DurabilityKind_t::TRANSIENT)
+                       .add_property("dds.persistence.plugin", "builtin.SQLITE3")
+                       .add_property("dds.persistence.sqlite3.filename", filename);
+    }
+
     RTPSWithRegistrationWriter& make_persistent(
             const std::string& filename,
-            const eprosima::fastrtps::rtps::GuidPrefix_t& guidPrefix)
+            const eprosima::fastdds::rtps::GuidPrefix_t& guidPrefix)
     {
         writer_attr_.endpoint.persistence_guid.guidPrefix = guidPrefix;
         writer_attr_.endpoint.persistence_guid.entityId = 0xAAAAAAAA;
@@ -458,17 +497,25 @@ public:
         std::cout << "Initializing persistent WRITER " << writer_attr_.endpoint.persistence_guid
                   << " with file " << filename << std::endl;
 
-        return durability(eprosima::fastrtps::rtps::DurabilityKind_t::PERSISTENT)
+        return durability(eprosima::fastdds::rtps::DurabilityKind_t::PERSISTENT)
                        .add_property("dds.persistence.plugin", "builtin.SQLITE3")
                        .add_property("dds.persistence.sqlite3.filename", filename);
     }
 
 #endif // if HAVE_SQLITE3
 
+    RTPSWithRegistrationWriter& set_entity_id(
+            const eprosima::fastdds::rtps::EntityId_t& entity_id)
+    {
+        custom_entity_id_ = entity_id;
+        return *this;
+    }
+
     RTPSWithRegistrationWriter& history_depth(
             const int32_t depth)
     {
-        topic_attr_.historyQos.depth = depth;
+        hattr_.maximumReservedCaches = depth;
+        hattr_.initialReservedCaches = std::min(hattr_.initialReservedCaches, depth);
         return *this;
     }
 
@@ -490,14 +537,13 @@ public:
             uint32_t bytes_per_period,
             uint32_t period_in_ms)
     {
-        const char* flow_controller_name = "my_flow_controller";
         auto flow_controller_descriptor = std::make_shared<eprosima::fastdds::rtps::FlowControllerDescriptor>();
-        flow_controller_descriptor->name = flow_controller_name;
+        flow_controller_descriptor->name = "my_flow_controller";
         flow_controller_descriptor->scheduler = scheduler_policy;
         flow_controller_descriptor->max_bytes_per_period = bytes_per_period;
         flow_controller_descriptor->period_ms = period_in_ms;
         participant_attr_.flow_controllers.push_back(flow_controller_descriptor);
-        writer_attr_.flow_controller_name = flow_controller_name;
+        writer_attr_.flow_controller_name = flow_controller_descriptor->name.c_str();
         return *this;
     }
 
@@ -516,9 +562,10 @@ public:
     }
 
     RTPSWithRegistrationWriter& user_data(
-            const std::vector<eprosima::fastrtps::rtps::octet>& user_data)
+            const std::vector<eprosima::fastdds::rtps::octet>& user_data)
     {
         writer_qos_.m_userData = user_data;
+        pub_builtin_data_.user_data = writer_qos_.m_userData;
         return *this;
     }
 
@@ -533,13 +580,15 @@ public:
             std::vector<std::string>& partitions)
     {
         writer_qos_.m_partition.setNames(partitions);
+        pub_builtin_data_.partition = writer_qos_.m_partition;
         return *this;
     }
 
-    void set_separate_sending(
+    RTPSWithRegistrationWriter& set_separate_sending(
             bool separate_sending)
     {
-        writer_->set_separate_sending(separate_sending);
+        writer_attr_.separate_sending = separate_sending;
+        return *this;
     }
 
     uint32_t get_matched() const
@@ -548,7 +597,7 @@ public:
     }
 
     bool has_been_fully_delivered(
-            const eprosima::fastrtps::rtps::SequenceNumber_t& seq_num)
+            const eprosima::fastdds::rtps::SequenceNumber_t& seq_num)
     {
         return writer_->has_been_fully_delivered(seq_num);
     }
@@ -558,7 +607,7 @@ public:
         participant_->update_attributes(participant_attr_);
     }
 
-    const eprosima::fastrtps::rtps::GUID_t& guid() const
+    const eprosima::fastdds::rtps::GUID_t& guid() const
     {
         return writer_->getGuid();
     }
@@ -566,10 +615,10 @@ public:
 private:
 
     void on_reader_discovery(
-            eprosima::fastrtps::rtps::RTPSWriter* writer,
-            eprosima::fastrtps::rtps::ReaderDiscoveryInfo::DISCOVERY_STATUS reason,
-            const eprosima::fastrtps::rtps::GUID_t& reader_guid,
-            const eprosima::fastrtps::rtps::ReaderProxyData* reader_info)
+            eprosima::fastdds::rtps::RTPSWriter* writer,
+            eprosima::fastdds::rtps::ReaderDiscoveryStatus reason,
+            const eprosima::fastdds::rtps::GUID_t& reader_guid,
+            const eprosima::fastdds::rtps::SubscriptionBuiltinTopicData* reader_info)
     {
         ASSERT_EQ(writer_, writer);
 
@@ -582,21 +631,22 @@ private:
     RTPSWithRegistrationWriter& operator =(
             const RTPSWithRegistrationWriter&) = delete;
 
-    eprosima::fastrtps::rtps::RTPSParticipant* participant_;
-    eprosima::fastrtps::rtps::RTPSParticipantAttributes participant_attr_;
+    eprosima::fastdds::rtps::RTPSParticipant* participant_;
+    eprosima::fastdds::rtps::RTPSParticipantAttributes participant_attr_;
     bool destroy_participant_{false};
-    eprosima::fastrtps::rtps::RTPSWriter* writer_;
-    eprosima::fastrtps::rtps::WriterAttributes writer_attr_;
-    eprosima::fastrtps::WriterQos writer_qos_;
-    eprosima::fastrtps::TopicAttributes topic_attr_;
-    eprosima::fastrtps::rtps::WriterHistory* history_;
-    eprosima::fastrtps::rtps::HistoryAttributes hattr_;
+    eprosima::fastdds::rtps::RTPSWriter* writer_;
+    eprosima::fastdds::rtps::WriterAttributes writer_attr_;
+    eprosima::fastdds::dds::WriterQos writer_qos_;
+    eprosima::fastdds::rtps::PublicationBuiltinTopicData pub_builtin_data_;
+    eprosima::fastdds::rtps::WriterHistory* history_;
+    eprosima::fastdds::rtps::HistoryAttributes hattr_;
     bool initialized_;
     std::mutex mutex_;
     std::condition_variable cv_;
     uint32_t matched_;
+    eprosima::fastdds::rtps::EntityId_t custom_entity_id_ = eprosima::fastdds::rtps::c_EntityId_Unknown;
     type_support type_;
-    std::shared_ptr<eprosima::fastrtps::rtps::IPayloadPool> payload_pool_;
+    std::shared_ptr<eprosima::fastdds::rtps::IPayloadPool> payload_pool_;
     bool has_payload_pool_ = false;
     OnReaderDiscoveryFunctor on_reader_discovery_functor;
 };

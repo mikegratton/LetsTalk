@@ -26,13 +26,12 @@ char dummy;
 } // namespace
 #endif // ifdef _WIN32
 
-#include <fastdds/rtps/common/Types.h>
+#include <fastdds/rtps/common/CdrSerialization.hpp>
+#include <fastdds/rtps/common/Types.hpp>
+#include <fastdds/rtps/common/VendorId_t.hpp>
+
 #include <rtps/transport/tcp/TCPControlMessage.h>
 
-#include <fastcdr/FastCdr.h>
-#include <fastcdr/Cdr.h>
-
-#include <fastcdr/exceptions/BadParamException.h>
 using namespace eprosima::fastcdr::exception;
 
 #include <utility>
@@ -40,10 +39,6 @@ using namespace eprosima::fastcdr::exception;
 namespace eprosima {
 namespace fastdds {
 namespace rtps {
-
-using ProtocolVersion_t = fastrtps::rtps::ProtocolVersion_t;
-using VendorId_t = fastrtps::rtps::VendorId_t;
-using SerializedPayload_t = fastrtps::rtps::SerializedPayload_t;
 
 static void operator <<(
         eprosima::fastcdr::Cdr& scdr,
@@ -102,7 +97,7 @@ static void operator >>(
 }
 
 ConnectionRequest_t::ConnectionRequest_t()
-    : m_vendorId(fastrtps::rtps::c_VendorId_eProsima)
+    : m_vendorId(fastdds::rtps::c_VendorId_eProsima)
 {
 }
 
@@ -170,6 +165,7 @@ bool ConnectionRequest_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -257,6 +253,7 @@ bool OpenLogicalPortRequest_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -345,6 +342,7 @@ bool CheckLogicalPortsRequest_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -432,6 +430,7 @@ bool KeepAliveRequest_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -519,6 +518,7 @@ bool LogicalPortIsClosedRequest_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -606,6 +606,7 @@ bool BindConnectionResponse_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 
@@ -694,6 +695,7 @@ bool CheckLogicalPortsResponse_t::serialize(
     }
 
     payload->length = (uint32_t)ser.get_serialized_data_length(); //Get the serialized length
+
     return true;
 }
 

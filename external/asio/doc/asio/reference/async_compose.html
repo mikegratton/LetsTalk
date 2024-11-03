@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="async_completion/result.html" title="async_completion::result">
 <link rel="next" href="async_connect.html" title="async_connect">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -32,7 +33,7 @@
     <span class="keyword">typename</span><span class="special">...</span> <span class="identifier">IoObjectsOrExecutors</span><span class="special">&gt;</span>
 <a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.automatic_deduction_of_initiating_function_return_type"><span class="emphasis"><em>DEDUCED</em></span></a> <span class="identifier">async_compose</span><span class="special">(</span>
     <span class="identifier">Implementation</span> <span class="special">&amp;&amp;</span> <span class="identifier">implementation</span><span class="special">,</span>
-    <span class="identifier">CompletionToken</span> <span class="special">&amp;</span> <span class="identifier">token</span><span class="special">,</span>
+    <span class="identifier">type_identity_t</span><span class="special">&lt;</span> <span class="identifier">CompletionToken</span> <span class="special">&gt;</span> <span class="special">&amp;</span> <span class="identifier">token</span><span class="special">,</span>
     <span class="identifier">IoObjectsOrExecutors</span> <span class="special">&amp;&amp;...</span> <span class="identifier">io_objects_or_executors</span><span class="special">);</span>
 </pre>
 <p>
@@ -68,6 +69,19 @@
 </div>
 <h5>
 <a name="asio.reference.async_compose.h1"></a>
+        <span><a name="asio.reference.async_compose.per_operation_cancellation"></a></span><a class="link" href="async_compose.html#asio.reference.async_compose.per_operation_cancellation">Per-Operation
+        Cancellation</a>
+      </h5>
+<p>
+        By default, terminal per-operation cancellation is enabled for composed operations
+        that are implemented using <code class="computeroutput"><span class="identifier">async_compose</span></code>.
+        To disable cancellation for the composed operation, or to alter its supported
+        cancellation types, call the <code class="computeroutput"><span class="identifier">self</span></code>
+        object's <code class="computeroutput"><span class="identifier">reset_cancellation_state</span></code>
+        function.
+      </p>
+<h5>
+<a name="asio.reference.async_compose.h2"></a>
         <span><a name="asio.reference.async_compose.example_"></a></span><a class="link" href="async_compose.html#asio.reference.async_compose.example_">Example:</a>
       </h5>
 <pre class="programlisting"><span class="keyword">struct</span> <span class="identifier">async_echo_implementation</span>
@@ -126,7 +140,7 @@
 <span class="special">}</span>
 </pre>
 <h5>
-<a name="asio.reference.async_compose.h2"></a>
+<a name="asio.reference.async_compose.h3"></a>
         <span><a name="asio.reference.async_compose.requirements"></a></span><a class="link" href="async_compose.html#asio.reference.async_compose.requirements">Requirements</a>
       </h5>
 <p>
@@ -136,14 +150,11 @@
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="async_completion/result.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="async_connect.html"><img src="../../next.png" alt="Next"></a>

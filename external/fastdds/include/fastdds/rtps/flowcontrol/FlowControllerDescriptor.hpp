@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERDESCRIPTOR_HPP
-#define FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERDESCRIPTOR_HPP
+#ifndef FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERDESCRIPTOR_HPP
+#define FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERDESCRIPTOR_HPP
+
+#include <string>
+
+#include <fastdds/rtps/attributes/ThreadSettings.hpp>
 
 #include "FlowControllerConsts.hpp"
 #include "FlowControllerSchedulerPolicy.hpp"
@@ -31,7 +35,7 @@ namespace rtps {
 struct FlowControllerDescriptor
 {
     //! Name of the flow controller.
-    const char* name = nullptr;
+    std::string name = FASTDDS_FLOW_CONTROLLER_DEFAULT;
 
     //! Scheduler policy used by the flow controller.
     //!
@@ -50,10 +54,24 @@ struct FlowControllerDescriptor
     //! Period of time on which the flow controller is allowed to send max_bytes_per_period.
     //! Default value: 100ms.
     uint64_t period_ms = 100;
+
+    //! Thread settings for the sender thread
+    ThreadSettings sender_thread;
+
+    bool operator ==(
+            const FlowControllerDescriptor& b) const
+    {
+        return (this->name == b.name) &&
+               (this->scheduler == b.scheduler) &&
+               (this->max_bytes_per_period == b.max_bytes_per_period) &&
+               (this->period_ms == b.period_ms) &&
+               (this->sender_thread == b.sender_thread);
+    }
+
 };
 
 } // namespace rtps
 } // namespace fastdds
 } // namespace eprosima
 
-#endif // FASTDDS_RTPS_FLOWCONTROL_FLOWCONTROLLERDESCRIPTOR_HPP
+#endif // FASTDDS_RTPS_FLOWCONTROL__FLOWCONTROLLERDESCRIPTOR_HPP

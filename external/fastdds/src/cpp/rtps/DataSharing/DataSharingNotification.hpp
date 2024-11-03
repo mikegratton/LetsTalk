@@ -23,7 +23,7 @@
 #include <rtps/history/PoolConfig.h>
 #include <utils/shared_memory/SharedMemSegment.hpp>
 #include <utils/shared_memory/SharedDir.hpp>
-#include <fastdds/rtps/common/Guid.h>
+#include <fastdds/rtps/common/Guid.hpp>
 
 #include <memory>
 #include <vector>
@@ -31,7 +31,7 @@
 #include <atomic>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class DataSharingNotification
@@ -231,7 +231,7 @@ protected:
 };
 
 }  // namespace rtps
-}  // namespace fastrtps
+}  // namespace fastdds
 }  // namespace eprosima
 
 #endif  // RTPS_DATASHARING_DATASHARINGNOTIFICATION_HPP

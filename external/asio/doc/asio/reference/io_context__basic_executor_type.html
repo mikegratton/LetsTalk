@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="io_context/_io_context.html" title="io_context::~io_context">
 <link rel="next" href="io_context__basic_executor_type/basic_executor_type.html" title="io_context::basic_executor_type::basic_executor_type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -28,7 +29,8 @@
 <pre class="programlisting"><span class="keyword">template</span><span class="special">&lt;</span>
     <span class="keyword">typename</span> <span class="identifier">Allocator</span><span class="special">,</span>
     <span class="identifier">uintptr_t</span> <span class="identifier">Bits</span><span class="special">&gt;</span>
-<span class="keyword">class</span> <span class="identifier">basic_executor_type</span>
+<span class="keyword">class</span> <span class="identifier">basic_executor_type</span> <span class="special">:</span>
+  <span class="identifier">Allocator</span>
 </pre>
 <h5>
 <a name="asio.reference.io_context__basic_executor_type.h0"></a>
@@ -294,14 +296,11 @@
         <span class="emphasis"><em>Convenience header: </em></span><code class="literal">asio.hpp</code>
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="io_context/_io_context.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="io_context__basic_executor_type/basic_executor_type.html"><img src="../../next.png" alt="Next"></a>

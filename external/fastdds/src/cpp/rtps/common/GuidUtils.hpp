@@ -37,8 +37,6 @@ namespace rtps {
  */
 class GuidUtils
 {
-    using GuidPrefix_t = eprosima::fastrtps::rtps::GuidPrefix_t;
-    using octet = eprosima::fastrtps::rtps::octet;
 
 public:
 
@@ -60,6 +58,16 @@ public:
         guid_prefix.value[9] = static_cast<octet>((participant_id >> 8) & 0xFF);
         guid_prefix.value[10] = static_cast<octet>((participant_id >> 16) & 0xFF);
         guid_prefix.value[11] = static_cast<octet>((participant_id >> 24) & 0xFF);
+    }
+
+    /**
+     * Get a copy of \c prefix_ attribute.
+     *
+     * @return copy of \c prefix_ attribute.
+     */
+    GuidPrefix_t prefix() const
+    {
+        return prefix_;
     }
 
     /**

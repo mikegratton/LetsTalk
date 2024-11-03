@@ -20,29 +20,9 @@
 #ifndef _TEST_BLACKBOX_RTPSASSOCKETREADER_HPP_
 #define _TEST_BLACKBOX_RTPSASSOCKETREADER_HPP_
 
-#include <fastrtps/rtps/rtps_fwd.h>
-#include <fastrtps/rtps/RTPSDomain.h>
-#include <fastrtps/rtps/participant/RTPSParticipant.h>
-#include <fastrtps/rtps/attributes/RTPSParticipantAttributes.h>
-#include <fastrtps/rtps/reader/RTPSReader.h>
-#include <fastrtps/rtps/attributes/HistoryAttributes.h>
-#include <fastrtps/rtps/history/ReaderHistory.h>
-#include <fastrtps/rtps/reader/ReaderListener.h>
-#include <fastrtps/rtps/attributes/ReaderAttributes.h>
-#include <fastrtps/rtps/builtin/data/WriterProxyData.h>
-#include <fastrtps/rtps/common/SequenceNumber.h>
-#include <fastrtps/utils/IPLocator.h>
-#include <fastrtps/utils/TimedMutex.hpp>
-
-#include <fastcdr/FastBuffer.h>
-#include <fastcdr/Cdr.h>
-
-#include <string>
-#include <list>
 #include <condition_variable>
-#include <asio.hpp>
-#include <gtest/gtest.h>
-
+#include <list>
+#include <string>
 
 #if defined(_WIN32)
 #include <process.h>
@@ -51,7 +31,30 @@
 #define GET_PID getpid
 #endif // if defined(_WIN32)
 
-using eprosima::fastrtps::rtps::IPLocator;
+#include <asio.hpp>
+
+#include <gtest/gtest.h>
+
+#include <fastcdr/Cdr.h>
+#include <fastcdr/FastBuffer.h>
+
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/attributes/ReaderAttributes.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.hpp>
+#include <fastdds/rtps/builtin/data/PublicationBuiltinTopicData.hpp>
+#include <fastdds/rtps/common/Guid.hpp>
+#include <fastdds/rtps/common/SequenceNumber.hpp>
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+#include <fastdds/rtps/participant/RTPSParticipant.hpp>
+#include <fastdds/rtps/reader/ReaderListener.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+
+#include <fastdds/utils/IPLocator.hpp>
+#include <fastdds/utils/TimedMutex.hpp>
+#include <gtest/gtest.h>
+
+using eprosima::fastdds::rtps::IPLocator;
 
 template<class TypeSupport>
 class RTPSAsSocketReader
@@ -63,7 +66,7 @@ public:
 
 private:
 
-    class Listener : public eprosima::fastrtps::rtps::ReaderListener
+    class Listener : public eprosima::fastdds::rtps::ReaderListener
     {
     public:
 
@@ -77,9 +80,9 @@ private:
         {
         }
 
-        void onNewCacheChangeAdded(
-                eprosima::fastrtps::rtps::RTPSReader* reader,
-                const eprosima::fastrtps::rtps::CacheChange_t* const change) override
+        void on_new_cache_change_added(
+                eprosima::fastdds::rtps::RTPSReader* reader,
+                const eprosima::fastdds::rtps::CacheChange_t* const change) override
         {
             ASSERT_NE(reader, nullptr);
             ASSERT_NE(change, nullptr);
@@ -115,18 +118,18 @@ public:
         magicword_ = mw.str();
 
         // By default, memory mode is PREALLOCATED_WITH_REALLOC_MEMORY_MODE
-        hattr_.memoryPolicy = eprosima::fastrtps::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
+        hattr_.memoryPolicy = eprosima::fastdds::rtps::PREALLOCATED_WITH_REALLOC_MEMORY_MODE;
 
         // By default, heartbeat period delay is 100 milliseconds.
-        reader_attr_.times.heartbeatResponseDelay.seconds = 0;
-        reader_attr_.times.heartbeatResponseDelay.nanosec = 100000000;
+        reader_attr_.times.heartbeat_response_delay.seconds = 0;
+        reader_attr_.times.heartbeat_response_delay.nanosec = 100000000;
     }
 
     virtual ~RTPSAsSocketReader()
     {
         if (participant_ != nullptr)
         {
-            eprosima::fastrtps::rtps::RTPSDomain::removeRTPSParticipant(participant_);
+            eprosima::fastdds::rtps::RTPSDomain::removeRTPSParticipant(participant_);
         }
         if (history_ != nullptr)
         {
@@ -137,20 +140,23 @@ public:
     // TODO Change api of  set_IP4_address to support const string.
     void init()
     {
-        eprosima::fastrtps::rtps::RTPSParticipantAttributes pattr;
-        pattr.builtin.discovery_config.discoveryProtocol = eprosima::fastrtps::rtps::DiscoveryProtocol::NONE;
+        eprosima::fastdds::rtps::RTPSParticipantAttributes pattr;
+        pattr.builtin.discovery_config.discoveryProtocol = eprosima::fastdds::rtps::DiscoveryProtocol::NONE;
         pattr.builtin.use_WriterLivelinessProtocol = false;
         pattr.participantID = 1;
-        participant_ = eprosima::fastrtps::rtps::RTPSDomain::createParticipant((uint32_t)GET_PID() % 230, pattr);
+        participant_ = eprosima::fastdds::rtps::RTPSDomain::createParticipant((uint32_t)GET_PID() % 230, pattr);
         ASSERT_NE(participant_, nullptr);
 
         //Create readerhistory
-        hattr_.payloadMaxSize = 255 + type_.m_typeSize;
-        history_ = new eprosima::fastrtps::rtps::ReaderHistory(hattr_);
+        hattr_.payloadMaxSize = 255 + type_.max_serialized_type_size;
+        history_ = new eprosima::fastdds::rtps::ReaderHistory(hattr_);
         ASSERT_NE(history_, nullptr);
 
         //Create reader
-        reader_ = eprosima::fastrtps::rtps::RTPSDomain::createRTPSReader(participant_, reader_attr_, history_,
+        auto attr = reader_attr_;
+        attr.accept_messages_from_unkown_writers =
+                eprosima::fastdds::rtps::RELIABLE != reader_attr_.endpoint.reliabilityKind;
+        reader_ = eprosima::fastdds::rtps::RTPSDomain::createRTPSReader(participant_, attr, history_,
                         &listener_);
         ASSERT_NE(reader_, nullptr);
 
@@ -168,7 +174,7 @@ public:
     {
         if (participant_ != nullptr)
         {
-            eprosima::fastrtps::rtps::RTPSDomain::removeRTPSParticipant(participant_);
+            eprosima::fastdds::rtps::RTPSDomain::removeRTPSParticipant(participant_);
             participant_ = nullptr;
         }
 
@@ -209,10 +215,10 @@ public:
         receiving_ = true;
         mutex_.unlock();
 
-        std::unique_lock<eprosima::fastrtps::RecursiveTimedMutex> lock(*history_->getMutex());
+        std::unique_lock<eprosima::fastdds::RecursiveTimedMutex> lock(*history_->getMutex());
         while (history_->changesBegin() != history_->changesEnd())
         {
-            eprosima::fastrtps::rtps::CacheChange_t* change = *history_->changesBegin();
+            eprosima::fastdds::rtps::CacheChange_t* change = *history_->changesBegin();
             receive_one(reader_, change);
         }
     }
@@ -256,11 +262,11 @@ public:
 
     /*** Function to change QoS ***/
     RTPSAsSocketReader& reliability(
-            const eprosima::fastrtps::rtps::ReliabilityKind_t kind)
+            const eprosima::fastdds::rtps::ReliabilityKind_t kind)
     {
         reader_attr_.endpoint.reliabilityKind = kind;
 
-        if (kind == eprosima::fastrtps::rtps::ReliabilityKind_t::RELIABLE)
+        if (kind == eprosima::fastdds::rtps::ReliabilityKind_t::RELIABLE)
         {
             reader_attr_.endpoint.setEntityID(1);
         }
@@ -274,7 +280,7 @@ public:
         ip_ = ip;
         port_ = port;
 
-        eprosima::fastrtps::rtps::Locator_t loc;
+        eprosima::fastdds::rtps::Locator_t loc;
         IPLocator::setIPv4(loc, ip);
         loc.port = static_cast<uint16_t>(port);
         reader_attr_.endpoint.multicastLocatorList.push_back(loc);
@@ -284,51 +290,60 @@ public:
 
     void register_writer()
     {
-        if (reader_attr_.endpoint.reliabilityKind == eprosima::fastrtps::rtps::RELIABLE)
+        if (reader_attr_.endpoint.reliabilityKind == eprosima::fastdds::rtps::RELIABLE)
         {
             if (port_ == 0)
             {
                 std::cout << "ERROR: locator has to be registered previous to call this" << std::endl;
             }
 
-            //Add remote writer (in this case a reader in the same machine)
-            eprosima::fastrtps::rtps::GUID_t guid = participant_->getGuid();
+            // Add remote writer (in this case a reader in the same machine)
+            eprosima::fastdds::rtps::GUID_t guid = participant_->getGuid();
 
-            eprosima::fastrtps::rtps::WriterProxyData wattr(4u, 1u);
-            eprosima::fastrtps::rtps::Locator_t loc;
+            eprosima::fastdds::rtps::Locator_t loc;
             IPLocator::setIPv4(loc, ip_);
             loc.port = static_cast<uint16_t>(port_);
-            wattr.add_multicast_locator(loc);
-            wattr.m_qos.m_reliability.kind = eprosima::fastrtps::RELIABLE_RELIABILITY_QOS;
-            wattr.guid().guidPrefix.value[0] = guid.guidPrefix.value[0];
-            wattr.guid().guidPrefix.value[1] = guid.guidPrefix.value[1];
-            wattr.guid().guidPrefix.value[2] = guid.guidPrefix.value[2];
-            wattr.guid().guidPrefix.value[3] = guid.guidPrefix.value[3];
-            wattr.guid().guidPrefix.value[4] = guid.guidPrefix.value[4];
-            wattr.guid().guidPrefix.value[5] = guid.guidPrefix.value[5];
-            wattr.guid().guidPrefix.value[6] = guid.guidPrefix.value[6];
-            wattr.guid().guidPrefix.value[7] = guid.guidPrefix.value[7];
-            wattr.guid().guidPrefix.value[8] = 2;
-            wattr.guid().guidPrefix.value[9] = 0;
-            wattr.guid().guidPrefix.value[10] = 0;
-            wattr.guid().guidPrefix.value[11] = 0;
-            wattr.guid().entityId.value[0] = 0;
-            wattr.guid().entityId.value[1] = 0;
-            wattr.guid().entityId.value[2] = 2;
-            wattr.guid().entityId.value[3] = 3;
-            reader_->matched_writer_add(wattr);
+
+            eprosima::fastdds::rtps::GUID_t wguid;
+            wguid.guidPrefix.value[0] = guid.guidPrefix.value[0];
+            wguid.guidPrefix.value[1] = guid.guidPrefix.value[1];
+            wguid.guidPrefix.value[2] = guid.guidPrefix.value[2];
+            wguid.guidPrefix.value[3] = guid.guidPrefix.value[3];
+            wguid.guidPrefix.value[4] = guid.guidPrefix.value[4];
+            wguid.guidPrefix.value[5] = guid.guidPrefix.value[5];
+            wguid.guidPrefix.value[6] = guid.guidPrefix.value[6];
+            wguid.guidPrefix.value[7] = guid.guidPrefix.value[7];
+            wguid.guidPrefix.value[8] = 2;
+            wguid.guidPrefix.value[9] = 0;
+            wguid.guidPrefix.value[10] = 0;
+            wguid.guidPrefix.value[11] = 0;
+            wguid.entityId.value[0] = 0;
+            wguid.entityId.value[1] = 0;
+            wguid.entityId.value[2] = 2;
+            wguid.entityId.value[3] = 3;
+
+            eprosima::fastdds::rtps::PublicationBuiltinTopicData pub_info{};
+            pub_info.reliability.kind = eprosima::fastdds::dds::RELIABLE_RELIABILITY_QOS;
+            pub_info.remote_locators.add_multicast_locator(loc);
+            pub_info.guid = wguid;
+            pub_info.persistence_guid = wguid;
+
+            reader_->matched_writer_add(pub_info);
         }
-        else
-        {
-            reader_->enableMessagesFromUnkownWriters(true);
-        }
+    }
+
+    RTPSAsSocketReader& disable_positive_acks(
+            bool disable)
+    {
+        reader_attr_.disable_positive_acks = disable;
+        return *this;
     }
 
 private:
 
     void receive_one(
-            eprosima::fastrtps::rtps::RTPSReader* reader,
-            const eprosima::fastrtps::rtps::CacheChange_t* change)
+            eprosima::fastdds::rtps::RTPSReader* reader,
+            const eprosima::fastdds::rtps::CacheChange_t* change)
     {
         std::unique_lock<std::mutex> lock(mutex_);
 
@@ -358,28 +373,28 @@ private:
                 cv_.notify_one();
             }
 
-            eprosima::fastrtps::rtps::ReaderHistory* history = reader->getHistory();
+            eprosima::fastdds::rtps::ReaderHistory* history = reader->get_history();
             ASSERT_NE(history, nullptr);
 
-            history->remove_change((eprosima::fastrtps::rtps::CacheChange_t*)change);
+            history->remove_change((eprosima::fastdds::rtps::CacheChange_t*)change);
         }
     }
 
     RTPSAsSocketReader& operator =(
             const RTPSAsSocketReader&) = delete;
 
-    eprosima::fastrtps::rtps::RTPSParticipant* participant_;
-    eprosima::fastrtps::rtps::ReaderAttributes reader_attr_;
-    eprosima::fastrtps::rtps::RTPSReader* reader_;
-    eprosima::fastrtps::rtps::ReaderHistory* history_;
-    eprosima::fastrtps::rtps::HistoryAttributes hattr_;
+    eprosima::fastdds::rtps::RTPSParticipant* participant_;
+    eprosima::fastdds::rtps::ReaderAttributes reader_attr_;
+    eprosima::fastdds::rtps::RTPSReader* reader_;
+    eprosima::fastdds::rtps::ReaderHistory* history_;
+    eprosima::fastdds::rtps::HistoryAttributes hattr_;
     std::atomic<bool> initialized_;
     std::list<type> total_msgs_;
     std::mutex mutex_;
     std::condition_variable cv_;
     std::string magicword_;
     std::atomic<bool> receiving_;
-    eprosima::fastrtps::rtps::SequenceNumber_t last_seq_;
+    eprosima::fastdds::rtps::SequenceNumber_t last_seq_;
     std::atomic<size_t> current_received_count_;
     std::atomic<size_t> number_samples_expected_;
     std::string ip_;

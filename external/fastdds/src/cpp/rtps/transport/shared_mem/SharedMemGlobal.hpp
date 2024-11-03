@@ -16,16 +16,19 @@
 #define _FASTDDS_SHAREDMEM_GLOBAL_H_
 
 #include <algorithm>
-#include <vector>
-#include <mutex>
 #include <memory>
+#include <mutex>
+#include <thread>
+#include <vector>
 
-#include <utils/shared_memory/SharedMemSegment.hpp>
-#include <utils/shared_memory/RobustExclusiveLock.hpp>
-#include <utils/shared_memory/RobustSharedLock.hpp>
-#include <utils/shared_memory/SharedMemWatchdog.hpp>
+#include <fastdds/config.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
 
 #include <rtps/transport/shared_mem/MultiProducerConsumerRingBuffer.hpp>
+#include <utils/shared_memory/RobustExclusiveLock.hpp>
+#include <utils/shared_memory/RobustSharedLock.hpp>
+#include <utils/shared_memory/SharedMemSegment.hpp>
+#include <utils/shared_memory/SharedMemWatchdog.hpp>
 
 #define THREADID "(ID:" << std::this_thread::get_id() << ") "
 
@@ -91,6 +94,8 @@ public:
     typedef MultiProducerConsumerRingBuffer<BufferDescriptor>::Cell PortCell;
 
     static const uint32_t CURRENT_ABI_VERSION = 5;
+    static_assert(CURRENT_ABI_VERSION == (2 + FASTDDS_VERSION_MAJOR), "ABI is not correct");
+    static_assert(LOCATOR_KIND_SHM == (16 + FASTDDS_VERSION_MAJOR), "LOCATOR_KIND_SHM is not correct");
 
     struct PortNode
     {
@@ -513,8 +518,8 @@ public:
         /**
          * Try to enqueue a buffer descriptor in the port.
          * If the port queue is full returns inmediatelly with false value.
-         * @param[in] buffer_descriptor buffer descriptor to be enqueued
-         * @param[out] listeners_active false if no active listeners => buffer not enqueued
+         * @param [in] buffer_descriptor buffer descriptor to be enqueued
+         * @param [out] listeners_active false if no active listeners => buffer not enqueued
          * @return false in overflow case, true otherwise.
          */
         bool try_push(
@@ -562,9 +567,9 @@ public:
 
         /**
          * Waits while the port is empty and listener is not closed
-         * @param[in] listener reference to the listener that will wait for an incoming buffer descriptor.
-         * @param[in] is_listener_closed this reference can become true in the middle of the waiting process,
-         * @param[in] listener_index to update the port's listener_status,
+         * @param [in] listener reference to the listener that will wait for an incoming buffer descriptor.
+         * @param [in] is_listener_closed this reference can become true in the middle of the waiting process,
+         * @param [in] listener_index to update the port's listener_status,
          * if that happens wait is aborted.
          */
         void wait_pop(
@@ -783,7 +788,7 @@ public:
          *
          * \pre Current port is zombie, as reported by is_zombie()
          *
-         * @param[OUT] buffer_descriptor Descriptor of the buffer that was being processed by the first processing listener
+         * @param [OUT] buffer_descriptor Descriptor of the buffer that was being processed by the first processing listener
          * @return True if there was at least one processing listener. False if not.
          */
         bool get_and_remove_blocked_processing(
@@ -898,12 +903,22 @@ public:
 
         void lock_read_exclusive()
         {
+            if (OpenMode::ReadShared == open_mode())
+            {
+                throw std::runtime_error("port is opened ReadShared");
+            }
+
             std::string lock_name = std::string(node_->domain_name) + "_port" + std::to_string(node_->port_id) + "_el";
             read_exclusive_lock_ = std::unique_ptr<RobustExclusiveLock>(new RobustExclusiveLock(lock_name));
         }
 
         void lock_read_shared()
         {
+            if (OpenMode::ReadExclusive == open_mode())
+            {
+                throw std::runtime_error("port is opened ReadExclusive");
+            }
+
             std::string lock_name = std::string(node_->domain_name) + "_port" + std::to_string(node_->port_id) + "_sl";
             read_shared_lock_ = std::unique_ptr<RobustSharedLock>(new RobustSharedLock(lock_name));
         }
@@ -1124,7 +1139,24 @@ private:
                         std::stringstream ss;
 
                         ss << port_node->port_id << " (" << port_node->uuid.to_string() <<
-                            ") because is ReadExclusive locked";
+                            ") because it was already locked";
+
+                        err_reason = ss.str();
+                        port.reset();
+                    }
+                }
+                else if (open_mode == Port::OpenMode::ReadShared)
+                {
+                    try
+                    {
+                        port->lock_read_shared();
+                    }
+                    catch (const std::exception&)
+                    {
+                        std::stringstream ss;
+
+                        ss << port_node->port_id << " (" << port_node->uuid.to_string() <<
+                            ") because it had a ReadExclusive lock";
 
                         err_reason = ss.str();
                         port.reset();

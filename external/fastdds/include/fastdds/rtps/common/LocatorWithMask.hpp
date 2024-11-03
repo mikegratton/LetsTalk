@@ -16,12 +16,13 @@
  * @file LocatorWithMask.hpp
  */
 
-#ifndef _FASTDDS_RTPS_COMMON_LOCATORWITHMASK_HPP_
-#define _FASTDDS_RTPS_COMMON_LOCATORWITHMASK_HPP_
+#ifndef FASTDDS_RTPS_COMMON__LOCATORWITHMASK_HPP
+#define FASTDDS_RTPS_COMMON__LOCATORWITHMASK_HPP
 
-#include <fastrtps/fastrtps_dll.h>
+#include <sstream>
 
-#include <fastdds/rtps/common/Locator.h>
+#include <fastdds/fastdds_dll.hpp>
+#include <fastdds/rtps/common/Locator.hpp>
 
 namespace eprosima {
 namespace fastdds {
@@ -30,7 +31,7 @@ namespace rtps {
 /**
  * A Locator with a mask that defines the number of significant bits of its address.
  */
-class RTPS_DllAPI LocatorWithMask : public Locator
+class FASTDDS_EXPORTED_API LocatorWithMask : public Locator
 {
 public:
 
@@ -39,10 +40,7 @@ public:
      *
      * @return number of significant bits on the address of this locator.
      */
-    uint8_t mask() const
-    {
-        return mask_;
-    }
+    uint8_t mask() const;
 
     /**
      * Set the number of significant bits on the address of this locator.
@@ -50,18 +48,33 @@ public:
      * @param mask number of significant bits on the address of this locator.
      */
     void mask(
-            uint8_t mask)
-    {
-        mask_ = mask;
-    }
+            uint8_t mask);
+
+    /**
+     * Check whether the given locator is from the same network as this locator.
+     *
+     * @param loc locator to check if belonging to the same network as this locator.
+     *
+     * @return true if the two locators are from the same network, false otherwise.
+     */
+    bool matches(
+            const Locator& loc) const;
+
+    //! Copy assignment
+    LocatorWithMask& operator =(
+            const Locator& loc);
 
 private:
 
     uint8_t mask_ = 24;
 };
 
+FASTDDS_EXPORTED_API std::ostream& operator <<(
+        std::ostream& output,
+        const LocatorWithMask& loc);
+
 } // namespace rtps
 } // namespace fastdds
 } // namespace eprosima
 
-#endif /* _FASTDDS_RTPS_COMMON_LOCATORWITHMASK_HPP_ */
+#endif // FASTDDS_RTPS_COMMON__LOCATORWITHMASK_HPP

@@ -8,6 +8,7 @@
 <link rel="up" href="../reference.html" title="Reference">
 <link rel="prev" href="../reference.html" title="Reference">
 <link rel="next" href="read_write_operations.html" title="Requirements on read and write operations">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../asio.png"></td></tr></table>
@@ -29,10 +30,10 @@
         <code class="computeroutput"><span class="identifier">f</span></code>, <code class="literal"><span class="emphasis"><em>i</em></span></code>,
         <code class="literal"><span class="emphasis"><em>N</em></span></code>, <code class="computeroutput"><span class="identifier">Signatures</span></code>,
         <code class="computeroutput"><span class="identifier">token</span></code>, <code class="computeroutput"><span class="identifier">initiation</span></code>,
-        <code class="computeroutput"><span class="identifier">Initiation</span></code>, <code class="literal">T[sub
-        <span class="emphasis"><em>i</em></span>]</code>, <code class="literal">t[sub <span class="emphasis"><em>i</em></span>]</code>,
-        <code class="computeroutput"><span class="identifier">work1</span></code>, and <code class="computeroutput"><span class="identifier">work2</span></code> as placeholders for specifying the
-        requirements below.
+        <code class="computeroutput"><span class="identifier">Initiation</span></code>, <code class="literal">T<sub><span class="emphasis"><em>i</em></span></sub></code>,
+        <code class="literal">t<sub><span class="emphasis"><em>i</em></span></sub></code>, <code class="computeroutput"><span class="identifier">work1</span></code>,
+        and <code class="computeroutput"><span class="identifier">work2</span></code> as placeholders
+        for specifying the requirements below.
       </p>
 <h5>
 <a name="asio.reference.asynchronous_operations.h0"></a>
@@ -318,8 +319,8 @@
         associated executor is an object of type <code class="computeroutput"><span class="identifier">system_executor</span></code>.
       </p>
 <p>
-        All asynchronous operations in this library have an associated executor object
-        that is determined as follows:
+        All asynchronous operations in this library have an associated I/O executor
+        object that is determined as follows:
       </p>
 <p>
         — If the initiating function is a member function, the associated executor
@@ -359,12 +360,29 @@
       </p>
 <h5>
 <a name="asio.reference.asynchronous_operations.h8"></a>
+        <span><a name="asio.reference.asynchronous_operations.associated_immediate_completion_executor"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.associated_immediate_completion_executor">Associated
+        immediate completion executor</a>
+      </h5>
+<p>
+        A completion handler object of type <code class="computeroutput"><span class="identifier">CompletionHandler</span></code>
+        has an associated immediate executor of type <code class="computeroutput"><span class="identifier">Executor3</span></code>
+        satisfying the <a class="link" href="Executor1.html" title="Executor requirements">Executor requirements</a>.
+        The type <code class="computeroutput"><span class="identifier">Executor3</span></code> is <code class="computeroutput"><span class="identifier">associated_immediate_executor_t</span><span class="special">&lt;</span><span class="identifier">CompletionHandler</span><span class="special">,</span>
+        <span class="identifier">Executor1</span><span class="special">&gt;</span></code>.
+        Let <code class="computeroutput"><span class="identifier">ex3</span></code> be a value of type
+        <code class="computeroutput"><span class="identifier">Executor3</span></code> obtained by performing
+        <code class="computeroutput"><span class="identifier">get_associated_immediate_executor</span><span class="special">(</span><span class="identifier">completion_handler</span><span class="special">,</span> <span class="identifier">ex1</span><span class="special">)</span></code>.
+      </p>
+<h5>
+<a name="asio.reference.asynchronous_operations.h9"></a>
         <span><a name="asio.reference.asynchronous_operations.outstanding_work"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.outstanding_work">Outstanding
         work</a>
       </h5>
 <p>
-        Until the asynchronous operation has completed, the asynchronous operation
-        shall maintain:
+        If the operation does not complete immediately (that is, the operation does
+        not complete within the thread of execution calling the initiating function,
+        before the initiating function returns) then, until the asynchronous operation
+        has completed, the asynchronous operation shall maintain:
       </p>
 <p>
         — an object <code class="computeroutput"><span class="identifier">work1</span></code> of type
@@ -379,7 +397,7 @@
         where <code class="computeroutput"><span class="identifier">work2</span><span class="special">.</span><span class="identifier">owns_work</span><span class="special">()</span> <span class="special">==</span> <span class="keyword">true</span></code>.
       </p>
 <h5>
-<a name="asio.reference.asynchronous_operations.h9"></a>
+<a name="asio.reference.asynchronous_operations.h10"></a>
         <span><a name="asio.reference.asynchronous_operations.allocation_of_intermediate_storage"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.allocation_of_intermediate_storage">Allocation
         of intermediate storage</a>
       </h5>
@@ -424,7 +442,7 @@
         races (See C++Std [res.on.data.races]). —<span class="emphasis"><em>end note</em></span>]
       </p>
 <h5>
-<a name="asio.reference.asynchronous_operations.h10"></a>
+<a name="asio.reference.asynchronous_operations.h11"></a>
         <span><a name="asio.reference.asynchronous_operations.execution_of_completion_handler_on_completion_of_asynchronous_operation"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.execution_of_completion_handler_on_completion_of_asynchronous_operation">Execution
         of completion handler on completion of asynchronous operation</a>
       </h5>
@@ -433,31 +451,80 @@
         be the argument types of a completion signature in <code class="computeroutput"><span class="identifier">Signatures</span><span class="special">...</span></code> and let <code class="literal"><span class="emphasis"><em>N</em></span></code>
         be <code class="computeroutput"><span class="keyword">sizeof</span><span class="special">...(</span><span class="identifier">Args</span><span class="special">)</span></code>.
         Let <code class="literal"><span class="emphasis"><em>i</em></span></code> be in the range [<code class="computeroutput"><span class="number">0</span></code>,<code class="literal"><span class="emphasis"><em>N</em></span></code>).
-        Let <code class="literal">T[sub <span class="emphasis"><em>i</em></span>]</code> be the <code class="literal"><span class="emphasis"><em>i</em></span></code>th
+        Let <code class="literal">T<sub><span class="emphasis"><em>i</em></span></sub></code> be the <code class="literal"><span class="emphasis"><em>i</em></span></code>th
         type in <code class="computeroutput"><span class="identifier">Args</span><span class="special">...</span></code>
-        and let <code class="literal">t[sub <span class="emphasis"><em>i</em></span>]</code> be the <code class="literal"><span class="emphasis"><em>i</em></span></code>th
-        completion handler argument associated with <code class="literal">T[sub <span class="emphasis"><em>i</em></span>]</code>.
+        and let <code class="literal">t<sub><span class="emphasis"><em>i</em></span></sub></code> be the <code class="literal"><span class="emphasis"><em>i</em></span></code>th
+        completion handler argument associated with <code class="literal">T<sub><span class="emphasis"><em>i</em></span></sub></code>.
       </p>
 <p>
-        Let <code class="computeroutput"><span class="identifier">f</span></code> be a function object,
-        callable as <code class="computeroutput"><span class="identifier">f</span><span class="special">()</span></code>,
-        that invokes <code class="computeroutput"><span class="identifier">completion_handler</span></code>
-        as if by <code class="literal">completion_handler(forward&lt;T[sub <span class="emphasis"><em>0</em></span>]&gt;(t[sub
-        <span class="emphasis"><em>0</em></span>]), ..., forward&lt;T[sub <span class="emphasis"><em>N-1</em></span>]&gt;(t[sub
-        <span class="emphasis"><em>N-1</em></span>]))</code>.
+        Let <code class="computeroutput"><span class="identifier">f</span></code> be a function object
+        that:
       </p>
 <p>
-        If an asynchonous operation completes immediately (that is, within the thread
-        of execution calling the initiating function, and before the initiating function
-        returns), the completion handler shall be submitted for execution as if by
-        performing <code class="computeroutput"><span class="identifier">post</span><span class="special">(</span><span class="identifier">ex2</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">),</span>
-        <span class="identifier">alloc2</span><span class="special">)</span></code>.
-        Otherwise, the completion handler shall be submitted for execution as if
-        by performing <code class="computeroutput"><span class="identifier">dispatch</span><span class="special">(</span><span class="identifier">ex2</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">),</span>
-        <span class="identifier">alloc2</span><span class="special">)</span></code>.
+        — is callable as <code class="computeroutput"><span class="identifier">f</span><span class="special">()</span></code>,
+        and when so called invokes <code class="computeroutput"><span class="identifier">completion_handler</span></code>
+        as if by <code class="literal">std::move(completion_handler)(forward&lt;T<sub><span class="emphasis"><em>0</em></span></sub>&gt;(t<sub><span class="emphasis"><em>0</em></span></sub>),
+        ..., forward&lt;T<sub><span class="emphasis"><em>N-1</em></span></sub>&gt;(t<sub><span class="emphasis"><em>N-1</em></span></sub>))</code>;
+      </p>
+<p>
+        — has an associated executor such that <code class="computeroutput"><span class="identifier">get_associated_executor</span><span class="special">(</span><span class="identifier">f</span><span class="special">,</span>
+        <span class="identifier">ex1</span><span class="special">)</span></code>
+        returns an executor that is equal to <code class="computeroutput"><span class="identifier">ex2</span></code>;
+        and
+      </p>
+<p>
+        — has an associated allocator such that <code class="computeroutput"><span class="identifier">get_associated_allocator</span><span class="special">(</span><span class="identifier">f</span><span class="special">,</span>
+        <span class="identifier">alloc1</span><span class="special">)</span></code>
+        returns an allocator that is equal to <code class="computeroutput"><span class="identifier">alloc2</span></code>.
+      </p>
+<p>
+        [<span class="emphasis"><em>Note:</em></span> These associated executor and allocator requirements
+        on <code class="computeroutput"><span class="identifier">f</span></code> are typically implemented
+        by specialising the associator traits for <code class="computeroutput"><span class="identifier">f</span></code>
+        so that they forward to the associator traits for <code class="computeroutput"><span class="identifier">completion_handler</span></code>.
+        —<span class="emphasis"><em>end note</em></span>]
+      </p>
+<p>
+        If an asynchonous operation completes immediately (that is, the operation
+        completes within the thread of execution calling the initiating function,
+        and before the initiating function returns), the completion handler shall
+        be submitted for execution as if by performing <code class="computeroutput"><span class="identifier">post</span><span class="special">(</span><span class="identifier">ex1</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">))</span></code>.
+      </p>
+<p>
+        Otherwise, when the operation completes, the completion handler shall be
+        submitted for execution as if by performing <code class="computeroutput"><span class="identifier">dispatch</span><span class="special">(</span><span class="identifier">ex2</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">))</span></code>.
       </p>
 <h5>
-<a name="asio.reference.asynchronous_operations.h11"></a>
+<a name="asio.reference.asynchronous_operations.h12"></a>
+        <span><a name="asio.reference.asynchronous_operations.optimisation_of_immediate_completion"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.optimisation_of_immediate_completion">Optimisation
+        of immediate completion</a>
+      </h5>
+<p>
+        If an asynchronous operation completes immediately then, as an optimisation,
+        the operation may either:
+      </p>
+<p>
+        — obtain the associated immediate completion executor <code class="computeroutput"><span class="identifier">ex3</span></code>
+        by performing <code class="computeroutput"><span class="identifier">get_associated_immediate_executor</span><span class="special">(</span><span class="identifier">completion_handler</span><span class="special">,</span> <span class="identifier">ex1</span><span class="special">)</span></code>,
+        and then submit the completion handler for execution as if by performing
+        <code class="computeroutput"><span class="identifier">dispatch</span><span class="special">(</span><span class="identifier">ex3</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">))</span></code>;
+        or
+      </p>
+<p>
+        — submit the completion handler for execution by performing the expression
+        <code class="computeroutput"><span class="identifier">post</span><span class="special">(</span><span class="identifier">ex2</span><span class="special">,</span> <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">))</span></code>,
+        if that expression is well-formed.
+      </p>
+<p>
+        [<span class="emphasis"><em>Note:</em></span> If <code class="computeroutput"><span class="identifier">completion_handler</span></code>
+        does not customise the associated immediate executor, the behaviour of the
+        first optimisation is equivalent to <code class="computeroutput"><span class="identifier">post</span><span class="special">(</span><span class="identifier">ex1</span><span class="special">,</span>
+        <span class="identifier">std</span><span class="special">::</span><span class="identifier">move</span><span class="special">(</span><span class="identifier">f</span><span class="special">))</span></code>. —<span class="emphasis"><em>end note</em></span>]
+      </p>
+<h5>
+<a name="asio.reference.asynchronous_operations.h13"></a>
         <span><a name="asio.reference.asynchronous_operations.completion_handlers_and_exceptions"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.completion_handlers_and_exceptions">Completion
         handlers and exceptions</a>
       </h5>
@@ -467,7 +534,7 @@
         by the executor which is executing the completion handler.
       </p>
 <h5>
-<a name="asio.reference.asynchronous_operations.h12"></a>
+<a name="asio.reference.asynchronous_operations.h14"></a>
         <span><a name="asio.reference.asynchronous_operations.default_completion_tokens"></a></span><a class="link" href="asynchronous_operations.html#asio.reference.asynchronous_operations.default_completion_tokens">Default
         completion tokens</a>
       </h5>
@@ -521,14 +588,11 @@
         —<span class="emphasis"><em>end example</em></span>]
       </p>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="../reference.html"><img src="../../prev.png" alt="Prev"></a><a accesskey="u" href="../reference.html"><img src="../../up.png" alt="Up"></a><a accesskey="h" href="../../index.html"><img src="../../home.png" alt="Home"></a><a accesskey="n" href="read_write_operations.html"><img src="../../next.png" alt="Next"></a>

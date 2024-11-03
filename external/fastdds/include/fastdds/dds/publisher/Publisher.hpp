@@ -17,19 +17,17 @@
  *
  */
 
-#ifndef _FASTDDS_PUBLISHER_HPP_
-#define _FASTDDS_PUBLISHER_HPP_
+#ifndef FASTDDS_DDS_PUBLISHER__PUBLISHER_HPP
+#define FASTDDS_DDS_PUBLISHER__PUBLISHER_HPP
 
 #include <fastdds/dds/core/Entity.hpp>
+#include <fastdds/dds/core/ReturnCode.hpp>
 #include <fastdds/dds/publisher/qos/DataWriterQos.hpp>
 #include <fastdds/dds/publisher/qos/PublisherQos.hpp>
 #include <fastdds/dds/topic/TypeSupport.hpp>
-#include <fastdds/rtps/common/Time_t.h>
+#include <fastdds/rtps/common/Time_t.hpp>
 
-#include <fastrtps/fastrtps_dll.h>
-#include <fastrtps/types/TypesBase.h>
-
-using eprosima::fastrtps::types::ReturnCode_t;
+#include <fastdds/fastdds_dll.hpp>
 
 namespace dds {
 namespace pub {
@@ -38,13 +36,13 @@ class Publisher;
 } // namespace dds
 
 namespace eprosima {
-namespace fastrtps {
-
-class TopicAttributes;
-
-} // namespace fastrtps
-
 namespace fastdds {
+namespace rtps {
+
+class IPayloadPool;
+
+} // namespace rtps
+
 namespace dds {
 
 class DomainParticipant;
@@ -93,21 +91,21 @@ public:
      * @return RETCODE_OK is successfully enabled. RETCODE_PRECONDITION_NOT_MET if the participant creating this
      *         Publisher is not enabled.
      */
-    RTPS_DllAPI ReturnCode_t enable() override;
+    FASTDDS_EXPORTED_API ReturnCode_t enable() override;
 
     /**
      * Allows accessing the Publisher Qos.
      *
      * @return PublisherQos reference
      */
-    RTPS_DllAPI const PublisherQos& get_qos() const;
+    FASTDDS_EXPORTED_API const PublisherQos& get_qos() const;
 
     /**
      * Retrieves the Publisher Qos.
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t get_qos(
             PublisherQos& qos) const;
 
     /**
@@ -118,7 +116,7 @@ public:
      * @return RETCODE_IMMUTABLE_POLICY if any of the Qos cannot be changed, RETCODE_INCONSISTENT_POLICY if the Qos is not
      * self consistent and RETCODE_OK if the qos is changed correctly.
      */
-    RTPS_DllAPI ReturnCode_t set_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t set_qos(
             const PublisherQos& qos);
 
     /**
@@ -126,7 +124,7 @@ public:
      *
      * @return PublisherListener pointer
      */
-    RTPS_DllAPI const PublisherListener* get_listener() const;
+    FASTDDS_EXPORTED_API const PublisherListener* get_listener() const;
 
     /**
      * Modifies the PublisherListener, sets the mask to StatusMask::all()
@@ -134,7 +132,7 @@ public:
      * @param listener new value for the PublisherListener
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t set_listener(
+    FASTDDS_EXPORTED_API ReturnCode_t set_listener(
             PublisherListener* listener);
 
     /**
@@ -144,7 +142,7 @@ public:
      * @param mask StatusMask that holds statuses the listener responds to
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t set_listener(
+    FASTDDS_EXPORTED_API ReturnCode_t set_listener(
             PublisherListener* listener,
             const StatusMask& mask);
 
@@ -158,12 +156,12 @@ public:
      * @param payload_pool IPayloadPool shared pointer that defines writer payload (default: nullptr).
      * @return Pointer to the created DataWriter. nullptr if failed.
      */
-    RTPS_DllAPI DataWriter* create_datawriter(
+    FASTDDS_EXPORTED_API DataWriter* create_datawriter(
             Topic* topic,
             const DataWriterQos& qos,
             DataWriterListener* listener = nullptr,
             const StatusMask& mask = StatusMask::all(),
-            std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool = nullptr);
+            std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool = nullptr);
 
     /**
      * This operation creates a DataWriter. The returned DataWriter will be attached and belongs to the Publisher.
@@ -175,12 +173,12 @@ public:
      * @param payload_pool IPayloadPool shared pointer that defines writer payload (default: nullptr).
      * @return Pointer to the created DataWriter. nullptr if failed.
      */
-    RTPS_DllAPI DataWriter* create_datawriter_with_profile(
+    FASTDDS_EXPORTED_API DataWriter* create_datawriter_with_profile(
             Topic* topic,
             const std::string& profile_name,
             DataWriterListener* listener = nullptr,
             const StatusMask& mask = StatusMask::all(),
-            std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool = nullptr);
+            std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool = nullptr);
 
     /**
      * This operation deletes a DataWriter that belongs to the Publisher.
@@ -197,7 +195,7 @@ public:
      * @return RETCODE_PRECONDITION_NOT_MET if it does not belong to this Publisher, RETCODE_OK if it is correctly deleted and
      * RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t delete_datawriter(
+    FASTDDS_EXPORTED_API ReturnCode_t delete_datawriter(
             const DataWriter* writer);
 
     /**
@@ -210,40 +208,44 @@ public:
      * @param topic_name Name of the Topic
      * @return Pointer to a previously created DataWriter associated to a Topic with the requested topic_name
      */
-    RTPS_DllAPI DataWriter* lookup_datawriter(
+    FASTDDS_EXPORTED_API DataWriter* lookup_datawriter(
             const std::string& topic_name) const;
 
     /**
      * @brief Indicates to FastDDS that the contained DataWriters are about to be modified
      *
      * @return RETCODE_OK if successful, an error code otherwise
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t suspend_publications();
+    FASTDDS_EXPORTED_API ReturnCode_t suspend_publications();
 
     /**
      * @brief Indicates to FastDDS that the modifications to the DataWriters are complete.
      *
      * @return RETCODE_OK if successful, an error code otherwise
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t resume_publications();
+    FASTDDS_EXPORTED_API ReturnCode_t resume_publications();
 
     /**
      * @brief Signals the beginning of a set of coherent cache changes using the Datawriters attached to the publisher
      *
      * @return RETCODE_OK if successful, an error code otherwise
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t begin_coherent_changes();
+    FASTDDS_EXPORTED_API ReturnCode_t begin_coherent_changes();
 
     /**
      * @brief Signals the end of a set of coherent cache changes
      *
      * @return RETCODE_OK if successful, an error code otherwise
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t end_coherent_changes();
+    FASTDDS_EXPORTED_API ReturnCode_t end_coherent_changes();
 
     /**
      * This operation blocks the calling thread until either all data written by the reliable DataWriter entities
@@ -256,22 +258,22 @@ public:
      * @return RETCODE_TIMEOUT if the function takes more than the maximum blocking time established, RETCODE_OK if the
      * Publisher receives the acknowledgments and RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t wait_for_acknowledgments(
-            const fastrtps::Duration_t& max_wait);
+    FASTDDS_EXPORTED_API ReturnCode_t wait_for_acknowledgments(
+            const fastdds::dds::Duration_t& max_wait);
 
     /**
      * This operation returns the DomainParticipant to which the Publisher belongs.
      *
      * @return Pointer to the DomainParticipant
      */
-    RTPS_DllAPI const DomainParticipant* get_participant() const;
+    FASTDDS_EXPORTED_API const DomainParticipant* get_participant() const;
 
     /**
      * @brief Deletes all contained DataWriters
      *
      * @return RETCODE_OK if successful, an error code otherwise
      */
-    RTPS_DllAPI ReturnCode_t delete_contained_entities();
+    FASTDDS_EXPORTED_API ReturnCode_t delete_contained_entities();
 
     /**
      * This operation sets a default value of the DataWriter QoS policies which will be used for newly created
@@ -287,7 +289,7 @@ public:
      * @param qos DataWriterQos to be set
      * @return RETCODE_INCONSISTENT_POLICY if the Qos is not self consistent and RETCODE_OK if the qos is changed correctly.
      */
-    RTPS_DllAPI ReturnCode_t set_default_datawriter_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t set_default_datawriter_qos(
             const DataWriterQos& qos);
 
     /**
@@ -300,7 +302,7 @@ public:
      *
      * @return Current default WriterQos
      */
-    RTPS_DllAPI const DataWriterQos& get_default_datawriter_qos() const;
+    FASTDDS_EXPORTED_API const DataWriterQos& get_default_datawriter_qos() const;
 
     /**
      * This operation retrieves the default value of the DataWriter QoS, that is, the QoS policies which will be used
@@ -313,38 +315,132 @@ public:
      * @param qos Reference to the current default WriterQos.
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_default_datawriter_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_datawriter_qos(
             DataWriterQos& qos) const;
 
     /**
      * @brief Copies TopicQos into the corresponding DataWriterQos
      *
-     * @param[out] writer_qos
-     * @param[in] topic_qos
+     * @param [out] writer_qos
+     * @param [in] topic_qos
      * @return RETCODE_OK if successful, an error code otherwise
+     *
      * @warning Not supported yet. Currently returns RETCODE_UNSUPPORTED
      */
-    RTPS_DllAPI ReturnCode_t copy_from_topic_qos(
+    FASTDDS_EXPORTED_API static ReturnCode_t copy_from_topic_qos(
             fastdds::dds::DataWriterQos& writer_qos,
-            const fastdds::dds::TopicQos& topic_qos) const;
+            const fastdds::dds::TopicQos& topic_qos);
 
     /**
-     * Fills the DataWriterQos with the values of the XML profile.
+     * Fills the @ref DataWriterQos with the values of the XML profile.
      *
      * @param profile_name DataWriter profile name.
-     * @param qos DataWriterQos object where the qos is returned.
-     * @return RETCODE_OK if the profile exists. RETCODE_BAD_PARAMETER otherwise.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @return @ref RETCODE_OK if the profile exists. @ref RETCODE_BAD_PARAMETER otherwise.
      */
-    RTPS_DllAPI ReturnCode_t get_datawriter_qos_from_profile(
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_profile(
             const std::string& profile_name,
             DataWriterQos& qos) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the values of the XML profile, and also its corresponding topic name (if specified).
+     *
+     * @param profile_name DataWriter profile name.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @param topic_name String where the name of the topic associated to this profile is returned (if specified).
+     * @return @ref RETCODE_OK if the profile exists. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_profile(
+            const std::string& profile_name,
+            DataWriterQos& qos,
+            std::string& topic_name) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the first DataWriter profile found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the first DataWriter profile found in the provided XML, and also its corresponding topic name (if specified).
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @param topic_name String where the name of the topic associated to this profile is returned (if specified).
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos,
+            std::string& topic_name) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the DataWriter profile with \c profile_name to be found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @param profile_name DataWriter profile name.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos,
+            const std::string& profile_name) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the DataWriter profile with \c profile_name to be found in the provided XML, and also its corresponding topic name (if specified).
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @param topic_name String where the name of the topic associated to this profile is returned (if specified).
+     * @param profile_name DataWriter profile name.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos,
+            std::string& topic_name,
+            const std::string& profile_name) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the default DataWriter profile found in the provided XML (if there is).
+     *
+     * @note This method does not update the default datawriter qos (returned by \c get_default_datawriter_qos).
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos) const;
+
+    /**
+     * Fills the @ref DataWriterQos with the default DataWriter profile found in the provided XML (if there is), and also its corresponding topic name (if specified).
+     *
+     * @note This method does not update the default datawriter qos (returned by \c get_default_datawriter_qos).
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DataWriterQos object where the qos is returned.
+     * @param topic_name String where the name of the topic associated to this profile is returned (if specified).
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_datawriter_qos_from_xml(
+            const std::string& xml,
+            DataWriterQos& qos,
+            std::string& topic_name) const;
 
     /**
      * Returns the Publisher's handle.
      *
      * @return InstanceHandle of this Publisher.
      */
-    RTPS_DllAPI const InstanceHandle_t& get_instance_handle() const;
+    FASTDDS_EXPORTED_API const InstanceHandle_t& get_instance_handle() const;
 
     /**
      * Fills the given vector with all the datawriters of this publisher.
@@ -352,7 +448,7 @@ public:
      * @param writers Vector where the DataWriters are returned
      * @return true
      */
-    RTPS_DllAPI bool get_datawriters(
+    FASTDDS_EXPORTED_API bool get_datawriters(
             std::vector<DataWriter*>& writers) const;
 
     /**
@@ -360,7 +456,7 @@ public:
      *
      * @return true if the publisher has one or several DataWriters, false otherwise
      */
-    RTPS_DllAPI bool has_datawriters() const;
+    FASTDDS_EXPORTED_API bool has_datawriters() const;
 
 protected:
 
@@ -369,8 +465,8 @@ protected:
     friend class ::dds::pub::Publisher;
 };
 
-} /* namespace dds */
-} /* namespace fastdds */
-} /* namespace eprosima */
+} // namespace dds
+} // namespace fastdds
+} // namespace eprosima
 
-#endif /* _FASTDDS_PUBLISHER_HPP_ */
+#endif // FASTDDS_DDS_PUBLISHER__PUBLISHER_HPP

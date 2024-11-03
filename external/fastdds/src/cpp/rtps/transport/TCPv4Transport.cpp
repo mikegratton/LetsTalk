@@ -20,8 +20,11 @@
 
 #include <asio.hpp>
 #include <fastdds/dds/log/Log.hpp>
-#include <fastdds/rtps/transport/TCPv4TransportDescriptor.h>
-#include <fastrtps/utils/IPLocator.h>
+#include <fastdds/rtps/transport/TCPv4TransportDescriptor.hpp>
+#include <fastdds/utils/IPLocator.hpp>
+
+#include <rtps/network/utils/netmask_filter.hpp>
+#include <utils/SystemInfo.hpp>
 
 using namespace std;
 using namespace asio;
@@ -30,16 +33,18 @@ namespace eprosima {
 namespace fastdds {
 namespace rtps {
 
-using IPFinder = fastrtps::rtps::IPFinder;
-using octet = fastrtps::rtps::octet;
-using IPLocator = fastrtps::rtps::IPLocator;
 using Log = fastdds::dds::Log;
 
-static void get_ipv4s(
+static bool get_ipv4s(
         std::vector<IPFinder::info_IP>& locNames,
-        bool return_loopback = false)
+        bool return_loopback,
+        bool force_lookup)
 {
-    IPFinder::getIPs(&locNames, return_loopback);
+    if (!SystemInfo::get_ips(locNames, return_loopback, force_lookup))
+    {
+        return false;
+    }
+
     auto new_end = remove_if(locNames.begin(),
                     locNames.end(),
                     [](IPFinder::info_IP ip)
@@ -50,7 +55,9 @@ static void get_ipv4s(
     std::for_each(locNames.begin(), locNames.end(), [](IPFinder::info_IP& loc)
             {
                 loc.locator.kind = LOCATOR_KIND_TCPv4;
+                loc.masked_locator.kind = LOCATOR_KIND_TCPv4;
             });
+    return true;
 }
 
 static asio::ip::address_v4::bytes_type locator_to_native(
@@ -76,21 +83,129 @@ TCPv4Transport::TCPv4Transport(
     : TCPTransportInterface(LOCATOR_KIND_TCPv4)
     , configuration_(descriptor)
 {
-    for (const auto& interface : descriptor.interfaceWhiteList)
+    // Copy descriptor's netmask filter configuration
+    // NOTE: participant's netmask_filter already taken into account before calling tranport registration
+    netmask_filter_ = descriptor.netmask_filter;
+
+    if (!descriptor.interfaceWhiteList.empty() || !descriptor.interface_allowlist.empty() ||
+            !descriptor.interface_blocklist.empty())
     {
-        interface_whitelist_.emplace_back(ip::address_v4::from_string(interface));
+        const auto white_begin = descriptor.interfaceWhiteList.begin();
+        const auto white_end = descriptor.interfaceWhiteList.end();
+
+        const auto allow_begin = descriptor.interface_allowlist.begin();
+        const auto allow_end = descriptor.interface_allowlist.end();
+
+        const auto block_begin = descriptor.interface_blocklist.begin();
+        const auto block_end = descriptor.interface_blocklist.end();
+
+        if (!descriptor.interfaceWhiteList.empty())
+        {
+            EPROSIMA_LOG_WARNING(TRANSPORT_TCPV4,
+                    "Support for interfaceWhiteList will be removed in a future release."
+                    << " Please use interface allowlist/blocklist instead.");
+        }
+
+        std::vector<IPFinder::info_IP> local_interfaces;
+        get_ipv4s(local_interfaces, true, false);
+        for (const IPFinder::info_IP& infoIP : local_interfaces)
+        {
+            if (std::find_if(block_begin, block_end, [infoIP](const BlockedNetworkInterface& blocklist_element)
+                    {
+                        return blocklist_element.name == infoIP.dev || blocklist_element.name == infoIP.name;
+                    }) != block_end )
+            {
+                // Before skipping this interface, check if present in whitelist/allowlist and warn the user if found
+                if ((std::find_if(white_begin, white_end, [infoIP](const std::string& whitelist_element)
+                        {
+                            return whitelist_element == infoIP.dev || whitelist_element == infoIP.name;
+                        }) != white_end ) ||
+                        (std::find_if(allow_begin, allow_end,
+                        [infoIP](const AllowedNetworkInterface& allowlist_element)
+                        {
+                            return allowlist_element.name == infoIP.dev || allowlist_element.name == infoIP.name;
+                        }) != allow_end ))
+                {
+                    EPROSIMA_LOG_WARNING(TRANSPORT_TCPV4,
+                            "Blocked interface " << infoIP.dev << ": " << infoIP.name
+                                                 << " is also present in whitelist/allowlist."
+                                                 << " Blocklist takes precedence over whitelist/allowlist.");
+                }
+                continue;
+            }
+            else if (descriptor.interfaceWhiteList.empty() && descriptor.interface_allowlist.empty())
+            {
+                interface_whitelist_.emplace_back(ip::address_v4::from_string(infoIP.name));
+                allowed_interfaces_.emplace_back(infoIP.dev, infoIP.name, infoIP.masked_locator,
+                        descriptor.netmask_filter);
+            }
+            else if (!descriptor.interface_allowlist.empty())
+            {
+                auto allow_it = std::find_if(
+                    allow_begin,
+                    allow_end,
+                    [&infoIP](const AllowedNetworkInterface& allowlist_element)
+                    {
+                        return allowlist_element.name == infoIP.dev || allowlist_element.name == infoIP.name;
+                    });
+                if (allow_it != allow_end)
+                {
+                    NetmaskFilterKind netmask_filter = allow_it->netmask_filter;
+                    if (network::netmask_filter::validate_and_transform(netmask_filter,
+                            descriptor.netmask_filter))
+                    {
+                        interface_whitelist_.emplace_back(ip::address_v4::from_string(infoIP.name));
+                        allowed_interfaces_.emplace_back(infoIP.dev, infoIP.name, infoIP.masked_locator,
+                                netmask_filter);
+                    }
+                    else
+                    {
+                        EPROSIMA_LOG_WARNING(TRANSPORT_TCPV4,
+                                "Ignoring allowed interface " << infoIP.dev << ": " << infoIP.name
+                                                              << " as its netmask filter configuration (" << netmask_filter << ") is incompatible"
+                                                              << " with descriptor's (" << descriptor.netmask_filter <<
+                                ").");
+                    }
+                }
+            }
+            else if (!descriptor.interfaceWhiteList.empty())
+            {
+                if (std::find_if(white_begin, white_end, [infoIP](const std::string& whitelist_element)
+                        {
+                            return whitelist_element == infoIP.dev || whitelist_element == infoIP.name;
+                        }) != white_end )
+                {
+                    interface_whitelist_.emplace_back(ip::address_v4::from_string(infoIP.name));
+                    allowed_interfaces_.emplace_back(infoIP.dev, infoIP.name, infoIP.masked_locator,
+                            descriptor.netmask_filter);
+                }
+            }
+        }
+
+        if (interface_whitelist_.empty())
+        {
+            EPROSIMA_LOG_ERROR(TRANSPORT_TCPV4, "All whitelist interfaces were filtered out");
+            interface_whitelist_.emplace_back(ip::address_v4::from_string("192.0.2.0"));
+        }
     }
 
-    for (uint16_t port : configuration_.listening_ports)
+    if (!configuration_.listening_ports.empty())
     {
-        Locator locator(LOCATOR_KIND_TCPv4, port);
-        create_acceptor_socket(locator);
+        if (configuration_.listening_ports.size() > 1)
+        {
+            EPROSIMA_LOG_ERROR(TRANSPORT_TCPV4,
+                    "Only one listening port is allowed for TCP transport. Only the first port will be used.");
+            configuration_.listening_ports.erase(
+                configuration_.listening_ports.begin() + 1, configuration_.listening_ports.end());
+        }
+        Locator locator(LOCATOR_KIND_TCPv4, configuration_.listening_ports.front());
+        configuration_.listening_ports.front() = create_acceptor_socket(locator);
     }
 
 #if !TLS_FOUND
     if (descriptor.apply_security)
     {
-        EPROSIMA_LOG_ERROR(RTCP_TLS, "Trying to use TCP Transport with TLS but TLS was not found.");
+        EPROSIMA_LOG_ERROR(RTCP_TLSV4, "Trying to use TCP Transport with TLS but TLS was not found.");
     }
 #endif // if !TLS_FOUND
 }
@@ -157,11 +272,12 @@ TCPTransportDescriptor* TCPv4Transport::configuration()
     return &configuration_;
 }
 
-void TCPv4Transport::get_ips(
+bool TCPv4Transport::get_ips(
         std::vector<IPFinder::info_IP>& locNames,
-        bool return_loopback) const
+        bool return_loopback,
+        bool force_lookup) const
 {
-    get_ipv4s(locNames, return_loopback);
+    return get_ipv4s(locNames, return_loopback, force_lookup);
 }
 
 uint16_t TCPv4Transport::GetLogicalPortIncrement() const
@@ -203,9 +319,9 @@ bool TCPv4Transport::is_interface_whitelist_empty() const
 }
 
 bool TCPv4Transport::is_interface_allowed(
-        const std::string& interface) const
+        const std::string& iface) const
 {
-    return is_interface_allowed(asio::ip::address_v4::from_string(interface));
+    return is_interface_allowed(asio::ip::address_v4::from_string(iface));
 }
 
 bool TCPv4Transport::is_interface_allowed(
@@ -232,7 +348,7 @@ LocatorList TCPv4Transport::NormalizeLocator(
     if (IPLocator::isAny(locator))
     {
         std::vector<IPFinder::info_IP> locNames;
-        get_ipv4s(locNames);
+        get_ipv4s(locNames, false, false);
         for (const auto& infoIP : locNames)
         {
             auto ip = asio::ip::address_v4::from_string(infoIP.name);
@@ -286,7 +402,14 @@ bool TCPv4Transport::is_local_locator(
     /*
      * Check case: Address is one of our addresses.
      */
-    for (const IPFinder::info_IP& localInterface : current_interfaces_)
+    std::vector<IPFinder::info_IP> current_interfaces;
+    if (!get_ips(current_interfaces, false, false))
+    {
+        EPROSIMA_LOG_WARNING(TRANSPORT_TCPV4,
+                "Could not retrieve IPs information to check if locator " << locator << " is local.");
+        return false;
+    }
+    for (const IPFinder::info_IP& localInterface : current_interfaces)
     {
         if (IPLocator::compareAddress(locator, localInterface.locator))
         {
@@ -309,6 +432,12 @@ bool TCPv4Transport::is_locator_allowed(
         return true;
     }
     return is_interface_allowed(IPLocator::toIPv4string(locator));
+}
+
+bool TCPv4Transport::is_locator_reachable(
+        const Locator_t& locator)
+{
+    return IsLocatorSupported(locator);
 }
 
 bool TCPv4Transport::compare_locator_ip(
@@ -415,5 +544,5 @@ bool TCPv4Transport::fillUnicastLocator(
 }
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima

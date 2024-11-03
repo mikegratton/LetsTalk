@@ -16,8 +16,8 @@
  * @file InstanceState.hpp
  */
 
-#ifndef _FASTDDS_DDS_SUBSCRIBER_INSTANCESTATE_HPP_
-#define _FASTDDS_DDS_SUBSCRIBER_INSTANCESTATE_HPP_
+#ifndef FASTDDS_DDS_SUBSCRIBER__INSTANCESTATE_HPP
+#define FASTDDS_DDS_SUBSCRIBER__INSTANCESTATE_HPP
 
 #include <cstdint>
 
@@ -26,7 +26,7 @@ namespace fastdds {
 namespace dds {
 
 /**
- * Indicates if the samples are from an alive @ref DataWriter or not.
+ * Indicates if the samples are from an alive @ref eprosima::fastdds::dds::DataWriter or not.
  *
  * For each instance, the middleware internally maintains an instance state. The instance state
  * can be:
@@ -84,4 +84,4 @@ constexpr InstanceStateMask ANY_INSTANCE_STATE = ALIVE_INSTANCE_STATE | NOT_ALIV
 }  // namespace fastdds
 }  // namespace eprosima
 
-#endif  // _FASTDDS_DDS_SUBSCRIBER_INSTANCESTATE_HPP_
+#endif  // FASTDDS_DDS_SUBSCRIBER__INSTANCESTATE_HPP

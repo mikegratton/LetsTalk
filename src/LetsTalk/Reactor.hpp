@@ -3,7 +3,7 @@
 #include <string>
 
 #include "LetsTalkFwd.hpp"
-#include "Reactor.h"
+#include "idl/Reactor.hpp"
 /**
  * A reactor is a communication pattern that is like an extended request/reply session.
  *

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles" >
+<dds xmlns="http://www.eprosima.com" >
     <types>
         <type>
             <enum name="my_alone_enum">
@@ -84,6 +84,14 @@
 
                 <!-- Complex types -->
                 <member name="my_other_struct" type="nonBasic" nonBasicTypeName="other_struct"/>
+            </struct>
+        </type>
+
+        <type>
+            <struct name="my_keyed_struct">
+                <member name="first" type="int32"/>
+                <member name="second" type="int64"/>
+                <member name="third" type="int32" key="true"/>
             </struct>
         </type>
 

@@ -17,24 +17,26 @@
  *
  */
 
-#ifndef _FASTDDS_DOMAINPARTICIPANT_HPP_
-#define _FASTDDS_DOMAINPARTICIPANT_HPP_
-
-#include <fastrtps/attributes/ParticipantAttributes.h>
-#include <fastrtps/types/TypesBase.h>
-#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
-#include <fastdds/dds/domain/qos/DomainParticipantFactoryQos.hpp>
-#include <fastdds/dds/core/status/StatusMask.hpp>
+#ifndef FASTDDS_DDS_DOMAIN__DOMAINPARTICIPANTFACTORY_HPP
+#define FASTDDS_DDS_DOMAIN__DOMAINPARTICIPANTFACTORY_HPP
 
 #include <map>
 #include <memory>
 #include <mutex>
 
-using eprosima::fastrtps::types::ReturnCode_t;
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/dds/core/status/StatusMask.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantExtendedQos.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantFactoryQos.hpp>
+#include <fastdds/dds/domain/qos/DomainParticipantQos.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicType.hpp>
+#include <fastdds/dds/xtypes/dynamic_types/DynamicTypeBuilder.hpp>
+#include <fastdds/dds/xtypes/type_representation/ITypeObjectRegistry.hpp>
+#include <fastdds/LibrarySettings.hpp>
 
 namespace eprosima {
 
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class RTPSDomainImpl;
@@ -43,9 +45,7 @@ namespace detail {
 class TopicPayloadPoolRegistry;
 }  // namespace detail
 }  // namespace rtps
-}  // namespace fastrtps
 
-namespace fastdds {
 namespace dds {
 
 class DomainParticipantListener;
@@ -71,14 +71,14 @@ public:
      *
      * @return A raw pointer to the DomainParticipantFactory singleton instance.
      */
-    RTPS_DllAPI static DomainParticipantFactory* get_instance();
+    FASTDDS_EXPORTED_API static DomainParticipantFactory* get_instance();
 
     /**
      * Returns the DomainParticipantFactory singleton instance.
      *
      * @return A shared pointer to the DomainParticipantFactory singleton instance.
      */
-    RTPS_DllAPI static std::shared_ptr<DomainParticipantFactory> get_shared_instance();
+    FASTDDS_EXPORTED_API static std::shared_ptr<DomainParticipantFactory> get_shared_instance();
 
     /**
      * Create a Participant.
@@ -89,11 +89,43 @@ public:
      * @param mask StatusMask Reference (default: all)
      * @return DomainParticipant pointer. (nullptr if not created.)
      */
-    RTPS_DllAPI DomainParticipant* create_participant(
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant(
             DomainId_t domain_id,
             const DomainParticipantQos& qos,
             DomainParticipantListener* listener = nullptr,
             const StatusMask& mask = StatusMask::all());
+
+    /**
+     * Create a Participant.
+     *
+     * @param extended_qos DomainParticipantExtendedQos Reference.
+     * @param listener DomainParticipantListener Pointer (default: nullptr)
+     * @param mask StatusMask Reference (default: all)
+     * @return DomainParticipant pointer. (nullptr if not created.)
+     */
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant(
+            const DomainParticipantExtendedQos& extended_qos,
+            DomainParticipantListener* listener = nullptr,
+            const StatusMask& mask = StatusMask::all());
+
+    /**
+     * Create a Participant with default domain id and qos.
+     *
+     * @return DomainParticipant pointer. (nullptr if not created.)
+     */
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant_with_default_profile();
+
+
+    /**
+     * Create a Participant with default domain id and qos.
+     *
+     * @return DomainParticipant pointer. (nullptr if not created.)
+     * @param listener DomainParticipantListener Pointer
+     * @param mask StatusMask Reference
+     */
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant_with_default_profile(
+            DomainParticipantListener* listener,
+            const StatusMask& mask);
 
     /**
      * Create a Participant.
@@ -104,7 +136,7 @@ public:
      * @param mask StatusMask Reference (default: all)
      * @return DomainParticipant pointer. (nullptr if not created.)
      */
-    RTPS_DllAPI DomainParticipant* create_participant_with_profile(
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant_with_profile(
             DomainId_t domain_id,
             const std::string& profile_name,
             DomainParticipantListener* listener = nullptr,
@@ -118,7 +150,7 @@ public:
      * @param mask StatusMask Reference (default: all)
      * @return DomainParticipant pointer. (nullptr if not created.)
      */
-    RTPS_DllAPI DomainParticipant* create_participant_with_profile(
+    FASTDDS_EXPORTED_API DomainParticipant* create_participant_with_profile(
             const std::string& profile_name,
             DomainParticipantListener* listener = nullptr,
             const StatusMask& mask = StatusMask::all());
@@ -132,7 +164,7 @@ public:
      * @param domain_id
      * @return previously created DomainParticipant within the specified domain
      */
-    RTPS_DllAPI DomainParticipant* lookup_participant(
+    FASTDDS_EXPORTED_API DomainParticipant* lookup_participant(
             DomainId_t domain_id) const;
 
     /**
@@ -141,7 +173,7 @@ public:
      * @param domain_id
      * @return previously created DomainParticipants within the specified domain
      */
-    RTPS_DllAPI std::vector<DomainParticipant*> lookup_participants(
+    FASTDDS_EXPORTED_API std::vector<DomainParticipant*> lookup_participants(
             DomainId_t domain_id) const;
 
     /**
@@ -154,7 +186,7 @@ public:
      * @param qos DomainParticipantQos where the qos is returned
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_default_participant_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_participant_qos(
             DomainParticipantQos& qos) const;
 
     /**
@@ -166,7 +198,7 @@ public:
      *
      * @return A reference to the default DomainParticipantQos
      */
-    RTPS_DllAPI const DomainParticipantQos& get_default_participant_qos() const;
+    FASTDDS_EXPORTED_API const DomainParticipantQos& get_default_participant_qos() const;
 
     /**
      * @brief This operation sets a default value of the DomainParticipant QoS policies which will be used for
@@ -183,19 +215,113 @@ public:
      * @param qos DomainParticipantQos to be set
      * @return RETCODE_INCONSISTENT_POLICY if the Qos is not self consistent and RETCODE_OK if the qos is changed correctly.
      */
-    RTPS_DllAPI ReturnCode_t set_default_participant_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t set_default_participant_qos(
             const DomainParticipantQos& qos);
 
     /**
-     * Fills the DomainParticipantQos with the values of the XML profile.
+     * Fills the @ref DomainParticipantQos with the values of the XML profile.
      *
      * @param profile_name DomainParticipant profile name.
-     * @param qos DomainParticipantQos object where the qos is returned.
+     * @param qos @ref DomainParticipantQos object where the qos is returned.
      * @return RETCODE_OK if the profile exists. RETCODE_BAD_PARAMETER otherwise.
      */
-    RTPS_DllAPI ReturnCode_t get_participant_qos_from_profile(
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_qos_from_profile(
             const std::string& profile_name,
             DomainParticipantQos& qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantQos with the first DomainParticipant profile found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DomainParticipantQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantQos& qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantQos with the DomainParticipant profile with \c profile_name to be found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DomainParticipantQos object where the qos is returned.
+     * @param profile_name DomainParticipant profile name.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantQos& qos,
+            const std::string& profile_name) const;
+
+    /**
+     * Fills the @ref DomainParticipantQos with the default DomainParticipant profile found in the provided XML (if there is).
+     *
+     * @note This method does not update the default participant qos (returned by \c get_default_participant_qos).
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c qos structure.
+     * @param qos @ref DomainParticipantQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_participant_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantQos& qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantExtendedQos with the values of the XML profile.
+     *
+     * @param profile_name DomainParticipant profile name.
+     * @param extended_qos DomainParticipantExtendedQos object where the domain and qos are returned.
+     * @return RETCODE_OK if the profile exists. RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_extended_qos_from_profile(
+            const std::string& profile_name,
+            DomainParticipantExtendedQos& extended_qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantExtendedQos with the first DomainParticipant profile found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c extended_qos structure.
+     * @param extended_qos @ref DomainParticipantExtendedQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_extended_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantExtendedQos& extended_qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantExtendedQos with the DomainParticipant profile with \c profile_name to be found in the provided XML.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c extended_qos structure.
+     * @param extended_qos @ref DomainParticipantExtendedQos object where the qos is returned.
+     * @param profile_name DomainParticipant profile name.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_extended_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantExtendedQos& extended_qos,
+            const std::string& profile_name) const;
+
+    /**
+     * Fills the @ref DomainParticipantExtendedQos with the default DomainParticipant profile found in the provided XML (if there is).
+     *
+     * @note This method does not update the default participant extended qos.
+     *
+     * @param xml Raw XML string containing the profile to be used to fill the \c extended_qos structure.
+     * @param extended_qos @ref DomainParticipantExtendedQos object where the qos is returned.
+     * @return @ref RETCODE_OK on success. @ref RETCODE_BAD_PARAMETER otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_default_participant_extended_qos_from_xml(
+            const std::string& xml,
+            DomainParticipantExtendedQos& extended_qos) const;
+
+    /**
+     * Fills the @ref DomainParticipantExtendedQos with the values of the default XML profile.
+     *
+     * @param extended_qos @ref DomainParticipantExtendedQos object where the domain and qos are returned.
+     * @return RETCODE_OK
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_participant_extended_qos_from_default_profile(
+            DomainParticipantExtendedQos& extended_qos) const;
 
     /**
      * Remove a Participant and all associated publishers and subscribers.
@@ -204,7 +330,7 @@ public:
      * @return RETCODE_PRECONDITION_NOT_MET if the participant has active entities, RETCODE_OK if the participant is correctly
      * deleted and RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t delete_participant(
+    FASTDDS_EXPORTED_API ReturnCode_t delete_participant(
             DomainParticipant* part);
 
     /**
@@ -212,7 +338,7 @@ public:
      *
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t load_profiles();
+    FASTDDS_EXPORTED_API ReturnCode_t load_profiles();
 
     /**
      * Load profiles from XML file.
@@ -220,7 +346,7 @@ public:
      * @param xml_profile_file XML profile file.
      * @return RETCODE_OK if it is correctly loaded, RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t load_XML_profiles_file(
+    FASTDDS_EXPORTED_API ReturnCode_t load_XML_profiles_file(
             const std::string& xml_profile_file);
 
     /**
@@ -230,7 +356,7 @@ public:
      * @param length length of data
      * @return RETCODE_OK if it is correctly loaded, RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t load_XML_profiles_string(
+    FASTDDS_EXPORTED_API ReturnCode_t load_XML_profiles_string(
             const char* data,
             size_t length);
 
@@ -240,7 +366,7 @@ public:
      * @param xml_file xml file path
      * @return RETCODE_OK if the validation is successful, RETCODE_ERROR otherwise.
      */
-    RTPS_DllAPI ReturnCode_t check_xml_static_discovery(
+    FASTDDS_EXPORTED_API ReturnCode_t check_xml_static_discovery(
             std::string& xml_file);
 
     /**
@@ -249,7 +375,7 @@ public:
      * @param qos DomaParticipantFactoryQos reference where the qos is returned
      * @return RETCODE_OK
      */
-    RTPS_DllAPI ReturnCode_t get_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t get_qos(
             DomainParticipantFactoryQos& qos) const;
 
     /**
@@ -265,8 +391,51 @@ public:
      * @return RETCODE_IMMUTABLE_POLICY if any of the Qos cannot be changed, RETCODE_INCONSISTENT_POLICY if the Qos is not
      * self consistent and RETCODE_OK if the qos is changed correctly.
      */
-    RTPS_DllAPI ReturnCode_t set_qos(
+    FASTDDS_EXPORTED_API ReturnCode_t set_qos(
             const DomainParticipantFactoryQos& qos);
+
+    /**
+     * @brief This operation returns the value of the DomainParticipant library settings.
+     *
+     * @param library_settings LibrarySettings reference where the settings are returned.
+     * @return RETCODE_OK
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_library_settings(
+            LibrarySettings& library_settings) const;
+
+    /**
+     * @brief This operation sets the library settings.
+     *
+     * Library settings must be set before enabling the DomainParticipants.
+     * Otherwise, failure of the setting operation is expected.
+     *
+     * @param library_settings LibrarySettings to be set.
+     * @return RETCODE_PRECONDITION_NOT_MET if any DomainParticipant is already enabled.
+     *         RETCODE_OK otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t set_library_settings(
+            const LibrarySettings& library_settings);
+
+    /**
+     * @brief Get the @ref DynamicType defined in XML file.
+     *        The XML file shall be previously loaded.
+     *
+     * @param type_name Dynamic type name.
+     * @param type Reference where the Dynamic type builder is returned.
+     * @return RETCODE_BAD_PARAMETER if type_name is empty.
+     *         RETCODE_NO_DATA if type_name is unknown.
+     *         RETCODE_OK otherwise.
+     */
+    FASTDDS_EXPORTED_API ReturnCode_t get_dynamic_type_builder_from_xml_by_name(
+            const std::string& type_name,
+            DynamicTypeBuilder::_ref_type& type);
+
+    /**
+     * @brief Return the TypeObjectRegistry member to access the public API.
+     *
+     * @return const xtypes::TypeObjectRegistry reference.
+     */
+    FASTDDS_EXPORTED_API xtypes::ITypeObjectRegistry& type_object_registry();
 
 protected:
 
@@ -305,13 +474,15 @@ protected:
 
     mutable bool default_xml_profiles_loaded;
 
+    DomainId_t default_domain_id_;
+
     DomainParticipantFactoryQos factory_qos_;
 
     DomainParticipantQos default_participant_qos_;
 
-    std::shared_ptr<fastrtps::rtps::detail::TopicPayloadPoolRegistry> topic_pool_;
+    std::shared_ptr<fastdds::rtps::detail::TopicPayloadPoolRegistry> topic_pool_;
 
-    std::shared_ptr<fastrtps::rtps::RTPSDomainImpl> rtps_domain_;
+    std::shared_ptr<fastdds::rtps::RTPSDomainImpl> rtps_domain_;
 
     std::shared_ptr<detail::LogResources> log_resources_;
 
@@ -327,4 +498,4 @@ protected:
 }  // namespace fastdds
 }  // namespace eprosima
 
-#endif /* _FASTDDS_DOMAINPARTICIPANT_HPP_*/
+#endif // FASTDDS_DDS_DOMAIN__DOMAINPARTICIPANTFACTORY_HPP

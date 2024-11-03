@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <map>
+#include <thread>
+
 #if defined(_WIN32)
 #include <process.h>
 #else
@@ -25,35 +27,50 @@
 #include <fastdds/dds/log/Log.hpp>
 #include <fastdds/dds/publisher/qos/WriterQos.hpp>
 #include <fastdds/dds/subscriber/qos/ReaderQos.hpp>
-#include <fastdds/rtps/RTPSDomain.h>
-#include <fastdds/rtps/attributes/HistoryAttributes.h>
-#include <fastdds/rtps/attributes/RTPSParticipantAttributes.h>
-#include <fastdds/rtps/attributes/ReaderAttributes.h>
-#include <fastdds/rtps/attributes/WriterAttributes.h>
-#include <fastdds/rtps/common/Time_t.h>
-#include <fastdds/rtps/history/ReaderHistory.h>
-#include <fastdds/rtps/history/WriterHistory.h>
-#include <fastdds/rtps/participant/RTPSParticipant.h>
-#include <fastdds/rtps/reader/RTPSReader.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
+#include <fastdds/LibrarySettings.hpp>
+#include <fastdds/rtps/attributes/HistoryAttributes.hpp>
+#include <fastdds/rtps/attributes/ReaderAttributes.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.hpp>
+#include <fastdds/rtps/attributes/WriterAttributes.hpp>
+#include <fastdds/rtps/builtin/data/TopicDescription.hpp>
+#include <fastdds/rtps/common/Time_t.hpp>
+#include <fastdds/rtps/history/ReaderHistory.hpp>
+#include <fastdds/rtps/history/WriterHistory.hpp>
+#include <fastdds/rtps/participant/RTPSParticipant.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <fastdds/rtps/transport/test_UDPv4TransportDescriptor.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
 #include <fastdds/statistics/IListeners.hpp>
-#include <fastrtps/attributes/LibrarySettingsAttributes.h>
-#include <fastrtps/attributes/LibrarySettingsAttributes.h>
-#include <fastrtps/attributes/TopicAttributes.h>
-#include <fastrtps/attributes/TopicAttributes.h>
-#include <fastrtps/transport/test_UDPv4TransportDescriptor.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
-#include <fastrtps/xmlparser/XMLProfileManager.h>
 
-#include <statistics/types/types.h>
-
+#include <rtps/participant/RTPSParticipantImpl.h>
 #include <rtps/transport/test_UDPv4Transport.h>
+#include <rtps/writer/BaseWriter.hpp>
+#include <statistics/rtps/monitor-service/Interfaces.hpp>
+#include <statistics/types/monitorservice_types.hpp>
+#include <statistics/types/types.hpp>
 #include <utils/SystemInfo.hpp>
+#include <xmlparser/XMLProfileManager.h>
 
 namespace eprosima {
 namespace fastdds {
 namespace statistics {
 namespace rtps {
+
+class RTPSParticipantMock : public fastdds::rtps::RTPSParticipant
+{
+
+public:
+
+    fastdds::rtps::RTPSParticipantImpl* get_impl()
+    {
+        return mp_impl;
+    }
+
+private:
+
+    ~RTPSParticipantMock();
+};
 
 struct MockListener : IListener
 {
@@ -68,52 +85,52 @@ struct MockListener : IListener
         auto kind = data._d();
         switch (kind)
         {
-            case HISTORY2HISTORY_LATENCY:
+            case EventKind::HISTORY2HISTORY_LATENCY:
                 on_history_latency(data.writer_reader_data());
                 break;
-            case RTPS_SENT:
+            case EventKind::RTPS_SENT:
                 on_rtps_sent(data.entity2locator_traffic());
                 break;
-            case RTPS_LOST:
+            case EventKind::RTPS_LOST:
                 on_rtps_lost(data.entity2locator_traffic());
                 break;
-            case NETWORK_LATENCY:
+            case EventKind::NETWORK_LATENCY:
                 on_network_latency(data.locator2locator_data());
                 break;
-            case HEARTBEAT_COUNT:
+            case EventKind::HEARTBEAT_COUNT:
                 on_heartbeat_count(data.entity_count());
                 break;
-            case ACKNACK_COUNT:
+            case EventKind::ACKNACK_COUNT:
                 on_acknack_count(data.entity_count());
                 break;
-            case DATA_COUNT:
+            case EventKind::DATA_COUNT:
                 on_data_count(data.entity_count());
                 break;
-            case RESENT_DATAS:
+            case EventKind::RESENT_DATAS:
                 on_resent_count(data.entity_count());
                 break;
-            case GAP_COUNT:
+            case EventKind::GAP_COUNT:
                 on_gap_count(data.entity_count());
                 break;
-            case NACKFRAG_COUNT:
+            case EventKind::NACKFRAG_COUNT:
                 on_nackfrag_count(data.entity_count());
                 break;
-            case DISCOVERED_ENTITY:
+            case EventKind::DISCOVERED_ENTITY:
                 on_entity_discovery(data.discovery_time());
                 break;
-            case PDP_PACKETS:
+            case EventKind::PDP_PACKETS:
                 on_pdp_packets(data.entity_count());
                 break;
-            case EDP_PACKETS:
+            case EventKind::EDP_PACKETS:
                 on_edp_packets(data.entity_count());
                 break;
-            case SAMPLE_DATAS:
+            case EventKind::SAMPLE_DATAS:
                 on_sample_datas(data.sample_identity_count());
                 break;
-            case PUBLICATION_THROUGHPUT:
+            case EventKind::PUBLICATION_THROUGHPUT:
                 on_publisher_throughput(data.entity_data());
                 break;
-            case SUBSCRIPTION_THROUGHPUT:
+            case EventKind::SUBSCRIPTION_THROUGHPUT:
                 on_subscriber_throughput(data.entity_data());
                 break;
             default:
@@ -138,7 +155,7 @@ struct MockListener : IListener
     MOCK_METHOD1(on_sample_datas, void(const eprosima::fastdds::statistics::SampleIdentityCount&));
     MOCK_METHOD1(on_publisher_throughput, void(const eprosima::fastdds::statistics::EntityData&));
     MOCK_METHOD1(on_subscriber_throughput, void(const eprosima::fastdds::statistics::EntityData&));
-    MOCK_METHOD1(on_unexpected_kind, void(eprosima::fastdds::statistics::EventKind));
+    MOCK_METHOD1(on_unexpected_kind, void(uint32_t));
 };
 
 class RTPSStatisticsTestsImpl
@@ -162,7 +179,7 @@ class RTPSStatisticsTestsImpl
                 TransportFilter&&) = delete;
 
         bool operator ()(
-                fastrtps::rtps::CDRMessage_t& msg) const noexcept
+                fastdds::rtps::CDRMessage_t& msg) const noexcept
         {
             try
             {
@@ -177,37 +194,38 @@ class RTPSStatisticsTestsImpl
 
     };
 
-    std::map<fastrtps::rtps::SubmessageId, TransportFilter> filters_;
+    std::map<fastdds::rtps::SubmessageId, TransportFilter> filters_;
 
 protected:
 
-    fastrtps::rtps::WriterHistory* writer_history_ = nullptr;
-    fastrtps::rtps::ReaderHistory* reader_history_ = nullptr;
+    fastdds::rtps::WriterHistory* writer_history_ = nullptr;
+    fastdds::rtps::ReaderHistory* reader_history_ = nullptr;
 
-    fastrtps::rtps::RTPSParticipant* participant_ = nullptr;
-    fastrtps::rtps::RTPSWriter* writer_ = nullptr;
-    fastrtps::rtps::RTPSReader* reader_ = nullptr;
+    fastdds::rtps::RTPSParticipant* participant_ = nullptr;
+    fastdds::rtps::RTPSWriter* writer_ = nullptr;
+    fastdds::rtps::RTPSReader* reader_ = nullptr;
+    std::shared_ptr<test_Descriptor> test_transport_descriptor_;
 
     // Getters and setters for the transport filter
     using filter = fastdds::rtps::test_UDPv4TransportDescriptor::filter;
 
     template<class F>
     void set_transport_filter(
-            fastrtps::rtps::SubmessageId id,
+            fastdds::rtps::SubmessageId id,
             F f) noexcept
     {
         filters_[id].external_filter_ = f;
     }
 
     void set_transport_filter(
-            fastrtps::rtps::SubmessageId id,
+            fastdds::rtps::SubmessageId id,
             std::nullptr_t) noexcept
     {
         filters_[id].external_filter_ = nullptr;
     }
 
     test_Descriptor::filter get_transport_filter(
-            fastrtps::rtps::SubmessageId id) noexcept
+            fastdds::rtps::SubmessageId id) noexcept
     {
         return filters_[id].external_filter_;
     }
@@ -216,24 +234,24 @@ public:
 
     void create_participant()
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         // create the participant
         RTPSParticipantAttributes p_attr;
 
         // use leaky transport
         // as filter use a fixture provided functor
-        auto descriptor = std::make_shared<test_Descriptor>();
+        test_transport_descriptor_ = std::make_shared<test_Descriptor>();
 
         // initialize filters
-        descriptor->drop_data_messages_filter_  = std::ref(filters_[DATA]);
-        descriptor->drop_heartbeat_messages_filter_ = std::ref(filters_[HEARTBEAT]);
-        descriptor->drop_ack_nack_messages_filter_ = std::ref(filters_[ACKNACK]);
-        descriptor->drop_gap_messages_filter_ = std::ref(filters_[GAP]);
-        descriptor->drop_data_frag_messages_filter_ = std::ref(filters_[DATA_FRAG]);
+        test_transport_descriptor_->drop_data_messages_filter_  = std::ref(filters_[DATA]);
+        test_transport_descriptor_->drop_heartbeat_messages_filter_ = std::ref(filters_[HEARTBEAT]);
+        test_transport_descriptor_->drop_ack_nack_messages_filter_ = std::ref(filters_[ACKNACK]);
+        test_transport_descriptor_->drop_gap_messages_filter_ = std::ref(filters_[GAP]);
+        test_transport_descriptor_->drop_data_frag_messages_filter_ = std::ref(filters_[DATA_FRAG]);
 
         p_attr.useBuiltinTransports = false;
-        p_attr.userTransports.push_back(descriptor);
+        p_attr.userTransports.push_back(test_transport_descriptor_);
 
         // random domain_id
 #if defined(__cplusplus_winrt)
@@ -250,7 +268,7 @@ public:
 
     void remove_participant()
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         // Remove the endpoints
         destroy_endpoints();
@@ -261,10 +279,10 @@ public:
 
     void create_reader(
             uint32_t payloadMaxSize,
-            fastrtps::rtps::ReliabilityKind_t reliability_qos = fastrtps::rtps::ReliabilityKind_t::RELIABLE,
-            fastrtps::rtps::DurabilityKind_t durability_qos = fastrtps::rtps::DurabilityKind_t::VOLATILE)
+            fastdds::rtps::ReliabilityKind_t reliability_qos = fastdds::rtps::ReliabilityKind_t::RELIABLE,
+            fastdds::rtps::DurabilityKind_t durability_qos = fastdds::rtps::DurabilityKind_t::VOLATILE)
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         HistoryAttributes history_attributes;
         history_attributes.payloadMaxSize = payloadMaxSize;
@@ -285,18 +303,18 @@ public:
 
     void create_writer(
             uint32_t payloadMaxSize,
-            fastrtps::rtps::ReliabilityKind_t reliability_qos = fastrtps::rtps::ReliabilityKind_t::RELIABLE,
-            fastrtps::rtps::DurabilityKind_t durability_qos = fastrtps::rtps::DurabilityKind_t::TRANSIENT_LOCAL)
+            fastdds::rtps::ReliabilityKind_t reliability_qos = fastdds::rtps::ReliabilityKind_t::RELIABLE,
+            fastdds::rtps::DurabilityKind_t durability_qos = fastdds::rtps::DurabilityKind_t::TRANSIENT_LOCAL)
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         HistoryAttributes history_attributes;
         history_attributes.payloadMaxSize = payloadMaxSize;
         writer_history_ = new WriterHistory(history_attributes);
 
         WriterAttributes w_att;
-        w_att.times.heartbeatPeriod.seconds = 0;
-        w_att.times.heartbeatPeriod.nanosec = 250 * 1000 * 1000; // reduce acknowledgement wait
+        w_att.times.heartbeat_period.seconds = 0;
+        w_att.times.heartbeat_period.nanosec = 250 * 1000 * 1000; // reduce acknowledgement wait
         w_att.endpoint.reliabilityKind = reliability_qos;
         w_att.endpoint.durabilityKind = durability_qos;
 
@@ -305,20 +323,20 @@ public:
 
     void create_lazy_writer(
             uint32_t payloadMaxSize,
-            fastrtps::rtps::ReliabilityKind_t reliability_qos = fastrtps::rtps::ReliabilityKind_t::RELIABLE,
-            fastrtps::rtps::DurabilityKind_t durability_qos = fastrtps::rtps::DurabilityKind_t::TRANSIENT_LOCAL)
+            fastdds::rtps::ReliabilityKind_t reliability_qos = fastdds::rtps::ReliabilityKind_t::RELIABLE,
+            fastdds::rtps::DurabilityKind_t durability_qos = fastdds::rtps::DurabilityKind_t::TRANSIENT_LOCAL)
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         HistoryAttributes history_attributes;
         history_attributes.payloadMaxSize = payloadMaxSize;
         writer_history_ = new WriterHistory(history_attributes);
 
         WriterAttributes w_att;
-        w_att.times.heartbeatPeriod.seconds = 3;
-        w_att.times.heartbeatPeriod.nanosec = 0;
-        w_att.times.nackResponseDelay.seconds = 0;
-        w_att.times.nackResponseDelay.nanosec = 300 * 1000 * 1000; // increase ACKNACK response delay
+        w_att.times.heartbeat_period.seconds = 3;
+        w_att.times.heartbeat_period.nanosec = 0;
+        w_att.times.nack_response_delay.seconds = 0;
+        w_att.times.nack_response_delay.nanosec = 300 * 1000 * 1000; // increase ACKNACK response delay
         w_att.endpoint.reliabilityKind = reliability_qos;
         w_att.endpoint.durabilityKind = durability_qos;
 
@@ -327,46 +345,45 @@ public:
 
     void create_endpoints(
             uint32_t payloadMaxSize,
-            fastrtps::rtps::ReliabilityKind_t reliability_qos = fastrtps::rtps::ReliabilityKind_t::RELIABLE)
+            fastdds::rtps::ReliabilityKind_t reliability_qos = fastdds::rtps::ReliabilityKind_t::RELIABLE)
     {
         create_reader(payloadMaxSize, reliability_qos);
         create_writer(payloadMaxSize, reliability_qos);
     }
 
     void match_endpoints(
-            bool key,
-            fastrtps::string_255 data_type,
-            fastrtps::string_255 topic_name)
+            bool /* key */,
+            fastcdr::string_255 data_type,
+            fastcdr::string_255 topic_name)
     {
-        using namespace fastrtps;
-        using namespace fastrtps::rtps;
+        using namespace fastdds;
+        using namespace fastdds::rtps;
 
-        TopicAttributes Tatt;
-        Tatt.topicKind = key ? TopicKind_t::WITH_KEY : TopicKind_t::NO_KEY;
-        Tatt.topicDataType = data_type;
-        Tatt.topicName = topic_name;
+        TopicDescription topic_desc;
+        topic_desc.type_name = data_type;
+        topic_desc.topic_name = topic_name;
 
-        WriterQos Wqos;
+        dds::WriterQos Wqos;
         auto& watt = writer_->getAttributes();
         Wqos.m_durability.durabilityKind(watt.durabilityKind);
         Wqos.m_reliability.kind =
                 RELIABLE ==
-                watt.reliabilityKind ? RELIABLE_RELIABILITY_QOS : BEST_EFFORT_RELIABILITY_QOS;
+                watt.reliabilityKind ? dds::RELIABLE_RELIABILITY_QOS : dds::BEST_EFFORT_RELIABILITY_QOS;
 
-        ReaderQos Rqos;
+        dds::ReaderQos Rqos;
         auto& ratt = writer_->getAttributes();
         Rqos.m_durability.durabilityKind(ratt.durabilityKind);
         Rqos.m_reliability.kind =
                 RELIABLE ==
-                ratt.reliabilityKind ? RELIABLE_RELIABILITY_QOS : BEST_EFFORT_RELIABILITY_QOS;
+                ratt.reliabilityKind ? dds::RELIABLE_RELIABILITY_QOS : dds::BEST_EFFORT_RELIABILITY_QOS;
 
-        participant_->registerWriter(writer_, Tatt, Wqos);
-        participant_->registerReader(reader_, Tatt, Rqos);
+        participant_->register_writer(writer_, topic_desc, Wqos);
+        participant_->register_reader(reader_, topic_desc, Rqos);
     }
 
     void destroy_endpoints()
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         if (nullptr != writer_ )
         {
@@ -388,17 +405,11 @@ public:
     void write_small_sample(
             uint32_t length)
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         ASSERT_NE(nullptr, writer_);
 
-        auto writer_change = writer_->new_change(
-            [length]() -> uint32_t
-            {
-                return length;
-            },
-            ALIVE);
-
+        auto writer_change = writer_history_->create_change(length, ALIVE);
         ASSERT_NE(nullptr, writer_change);
 
         std::string str("https://github.com/eProsima/Fast-DDS.git");
@@ -413,17 +424,11 @@ public:
             uint32_t length,
             uint16_t fragment_size)
     {
-        using namespace fastrtps::rtps;
+        using namespace fastdds::rtps;
 
         ASSERT_NE(nullptr, writer_);
 
-        auto writer_change = writer_->new_change(
-            [length]() -> uint32_t
-            {
-                return length;
-            },
-            ALIVE);
-
+        auto writer_change = writer_history_->create_change(length, ALIVE);
         ASSERT_NE(nullptr, writer_change);
 
         {
@@ -446,12 +451,12 @@ public:
     // Sets up the test fixture.
     void SetUp() override
     {
-        using namespace fastrtps;
+        using namespace fastdds;
 
         // Intraprocess must be disable in order to receive DATA callbacks
-        LibrarySettingsAttributes att;
+        LibrarySettings att;
         att.intraprocess_delivery = INTRAPROCESS_OFF;
-        xmlparser::XMLProfileManager::library_settings(att);
+        fastdds::rtps::RTPSDomain::set_library_settings(att);
 
         create_participant();
     }
@@ -473,7 +478,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_management)
 {
     // Check API add and remove interfaces
     using namespace std;
-    using namespace fastrtps::rtps;
+    using namespace fastdds::rtps;
 
     // Create the testing endpoints
     create_endpoints(255);
@@ -483,9 +488,9 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_management)
     auto nolistener = listener1;
     nolistener.reset();
 
-    EventKind kind = EventKindBits::PUBLICATION_THROUGHPUT;
-    EventKind another_kind = EventKindBits::SUBSCRIPTION_THROUGHPUT;
-    EventKind yet_another_kind = EventKindBits::NETWORK_LATENCY;
+    uint32_t kind = EventKind::PUBLICATION_THROUGHPUT;
+    uint32_t another_kind = EventKind::SUBSCRIPTION_THROUGHPUT;
+    uint32_t yet_another_kind = EventKind::NETWORK_LATENCY;
 
     // test the participant apis
     // + fails to remove an empty listener
@@ -571,8 +576,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_management)
 TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     std::atomic<unsigned int> samples_filtered{0};
@@ -580,7 +585,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
     // make sure some messages are lost to assure the RESENT_DATAS callback
     set_transport_filter(
         DATA,
-        [&samples_filtered](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [&samples_filtered](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             uint32_t old_pos = msg.pos;
 
@@ -615,13 +620,13 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
                 // participant specific callbacks
                 auto participant_listener = make_shared<MockListener>();
                 ASSERT_TRUE(participant_->add_statistics_listener(participant_listener,
-                        EventKindBits::RTPS_SENT | EventKindBits::NETWORK_LATENCY | EventKindBits::RTPS_LOST));
+                        EventKind::RTPS_SENT | EventKind::NETWORK_LATENCY | EventKind::RTPS_LOST));
 
                 // writer callbacks through participant listener
                 auto participant_writer_listener = make_shared<MockListener>();
                 ASSERT_TRUE(participant_->add_statistics_listener(participant_writer_listener,
-                        EventKindBits::DATA_COUNT | EventKindBits::RESENT_DATAS |
-                        EventKindBits::PUBLICATION_THROUGHPUT | EventKindBits::SAMPLE_DATAS));
+                        EventKind::DATA_COUNT | EventKind::RESENT_DATAS |
+                        EventKind::PUBLICATION_THROUGHPUT | EventKind::SAMPLE_DATAS));
 
                 // writer specific callbacks
                 auto writer_listener = make_shared<MockListener>();
@@ -630,8 +635,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
                 // reader callbacks through participant listener
                 auto participant_reader_listener = make_shared<MockListener>();
                 ASSERT_TRUE(participant_->add_statistics_listener(participant_reader_listener,
-                        EventKindBits::ACKNACK_COUNT | EventKindBits::HISTORY2HISTORY_LATENCY |
-                        EventKindBits::SUBSCRIPTION_THROUGHPUT));
+                        EventKind::ACKNACK_COUNT | EventKind::HISTORY2HISTORY_LATENCY |
+                        EventKind::SUBSCRIPTION_THROUGHPUT));
 
                 // reader specific callbacks
                 auto reader_listener = make_shared<MockListener>();
@@ -693,41 +698,41 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
                 write_small_sample(length);
 
                 // wait for reception
-                EXPECT_TRUE(reader_->wait_for_unread_cache(Duration_t(5, 0)));
+                EXPECT_TRUE(reader_->wait_for_unread_cache(dds::Duration_t(5, 0)));
 
                 // receive the sample
-                CacheChange_t* reader_change = nullptr;
-                ASSERT_TRUE(reader_->nextUntakenCache(&reader_change, nullptr));
+                CacheChange_t* reader_change = reader_->next_untaken_cache();
+                ASSERT_NE(nullptr, reader_change);
 
                 // wait for acknowledgement
-                EXPECT_TRUE(writer_->wait_for_all_acked(Duration_t(5, 0)));
+                EXPECT_TRUE(writer_->wait_for_all_acked(dds::Duration_t(5, 0)));
 
                 EXPECT_TRUE(writer_->remove_statistics_listener(writer_listener));
                 EXPECT_TRUE(reader_->remove_statistics_listener(reader_listener));
 
                 EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener,
-                        EventKindBits::RTPS_SENT | EventKindBits::NETWORK_LATENCY | EventKindBits::RTPS_LOST));
+                        EventKind::RTPS_SENT | EventKind::NETWORK_LATENCY | EventKind::RTPS_LOST));
                 EXPECT_TRUE(participant_->remove_statistics_listener(participant_writer_listener,
-                        EventKindBits::DATA_COUNT | EventKindBits::RESENT_DATAS |
-                        EventKindBits::PUBLICATION_THROUGHPUT | EventKindBits::SAMPLE_DATAS));
+                        EventKind::DATA_COUNT | EventKind::RESENT_DATAS |
+                        EventKind::PUBLICATION_THROUGHPUT | EventKind::SAMPLE_DATAS));
                 EXPECT_TRUE(participant_->remove_statistics_listener(participant_reader_listener,
-                        EventKindBits::ACKNACK_COUNT | EventKindBits::HISTORY2HISTORY_LATENCY |
-                        EventKindBits::SUBSCRIPTION_THROUGHPUT));
+                        EventKind::ACKNACK_COUNT | EventKind::HISTORY2HISTORY_LATENCY |
+                        EventKind::SUBSCRIPTION_THROUGHPUT));
             };
 
     // Check that setting the mask after creating the endpoints work
     uint32_t enable_writers_mask =
-            EventKindBits::HISTORY2HISTORY_LATENCY |
-            EventKindBits::NETWORK_LATENCY |
-            EventKindBits::PUBLICATION_THROUGHPUT |
-            EventKindBits::SUBSCRIPTION_THROUGHPUT |
-            EventKindBits::RTPS_SENT |
-            EventKindBits::RTPS_LOST |
-            EventKindBits::RESENT_DATAS |
-            EventKindBits::HEARTBEAT_COUNT |
-            EventKindBits::ACKNACK_COUNT |
-            EventKindBits::DATA_COUNT |
-            EventKindBits::SAMPLE_DATAS;
+            EventKind::HISTORY2HISTORY_LATENCY |
+            EventKind::NETWORK_LATENCY |
+            EventKind::PUBLICATION_THROUGHPUT |
+            EventKind::SUBSCRIPTION_THROUGHPUT |
+            EventKind::RTPS_SENT |
+            EventKind::RTPS_LOST |
+            EventKind::RESENT_DATAS |
+            EventKind::HEARTBEAT_COUNT |
+            EventKind::ACKNACK_COUNT |
+            EventKind::DATA_COUNT |
+            EventKind::SAMPLE_DATAS;
     create_endpoints(length, RELIABLE);
     participant_->set_enabled_statistics_writers_mask(enable_writers_mask);
     test_execution();
@@ -749,8 +754,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks)
 TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     // payload size
@@ -760,7 +765,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
     // make sure some messages are lost to assure the NACKFRAG callback
     set_transport_filter(
         DATA_FRAG,
-        [](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             static uint32_t max_fragment = 0;
             static bool keep_filtering = true;
@@ -768,7 +773,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
             uint32_t fragmentNum = 0;
             uint32_t old_pos = msg.pos;
             msg.pos += 20;
-            fastrtps::rtps::CDRMessage::readUInt32(&msg, &fragmentNum);
+            fastdds::rtps::CDRMessage::readUInt32(&msg, &fragmentNum);
             msg.pos = old_pos;
 
             // generate losses only on the first burst
@@ -783,16 +788,16 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
         });
 
     uint32_t enable_writers_mask =
-            EventKindBits::HISTORY2HISTORY_LATENCY |
-            EventKindBits::HEARTBEAT_COUNT |
-            EventKindBits::ACKNACK_COUNT |
-            EventKindBits::NACKFRAG_COUNT |
-            EventKindBits::DATA_COUNT;
+            EventKind::HISTORY2HISTORY_LATENCY |
+            EventKind::HEARTBEAT_COUNT |
+            EventKind::ACKNACK_COUNT |
+            EventKind::NACKFRAG_COUNT |
+            EventKind::DATA_COUNT;
 
     // writer callbacks through participant listener
     auto participant_listener = make_shared<MockListener>();
-    uint32_t mask = EventKindBits::DATA_COUNT | EventKindBits::HEARTBEAT_COUNT
-            | EventKindBits::ACKNACK_COUNT | EventKindBits::NACKFRAG_COUNT | EventKindBits::HISTORY2HISTORY_LATENCY;
+    uint32_t mask = EventKind::DATA_COUNT | EventKind::HEARTBEAT_COUNT
+            | EventKind::ACKNACK_COUNT | EventKind::NACKFRAG_COUNT | EventKind::HISTORY2HISTORY_LATENCY;
     ASSERT_TRUE(participant_->add_statistics_listener(participant_listener, mask));
     participant_->set_enabled_statistics_writers_mask(enable_writers_mask);
 
@@ -819,14 +824,14 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
     write_large_sample(length, fragment_size);
 
     // wait for reception
-    EXPECT_TRUE(reader_->wait_for_unread_cache(Duration_t(10, 0)));
+    EXPECT_TRUE(reader_->wait_for_unread_cache(dds::Duration_t(10, 0)));
 
     // receive the sample
-    CacheChange_t* reader_change = nullptr;
-    ASSERT_TRUE(reader_->nextUntakenCache(&reader_change, nullptr));
+    CacheChange_t* reader_change = reader_->next_untaken_cache();
+    ASSERT_NE(nullptr, reader_change);
 
     // wait for acknowledgement
-    EXPECT_TRUE(writer_->wait_for_all_acked(Duration_t(1, 0)));
+    EXPECT_TRUE(writer_->wait_for_all_acked(dds::Duration_t(1, 0)));
 
     EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener, mask));
 }
@@ -849,14 +854,14 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_fragmented)
 TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_no_enabled_writers)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     // make sure some messages are lost to assure the RESENT_DATAS callback
     set_transport_filter(
         DATA,
-        [](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             static unsigned int samples_filtered = 0;
             uint32_t old_pos = msg.pos;
@@ -893,13 +898,13 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_no_enabled_writer
     // participant specific callbacks
     auto participant_listener = make_shared<MockListener>();
     ASSERT_TRUE(participant_->add_statistics_listener(participant_listener,
-            EventKindBits::RTPS_SENT | EventKindBits::NETWORK_LATENCY | EventKindBits::RTPS_LOST));
+            EventKind::RTPS_SENT | EventKind::NETWORK_LATENCY | EventKind::RTPS_LOST));
 
     // writer callbacks through participant listener
     auto participant_writer_listener = make_shared<MockListener>();
     ASSERT_TRUE(participant_->add_statistics_listener(participant_writer_listener,
-            EventKindBits::DATA_COUNT | EventKindBits::RESENT_DATAS |
-            EventKindBits::PUBLICATION_THROUGHPUT | EventKindBits::SAMPLE_DATAS));
+            EventKind::DATA_COUNT | EventKind::RESENT_DATAS |
+            EventKind::PUBLICATION_THROUGHPUT | EventKind::SAMPLE_DATAS));
 
     // writer specific callbacks
     auto writer_listener = make_shared<MockListener>();
@@ -908,8 +913,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_no_enabled_writer
     // reader callbacks through participant listener
     auto participant_reader_listener = make_shared<MockListener>();
     ASSERT_TRUE(participant_->add_statistics_listener(participant_reader_listener,
-            EventKindBits::ACKNACK_COUNT | EventKindBits::HISTORY2HISTORY_LATENCY |
-            EventKindBits::SUBSCRIPTION_THROUGHPUT));
+            EventKind::ACKNACK_COUNT | EventKind::HISTORY2HISTORY_LATENCY |
+            EventKind::SUBSCRIPTION_THROUGHPUT));
 
     // reader specific callbacks
     auto reader_listener = make_shared<MockListener>();
@@ -971,26 +976,26 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_no_enabled_writer
     write_small_sample(length);
 
     // wait for reception
-    EXPECT_TRUE(reader_->wait_for_unread_cache(Duration_t(5, 0)));
+    EXPECT_TRUE(reader_->wait_for_unread_cache(dds::Duration_t(5, 0)));
 
     // receive the sample
-    CacheChange_t* reader_change = nullptr;
-    ASSERT_TRUE(reader_->nextUntakenCache(&reader_change, nullptr));
+    CacheChange_t* reader_change = reader_->next_untaken_cache();
+    ASSERT_NE(nullptr, reader_change);
 
     // wait for acknowledgement
-    EXPECT_TRUE(writer_->wait_for_all_acked(Duration_t(5, 0)));
+    EXPECT_TRUE(writer_->wait_for_all_acked(dds::Duration_t(5, 0)));
 
     EXPECT_TRUE(writer_->remove_statistics_listener(writer_listener));
     EXPECT_TRUE(reader_->remove_statistics_listener(reader_listener));
 
     EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener,
-            EventKindBits::RTPS_SENT | EventKindBits::NETWORK_LATENCY | EventKindBits::RTPS_LOST));
+            EventKind::RTPS_SENT | EventKind::NETWORK_LATENCY | EventKind::RTPS_LOST));
     EXPECT_TRUE(participant_->remove_statistics_listener(participant_writer_listener,
-            EventKindBits::DATA_COUNT | EventKindBits::RESENT_DATAS |
-            EventKindBits::PUBLICATION_THROUGHPUT | EventKindBits::SAMPLE_DATAS));
+            EventKind::DATA_COUNT | EventKind::RESENT_DATAS |
+            EventKind::PUBLICATION_THROUGHPUT | EventKind::SAMPLE_DATAS));
     EXPECT_TRUE(participant_->remove_statistics_listener(participant_reader_listener,
-            EventKindBits::ACKNACK_COUNT | EventKindBits::HISTORY2HISTORY_LATENCY |
-            EventKindBits::SUBSCRIPTION_THROUGHPUT));
+            EventKind::ACKNACK_COUNT | EventKind::HISTORY2HISTORY_LATENCY |
+            EventKind::SUBSCRIPTION_THROUGHPUT));
 }
 
 /*
@@ -999,19 +1004,19 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_callbacks_no_enabled_writer
 TEST_F(RTPSStatisticsTests, statistics_rpts_listener_gap_callback)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     uint32_t enable_writers_mask =
-            EventKindBits::PUBLICATION_THROUGHPUT |
-            EventKindBits::RESENT_DATAS |
-            EventKindBits::HEARTBEAT_COUNT |
-            EventKindBits::ACKNACK_COUNT |
-            EventKindBits::NACKFRAG_COUNT |
-            EventKindBits::GAP_COUNT |
-            EventKindBits::DATA_COUNT |
-            EventKindBits::SAMPLE_DATAS;
+            EventKind::PUBLICATION_THROUGHPUT |
+            EventKind::RESENT_DATAS |
+            EventKind::HEARTBEAT_COUNT |
+            EventKind::ACKNACK_COUNT |
+            EventKind::NACKFRAG_COUNT |
+            EventKind::GAP_COUNT |
+            EventKind::DATA_COUNT |
+            EventKind::SAMPLE_DATAS;
 
     // create the listeners and set expectations
     auto participant_writer_listener = make_shared<MockListener>();
@@ -1040,7 +1045,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_gap_callback)
     writer_->set_enabled_statistics_writers_mask(enable_writers_mask);
 
     // writer callback through participant listener
-    ASSERT_TRUE(participant_->add_statistics_listener(participant_writer_listener, EventKindBits::GAP_COUNT));
+    ASSERT_TRUE(participant_->add_statistics_listener(participant_writer_listener, EventKind::GAP_COUNT));
 
     // writer specific callbacks
     ASSERT_TRUE(writer_->add_statistics_listener(writer_listener));
@@ -1060,18 +1065,18 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_gap_callback)
     match_endpoints(false, "string", "statisticsSmallTopic");
 
     // wait for reception
-    EXPECT_TRUE(reader_->wait_for_unread_cache(Duration_t(5, 0)));
+    EXPECT_TRUE(reader_->wait_for_unread_cache(dds::Duration_t(5, 0)));
 
     // receive the second sample
-    CacheChange_t* reader_change = nullptr;
-    ASSERT_TRUE(reader_->nextUntakenCache(&reader_change, nullptr));
+    CacheChange_t* reader_change = reader_->next_untaken_cache();
+    ASSERT_NE(nullptr, reader_change);
 
     // wait for acknowledgement
-    EXPECT_TRUE(writer_->wait_for_all_acked(Duration_t(1, 0)));
+    EXPECT_TRUE(writer_->wait_for_all_acked(dds::Duration_t(1, 0)));
 
     // release the listeners
     EXPECT_TRUE(writer_->remove_statistics_listener(writer_listener));
-    EXPECT_TRUE(participant_->remove_statistics_listener(participant_writer_listener, EventKindBits::GAP_COUNT));
+    EXPECT_TRUE(participant_->remove_statistics_listener(participant_writer_listener, EventKind::GAP_COUNT));
 }
 
 /*
@@ -1080,19 +1085,19 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_gap_callback)
 TEST_F(RTPSStatisticsTests, statistics_rpts_listener_discovery_callbacks)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     uint32_t enable_writers_mask =
-            EventKindBits::PDP_PACKETS |
-            EventKindBits::EDP_PACKETS |
-            EventKindBits::DISCOVERED_ENTITY;
+            EventKind::PDP_PACKETS |
+            EventKind::EDP_PACKETS |
+            EventKind::DISCOVERED_ENTITY;
 
     // create the listener and set expectations
     auto participant_listener = make_shared<MockListener>();
     ASSERT_TRUE(participant_->add_statistics_listener(participant_listener,
-            EventKindBits::DISCOVERED_ENTITY | EventKindBits::PDP_PACKETS | EventKindBits::EDP_PACKETS));
+            EventKind::DISCOVERED_ENTITY | EventKind::PDP_PACKETS | EventKind::EDP_PACKETS));
     participant_->set_enabled_statistics_writers_mask(enable_writers_mask);
 
     // check callbacks on data exchange
@@ -1137,7 +1142,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_discovery_callbacks)
     }
 
     // release the listener
-    EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener, EventKindBits::DISCOVERED_ENTITY));
+    EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener, EventKind::DISCOVERED_ENTITY));
 }
 
 /*
@@ -1146,8 +1151,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_listener_discovery_callbacks)
 TEST_F(RTPSStatisticsTests, statistics_rpts_avoid_empty_resent_callbacks)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
 
     // The history must be cleared after the acknack is received
@@ -1157,7 +1162,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_avoid_empty_resent_callbacks)
     // filter out all user DATAs
     set_transport_filter(
         DATA,
-        [](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             uint32_t old_pos = msg.pos;
 
@@ -1180,7 +1185,7 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_avoid_empty_resent_callbacks)
 
     set_transport_filter(
         ACKNACK,
-        [&acknack_sent](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [&acknack_sent](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             uint32_t old_pos = msg.pos;
 
@@ -1221,11 +1226,11 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_avoid_empty_resent_callbacks)
     uint16_t length = 255;
     create_lazy_writer(length, RELIABLE, TRANSIENT_LOCAL);
     uint32_t enable_writers_mask =
-            EventKindBits::HEARTBEAT_COUNT |
-            EventKindBits::DATA_COUNT |
-            EventKindBits::SAMPLE_DATAS |
-            EventKindBits::PUBLICATION_THROUGHPUT |
-            EventKindBits::RESENT_DATAS;
+            EventKind::HEARTBEAT_COUNT |
+            EventKind::DATA_COUNT |
+            EventKind::SAMPLE_DATAS |
+            EventKind::PUBLICATION_THROUGHPUT |
+            EventKind::RESENT_DATAS;
     writer_->set_enabled_statistics_writers_mask(enable_writers_mask);
 
     // writer specific callbacks
@@ -1263,11 +1268,9 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_avoid_empty_resent_callbacks)
 TEST_F(RTPSStatisticsTests, statistics_rpts_unordered_datagrams)
 {
     using namespace ::testing;
-    using namespace fastrtps;
-    using namespace fastrtps::rtps;
+    using namespace fastdds;
+    using namespace fastdds::rtps;
     using namespace std;
-
-    using test_UDPv4Transport = eprosima::fastdds::rtps::test_UDPv4Transport;
 
     constexpr uint16_t num_messages = 10;
     constexpr std::array<size_t, num_messages> message_order {
@@ -1294,10 +1297,10 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_unordered_datagrams)
     };
 
     // A filter to add the first `num_messages` user DATA_FRAG into `user_data`
-    test_UDPv4Transport::test_UDPv4Transport_DropLogLength = num_messages;
+    test_transport_descriptor_->test_transport_options->test_UDPv4Transport_DropLogLength = num_messages;
     set_transport_filter(
         DATA_FRAG,
-        [](fastrtps::rtps::CDRMessage_t& msg)-> bool
+        [](fastdds::rtps::CDRMessage_t& msg)-> bool
         {
             uint32_t old_pos = msg.pos;
 
@@ -1328,8 +1331,8 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_unordered_datagrams)
 
     // create the listener and set expectations
     auto participant_listener = make_shared<MockListener>();
-    ASSERT_TRUE(participant_->add_statistics_listener(participant_listener, EventKindBits::RTPS_LOST));
-    participant_->set_enabled_statistics_writers_mask(EventKindBits::RTPS_LOST);
+    ASSERT_TRUE(participant_->add_statistics_listener(participant_listener, EventKind::RTPS_LOST));
+    participant_->set_enabled_statistics_writers_mask(EventKind::RTPS_LOST);
 
     std::vector<Entity2LocatorTraffic> lost_callback_data;
     auto callback_action = [&lost_callback_data](const Entity2LocatorTraffic& data) -> void
@@ -1359,14 +1362,15 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_unordered_datagrams)
     // Send messages in different order
     for (size_t idx : message_order)
     {
-        const std::vector<octet>& msg = test_UDPv4Transport::test_UDPv4Transport_DropLog[idx];
+        const std::vector<octet>& msg =
+                test_transport_descriptor_->test_transport_options->test_UDPv4Transport_DropLog[idx];
         EXPECT_EQ(msg.size(), sender.send_to(asio::buffer(msg.data(), msg.size()), destination, 0, ec)) << ec;
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     // release the listener
-    EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener, EventKindBits::RTPS_LOST));
+    EXPECT_TRUE(participant_->remove_statistics_listener(participant_listener, EventKind::RTPS_LOST));
 
     // Check reported callbacks
     EXPECT_EQ(sizeof(lost_count_notified) / sizeof(lost_count_notified[0]), lost_callback_data.size());
@@ -1380,6 +1384,44 @@ TEST_F(RTPSStatisticsTests, statistics_rpts_unordered_datagrams)
     EXPECT_EQ(0u, last_lost_data.packet_count());
     EXPECT_EQ(0u, last_lost_data.byte_count());
     EXPECT_EQ(0, last_lost_data.byte_magnitude_order());
+}
+
+TEST_F(RTPSStatisticsTests, iconnections_queryable_get_entity_connections)
+{
+    ConnectionList conns_reader, conns_writer;
+    create_endpoints(1024);
+
+    // match writer and reader on a dummy topic
+    match_endpoints(false, "string", "test_topic_name");
+
+    auto participant_mock = static_cast<RTPSParticipantMock*>(participant_);
+    auto part_impl = participant_mock->get_impl();
+
+    part_impl->get_entity_connections(reader_->getGuid(), conns_reader);
+    part_impl->get_entity_connections(writer_->getGuid(), conns_writer);
+
+    ASSERT_EQ(1, conns_writer.size());
+    ASSERT_EQ(1, conns_writer.size());
+    ASSERT_EQ(conns_reader[0].guid(), statistics::to_statistics_type(writer_->getGuid()));
+    ASSERT_EQ(conns_writer[0].guid(), statistics::to_statistics_type(reader_->getGuid()));
+
+    for (auto& locator : conns_reader[0].announced_locators())
+    {
+        bool found = false;
+        auto base_writer = static_cast<fastdds::rtps::BaseWriter*>(writer_);
+        for (auto& writer_loc : base_writer->get_general_locator_selector().locator_selector)
+        {
+            //! Checking the address can be confusing since the writer_loc could be translated to
+            //! 127.0.0.1
+            if (statistics::to_statistics_type(writer_loc).port() == locator.port() &&
+                    statistics::to_statistics_type(writer_loc).kind() == locator.kind())
+            {
+                found = true;
+            }
+        }
+
+        ASSERT_TRUE(found);
+    }
 }
 
 } // namespace rtps

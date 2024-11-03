@@ -21,10 +21,12 @@
 
 #include <fastdds/statistics/IListeners.hpp>
 
-#include <fastdds/publisher/DataWriterImpl.hpp>
-#include <fastdds/rtps/RTPSDomain.h>
-#include <fastdds/rtps/writer/RTPSWriter.h>
+#include <fastdds/dds/core/ReturnCode.hpp>
+#include <fastdds/rtps/RTPSDomain.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
 
+#include <fastdds/publisher/DataWriterImpl.hpp>
+#include <rtps/writer/BaseWriter.hpp>
 #include <statistics/fastdds/domain/DomainParticipantImpl.hpp>
 
 namespace eprosima {
@@ -47,7 +49,7 @@ public:
             efd::TypeSupport type,
             efd::Topic* topic,
             const efd::DataWriterQos& qos,
-            const eprosima::fastrtps::rtps::EntityId_t& entity_id)
+            const eprosima::fastdds::rtps::EntityId_t& entity_id)
         : BaseType(p, type, topic, qos, entity_id, nullptr)
     {
     }
@@ -58,23 +60,23 @@ public:
             efd::Topic* topic,
             const efd::DataWriterQos& qos,
             efd::DataWriterListener* listener,
-            std::shared_ptr<fastrtps::rtps::IPayloadPool> payload_pool,
+            std::shared_ptr<fastdds::rtps::IPayloadPool> payload_pool,
             std::shared_ptr<IListener> stat_listener)
         : BaseType(p, type, topic, qos, listener, payload_pool)
         , statistics_listener_(stat_listener)
     {
     }
 
-    ReturnCode_t enable() override
+    efd::ReturnCode_t enable() override
     {
         if (nullptr != writer_)
         {
-            return ReturnCode_t::RETCODE_OK;
+            return efd::RETCODE_OK;
         }
 
-        ReturnCode_t ret = BaseType::enable();
+        efd::ReturnCode_t ret = BaseType::enable();
 
-        if (ReturnCode_t::RETCODE_OK == ret && statistics_listener_)
+        if (efd::RETCODE_OK == ret && statistics_listener_)
         {
             writer_->add_statistics_listener(statistics_listener_);
         }

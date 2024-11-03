@@ -16,29 +16,37 @@
  * @file RTPSParticipantImpl.h
  */
 
-#ifndef _RTPS_PARTICIPANT_RTPSPARTICIPANTIMPL_H_
-#define _RTPS_PARTICIPANT_RTPSPARTICIPANTIMPL_H_
-
-// Include first possible mocks (depending on include on CMakeLists.txt)
-#include <fastrtps/rtps/attributes/RTPSParticipantAttributes.h>
-#include <rtps/network/NetworkFactory.h>
-#include <fastrtps/rtps/participant/RTPSParticipantListener.h>
-#include <fastrtps/rtps/reader/RTPSReader.h>
-#include <fastrtps/rtps/resources/ResourceEvent.h>
-#include <fastrtps/rtps/writer/RTPSWriter.h>
-
-#if HAVE_SECURITY
-#include <rtps/security/SecurityManager.h>
-#endif // if HAVE_SECURITY
-
-#include <gmock/gmock.h>
+#ifndef FASTDDS_RTPS_PARTICIPANT__RTPSPARTICIPANTIMPL_H
+#define FASTDDS_RTPS_PARTICIPANT__RTPSPARTICIPANTIMPL_H
 
 #include <atomic>
 #include <map>
 #include <sstream>
 
+#include <gmock/gmock.h>
+
+// Include first possible mocks (depending on include on CMakeLists.txt)
+#include <fastdds/builtin/type_lookup_service/TypeLookupManager.hpp>
+#include <fastdds/rtps/attributes/RTPSParticipantAttributes.hpp>
+#include <fastdds/rtps/builtin/data/ParticipantBuiltinTopicData.hpp>
+#include <fastdds/rtps/common/LocatorList.hpp>
+#include <fastdds/rtps/history/IChangePool.hpp>
+#include <fastdds/rtps/participant/RTPSParticipantListener.hpp>
+#include <fastdds/rtps/reader/RTPSReader.hpp>
+#include <fastdds/rtps/writer/RTPSWriter.hpp>
+
+#include <fastdds/utils/TypePropagation.hpp>
+#include <rtps/network/NetworkFactory.hpp>
+#include <rtps/reader/BaseReader.hpp>
+#include <rtps/resources/ResourceEvent.h>
+#if HAVE_SECURITY
+#include <rtps/security/SecurityManager.h>
+#endif // if HAVE_SECURITY
+#include <rtps/writer/BaseWriter.hpp>
+
+
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class Endpoint;
@@ -65,14 +73,18 @@ class MockParticipantListener : public RTPSParticipantListener
 {
 public:
 
-    void onParticipantDiscovery(
+    void on_participant_discovery(
             RTPSParticipant* participant,
-            ParticipantDiscoveryInfo&& info) override
+            ParticipantDiscoveryStatus status,
+            const ParticipantBuiltinTopicData& info,
+            bool& should_be_ignored) override
     {
-        onParticipantDiscovery_mock(participant, info);
+        on_participant_discovery_mock(participant, status, info, should_be_ignored);
     }
 
-    MOCK_METHOD2(onParticipantDiscovery_mock, void (RTPSParticipant*, const ParticipantDiscoveryInfo&));
+    MOCK_METHOD4(on_participant_discovery_mock,
+            void (RTPSParticipant*, ParticipantDiscoveryStatus, const ParticipantBuiltinTopicData&,
+            bool&));
 
 #if HAVE_SECURITY
     void onParticipantAuthentication(
@@ -95,11 +107,39 @@ public:
         events_.init_thread();
     }
 
+    RTPSParticipantImpl(
+            uint32_t,
+            const RTPSParticipantAttributes&,
+            const GuidPrefix_t&,
+            RTPSParticipant*,
+            RTPSParticipantListener*)
+    {
+        events_.init_thread();
+    }
+
+    RTPSParticipantImpl(
+            uint32_t,
+            const RTPSParticipantAttributes&,
+            const GuidPrefix_t&,
+            const GuidPrefix_t&,
+            RTPSParticipant*,
+            RTPSParticipantListener*)
+    {
+        events_.init_thread();
+    }
+
     MOCK_CONST_METHOD0(get_domain_id, uint32_t());
 
     MOCK_CONST_METHOD0(getGuid, const GUID_t& ());
 
-    MOCK_CONST_METHOD0(network_factory, const NetworkFactory& ());
+    const NetworkFactory& network_factory()
+    {
+        return network_factory_;
+    }
+
+    MOCK_METHOD0(is_intraprocess_only, bool());
+
+    MOCK_METHOD0(get_persistence_guid_prefix, GuidPrefix_t());
 
 #if HAVE_SECURITY
     MOCK_CONST_METHOD0(security_attributes, const security::ParticipantSecurityAttributes& ());
@@ -117,6 +157,11 @@ public:
 
     MOCK_METHOD1(setGuid, void(GUID_t &));
 
+    MOCK_METHOD1(check_type, bool(std::string));
+
+    MOCK_METHOD2(on_entity_discovery,
+            void(const fastdds::rtps::GUID_t&, const fastdds::dds::ParameterPropertyList_t&));
+
     // *INDENT-OFF* Uncrustify makes a mess with MOCK_METHOD macros
     MOCK_METHOD6(createWriter_mock,
             bool (RTPSWriter** writer, WriterAttributes& param, WriterHistory* hist,
@@ -128,8 +173,6 @@ public:
             ReaderListener* listen,
             const EntityId_t& entityId, bool isBuiltin, bool enable));
     // *INDENT-ON*
-
-    MOCK_CONST_METHOD0(getParticipantMutex, std::recursive_mutex* ());
 
     bool createWriter(
             RTPSWriter** writer,
@@ -185,7 +228,7 @@ public:
         if (*reader != nullptr)
         {
             (*reader)->history_ = hist;
-            (*reader)->listener_ = listen;
+            fastdds::rtps::BaseReader::downcast(*reader)->listener_ = listen;
 
             auto guid = generate_endpoint_guid();
             (*reader)->m_guid = guid;
@@ -208,7 +251,7 @@ public:
         if (*reader != nullptr)
         {
             (*reader)->history_ = hist;
-            (*reader)->listener_ = listen;
+            fastdds::rtps::BaseReader::downcast(*reader)->listener_ = listen;
 
             auto guid = generate_endpoint_guid();
             (*reader)->m_guid = guid;
@@ -269,12 +312,7 @@ public:
         return 65536;
     }
 
-    const RTPSParticipantAttributes& getRTPSParticipantAttributes() const
-    {
-        return attr_;
-    }
-
-    RTPSParticipantAttributes& getAttributes()
+    const RTPSParticipantAttributes& get_attributes() const
     {
         return attr_;
     }
@@ -310,13 +348,87 @@ public:
 
     MOCK_METHOD(bool, should_match_local_endpoints, ());
 
+    MOCK_METHOD(bool, ignore_participant, (const GuidPrefix_t&));
+
+    MOCK_METHOD(bool, update_removed_participant, (rtps::LocatorList_t&));
+
+    MOCK_METHOD0(has_shm_transport, bool());
+
+    MOCK_METHOD0(typelookup_manager, fastdds::dds::builtin::TypeLookupManager* ());
+
+    uint32_t getRTPSParticipantID() const
+    {
+        return 0;
+    }
+
+    bool is_initialized() const
+    {
+        return true;
+    }
+
+    bool did_mutation_took_place_on_meta(
+            const LocatorList_t&,
+            const LocatorList_t&) const
+    {
+        return false;
+    }
+
+    bool networkFactoryHasRegisteredTransports() const
+    {
+        return true;
+    }
+
+    void environment_file_has_changed()
+    {
+    }
+
+    void enable()
+    {
+    }
+
+    void disable()
+    {
+    }
+
+    bool create_writer(
+            RTPSWriter**,
+            WriterAttributes&,
+            WriterHistory*,
+            WriterListener*,
+            const EntityId_t&,
+            bool)
+    {
+        return true;
+    }
+
+    void client_override(
+            bool)
+    {
+    }
+
+    RTPSReader* find_local_reader(
+            const GUID_t&)
+    {
+        return nullptr;
+    }
+
+    BaseWriter* find_local_writer(
+            const GUID_t&)
+    {
+        return nullptr;
+    }
+
+    MOCK_METHOD(dds::utils::TypePropagation, type_propagation, (), (const));
+
 private:
 
     MockParticipantListener listener_;
 
-    ResourceEvent events_;
-
     RTPSParticipantAttributes attr_;
+
+    NetworkFactory network_factory_ {attr_};
+
+    ::testing::NiceMock<ResourceEvent> events_;
 
     std::map<GUID_t, Endpoint*> endpoints_;
 
@@ -335,7 +447,7 @@ private:
 };
 
 } // namespace rtps
-} // namespace fastrtps
+} // namespace fastdds
 } // namespace eprosima
 
-#endif // _RTPS_PARTICIPANT_RTPSPARTICIPANTIMPL_H_
+#endif // FASTDDS_RTPS_PARTICIPANT__RTPSPARTICIPANTIMPL_H

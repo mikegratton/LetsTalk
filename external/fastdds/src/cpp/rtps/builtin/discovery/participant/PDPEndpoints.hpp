@@ -19,7 +19,7 @@
 #ifndef FASTDDS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT__PDPENDPOINTS_HPP_
 #define FASTDDS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT__PDPENDPOINTS_HPP_
 
-#include <fastdds/rtps/common/Types.h>
+#include <fastdds/rtps/common/Types.hpp>
 
 #include <rtps/participant/RTPSParticipantImpl.h>
 
@@ -43,18 +43,20 @@ public:
      *
      * @return The list of builtin endpoints to announce.
      */
-    virtual fastrtps::rtps::BuiltinEndpointSet_t builtin_endpoints() const = 0;
+    virtual fastdds::rtps::BuiltinEndpointSet_t builtin_endpoints() const = 0;
+
+    virtual const std::unique_ptr<fastdds::rtps::ReaderListener>& main_listener() const = 0;
 
     virtual bool enable_pdp_readers(
-            fastrtps::rtps::RTPSParticipantImpl* participant) = 0;
+            fastdds::rtps::RTPSParticipantImpl* participant) = 0;
     virtual void disable_pdp_readers(
-            fastrtps::rtps::RTPSParticipantImpl* participant) = 0;
+            fastdds::rtps::RTPSParticipantImpl* participant) = 0;
     virtual void delete_pdp_endpoints(
-            fastrtps::rtps::RTPSParticipantImpl* participant) = 0;
+            fastdds::rtps::RTPSParticipantImpl* participant) = 0;
     virtual void remove_from_pdp_reader_history(
-            const fastrtps::rtps::InstanceHandle_t& remote_participant) = 0;
+            const fastdds::rtps::InstanceHandle_t& remote_participant) = 0;
     virtual void remove_from_pdp_reader_history(
-            fastrtps::rtps::CacheChange_t* change) = 0;
+            fastdds::rtps::CacheChange_t* change) = 0;
 
 protected:
 

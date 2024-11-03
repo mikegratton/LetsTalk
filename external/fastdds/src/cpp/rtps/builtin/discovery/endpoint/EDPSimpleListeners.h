@@ -21,19 +21,20 @@
 #define EDPSIMPLELISTENER_H_
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#include <fastdds/rtps/builtin/data/ReaderProxyData.h>
-#include <fastdds/rtps/builtin/data/WriterProxyData.h>
+#include <fastdds/rtps/reader/ReaderListener.hpp>
+#include <fastdds/rtps/writer/WriterListener.hpp>
 
-#include <fastdds/rtps/builtin/discovery/endpoint/EDPSimple.h>
-
-#include <fastdds/rtps/reader/ReaderListener.h>
-#include <fastdds/rtps/writer/WriterListener.h>
-
+#include <rtps/builtin/data/ReaderProxyData.hpp>
+#include <rtps/builtin/data/WriterProxyData.hpp>
+#include <rtps/builtin/discovery/endpoint/EDPSimple.h>
 #include <rtps/participant/RTPSParticipantImpl.h>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
+
+using EndpointAddedCallback = std::function<
+    void (RTPSReader* reader, const CacheChange_t* change)>;
 
 class RTPSReader;
 struct CacheChange_t;
@@ -79,7 +80,9 @@ protected:
             ReaderHistory* reader_history,
             CacheChange_t* change,
             EDP* edp,
-            bool release_change = true);
+            bool release_change = true,
+            const EndpointAddedCallback& writer_added_callback = nullptr
+            );
 };
 
 /**
@@ -101,7 +104,9 @@ protected:
             ReaderHistory* reader_history,
             CacheChange_t* change,
             EDP* edp,
-            bool release_change = true);
+            bool release_change = true,
+            const EndpointAddedCallback& reader_added_callback = nullptr
+            );
 };
 
 /*!
@@ -129,7 +134,7 @@ public:
      * @param reader
      * @param change
      */
-    void onNewCacheChangeAdded(
+    void on_new_cache_change_added(
             RTPSReader* reader,
             const CacheChange_t* const change) override;
 
@@ -140,7 +145,7 @@ public:
      * @param writer Pointer to the RTPSWriter.
      * @param change Pointer to the affected CacheChange_t.
      */
-    void onWriterChangeReceivedByAll(
+    void on_writer_change_received_by_all(
             RTPSWriter* writer,
             CacheChange_t* change) override;
 
@@ -174,7 +179,7 @@ public:
      * @param reader
      * @param change
      */
-    void onNewCacheChangeAdded(
+    void on_new_cache_change_added(
             RTPSReader* reader,
             const CacheChange_t* const change) override;
 
@@ -184,7 +189,7 @@ public:
      * @param writer Pointer to the RTPSWriter.
      * @param change Pointer to the affected CacheChange_t.
      */
-    void onWriterChangeReceivedByAll(
+    void on_writer_change_received_by_all(
             RTPSWriter* writer,
             CacheChange_t* change) override;
 
@@ -195,7 +200,7 @@ private:
 };
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */
 
 #endif // ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC

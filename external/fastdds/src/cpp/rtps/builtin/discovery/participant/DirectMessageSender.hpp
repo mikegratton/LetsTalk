@@ -17,16 +17,18 @@
  *
  */
 
-#ifndef FASTRTPS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_
-#define FASTRTPS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_
+#ifndef FASTDDS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_
+#define FASTDDS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
+#include <vector>
+
 #include <fastdds/rtps/messages/RTPSMessageSenderInterface.hpp>
-#include <fastdds/rtps/common/Locator.h>
+#include <fastdds/rtps/common/LocatorList.hpp>
 
 namespace eprosima {
-namespace fastrtps {
+namespace fastdds {
 namespace rtps {
 
 class RTPSParticipantImpl;
@@ -78,11 +80,13 @@ public:
     /**
      * Send a message through this interface.
      *
-     * @param message Pointer to the buffer with the message already serialized.
+     * @param buffers Vector of NetworkBuffers to send with data already serialized.
+     * @param total_bytes Total number of bytes to send. Should be equal to the sum of the @c size field of all buffers.
      * @param max_blocking_time_point Future timepoint where blocking send should end.
      */
     virtual bool send(
-            CDRMessage_t* message,
+            const std::vector<eprosima::fastdds::rtps::NetworkBuffer>& buffers,
+            const uint32_t& total_bytes,
             std::chrono::steady_clock::time_point max_blocking_time_point) const override;
 
     /*
@@ -108,9 +112,9 @@ private:
 };
 
 } /* namespace rtps */
-} /* namespace fastrtps */
+} /* namespace fastdds */
 } /* namespace eprosima */
 
 #endif // ifndef DOXYGEN_SHOULD_SKIP_THIS_PUBLIC
 
-#endif /* FASTRTPS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_ */
+#endif /* FASTDDS_RTPS_BUILTIN_DISCOVERY_PARTICIPANT_DIRECTMESSAGESENDER_HPP_ */

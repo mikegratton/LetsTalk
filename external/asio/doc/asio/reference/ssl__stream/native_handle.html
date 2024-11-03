@@ -8,6 +8,7 @@
 <link rel="up" href="../ssl__stream.html" title="ssl::stream">
 <link rel="prev" href="lowest_layer_type.html" title="ssl::stream::lowest_layer_type">
 <link rel="next" href="native_handle_type.html" title="ssl::stream::native_handle_type">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 <table cellpadding="2" width="100%"><tr><td valign="top"><img alt="asio C++ library" width="250" height="60" src="../../../asio.png"></td></tr></table>
@@ -41,7 +42,7 @@ Get the
           such as <code class="computeroutput"><span class="identifier">SSL_get_verify_result</span></code>
           and <code class="computeroutput"><span class="identifier">SSL_get_peer_certificate</span><span class="special">:</span></code>
         </p>
-<pre class="programlisting"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">ssl</span><span class="special">::</span><span class="identifier">stream</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">:</span><span class="identifier">ip</span><span class="special">::</span><span class="identifier">tcp</span><span class="special">::</span><span class="identifier">socket</span><span class="special">&gt;</span> <span class="identifier">sock</span><span class="special">(</span><span class="identifier">my_context</span><span class="special">,</span> <span class="identifier">ctx</span><span class="special">);</span>
+<pre class="programlisting"><span class="identifier">asio</span><span class="special">::</span><span class="identifier">ssl</span><span class="special">::</span><span class="identifier">stream</span><span class="special">&lt;</span><span class="identifier">asio</span><span class="special">::</span><span class="identifier">ip</span><span class="special">::</span><span class="identifier">tcp</span><span class="special">::</span><span class="identifier">socket</span><span class="special">&gt;</span> <span class="identifier">sock</span><span class="special">(</span><span class="identifier">io_ctx</span><span class="special">,</span> <span class="identifier">ctx</span><span class="special">);</span>
 
 <span class="comment">// ... establish connection and perform handshake ...</span>
 
@@ -54,14 +55,11 @@ Get the
 <span class="special">}</span>
 </pre>
 </div>
-<table xmlns:rev="http://www.cs.rpi.edu/~gregod/boost/tools/doc/revision" width="100%"><tr>
-<td align="left"></td>
-<td align="right"><div class="copyright-footer">Copyright © 2003-2022 Christopher M. Kohlhoff<p>
+<div class="copyright-footer">Copyright © 2003-2024 Christopher M. Kohlhoff<p>
         Distributed under the Boost Software License, Version 1.0. (See accompanying
         file LICENSE_1_0.txt or copy at <a href="http://www.boost.org/LICENSE_1_0.txt" target="_top">http://www.boost.org/LICENSE_1_0.txt</a>)
       </p>
-</div></td>
-</tr></table>
+</div>
 <hr>
 <div class="spirit-nav">
 <a accesskey="p" href="lowest_layer_type.html"><img src="../../../prev.png" alt="Prev"></a><a accesskey="u" href="../ssl__stream.html"><img src="../../../up.png" alt="Up"></a><a accesskey="h" href="../../../index.html"><img src="../../../home.png" alt="Home"></a><a accesskey="n" href="native_handle_type.html"><img src="../../../next.png" alt="Next"></a>

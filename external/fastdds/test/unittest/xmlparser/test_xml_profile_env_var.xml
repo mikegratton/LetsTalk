@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"  ?>
-<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+<dds xmlns="http://www.eprosima.com">
     <profiles>
         <participant profile_name="test_participant_profile" is_default_profile="true">
             <domainId>${XML_PROFILES_ENV_VAR_1}</domainId>
@@ -27,6 +27,11 @@
                     <send_buffers>
                         <preallocated_number>${XML_PROFILES_ENV_VAR_13}</preallocated_number>
                         <dynamic>${XML_PROFILES_ENV_VAR_14}</dynamic>
+                        <network_buffers_config>
+                            <initial>${XML_PROFILES_ENV_VAR_4}</initial>
+                            <maximum>${XML_PROFILES_ENV_VAR_13}</maximum>
+                            <increment>${XML_PROFILES_ENV_VAR_4}</increment>
+                        </network_buffers_config>
                     </send_buffers>
                 </allocation>
                 <defaultUnicastLocatorList>
@@ -127,10 +132,6 @@
                     <readerPayloadSize>${XML_PROFILES_ENV_VAR_51}</readerPayloadSize>
                     <writerPayloadSize>${XML_PROFILES_ENV_VAR_52}</writerPayloadSize>
                     <mutation_tries>${XML_PROFILES_ENV_VAR_53}</mutation_tries>
-                    <typelookup_config>
-                        <use_client>${XML_PROFILES_ENV_VAR_54}</use_client>
-                        <use_server>${XML_PROFILES_ENV_VAR_55}</use_server>
-                    </typelookup_config>
                 </builtin>
                 <port>
                     <portBase>${XML_PROFILES_ENV_VAR_56}</portBase>
@@ -143,10 +144,61 @@
                 </port>
                 <participantID>${XML_PROFILES_ENV_VAR_63}</participantID>
                 <useBuiltinTransports>${XML_PROFILES_ENV_VAR_64}</useBuiltinTransports>
+                <netmask_filter>${XML_PROFILES_ENV_VAR_162}</netmask_filter>
                 <name>${XML_PROFILES_ENV_VAR_65}</name>
                 <userData>
                     <value>${XML_PROFILES_ENV_VAR_66}</value>
                 </userData>
+                <builtin_controllers_sender_thread>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </builtin_controllers_sender_thread>
+                <timed_events_thread>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </timed_events_thread>
+                <discovery_server_thread>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </discovery_server_thread>
+                <typelookup_service_thread>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </typelookup_service_thread>
+                <builtin_transports_reception_threads>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </builtin_transports_reception_threads>
+                <security_log_thread>
+                    <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                    <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                    <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                    <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                </security_log_thread>
+                <flow_controller_descriptor_list>
+                    <flow_controller_descriptor>
+                        <name>${XML_PROFILES_ENV_VAR_163}</name>
+                        <scheduler>${XML_PROFILES_ENV_VAR_164}</scheduler>
+                        <max_bytes_per_period>${XML_PROFILES_ENV_VAR_165}</max_bytes_per_period>
+                        <period_ms>${XML_PROFILES_ENV_VAR_166}</period_ms>
+                        <sender_thread>
+                            <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                            <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                            <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                            <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+                        </sender_thread>
+                    </flow_controller_descriptor>
+                </flow_controller_descriptor_list>
             </rtps>
         </participant>
 
@@ -192,6 +244,7 @@
                 </partition>
                 <publishMode>
                     <kind>${XML_PROFILES_ENV_VAR_83}</kind>
+                    <flow_controller_name>${XML_PROFILES_ENV_VAR_167}</flow_controller_name>
                 </publishMode>
                 <userData>
                     <value>${XML_PROFILES_ENV_VAR_84}</value>
@@ -204,22 +257,22 @@
                 </groupData>
             </qos>
             <times>
-                <initialHeartbeatDelay>
+                <initial_heartbeat_delay>
                     <sec>${XML_PROFILES_ENV_VAR_87}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_88}</nanosec>
-                </initialHeartbeatDelay>
-                <heartbeatPeriod>
+                </initial_heartbeat_delay>
+                <heartbeat_period>
                     <sec>${XML_PROFILES_ENV_VAR_89}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_90}</nanosec>
-                </heartbeatPeriod>
-                <nackResponseDelay>
+                </heartbeat_period>
+                <nack_response_delay>
                     <sec>${XML_PROFILES_ENV_VAR_91}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_92}</nanosec>
-                </nackResponseDelay>
-                <nackSupressionDuration>
+                </nack_response_delay>
+                <nack_supression_duration>
                     <sec>${XML_PROFILES_ENV_VAR_93}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_94}</nanosec>
-                </nackSupressionDuration>
+                </nack_supression_duration>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -321,14 +374,14 @@
                 </groupData>
             </qos>
             <times>
-                <initialAcknackDelay>
+                <initial_acknack_delay>
                     <sec>${XML_PROFILES_ENV_VAR_133}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_134}</nanosec>
-                </initialAcknackDelay>
-                <heartbeatResponseDelay>
+                </initial_acknack_delay>
+                <heartbeat_response_delay>
                     <sec>${XML_PROFILES_ENV_VAR_135}</sec>
                     <nanosec>${XML_PROFILES_ENV_VAR_136}</nanosec>
-                </heartbeatResponseDelay>
+                </heartbeat_response_delay>
             </times>
             <unicastLocatorList>
                 <locator>
@@ -368,7 +421,7 @@
                     <port>${XML_PROFILES_ENV_VAR_146}</port>
                 </udpv4>
             </external_unicast_locators>
-            <expectsInlineQos>${XML_PROFILES_ENV_VAR_147}</expectsInlineQos>
+            <expects_inline_qos>${XML_PROFILES_ENV_VAR_147}</expects_inline_qos>
             <historyMemoryPolicy>${XML_PROFILES_ENV_VAR_148}</historyMemoryPolicy>
             <userDefinedID>${XML_PROFILES_ENV_VAR_149}</userDefinedID>
             <entityID>${XML_PROFILES_ENV_VAR_150}</entityID>
@@ -388,4 +441,23 @@
     <library_settings>
         <intraprocess_delivery>${XML_PROFILES_ENV_VAR_156}</intraprocess_delivery>
     </library_settings>
+    <domainparticipant_factory profile_name="factory">
+        <qos>
+            <entity_factory>
+                <autoenable_created_entities>${XML_PROFILES_ENV_VAR_157}</autoenable_created_entities>
+            </entity_factory>
+            <shm_watchdog_thread>
+                <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+            </shm_watchdog_thread>
+            <file_watch_threads>
+                <scheduling_policy>${XML_PROFILES_ENV_VAR_158}</scheduling_policy>
+                <priority>${XML_PROFILES_ENV_VAR_159}</priority>
+                <affinity>${XML_PROFILES_ENV_VAR_160}</affinity>
+                <stack_size>${XML_PROFILES_ENV_VAR_161}</stack_size>
+            </file_watch_threads>
+        </qos>
+    </domainparticipant_factory>
 </dds>
