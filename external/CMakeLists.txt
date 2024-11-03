@@ -1,3 +1,6 @@
 add_subdirectory(memory)
+set(THIRDPARTY ON CACHE BOOL "Use built-in fastdds dependencies" FORCE)
+set(THIRDPARTY_fastcdr ON CACHE BOOL "Use built-in fastdds dependencies" FORCE)
+set(THIRDPARTY_UPDATE OFF CACHE BOOL "Attempt to download dependency updates (not recommended)" FORCE)
 add_subdirectory(fastdds)
 add_subdirectory(fastddsgen)
