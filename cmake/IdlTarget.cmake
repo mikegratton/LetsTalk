@@ -54,7 +54,7 @@ find_path(stgpath JsonSupportHeader.stg
         /usr/share/LetsTalk    
 )
 
-set(idl_options -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR}/fastdds)
+set(idl_options -no-typeobjectsupport -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR}/fastdds)
 
 foreach(idl ${idl_SOURCE})
     get_filename_component(ddsgen_dir ${ddsgen} DIRECTORY)
@@ -92,7 +92,7 @@ target_include_directories(${name}
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
         $<INSTALL_INTERFACE:include/${name}>
 )
-#If there are no cpp files, we need to ensure that the dummy library has a language
+# If there are no cpp files, we need to ensure that the dummy library has a language
 set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
 endmacro()
 

@@ -7,6 +7,8 @@ IdlTarget(testIdl
         HelloWorld.idl
         OpenGarage.idl
         Big.idl
+        Union.idl 
+        Map.idl
     PATH idl)
 
 file(GLOB source CONFIGURE_DEPENDS "*.cpp")

@@ -176,14 +176,16 @@ struct ComputeKey<T, true> {
     inline bool operator()(T const* p_type, efd::InstanceHandle_t& handle, bool force_md5, eprosima::fastdds::MD5& md5,
                            unsigned char* keyBuffer, uint32_t maxKeySize)
     {
+        using CdrTypeProperties = eprosima::fastcdr::CdrTypeProperties<T>;
+
         // Object that manages the raw buffer.
-        eprosima::fastcdr::FastBuffer fastbuffer(keyBuffer, maxKeySize);
+        eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(keyBuffer), maxKeySize);
 
         // Object that serializes the data.
         eprosima::fastcdr::Cdr ser(fastbuffer, ::eprosima::fastcdr::Cdr::BIG_ENDIANNESS,
                                    eprosima::fastcdr::CdrVersion::XCDRv2);
         ser.set_encoding_flag(eprosima::fastcdr::EncodingAlgorithmFlag::PLAIN_CDR2);
-        eprosima::fastcdr::serialize_key(ser, *p_type);
+        CdrTypeProperties::serializeKey(ser, *p_type);
         if (force_md5 || maxKeySize > 16) {
             md5.init();
             md5.update(keyBuffer, static_cast<unsigned int>(ser.get_serialized_data_length()));

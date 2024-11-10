@@ -363,84 +363,162 @@ JsonParseError::JsonParseError(char const* i_what, char const* at, char const* c
 }
 
 template<class T>
-T fromString(std::string const& value);
-
-template<>
-bool fromString<bool>(std::string const& value)
-{
-    if (value.size() > 0 && std::tolower(value.front()) == 't') {
-        return true;
+struct FromString {
+    T operator()(std::string const& value) 
+    {
+        std::string error = "Cannot convert from ";
+        error += value + " to desired type";
+        throw std::runtime_error(error); 
     }
-    return false;
-}
+};
 
 template<>
-float fromString<float>(std::string const& value)
-{
-    return std::stod(value);
-}
+struct FromString<bool> {
+    bool operator()(std::string const& value) 
+    {
+        if (value.size() > 0 && std::tolower(value.front()) == 't') {
+            return true;
+        }
+        return false;
+    }
+};
 
 template<>
-double fromString<double>(std::string const& value)
-{
-    return std::stod(value);
-}
+struct FromString<float> {
+
+    float operator()(std::string const& value)
+    {
+        return std::stod(value);
+    }
+};
 
 template<>
-std::string fromString<std::string>(std::string const& value)
-{
-    return value;
-}
+struct FromString<double> {
 
-template<class T>
-typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value,T>::type
-fromString(std::string const& value)
-{
-    return std::stoull(value);
-}
+    double operator()(std::string const& value)
+    {
+        return std::stod(value);
+    }
+};
 
-template<class T>
-typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value,T>::type
-fromString(std::string const& value)
-{
-    return std::stoll(value);
-}
+template<>
+struct FromString<std::string> {
+
+    std::string operator()(std::string const& value)
+    {
+        return value;
+    }
+};
+
+template<>
+struct FromString<int8_t> {
+    int8_t operator()(std::string const& value)
+    {
+        return std::stoll(value);
+    }
+};
+
+
+template<>
+struct FromString<int16_t> {
+    int16_t operator()(std::string const& value)
+    {
+        return std::stoll(value);
+    }
+};
+
+template<>
+struct FromString<int32_t> {
+    int32_t operator()(std::string const& value)
+    {
+        return std::stoll(value);
+    }
+};
+
+template<>
+struct FromString<int64_t> {
+    int64_t operator()(std::string const& value)
+    {
+        return std::stoll(value);
+    }
+};
+
+
+template<>
+struct FromString<uint8_t> {
+    uint8_t operator()(std::string const& value)
+    {
+        return std::stoul(value);
+    }
+};
+
+
+template<>
+struct FromString<uint16_t> {
+    uint16_t operator()(std::string const& value)
+    {
+        return std::stoul(value);
+    }
+};
+
+template<>
+struct FromString<uint32_t> {
+    uint32_t operator()(std::string const& value)
+    {
+        return std::stoul(value);
+    }
+};
+
+template<>
+struct FromString<uint64_t> {
+    uint64_t operator()(std::string const& value)
+    {
+        return std::stoul(value);
+    }
+};
+
+
 
 /*
  * Convert primitive values to string for json representation
  */
 template<class T>
-std::string ToJsonString(T const& value)
-{
-    using std::to_string;
-    return to_string(value);
-}
+struct ToJsonString {
+    std::string operator()(T const& value)
+    {
+        using std::to_string;
+        return to_string(value);
+    }
+};
 
-template<>
-std::string ToJsonString<bool>(bool const& value)
+template<> struct ToJsonString<bool>
 {
-    return value? "true" : "false";
-}
+    std::string operator()(bool const& value) { return value? "true" : "false"; }
+};
 
-template<>
-std::string ToJsonString<double>(double const& value)
+template<> struct ToJsonString<double>
 {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%.16g", value);
-    return buf;
-}
+    std::string operator()(double const& value)
+    {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.16g", value);
+        return buf;
+    }
+};
 
-template<>
-std::string ToJsonString<float>(float const& value)
+template<> struct ToJsonString<float>
 {
-    char buf[32];
-    snprintf(buf, sizeof(buf), "%.9g", value);
-    return buf;
-}
+    std::string operator()(float const& value)
+    {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.9g", value);
+        return buf;
+    }
+};
+
 } // namespace
 // End of built-in json parser
 /*********************************************************************/
-
 
 $definitions; separator="\n"$
 
@@ -485,7 +563,7 @@ for (auto const& element_$member.name$ : $json_member_access(member)$) {
     $if (member.typecode.keyTypeCode.isStringType)$
     json += "\"" + $json_map_key(member)$ + "\":";
     $else$
-    json += "\"" + ToJsonString($json_map_key(member)$) + "\":";
+    json += "\"" + ToJsonString<$member.typecode.keyTypeCode.cppTypename$>{\}($json_map_key(member)$) + "\":";
     $endif$                
     $to_json_value(member=member, typecode=member.typecode.valueTypeCode, access=json_map_value(member))$        
     json += ",";
@@ -498,7 +576,7 @@ to_json_value(member, typecode, access) ::= <<
 $if(typecode.isEnumType)$
 json += "\"" + $typecode.name$ToJson($access$) + "\"";
 $elseif(typecode.primitive)$
-json += ToJsonString($access$);
+json += ToJsonString<$typecode.cppTypename$>{\}($access$);
 $elseif(typecode.isStringType)$
 json += "\"" + $access$ + "\"";
 $elseif(typecode.isStructType)$
@@ -571,9 +649,9 @@ if (!$json$.is_object()) {
 }
 $typecode.cppTypename$ $varname$;
 for (auto const& $element_name(member.name)$ : $json$.as_object()) {    
-    auto key_$member.name$ = fromString<$typecode.keyTypeCode.cppTypename$>($element_name(member.name)$.first);
+    auto key_$member.name$ = FromString<$typecode.keyTypeCode.cppTypename$>{\}($element_name(member.name)$.first);
     $var_deserialize( member=member, typecode=typecode.valueTypeCode, varname=recursive_temp(varname), json=json_second(member.name))$
-    $varname$.insert({key_$member.name$, $recursive_temp(varname)$});
+    $varname$.insert(std::make_pair(key_$member.name$, $recursive_temp(varname)$));
 }
 $elseif(typecode.isUnionType)$
 if (!$json$.is_object()) {
@@ -682,9 +760,15 @@ std::string $enum.name$ToJson($enum.name$ const& sample)
 {
     switch(sample) {
     $enum.members : {it | case $enum.name$::$it.name$: return "$it.name$";}; separator="\n"$        
-    default: throw std::runtime_error("Enum case not recognized as type of enum $enum.name$");
+    default: {
+        std::string error_message = "Enum case ";
+        error_message += std::to_string(static_cast<int>(sample));
+        error_message += " not recognized as type of enum $enum.name$";
+        throw std::runtime_error(error_message.c_str());
+    }
     }    
 }
+
 >>
 
 union_type(ctx, parent, union, extensions, switch_type) ::= <<

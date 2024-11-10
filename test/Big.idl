@@ -31,8 +31,10 @@ struct Big
     boolean bool_thing;
     TwoFace two_face;
     Discriminator enum_thing;
-    // map<int, int> int_map;
+    map<int32, int32> int_map;
     MyBitset bitset_thing;
+    @key
+    int32 keymember;
 };
 
 }; // module modname

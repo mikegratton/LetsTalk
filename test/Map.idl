@@ -1,0 +1,21 @@
+module modname {
+
+enum Trivalue {
+One,
+Two,
+Three
+};
+
+struct InnerStruct {
+    sequence<int32> myNumbers;
+};
+
+struct MapTest
+{
+    //map<Trivalue, Trivalue> enumMap;
+
+    @key
+    char myBytes[4];    
+};
+
+}; // module modname

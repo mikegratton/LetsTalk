@@ -1,0 +1,52 @@
+module modname {
+
+struct TestStruct
+{
+     uint64 index;
+     string message;
+     sequence<int64> seq;
+     map<int32,int32> amap;
+     int32 adata[3];
+};
+
+enum TestEnum {
+    Alpha, Beta
+};
+
+bitset TestBitset
+{
+    bitfield<3> a;
+    bitfield<10> b;
+};
+
+union TestUnion switch(TestEnum) {
+    case Alpha: int32 x;
+    case Beta: double y;
+};
+
+enum LotaTypes
+{
+    Int,
+    String,
+    Sequence,
+    Map,
+    Struct,
+    Bitset,
+    Union,
+    Enum,
+    Array
+};
+
+union BigUnion switch(LotaTypes) {
+    case Int: int32 myInt;
+    case String: string myString;
+    case Sequence: sequence<TestStruct> mySequence; 
+    case Map: map<int32, int32> myMap;
+    case Struct: TestStruct myStruct;
+    case Bitset: TestBitset myBitset;
+    case Union: TestUnion myUnion;
+    case Enum: TestEnum myEnum;
+    case Array: int32 myArray[4];
+};
+
+}; // module modname
