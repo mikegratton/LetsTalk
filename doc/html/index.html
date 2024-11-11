@@ -101,11 +101,10 @@ Links</h1>
 </ul>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Example</h1>
-<p>Here's the basic "hello world" example from <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</a> using the Let's Talk API. The subscriber application:</p>
-<div class="fragment"><div class="line"> {c++}</div>
+<p>Here's the basic "hello world" example from <a href="https://fast-dds.docs.eprosima.com/en/latest/fastdds/getting_started/simple_app/simple_app.html">Fast DDS</a> using the Let's Talk API. The subscriber application: </p><div class="fragment"><div class="line"> {c++}</div>
 <div class="line">#include &quot;LetsTalk.hpp&quot;</div>
 <div class="line">#include &lt;iostream&gt;</div>
-<div class="line">#include &quot;HelloWorld.h&quot;</div>
+<div class="line">#include &quot;HelloWorld.hpp&quot;</div>
 <div class="line"> </div>
 <div class="line">int main(int, char**)</div>
 <div class="line">{</div>
@@ -119,7 +118,7 @@ Example</h1>
 </div><!-- fragment --><p> and the publisher application: </p><div class="fragment"><div class="line"> {c++}</div>
 <div class="line">#include &quot;LetsTalk.hpp&quot;</div>
 <div class="line">#include &lt;iostream&gt;</div>
-<div class="line">#include &quot;HelloWorld.h&quot;</div>
+<div class="line">#include &quot;HelloWorld.hpp&quot;</div>
 <div class="line"> </div>
 <div class="line">int main(int argc, char** argv)</div>
 <div class="line">{</div>
@@ -153,28 +152,29 @@ As a submodule</h2>
 </div><!-- fragment --><p> This will provide the following cmake targets:</p>
 <ul>
 <li><code>letstalk</code> &ndash; The library (with appropriate includes)</li>
-<li><code>fastrtps</code> &ndash; The underlying FastDDS library</li>
+<li><code>fastdds</code> &ndash; The underlying FastDDS library</li>
 </ul>
 <p>To include and link <code>myTarget</code> to Let's Talk, you just need to add the cmake </p><div class="fragment"><div class="line">target_link_libraries(myTarget PUBLIC letstalk)</div>
-</div><!-- fragment --><p> (The <code>letstalk</code> target depends on <code>fastrtps</code>, so you don't need to reference <code>fastrtps</code> directly.)</p>
+</div><!-- fragment --><p> (The <code>letstalk</code> target depends on <code>fastdds</code>, so you don't need to reference <code>fastdds</code> directly.)</p>
 <h2><a class="anchor" id="autotoc_md5"></a>
 Via an installation</h2>
 <p>If you have several projects that depend on Let's Talk, it is more efficient to install the library per usual. In this case, check out the code and do </p><div class="fragment"><div class="line">mkdir build &amp;&amp; cd build &amp;&amp; cmake .. -DCMAKE_INSTALL_PREFIX=&lt;your install dir&gt; -DCMAKE_BUILD_TYPE=Release &amp;&amp; make install</div>
 </div><!-- fragment --><p> This will provide a cmake config script at <code>&lt;your install dir&gt;/lib/cmake/letstalk</code> that you can use in your cmake like </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">list(APPEND CMAKE_PREFIX_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">find_package(letstalk)</div>
-</div><!-- fragment --><p> This will provide the same cmake targets (<code>letstalk</code> and <code>fastrtps</code>) for linking as above.</p>
+</div><!-- fragment --><p> This will provide the same cmake targets (<code>letstalk</code> and <code>fastdds</code>) for linking as above.</p>
 <h2><a class="anchor" id="autotoc_md6"></a>
 IDL Support in CMake</h2>
-<p>Working with IDL in Let's Talk is especially easy. Inspired by the protobuf cmake support, Let's Talk provides an "IdlTarget.cmake" macro. Basic operation is </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
-<div class="line">include(IdlTarget)</div>
+<p>Working with IDL in Let's Talk is especially easy. Inspired by the protobuf cmake support, Let's Talk provides an "IdlTarget.cmake" macro that is included when the Let's Talk module is imported. Basic operation is </p><div class="fragment"><div class="line">list(APPEND CMAKE_MODULE_PATH &lt;your install dir&gt;/lib/cmake/letstalk)</div>
 <div class="line">IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)</div>
 <div class="line">...</div>
 <div class="line">target_link_library(myTarget PUBLIC myIdlTarget)</div>
-</div><!-- fragment --><p> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to all required libraries, and providing access to the header include path as a target property. The header and source cpp files are written in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile generated source, and re-link. The intention is to have machine-generated code segregated from the rest of the code base. The full form is </p><div class="fragment"><div class="line">IdlTarget([PATH path] INCLUDE ... SOURCE ...)</div>
-</div><!-- fragment --><p> where</p>
-<ul>
-<li><code>PATH</code> specifies the relative path where the generated code will be placed. This can be used to change the include path. Setting <code>PATH foo/bar</code> will change <code>#include "MyIdl.h"</code> to <code>#include "foo/bar/MyIdl"</code></li>
+</div><!-- fragment --><p> That is, IdlTarget creates a cmake target consisting of a library built from the provided compiled IDLs, linking transitively to all required libraries, and providing access to the header include path as a target property. The header and source cpp files are written in the build directory. If the IDL is changed, make/ninja will correctly re-run the IDL compiler, recompile generated source, and re-link. The intention is to have machine-generated code segregated from the rest of the code base. The full form is </p><div class="fragment"><div class="line">IdlTarget( &lt;target_name&gt; [SHARED] [JSON] [PATH path] INCLUDE ... SOURCE ...)</div>
+</div><!-- fragment --><p> where</p><ul>
+<li><code>target_name</code> will be the name of the new target created and what you will need to link to</li>
+<li><code>SHARED</code> forces the created library to be a shared library</li>
+<li><code>JSON</code> generates to/from json serialization methods access throught the header <code>MyIdlJsonSupport.hpp</code></li>
+<li><code>PATH</code> specifies the relative path where the generated code will be placed. This can be used to change the include path. Setting <code>PATH foo/bar</code> will change <code>#include "MyIdl.hpp"</code> to <code>#include "foo/bar/MyIdl.hpp"</code></li>
 <li><code>INCLUDE</code> specifies additional include paths for IDL compilation</li>
 <li><code>SOURCE</code> gives the list of IDL files that comprise the resultant library. These will be used to generate code, the code compiled, and then linked into the library.</li>
 </ul>
@@ -189,11 +189,10 @@ Communication Patterns</h1>
 <p>See below for more details on each pattern. The <code>examples</code> directory provides sample code for each pattern.</p>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Publish/Subscribe</h2>
-<p>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. "robot.motion.command") combined with a type. Publishers are only matched to subscribers if both the topic name and topic types match. To subscribe, you register a callback with a participant, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
+<p>In pub/sub, a group of publishers send data to all subscribers that match on a topic. Topics are strings (e.g. "robot.motion.command") combined with a type. Publishers are only matched to subscribers if both the topic name and topic types match. To subscribe, you register a callback with a participant, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = lt::Participant::create();</div>
 <div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](MyType <span class="keyword">const</span>&amp; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
-<div class="ttc" id="aclasslt_1_1Participant_html_a266f5f43e44e21fa68f9b7d83899c0e1"><div class="ttname"><a href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a></div><div class="ttdeci">static ParticipantPtr create(uint8_t i_domain=0, std::string const &amp;i_qosProfile=&quot;&quot;)</div><div class="ttdoc">Makes a new Participant. (There is no public constructor)</div><div class="ttdef"><b>Definition:</b> Participant.cpp:27</div></div>
 </div><!-- fragment --><p> or, if you wish to get samples as <code>unique_ptr</code>s (because you plan to move them to another thread), </p><div class="fragment"><div class="line">node-&gt;subscribe&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>, [](std::unique_ptr&lt;MyType&gt; sample) {</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Got some data!\n&quot;</span>;</div>
 <div class="line">});</div>
@@ -223,16 +222,14 @@ Publish/Subscribe</h2>
 </div><!-- fragment --><p> See <code>example/waitset</code> for a detailed design. Note that the returned index represents the first queue that has data. Higher-numbered queues may also have data. The best practice is to use a fall-through design to check all of the higher indexed queues as well.</p>
 <p>To cancel a subscription, the Participant provides an unsubscribe function, </p><div class="fragment"><div class="line">node-&gt;unsubscribe(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p> You can also query how many publishers have been discovered for the topic, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = node-&gt;publisherCount(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-</div><!-- fragment --><p>For publishing, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
-<div class="line"><a class="code" href="classlt_1_1Publisher.html">lt::Publisher</a> pub = node-&gt;advertise&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
-<div class="ttc" id="aclasslt_1_1Publisher_html"><div class="ttname"><a href="classlt_1_1Publisher.html">lt::Publisher</a></div><div class="ttdoc">Sends messages to a topic.</div><div class="ttdef"><b>Definition:</b> Participant.hpp:291</div></div>
+</div><!-- fragment --><p>For publishing, Participant acts as a factory for creating lightweight <code>Publisher</code> objects, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = lt::Participant::create();</div>
+<div class="line">lt::Publisher pub = node-&gt;advertise&lt;MyType&gt;(<span class="stringliteral">&quot;my.topic&quot;</span>);</div>
 </div><!-- fragment --><p> To use it, </p><div class="fragment"><div class="line">MyType sample;</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
-<div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(sample);</div>
-<div class="ttc" id="aclasslt_1_1Publisher_html_aa9a5ba8316bc12616e663feef7531ad3"><div class="ttname"><a href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">lt::Publisher::publish</a></div><div class="ttdeci">bool publish(std::unique_ptr&lt; T &gt; i_data)</div><div class="ttdef"><b>Definition:</b> ParticipantImpl.hpp:72</div></div>
+<div class="line">pub.publish(sample);</div>
 </div><!-- fragment --><p> or via unique_ptr, </p><div class="fragment"><div class="line"><span class="keyword">auto</span> sample = std::make_unique&lt;MyType&gt;();</div>
 <div class="line"><span class="comment">/* ... fill out sample here */</span></div>
-<div class="line">pub.<a class="code" href="classlt_1_1Publisher.html#aa9a5ba8316bc12616e663feef7531ad3">publish</a>(std::move(sample));</div>
+<div class="line">pub.publish(std::move(sample));</div>
 </div><!-- fragment --><p> Publisher erases the <code>MyType</code> information (i.e. all Publishers are formally the same type), but publishing a type other than <code>MyType</code> will result in an error. Calling <code>pub.topicType()</code> will return the type name as a string. You can check for subscribers using </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> count = pub.subscriberCount(<span class="stringliteral">&quot;my.topic&quot;</span>)</div>
 </div><!-- fragment --><p> To stop advertising data, simply dispose of the Publisher object.</p>
 <p>Let's Talk also supports different "Quality of Service" (QoS) settings for publishers and subscribers. An optional string argument to <code>advertise()</code> and <code>subscribe()</code> gives the name of the QoS profile to use. For example, </p><div class="fragment"><div class="line">auto frameQueue = node-&gt;subscribe&lt;VideoFrame&gt;(&quot;video.stream&quot;, &quot;bulk&quot;);</div>
@@ -274,7 +271,7 @@ Request/Reply</h2>
 </ol>
 <h2><a class="anchor" id="autotoc_md10"></a>
 Reactor</h2>
-<p>The Reactor pattern is similar to the request/reply pattern and uses a pull-style API with session objects, but with more features. To provide a reactor service, we first create the server object, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = <a class="code" href="classlt_1_1Participant.html#a266f5f43e44e21fa68f9b7d83899c0e1">lt::Participant::create</a>();</div>
+<p>The Reactor pattern is similar to the request/reply pattern and uses a pull-style API with session objects, but with more features. To provide a reactor service, we first create the server object, </p><div class="fragment"><div class="line">lt::ParticipantPtr node = lt::Participant::create();</div>
 <div class="line"><span class="keyword">auto</span> motionServer = node-&gt;makeReactorServer&lt;RequestType, ReplyType, ProgressType&gt;(<span class="stringliteral">&quot;robot.move&quot;</span>);</div>
 </div><!-- fragment --><p> Here, <code>ProgressType</code> is optional; if your service doesn't provide progress data you can omit the argument. <code>ReactorServer</code> objects are lightweight and may be copied cheaply. To see if clients have connected, </p><div class="fragment"><div class="line"><span class="keywordtype">int</span> knownClientCount = motionServer.discoveredClients());</div>
 </div><!-- fragment --><p> and to check for pending sessions, </p><div class="fragment"><div class="line"><span class="keywordtype">bool</span> pending = motionServer.havePendingSession();</div>
@@ -354,6 +351,8 @@ History</h1>
 <li>Added a pull-mode replier to request/reply pattern, and added a convenience <code>request</code> method to avoid explicitly handling <code>Requester</code> objects.</li>
 <li>Send cancellation messages for the reactor when a client goes away unexpectedly.</li>
 <li>Extended the waitset to allow for waiting on <code>ReactorServer</code> sessions and Replier sessions. Renamed the object from <code>QueueWaitset</code> to <code>Waitset</code>.</li>
+<li>Add <code>toJson()</code> methods to idl-generated C++ code.</li>
+<li>Fixed deleter-order issue and bad shared_ptr deleters that could cause problems in some setups.</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md23"></a>
 0.2</h2>
@@ -372,7 +371,8 @@ Roadmap</h1>
 Future Features</h2>
 <ol type="1">
 <li>Automate FastDDS version upgrade</li>
-<li>To/from json additions for fastddsgen </li>
+<li>Provide support for using <code>FetchContent</code> in cmake</li>
+<li>Support Cyclone DDS </li>
 </ol>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->

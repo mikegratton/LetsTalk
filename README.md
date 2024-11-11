@@ -91,13 +91,13 @@ add_subdirectory(LetsTalk)
 This will provide the following cmake targets:
  
  * `letstalk` -- The library (with appropriate includes)
- * `fastrtps` -- The underlying FastDDS library 
+ * `fastdds` -- The underlying FastDDS library 
  
 To include and link `myTarget` to Let's Talk, you just need to add the cmake
 ```
 target_link_libraries(myTarget PUBLIC letstalk)
 ```
-(The `letstalk` target depends on `fastrtps`, so you don't need to reference `fastrtps` directly.)
+(The `letstalk` target depends on `fastdds`, so you don't need to reference `fastdds` directly.)
 
 ## Via an installation
 If you have several projects that depend on Let's Talk, it is more efficient
@@ -112,17 +112,16 @@ list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
 list(APPEND CMAKE_PREFIX_PATH <your install dir>/lib/cmake/letstalk)
 find_package(letstalk)
 ```
-This will provide the same cmake targets (`letstalk` and `fastrtps`) for linking as 
+This will provide the same cmake targets (`letstalk` and `fastdds`) for linking as 
 above.
 
 ## IDL Support in CMake
 
 Working with IDL in Let's Talk is especially easy. Inspired by the protobuf
-cmake support, Let's Talk provides an "IdlTarget.cmake" macro.  Basic operation
-is
+cmake support, Let's Talk provides an "IdlTarget.cmake" macro that is included when the Let's Talk module is imported.
+Basic operation is
 ```
 list(APPEND CMAKE_MODULE_PATH <your install dir>/lib/cmake/letstalk)
-include(IdlTarget)
 IdlTarget(myIdlTarget SOURCE MyIdl.idl MyOtherIdl.idl)
 ...
 target_link_library(myTarget PUBLIC myIdlTarget)
@@ -135,12 +134,14 @@ re-run the IDL compiler, recompile generated source, and re-link.  The intention
 to have machine-generated code segregated from the rest of the code base.  The full
 form is 
 ```
-IdlTarget([PATH path] INCLUDE ... SOURCE ...)
+IdlTarget( <target_name> [SHARED] [JSON] [PATH path] INCLUDE ... SOURCE ...)
 ```
 where
-
+* `target_name` will be the name of the new target created and what you will need to link to
+* `SHARED` forces the created library to be a shared library
+* `JSON` generates to/from json serialization methods access throught the header `MyIdlJsonSupport.hpp`
 * `PATH` specifies the relative path where the generated code will be placed. This can be used to
-   change the include path. Setting `PATH foo/bar` will change `#include "MyIdl.h"` to `#include "foo/bar/MyIdl"`
+   change the include path. Setting `PATH foo/bar` will change `#include "MyIdl.hpp"` to `#include "foo/bar/MyIdl.hpp"`
 * `INCLUDE` specifies additional include paths for IDL compilation
 * `SOURCE` gives the list of IDL files that comprise the resultant library. These will be used to generate code,
 the code compiled, and then linked into the library.
@@ -548,7 +549,9 @@ these design differences makes sense.
 * Extended the waitset to allow for waiting on `ReactorServer` sessions and Replier sessions. Renamed the object from `QueueWaitset` to 
   `Waitset`.
 
-* Add `toJson()` method to idl-generated C++ code.
+* Add `toJson()` methods to idl-generated C++ code.
+
+* Fixed deleter-order issue and bad shared_ptr deleters that could cause problems in some setups.
 
 ## 0.2
 
@@ -571,4 +574,6 @@ Initial release. Covers all basic functionality.
 
 1. Automate FastDDS version upgrade
 
-2. From json additions for fastddsgen
+2. Provide support for using `FetchContent` in cmake
+
+3. Support Cyclone DDS
