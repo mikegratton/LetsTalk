@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "HelloWorld.hpp"
-#include "HelloWorldJsonSupport.h"
+#include "HelloWorldJsonSupport.hpp"
 #include "LetsTalk/LetsTalk.hpp"
 
 int main(int, char**)

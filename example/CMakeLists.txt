@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(letstalkdemo VERSION 1.0.0)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/install/lib/cmake/LetsTalk)
-list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/install/lib/cmake/LetsTalk)
 
+# Finding our installed xxx-config.cmake modules
+list(APPEND CMAKE_PREFIX_PATH 
+    ${CMAKE_CURRENT_SOURCE_DIR}/install
+)
 find_package(LetsTalk)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 add_subdirectory(pubsub)
 add_subdirectory(fastdds)

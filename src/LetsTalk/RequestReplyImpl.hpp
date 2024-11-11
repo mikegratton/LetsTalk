@@ -20,8 +20,6 @@ namespace detail {
 // Request/Reply naming and constants
 std::string requestName(std::string i_name);
 std::string replyName(std::string i_name);
-efr::Time_t getBadTime();
-efr::SampleIdentity getBadId();
 
 ///////////////////////////////////////////////////////////////////
 // ServiceProvider is an internal active object used to convert a

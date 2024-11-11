@@ -1,4 +1,4 @@
-#include "DivideService.h"
+#include "DivideService.hpp"
 
 #include <exception>
 #include <stdexcept>

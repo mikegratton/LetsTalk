@@ -254,13 +254,11 @@ if(NOT BUILD_SHARED_LIBS)
     set(FASTDDS_STATIC ON)
 endif()
 
-eprosima_find_package(fastcdr 2 REQUIRED)
 eprosima_find_thirdparty(Asio asio VERSION 1.10.8)
 eprosima_find_thirdparty(TinyXML2 tinyxml2)
 
-# LetsTalk: Supply this from a superbuild
-# find_package(foonathan_memory REQUIRED)
-# message(STATUS "Found foonathan_memory: ${foonathan_memory_DIR}")
+# LetsTalk: Supply memory and fastcdr from a superbuild, so remove find commands here
+
 find_package(ThirdpartyBoost REQUIRED)
 
 if(ANDROID)

@@ -1,5 +1,5 @@
-add_executable(HelloWorldPublisher HelloWorldPublisher.cpp HelloWorld.cxx HelloWorldPubSubTypes.cxx)
-add_executable(HelloWorldSubscriber HelloWorldSubscriber.cpp HelloWorld.cxx HelloWorldPubSubTypes.cxx)
+add_executable(HelloWorldPublisher HelloWorldPublisher.cpp HelloWorldPubSubTypes.cxx HelloWorldTypeObjectSupport.cxx)
+add_executable(HelloWorldSubscriber HelloWorldSubscriber.cpp HelloWorldPubSubTypes.cxx HelloWorldTypeObjectSupport.cxx)
 
-target_link_libraries(HelloWorldPublisher fastrtps)
-target_link_libraries(HelloWorldSubscriber fastrtps)
+target_link_libraries(HelloWorldPublisher fastdds fastcdr)
+target_link_libraries(HelloWorldSubscriber fastdds fastcdr)

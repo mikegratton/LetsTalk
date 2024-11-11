@@ -1,7 +1,7 @@
 ###########################################################################
 # IdlTarget -- make a library target whose source comes from compiling idls
 #    
-# IdlTarget([SHARED] [JSON] [PATH path] INCLUDE ... SOURCE ...)
+# IdlTarget( <target_name> [SHARED] [JSON] [PATH path] INCLUDE ... SOURCE ...)
 #
 # Arguments:
 #    SHARED -- Make the target lib shared, overriding the global setting
@@ -33,43 +33,43 @@ file(MAKE_DIRECTORY ${idl_ABS_PATH})
 set(relpath ${idl_ABS_PATH})
 string(REPLACE "${CMAKE_BINARY_DIR}/" "" relpath ${relpath})
 
-find_program(ddsgen fastddsgen
+find_program(LETSTALK_ddsgen fastddsgen
     PATHS
         ${PROJECT_SOURCE_DIR}/fastddsgen
         ${PROJECT_SOURCE_DIR}/external/fastddsgen
-        ${CompileIdl_location}/../../../bin
-        ${CompileIdl_location}/../../bin
-        ${CompileIdl_location}/../bin
+        ${LETSTALK_CompileIdl_location}/../../../bin
+        ${LETSTALK_CompileIdl_location}/../../bin
+        ${LETSTALK_CompileIdl_location}/../bin
         /usr/local/bin
         /usr/bin
     )
-find_path(stgpath JsonSupportHeader.stg 
+find_path(LETSTALK_stgpath JsonSupportHeader.stg 
     PATHS
         ${PROJECT_SOURCE_DIR}/resources
         ${PROJECT_SOURCE_DIR}/external/fastddsgen
-        ${CompileIdl_location}/../../../share/LetsTalk
-        ${CompileIdl_location}/../../share/LetsTalk
-        ${CompileIdl_location}/../share/LetsTalk
+        ${LETSTALK_CompileIdl_location}/../../../share/LetsTalk
+        ${LETSTALK_CompileIdl_location}/../../share/LetsTalk
+        ${LETSTALK_CompileIdl_location}/../share/LetsTalk
         /usr/local/share/LetsTalk
         /usr/share/LetsTalk    
 )
 
-set(idl_options -no-typeobjectsupport -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR}/fastdds)
+set(idl_options -no-typeobjectsupport -cs -replace -t ${CMAKE_CURRENT_BINARY_DIR}/fastddsgen)
 
 foreach(idl ${idl_SOURCE})
-    get_filename_component(ddsgen_dir ${ddsgen} DIRECTORY)
+    get_filename_component(ddsgen_dir ${LETSTALK_ddsgen} DIRECTORY)
     get_filename_component(stem ${idl} NAME_WE)
     get_filename_component(idl_abs ${idl} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
     set(idl_output ${idl_ABS_PATH}/${stem}.hpp ${idl_ABS_PATH}/${stem}CdrAux.cxx)
     if (idl_JSON)
         set(json_source ${stem}JsonSupport.cxx)
         set(json_header ${stem}JsonSupport.hpp)
-        set(idl_json_options  -extrastg ${stgpath}/JsonSupportHeader.stg ${json_header} -extrastg ${stgpath}/JsonSupportSource.stg ${json_source})        
+        set(idl_json_options  -extrastg ${LETSTALK_stgpath}/JsonSupportHeader.stg ${json_header} -extrastg ${LETSTALK_stgpath}/JsonSupportSource.stg ${json_source})        
         list(APPEND idl_output ${idl_ABS_PATH}/${json_source})
     endif()
     add_custom_command(OUTPUT ${idl_output}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/fastdds
-        COMMAND ${ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${idl_json_options} ${ddsgen_include} ${idl_abs}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/fastddsgen
+        COMMAND ${LETSTALK_ddsgen} -d ${idl_ABS_PATH} ${idl_options} ${idl_json_options} ${ddsgen_include} ${idl_abs}
         COMMAND ${CMAKE_COMMAND} -E rename ${idl_ABS_PATH}/${stem}CdrAux.ipp ${idl_ABS_PATH}/${stem}CdrAux.cxx
         DEPENDS ${idl_abs}
         COMMENT " Compiling idl ${idl_abs}"
@@ -96,4 +96,4 @@ target_include_directories(${name}
 set_target_properties(${name} PROPERTIES LINKER_LANGUAGE CXX)
 endmacro()
 
-set(CompileIdl_location ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")
+set(LETSTALK_CompileIdl_location ${CMAKE_CURRENT_LIST_DIR} CACHE INTERNAL "")

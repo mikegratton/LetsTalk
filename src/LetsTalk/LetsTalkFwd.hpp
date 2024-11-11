@@ -41,13 +41,6 @@ extern const bool LT_VERBOSE;
         std::cout
 
 ////////////////////////////////////////////////////////////////////////////////////////
-std::string demangle_name(char const* i_mangled);
-
-template <class T>
-std::string get_demangled_name()
-{
-    return demangle_name(typeid(T).name());
-}
 
 void logSampleRejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& i_status);
 void logIncompatibleQos(efd::DataReader* i_reader, const efd::RequestedIncompatibleQosStatus& i_status);

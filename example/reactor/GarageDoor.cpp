@@ -2,8 +2,9 @@
 #include <iostream>
 #include <thread>
 
+#include "EnumToString.hpp"
 #include "LetsTalk/LetsTalk.hpp"
-#include "OpenGarage.h"
+#include "idl/OpenGarage.hpp"
 
 int main(int argc, char** argv)
 {

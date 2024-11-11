@@ -12,6 +12,7 @@
 
 #include "LetsTalk.hpp"
 #include "LetsTalkFwd.hpp"
+#include "fastdds/dds/core/detail/DDSReturnCode.hpp"
 
 namespace lt {
 
@@ -317,7 +318,7 @@ bool Publisher::doPublish(void* i_data)
         LT_LOG << m_writer << " could not publish sample " << i_data << "\n";
         return false;
     }
-    return m_writer->write(i_data);
+    return (m_writer->write(i_data) == efd::RETCODE_OK);
 }
 
 bool Publisher::doPublish(void* i_data, Guid const& i_myId, Guid const& i_relatedId, bool i_bad)
@@ -333,7 +334,7 @@ bool Publisher::doPublish(void* i_data, Guid const& i_myId, Guid const& i_relate
     } else {
         i_correlation.related_sample_identity(toSampleId(i_relatedId));
     }
-    return m_writer->write(i_data, i_correlation);
+    return (m_writer->write(i_data, i_correlation) == efd::RETCODE_OK);
 }
 
 }  // namespace lt

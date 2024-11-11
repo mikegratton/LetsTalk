@@ -5,31 +5,9 @@
 #include "fastdds/dds/core/detail/DDSReturnCode.hpp"
 #include "fastdds/dds/core/detail/DDSSecurityReturnCode.hpp"
 
-#if defined(__GNUC__) || defined(__clang__)
-#include <cxxabi.h>
-#endif
-
 namespace lt {
 
 namespace detail {
-
-/*
- * Turn the mangled name into somethign human readable
- */
-#if defined(__GNUC__) || defined(__clang__)
-std::string demangle_name(char const* i_mangled)
-{
-    char* realname = abi::__cxa_demangle(i_mangled, nullptr, nullptr, nullptr);
-    std::string rname(realname);
-    free(realname);
-    return rname;
-}
-#else
-std::string demangle_name(char const* i_mangled)
-{
-    return std::string(i_mangled);
-}
-#endif
 
 void logSampleRejected(efd::DataReader* i_reader, const efd::SampleRejectedStatus& status)
 {

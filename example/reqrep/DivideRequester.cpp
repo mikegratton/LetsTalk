@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <thread>
 
-#include "DivideService.h"
+#include "DivideService.hpp"
 #include "LetsTalk/LetsTalk.hpp"
 
 int main(int argc, char** argv)

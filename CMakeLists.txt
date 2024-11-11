@@ -16,7 +16,7 @@ endif()
 install(
     FILES
     cmake/IdlTarget.cmake
-    cmake/Findfastrtps.cmake
+    cmake/Findfastdds.cmake
     DESTINATION
     ${CMAKE_INSTALL_PREFIX}/lib/cmake/${PROJECT_NAME}
 )
@@ -46,4 +46,11 @@ install(FILES
     ${PROJECT_SOURCE_DIR}/resources/JsonSupportHeader.stg
     ${PROJECT_SOURCE_DIR}/resources/JsonSupportSource.stg
     DESTINATION share/${PROJECT_NAME}
+)
+
+# Some fastdds files end up in the wrong place because they assume
+# CMAKE_PROJECT_NAME will be fastdds
+install(CODE 
+    "file(COPY ${CMAKE_INSTALL_PREFIX}/share/LetsTalk/cmake DESTINATION ${CMAKE_INSTALL_PREFIX}/share/fastdds/ PATTERN *.cmake ) 
+     file(REMOVE_RECURSE ${CMAKE_INSTALL_PREFIX}/share/LetsTalk/cmake)"
 )

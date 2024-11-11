@@ -1,3 +1,3 @@
 
 add_executable(Waitset waitset.cpp)
-target_link_libraries(Waitset PUBLIC LetsTalk)
+target_link_libraries(Waitset PUBLIC lt::LetsTalk)
