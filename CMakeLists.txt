@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(LetsTalk VERSION 0.3.0)
+project(LetsTalk VERSION 0.4.0.0)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 set(CMAKE_INSTALL_RPATH $ORIGIN)
