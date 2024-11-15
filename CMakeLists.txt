@@ -5,11 +5,13 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(CMAKE_INSTALL_RPATH $ORIGIN)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+
+option(LETSTALK_TESTING "Build unit tests for Let's Talk" OFF)
+
 add_subdirectory(external)
 add_subdirectory(src)
 
-enable_testing()
-if (BUILD_TESTING)
+if (LETSTALK_TESTING)
     add_subdirectory(test)
 endif()
 

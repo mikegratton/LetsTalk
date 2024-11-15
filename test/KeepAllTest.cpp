@@ -17,7 +17,7 @@
 
 namespace efd = eprosima::fastdds::dds;
 
-std::atomic<int> recCount = 0;
+std::atomic<int> recCount{0};
 
 class Listener : public efd::DataReaderListener {
     void on_data_available(efd::DataReader* i_reader) final

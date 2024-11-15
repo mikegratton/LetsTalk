@@ -1,3 +1,5 @@
+set(BUILD_TESTING OFF)
+
 # FastDDS CMake has been modified so that these are not searched for. Instead, we include them here
 add_subdirectory(memory)
 add_subdirectory(fastcdr)
