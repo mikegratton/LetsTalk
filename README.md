@@ -540,6 +540,14 @@ these design differences makes sense.
 
 # History
 
+## 0.3.1
+
+* Fix std::atomic<> initialization in several tests.
+
+* Fix IDL-derived Reactor source being placed in the wrong path
+
+* Suppress dependent project unit test compilation
+
 ## 0.3
 
 * Added a pull-mode replier to request/reply pattern, and added a convenience `request` method to avoid explicitly handling `Requester` objects.
