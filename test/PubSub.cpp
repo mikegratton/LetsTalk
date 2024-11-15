@@ -26,7 +26,7 @@ TEST_CASE("BulkProfile")
 
 TEST_CASE("StatefulProfile")
 {
-    std::atomic<int> recCount = 0;
+    std::atomic<int> recCount{0};
     auto participant = lt::Participant::create();
     participant->subscribe<HelloWorld>(
         "HelloWorldTopic",
